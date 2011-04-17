@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <QDebug>
 #include <QCompleter>
+#include <ostream>
 #include "CasManager.h"
 #include "giac/giac.h"
 #include "gui/FormalLineWidgets.h"
@@ -10,11 +11,71 @@
 //#include "MainWindow.h"
 using namespace giac;
 using namespace std;
+
+mybuf::mybuf(int bsize): streambuf(){
+  if (bsize)
+    {
+      char	*ptr = new char[bsize];
+      setp(ptr, ptr + bsize);
+    }
+  else
+    setp(0, 0);
+
+  setg(0, 0, 0);
+}
+
+int mybuf::overflow(int c){
+  put_buffer();
+  if (c != EOF)
+    if (pbase() == epptr())
+      put_char(c);
+    else
+      sputc(c);
+  return 0;
+}
+
+
+int    mybuf::sync(){
+  put_buffer();
+  return 0;
+}
+
+
+void    mybuf::put_char(int chr){
+
+    cerr << "1 caractere" << char(chr) << endl;
+
+  // mettre ici votre code de sortie java du caractere de code ascii chr
+}
+
+
+void     mybuf::put_buffer(){
+if (pbase() != pptr())
+  {
+    int     len = (pptr() - pbase());
+    char    * buffer = new char[len + 1];
+    strncpy(buffer, pbase(), len);
+    buffer[len] = 0;
+    // mettre ici le code de sortie java de la chaine buffer
+    setp(pbase(), epptr());
+    cerr << "1 chaine " << endl;
+    qDebug()<<"debug "<<buffer;
+    delete [] buffer;
+  }
+}
+
+
+MyStream::MyStream(int bsize):ostream(new mybuf(bsize)) {}
+
+
 CasManager::CasManager(){
-    //mainWidow=main;
+
     context=new giac::context;
     listAllCommands();
     completer=new QCompleter(commandList);
+
+   logptr(new MyStream,context);
+
 }
 
 
@@ -23,12 +84,19 @@ void CasManager::listAllCommands(){
     file.open(QIODevice::ReadOnly);
     QTextStream stream(&file);
     QString line;
+    // Only take command with alpanumeric characters
+    // For example %{ %} is excluded.
+
+    QRegExp expr("([a-z]|[A-Z]|[_]|[0-9])+");
+
     while(!stream.atEnd()){
         line=stream.readLine();
         if (line.startsWith("#")) {
             QStringList list=line.remove(0,2).split(" ",QString::SkipEmptyParts);
             for(int i=0;i<list.size();++i){
-                commandList.append(list.at(i));
+                QString s(list.at(i));
+                if (expr.exactMatch(s))
+                    commandList.append(list.at(i));
             }
         }
     }
@@ -134,22 +202,33 @@ QString CasManager::seekForKeyword(const QString & keyWord) const{
 bool CasManager::isCommand(const QString &st) const{
     return (commandList.contains(st));
 }
-QCompleter* CasManager::getCompleter(){
+QCompleter* CasManager::getCompleter() const{
     return completer;
+}
+QStringList CasManager::getCommands(){
+    return commandList;
 }
 
 OutputWidget* CasManager::evaluate(const QString &formula){
     signal(SIGINT,giac::ctrl_c_signal_handler);
     giac::child_id=1;
     giac::gen expression(formula.toStdString(),context);
-    std::string answer=giac::gen2mathml(protecteval(expression,25,context),context);
-    QString mathml(answer.c_str());
+    gen answer=protecteval(expression,25,context);
+
+    // Add result to history
+    giac::history_in(context).push_back(expression);
+    giac::history_out(context).push_back(answer);
+
+    // translate result to mathml
+    QString mathml(giac::gen2mathml(answer,context).c_str());
     mathml.prepend("<math mode=\"display\">\n");
     mathml.append("\n</math>");
+    qDebug()<<"----------------------";
     qDebug()<<formula;
     qDebug()<<mathml;
     qDebug()<<"----------------------";
     QtMmlWidget *mmlWidget=new QtMmlWidget;
+
     QString errorMsg;
       int errorLine;
       int errorColumn;
@@ -158,7 +237,10 @@ OutputWidget* CasManager::evaluate(const QString &formula){
         qWarning("MathML error: %s, Line: %d, Column: %d",
         errorMsg.toLatin1(), errorLine, errorColumn);
       }
+      QPalette p=mmlWidget->palette();
+      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
+      mmlWidget->setPalette(p);
       return new FormulaWidget(mmlWidget);
 
 
-}
+  }

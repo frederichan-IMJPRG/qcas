@@ -36,6 +36,8 @@ private slots:
     void matchBraces();
     void insertCompletion(const QString &completion);
 private:
+    bool goDown();
+    bool goUp();
     void updateCompleter();
     void installCompleter();
     QString textUnderCursor() const;

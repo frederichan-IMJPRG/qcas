@@ -15,6 +15,7 @@ TextInput::TextInput(Line *parent):QTextEdit(parent){
     line=parent;
 
     setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin());
+    new Highlighter(document(),line->getWorkSheet()->getApp()->getCas());
     connect(document(),SIGNAL(contentsChange(int,int,int)),this,SLOT(addMultiLines(int,int,int)));
     connect(this,SIGNAL(cursorPositionChanged()),this,SLOT(matchBraces()));
 
@@ -47,6 +48,8 @@ void TextInput::keyPressEvent(QKeyEvent *e){
 
     }
     switch(e->key()){
+        // The mouse is above a command name
+        // User has pressed F1 to read inline help
         case Qt::Key_F1:
         if (QToolTip::isVisible()){
             line->getWorkSheet()->getApp()->displayHelp(
@@ -54,12 +57,17 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             setFocus();
         }
         break;
+        // User has pressed Space
+        // Checking if Ctrl is pressed to enable autocompletion
         case Qt::Key_Space:
         if (e->modifiers()&Qt::ControlModifier){
             updateCompleter();
         }
         else QTextEdit::keyPressEvent(e);
         break;
+        // User has pressed Return or Enter Key
+        // If Shift is pressed, evaluate and go to next line
+        // else adjust the size of the text zone
         case Qt::Key_Return:
         case Qt::Key_Enter:
             if (e->modifiers()&Qt::ShiftModifier) {
@@ -71,6 +79,16 @@ void TextInput::keyPressEvent(QKeyEvent *e){
                 setFixedHeight(height()+fontMetrics().lineSpacing()+1);
             }
          break;
+
+        case Qt::Key_Down:
+         if (goDown()){
+             QTextEdit::keyPressEvent(e);
+         }
+        break;
+        case Qt::Key_Up:
+            if (goUp())
+                QTextEdit::keyPressEvent(e);
+            break;
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
          {
@@ -117,16 +135,52 @@ void TextInput::updateCompleter(){
 }
 void TextInput::focusInEvent(QFocusEvent *e){
     installCompleter();
+//    line->getWorkSheet()->getHighlighter()->setDocument(document());
     line->getWorkSheet()->setCurrent(line->getId());
     QTextEdit::focusInEvent(e);
 }
 void TextInput::focusOutEvent(QFocusEvent *e){
+ //   line->getWorkSheet()->getHighlighter()->setDocument(0);
     QObject::disconnect(completer,0,this,0);
 
     QTextEdit::focusOutEvent(e);
 }
+/**
+  This method returns true if the user is able to go down with the "Down" Key"
+    in the text zone
+  **/
+bool TextInput::goDown(){
+    QTextCursor newCursor(document());
+    newCursor.setPosition(textCursor().position());
+
+    newCursor.movePosition(QTextCursor::EndOfLine);
+    int pos=newCursor.position();
+    newCursor.movePosition(QTextCursor::End);
+    if (newCursor.position()==pos){
+        line->getWorkSheet()->goToNextExistingLine();
+        return false;
+    }
+    return true;
+}
+/**
+  This method returns true if the user is able to go Up with the "Down" Key"
+    in the text zone
+  **/
+bool TextInput::goUp(){
+    QTextCursor newCursor(document());
+    newCursor.setPosition(textCursor().position());
+
+    newCursor.movePosition(QTextCursor::StartOfLine);
+    if (newCursor.position()==0){
+        line->getWorkSheet()->goToPreviousExistingLine();
+        return false;
+    }
+    return true;
+}
+
+
 bool TextInput::event(QEvent* event){
-        if (event->type() == QEvent::ToolTip)
+        if (event->type() == QEvent::ToolTip&&hasFocus())
         {
         QHelpEvent* helpEvent = static_cast<QHelpEvent*>(event);
         QTextCursor cursor=cursorForPosition(helpEvent->pos());
@@ -202,7 +256,7 @@ void Highlighter::highlightBlock(const QString &text)
 
 
 
-OutputWidget::OutputWidget(QWidget *parent):QWidget(){
+OutputWidget::OutputWidget(QWidget*):QWidget(){
 
 }
 void OutputWidget::setLine(Line* l){

@@ -2,9 +2,10 @@
 #define FORMALSHEET_H
 
 #include <QVector>
-//#include <QTextEdit>
 #include <QScrollArea>
 #include "CentralTabWidget.h"
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
 
 class QCheckBox;
 class QGridLayout;
@@ -14,35 +15,33 @@ class QTextDocument;
 class MainWindow;
 class QCompleter;
 class Line;
-/*class Highlighter : public QSyntaxHighlighter
-{
-Q_OBJECT
+class CasManager;
+/**
+  This class is used to highlight QTextEdit
+  it supports
+  - Comments  //...  or / * ... * /
+  - quotation "..."
+  - keyword highlighting
+  **/
+
+class Highlighter:public QSyntaxHighlighter{
+    Q_OBJECT
 public:
-    Highlighter(QTextDocument *document);
+    Highlighter(QTextDocument * parent=0,CasManager* cas=0);
 protected:
     void highlightBlock(const QString &text);
-};
-struct ParenthesisInfo
-{
-    char character;
-    int position;
-};
-class TextBlockData : public QTextBlockUserData
-{
-public:
-
-    TextBlockData();
-
-    QVector<ParenthesisInfo *> parentheses();
-    void insert(ParenthesisInfo *info);
-
 private:
-
-    QVector<ParenthesisInfo *> m_parentheses;
+    enum style{
+     keyword=1,comment=2,
+     quotation=3
+    };
+    CasManager* cas;
+    QTextCharFormat keywordFormat;
+    QTextCharFormat commentFormat;
+    QTextCharFormat quotationFormat;
 
 };
 
-*/
 
 
 class FormalWorkSheet: public QScrollArea, public MainSheet{
@@ -51,6 +50,8 @@ public:
     FormalWorkSheet(MainWindow *parent=0);
     MainWindow* getApp();
     void goToNextLine();
+    void goToNextExistingLine();
+    void goToPreviousExistingLine();
     void setCurrent(const int);
     int getCurrent() const;
     void setFocus(Qt::FocusReason);
@@ -60,13 +61,15 @@ public:
     void undo();
     void redo();
     void sendText(const QString &);
+  //  Highlighter* getHighlighter() const;
 private:
     QWidget *mainPanel;
     int current;
     QVector <Line*>*lines;
     QVBoxLayout* vLayout;
-    QVBoxLayout* mainLayout;
+//    QVBoxLayout* mainLayout;
     MainWindow *mainWindow;
+//    Highlighter* highlighter;
 };
 
 

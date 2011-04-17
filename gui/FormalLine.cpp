@@ -41,16 +41,16 @@ void Line::output(const QString & formula){
     }
 
     out=getWorkSheet()->getApp()->getCas()->evaluate(formula);
-    //out->setLine(this);
+    out->setMinimumSize(out->sizeHint());
+    out->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
 
     mainLayout->addWidget(out,1,1,Qt::AlignLeft);
-//    QScrollArea *scroll=qobject_cast<QScrollArea*>(getWorkSheet()->parentWidget());
-//    scroll->ensureVisible(out->x(),out->y());;
+    out->show();
 
   /*  QString mathml("<math mode=\"display\">\n"
                    "<msqrt><mn>2</mn></msqrt><mo>+</mo><mn>2</mn><msqrt><mn>2</mn></msqrt>\n"
                    "</math>");
-/*    for (int i=0;i<mathml.length();++i){
+    for (int i=0;i<mathml.length();++i){
         qDebug()<<mathml.at(i);
     }*/
     //QPalette pal=->palette();
