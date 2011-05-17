@@ -1,325 +1,92 @@
-#include <QDebug>
-#include <ostream>
-#include <QGraphicsScene>
-#include <QGraphicsView>
-#include "CasManager.h"
-#include "giac/giac.h"
-#include "EvaluationThread.h"
-#include "gui/FormalLineWidgets.h"
-#include "gui/src/qtmmlwidget.h"
-#include "output.h"
+#include <QHBoxLayout>
+#include <QPainter>
+#include <QPointF>
+#include <giac/giac.h>
+#include "gui/FormalLine.h"
 #include "config.h"
+#include "gui/qtmmlwidget.h"
+#include "output.h"
 
-using namespace std;
 using namespace giac;
-mybuf::mybuf(EvaluationThread *eval,int bsize): streambuf(){
-    ev=eval;
-    if (bsize)
-    {
-      char	*ptr = new char[bsize];
-      setp(ptr, ptr + bsize);
-    }
-  else
-    setp(0, 0);
 
-  setg(0, 0, 0);
+OutputWidget::OutputWidget(QWidget*):QWidget(){
+
+}
+void OutputWidget::setLine(Line* l){
+    line=l;
 }
 
-int mybuf::overflow(int c){
-  put_buffer();
-  // {}{}{} warning!
-  if (c != EOF){
-    if (pbase() == epptr())
-      put_char(c);
-    else
-        sputc(c);
-    }
-  return 0;
+FormulaWidget::FormulaWidget(QtMmlWidget *mml){
+    QHBoxLayout *layout=new QHBoxLayout;
+    layout->addWidget(mml);
+    setLayout(layout);
 }
 
-
-int    mybuf::sync(){
-  put_buffer();
-  return 0;
-}
-
-/** Append the character chr in the Giac messages zone
-  @param chr: the character to add
-  **/
-void    mybuf::put_char(int chr){
- //   qDebug()<<(chr=='\n');
-    QChar c=QChar(chr);
-    ev->appendPrintCache(c);
-}
-
-
-void     mybuf::put_buffer(){
-    if (pbase() != pptr())
-  {
-    int     len = (pptr() - pbase());
-    char    * buffer = new char[len + 1];
-    strncpy(buffer, pbase(), len);
-    buffer[len] = 0;
-    // mettre ici le code de sortie java de la chaine buffer
-    setp(pbase(), epptr());
-    cerr << "1 chaine " << endl;
-    qDebug()<<"debug "<<buffer;
-    delete [] buffer;
+double GraphWidget::find_tick(double dx){
+  double res=std::pow(10.0,std::floor(std::log10(std::abs(dx))));
+  int nticks=int(dx/res);
+  if (nticks<4)
+    res/=5;
+  else {
+    if (nticks<8)
+      res/=2;
   }
+  return res;
+}
+QSize GraphWidget::sizeHint() const{
+    return QSize(width(),height());
 }
 
+GraphWidget::GraphWidget(const giac::gen & g,giac::context* context){
 
-MyStream::MyStream(EvaluationThread *ev,int bsize):ostream(new mybuf(ev,bsize)) {}
+    // Find the largest and lowest x/y/z in objects (except lines/plans)
+   std::vector<double> vx,vy,vz;
+   bool ortho=giac::autoscaleg(g,vx,vy,vz,context);
+   giac::autoscaleminmax(vx,xmin,xmax);
+   giac::autoscaleminmax(vy,ymin,ymax);
+   qDebug()<<"unités"<<xmin<<xmax<<ymin<<ymax;
+   zoom=1;
+   setFixedSize(Config::graph_width,Config::graph_width*3/4);
+   setXYUnit();
 
+   createScene(g,context);
 
-CasManager::CasManager(EvaluationThread *ev){
-    this->ev=ev;
-    signal(SIGINT,giac::ctrl_c_signal_handler);
-    giac::child_id=1;
-
-    context=new giac::context;
-   logptr(new MyStream(ev),context);
-}
-bool CasManager::testExpression(const giac::gen & exp){
-
-    if (exp.is_symb_of_sommet(giac::at_equal)){
-        return false;
-    }
-    return true;
-
-}
-EvaluationThread::warning CasManager::initExpression(const QString *str){
-    expression=giac::gen(str->toStdString(),context);
-    bool b=testExpression(expression);
-    if (!b){
-        return EvaluationThread::WARNING;
-    }
-    return EvaluationThread::NO_WARNING;
-}
-
-void CasManager::evaluate(){
-
-    answer=protecteval(expression,25,context);
-
-    // Add result to history
-    giac::history_in(context).push_back(expression);
-    giac::history_out(context).push_back(answer);
-}
-giac::gen CasManager::getAnswer() const{
-    return answer;
-}
-
-QString CasManager::gen2mathml(const giac::gen &result){
-    return QString(giac::gen2mathml(result,context).c_str());
-}
-void CasManager::killThread(){
-    if (giac::is_context_busy(context))
-        giac::kill_thread(true,context);
-}
-
-
-QString CasManager::displayType(int c){
-    switch(c){
-    case 0:
-        return "_INT";
-     break;
-    case 1:
-     return "_DOUBLE_"; // double _DOUBLE_val
-     break;
-    case 2:
-       return "_ZINT"; // mpz_t * _ZINTptr
-    break;
-    case 3:
-    return "_REAL";
-    break;
-    case 4:
-    return "_CPLX";
-    break;
-    case 5:
-    return "_POLY";
-    break;
-    case 6:
-    return "_IDNT";
-    break;
-    case 7:
-    return "_VECT";
-    break;
-    case 8:
-    return "_SYMB";
-    break;
-    case 9:
-    return "SPLOY1";
-    break;
-    case 10:
-    return "FRAC";
-    break;
-    case 11:
-    return "EXT";
-    break;
-    case 12:
-    return "STRNG";
-    break;
-    default: return QString::number(c);
-    }
-
-}
-
-QString CasManager::displaySubType(int c){
-    switch(c){
-    case 1:
-        return "_SEQ__VECT";
-     break;
-    case 2:
-     return "_SET__VECT";
-     break;
-    case 3:
-       return "_RPN_FUNC__VECT"; // mpz_t * _ZINTptr
-    break;
-    case 4:
-    return "_STACK_FUNC_VECT";
-    break;
-    case 5:
-    return "_GROUP__VECT";
-    break;
-    case 6:
-    return "_LINE__VECT";
-    break;
-    case 7:
-    return "_VECTOR__VECT";
-    break;
-    case 8:
-    return "_PNT__VECT_||_CURVE_VECT";
-    break;
-    case 9:
-    return "_CURVE__VECT";
-    break;
-    case 10:
-    return "_HALF_LINE__VECT";
-    break;
-    default: return QString::number(c);
-    }
-}
-
-void CasManager::info(giac::gen  gg){
-    if (gg.type==giac::_SYMB){
-        qDebug()<<"_SYMB Sommet";
-        dbgprint(gg._SYMBptr->sommet);
-        giac::gen g=gg._SYMBptr->feuille;
-        info(g);
-    }
-    else if (gg.type==giac::_VECT){
-        giac::vecteur *v=gg._VECTptr;
-        qDebug()<<"_VECT subtype"<< displaySubType(gg.subtype);
-        qDebug()<<"size"<<QString::number(v->size());
-        for (int i=0;i<v->size();i++){
-            qDebug()<<"//vect////////////// élément"<<i;
-             info(v->at(i));
-        }
-        qDebug()<<"//fin vect";
-
-    }
-    else     {
-        qDebug()<<displayType(gg.type);
-        gg.dbgprint();
-    }
-
-    }
-OutputWidget* CasManager::createDisplay(){
-    info(answer);
-    if (answer.type == _VECT && graph_output_type(answer)){
-      if (is3d(answer._VECTptr->back())){
-        return new OutputWidget();
-      }
-      else {
-        return new GraphWidget(answer,context);
-    }
-  }
-    else if(answer.is_symb_of_sommet(at_pnt)){
-        if (is3d(answer)){
-
-        }
-        else {
-            return new GraphWidget(answer,context);
-        }
-    }
-/*    if (evaled_g.is_symb_of_sommet(at_pnt) || anim){
-      Fl_Tile * g = new Fl_Tile(w->x(),w->y(),w->w(),max(130,w->w()/3));
-      g->labelsize(w->labelsize());
-      Graph2d3d * res;
-      if (is3d(evaled_g)){
-        res = new Graph3d(w->x(),w->y(),w->w(),g->h(),"",hp);
-        res->show();
-      }
-      else {
-        res=new Graph2d(w->x(),w->y(),w->w(),g->h(),"",hp);
-        if (Xcas_config.ortho)
-          res->orthonormalize();
-      }
-      res->add(evaled_g);
-      if (anim)
-        res->animation_dt=1./5;
-      if (Xcas_config.autoscale)
-        res->autoscale();
-      res->update_infos(evaled_g,contextptr);
-      g->end();
-      change_group_fontsize(g,w->labelsize());
-      return g;
-    }
-
-
-  */
-
-    ////////////////////////////////////////////////
-
-/*      bool graph=false;
-    if (answer.is_symb_of_sommet(giac::at_pnt)) graph=true;
-    else if(answer.type==giac::_VECT){
-        qDebug()<<QString::number(answer.subtype);
-        giac::vecteur* v=answer._VECTptr;
-        for(int i=0;i<v->size();++i){
-            if (v->at(i).is_symb_of_sommet(giac::at_pnt)){
-                graph=true;
-            }            
-        }
-    }
+   /*   QPalette p=palette();
+   p.setColor(QPalette::Window,Qt::white);
+   setPalette(p);
 */
-//    if (graph) return graph2Widget(answer);
-  //  else
-    return formula2Widget(gen2mathml(answer));
+   setBackgroundRole(QPalette::Light);
+   setAutoFillBackground(true);
+   /*   if (ortho)
+        orthonormalize();
+    }
+    find_ylegende();
+    y_tick=find_tick(window_ymax-window_ymin);
+    redraw();
+    push_cfg();
+
+
+
+
+    if (Config::ortho)
+        tmp->orthonormalize();
+    }
+    tmp->add(evaled_g);
+if (anim)
+  tmp->animation_dt=1./5;
+if (Xcas_config.autoscale)
+  tmp->autoscale();
+tmp->update_infos(evaled_g,contextptr);
+g->end();
+change_group_fontsize(g,w->labelsize());
+return g;*/
 }
-OutputWidget* CasManager::formula2Widget(const QString &mathml){
-    QString m("<math mode=\"display\">\n");
-    m.append(mathml);
-    m.append("\n</math>");
-
-
-    qDebug()<<"----------------------";
-    qDebug()<<m;
-    qDebug()<<"----------------------";
-
-    QtMmlWidget *mmlWidget=new QtMmlWidget;
-
-    QString errorMsg;
-      int errorLine;
-      int errorColumn;
-      bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
-      if (!ok) {
-        qWarning("MathML error: %s, Line: %d, Column: %d",
-        errorMsg.toLatin1(), errorLine, errorColumn);
-      }
-      QPalette p=mmlWidget->palette();
-      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
-      mmlWidget->setPalette(p);
-      return new FormulaWidget(mmlWidget);
-}
-
-
-void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
+void GraphWidget::createScene(const giac::gen &g,giac::context* context){
     if (g.type==_VECT){
       vecteur & v =*g._VECTptr;
       const_iterateur it=v.begin(),itend=v.end();
       for (;it!=itend;++it){
-            drawOnScene(scene,*it);
+            createScene(*it,context);
       } // end for it
     }
     if (g.type!=_SYMB)
@@ -335,13 +102,15 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
 
     // TODO Attributs
     vecteur f=*g._SYMBptr->feuille._VECTptr;
-  /*  int mxw=Mon_image.w(),myw=Mon_image.h()-(Mon_image.show_axes?(Mon_image.title.empty()?1:2):0)*Mon_image.labelsize();
-    double i0,j0,i0save,j0save,i1,j1;
+  //  int mxw=Mon_image.w(),myw=Mon_image.h()-(Mon_image.show_axes?(Mon_image.title.empty()?1:2):0)*Mon_image.labelsize();
+  double i0;
+  double j0;
+  double i0save,j0save,i1,j1;
     int fs=f.size();
     if ((fs==4) && (s==at_parameter)){
       return ;
     }
-    string the_legend;
+    std::string the_legend;
     vecteur style(get_style(f,the_legend));
     int styles=style.size();
     // color
@@ -363,7 +132,8 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
     bool fill_polygon   =(ensemble_attributs & 0x40000000) >> 30;
     int couleur         =(ensemble_attributs & 0x0000ffff);
     epaisseur_point += 2;
-    std::pair<Fl_Image *,Fl_Image *> * texture = 0;
+    /*
+std::pair<Fl_Image *,Fl_Image *> * texture = 0;
     for (int i=2;i<styles;++i){
       gen & attr=style[i];
       if (attr.type==_VECT && attr._VECTptr->size()<=3 ){
@@ -393,11 +163,13 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
       }
       if (is_undef(point))
         return;
-/* TODO A comprendre
+    point.dbgprint();
+    qDebug()<<point.type;
+      /* TODO A comprendre
      if ( equalposcomp(Mon_image.selected,plot_i))
         fl_color(FL_BLUE);
       else
-        xcas_color(couleur);
+       xcas_color(couleur);
       fl_line_style(type_line,width+1,0);*/
       if (point.type==_SYMB) {
         if (point._SYMBptr->sommet==at_hyperplan || point._SYMBptr->sommet==at_hypersphere)
@@ -405,7 +177,10 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
         if (point._SYMBptr->sommet==at_cercle){
           vecteur v=*point._SYMBptr->feuille._VECTptr;
           gen diametre=remove_at_pnt(v[0]);
-          gen e1=diametre._VECTptr->front().evalf_double(1,context),e2=diametre._VECTptr->back().evalf_double(1,context);
+
+            qDebug()<<"loic";
+          gen e1=diametre._VECTptr->front().evalf_double(1,context);
+          gen e2=diametre._VECTptr->back().evalf_double(1,context);
           gen centre=rdiv(e1+e2,2.0);
           gen e12=e2-e1;
           double ex=evalf_double(re(e12,context),1,context)._DOUBLE_val,ey=evalf_double(im(e12,context),1,context)._DOUBLE_val;
@@ -459,7 +234,7 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
           xcas_color(v[2].val);
 #ifdef IPAQ
           if (delta_i>0 && delta_i<mxw && delta_j>0 && delta_j<myw)
-            check_fl_point(deltax+delta_i,deltay+delta_j,clip_x,clip_y,clip_w,clip_h,0,0);
+            check_fl_point(+delta_i,deltay+delta_j,clip_x,clip_y,clip_w,clip_h,0,0);
 #else
           delta_i *= 2;
           delta_j *= 2;
@@ -544,11 +319,24 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
                 fl_draw(legendes.c_str(),deltax+fvv[0].val+dx,deltay+fvv[1].val+dy);
               }
             }
-          }
-        }*/
+          }*/
+        }
       } // end point.type==_SYMB
       if (point.type!=_VECT){ // single point
-          qDebug()<<"coucou";
+          gen e,f0,f1;
+          evalfdouble2reim(point,e,f0,f1,context);
+          if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
+               Point* pt=new Point(f0._DOUBLE_val,f1._DOUBLE_val,this);
+
+               pt->setPointWidth(epaisseur_point);
+               pt->setPointStyle(type_point);
+               pt->setColor(couleur);
+               pt->setLabelPos(labelpos);
+               pt->setVisible(hidden_name);
+               pointItems.append(pt);
+           }
+
+
 /*        Mon_image.findij(point,x_scale,y_scale,i0,j0,context);
         if (i0>0 && i0<mxw && j0>0 && j0<myw)
           fltk_point(deltax,deltay,round(i0),round(j0),epaisseur_point,type_point);
@@ -585,8 +373,17 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
       if (jt->type==_VECT)
         return;
       // initial point
-/*      Mon_image.findij(*jt,x_scale,y_scale,i0,j0,context);
-      if (fill_polygon && *jt==*(jtend-1)){
+      gen e,f0,f1;
+      evalfdouble2reim(*jt,e,f0,f1,context);
+      if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
+           i0=f0._DOUBLE_val;
+           j0=f1._DOUBLE_val;
+       }
+
+
+//        Mon_image.findij(*jt,x_scale,y_scale,i0,j0,context);
+
+        /*   if (fill_polygon && *jt==*(jtend-1)){
         const_iterateur jtsave=jt;
         gen e,f0,f1;
         // Compute matrix for complex drawing
@@ -610,45 +407,67 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
         jt=jtsave;
         fl_line_style(type_line,width,0);
         fl_color(epaisseur_point-2+(type_point<<3));
-      }
-      i0save=i0;
-      j0save=j0;
+      }*/
+
+//      i0save=i0;
+//      j0save=j0;
       ++jt;
       if (jt==jtend){
-        if (i0>0 && i0<mxw && j0>0 && j0<myw)
-          check_fl_point(deltax+round(i0),deltay+round(j0),clip_x,clip_y,clip_w,clip_h,0,0);
-        if (!hidden_name)
-          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
+       // if (i0>0 && i0<width && j0>0 && j0<myw)
+            Point* pt=new Point(i0,j0,this);
+            pt->setPointWidth(epaisseur_point);
+            pt->setPointStyle(type_point);
+            pt->setColor(couleur);
+            pt->setLabelPos(labelpos);
+            pt->setVisible(hidden_name);
+            pointItems.append(pt);
+ //       if (!hidden_name)
+//          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
         return;
       }
-      bool seghalfline=( point.subtype==_LINE__VECT || point.subtype==_HALFLINE__VECT ) && (point._VECTptr->size()==2);
+      bool seghalfline=(point.subtype==_LINE__VECT || point.subtype==_HALFLINE__VECT) && (point._VECTptr->size()==2);
+
       // rest of the path
+      QPainterPath path;
+      if (!seghalfline) {
+          path.moveTo(i0,j0);
+      }
+
       for (;;){
-        Mon_image.findij(*jt,x_scale,y_scale,i1,j1,context);
-        if (!seghalfline){
-          check_fl_line(round(i0)+deltax,round(j0)+deltay,round(i1)+deltax,round(j1)+deltay,clip_x,clip_y,clip_w,clip_h,0,0);
+  //      Mon_image.findij(*jt,x_scale,y_scale,i1,j1,context);
+          // segment
+          if (!seghalfline){
+              gen e,f0,f1;
+
+              evalfdouble2reim(*jt,e,f0,f1,context);
+              if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
+                   i0=f0._DOUBLE_val;
+                   j0=f1._DOUBLE_val;
+
+                   path.lineTo(QPointF(i0,j0));
+               }
           if (point.subtype==_VECTOR__VECT){
-            double dx=i0-i1,dy=j0-j1;
-            petite_fleche(i1,j1,dx,dy,deltax,deltay,width);
+//            double dx=i0-i1,dy=j0-j1;
+//            petite_fleche(i1,j1,dx,dy,deltax,deltay,width);
           }
         }
         ++jt;
         if (jt==jtend){ // label of line at midpoint
-          if (point.subtype==_LINE__VECT){
+        /*  if (point.subtype==_LINE__VECT){
             i0=(6*i1-i0)/5-8;
             j0=(6*j1-j0)/5-8;
           }
           else {
             i0=(i0+i1)/2-8;
             j0=(j0+j1)/2;
-          }
+          }*/
           break;
         }
         i0=i1;
         j0=j1;
       }
       // check for a segment/halfline/line
-      if ( seghalfline){
+/*      if ( seghalfline){
         double deltai=i1-i0save,adeltai=std::abs(deltai);
         double deltaj=j1-j0save,adeltaj=std::abs(deltaj);
         if (point.subtype==_LINE__VECT){
@@ -698,51 +517,48 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
           check_fl_line(round(i0save)+deltax,round(j0save)+deltay,round(i1+N*deltai)+deltax,round(j1+N*deltaj)+deltay,clip_x,clip_y,clip_w,clip_h,0,0);
         }
       } // end seghalfline
+  */
       if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2))
         ; // no legend for segment
       else {
-        if (!hidden_name)
-          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
+        if (!hidden_name);
+      //    draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
       }
+      lineItems.append(new Curve(path,this));
     } // end pnt subcase
-*/
-
-
+//*/
   }
-  }}
-
-/*void autoscale(){
-if (!plot_instructions.empty()){
-  // Find the largest and lowest x/y/z in objects (except lines/plans)
-  vector<double> vx,vy,vz;
-  int s;
-  context * contextptr=hp?hp->contextptr:get_context(this);
-  bool ortho=autoscaleg(plot_instructions,vx,vy,vz,contextptr);
-  autoscaleminmax(vx,window_xmin,window_xmax);
-  zoomx(1.0);
-  autoscaleminmax(vy,window_ymin,window_ymax);
-  zoomy(1.0);
-  autoscaleminmax(vz,window_zmin,window_zmax);
-  zoomz(1.0);
-  if (ortho)
-    orthonormalize();
+void GraphWidget::drawAxes(){
+    double tick=find_tick(xmax-xmin);
+    qDebug()<<tick;
 }
-find_ylegende();
-y_tick=find_tick(window_ymax-window_ymin);
-redraw();
-push_cfg();
-}*/
+void GraphWidget::drawGrid(){
 
-OutputWidget* CasManager::graph2Widget(const  gen& g){
-
-
-
+}
+void GraphWidget::drawElements(QVector<MyItem*> & v,QPainter* painter){
+    if (v.isEmpty()) return;
+    for(int i=0;i<v.size();++i){
+        v.at(i)->draw(painter);
+    }
 
 
+}
+void GraphWidget::toScreenCoord(const double x,const double y,double& xScreen, double& yScreen){
+//    qDebug()<<"unités"<<xmin<<xmax<<xunit<<yunit<<zoom;
+    xScreen=(x-xmin)*xunit*zoom;
+    yScreen=(ymax-y)*yunit*zoom;
+}
 
-//     QGraphicsView view(&scene);
-
-
-    return NULL;
-
+void GraphWidget::setXYUnit(){
+    xunit=width()/(xmax-xmin);
+    yunit=height()/(ymax-ymin);
+}
+void GraphWidget::paintEvent(QPaintEvent * ){
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing,true);
+    drawGrid();
+    drawAxes();
+    drawElements(filledItems,&painter);
+    drawElements(lineItems,&painter);
+    drawElements(pointItems,&painter);
 }

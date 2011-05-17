@@ -10,7 +10,11 @@ SOURCES += gui/WizardMatrix.cpp \
     gui/FormalLine.cpp \
     gui/FormalLineWidgets.cpp \
     gui/spreadsheet.cpp \
-    gui/CentralTabWidget.cpp
+    gui/CentralTabWidget.cpp \
+    EvaluationThread.cpp \
+    output.cpp \
+    config.cpp \
+    geometry.cc
 HEADERS += gui/WizardMatrix.h \
     gui/WizardEquation.h \
     MainWindow.h \
@@ -21,7 +25,11 @@ HEADERS += gui/WizardMatrix.h \
     gui/FormalLine.h \
     gui/FormalLineWidgets.h \
     gui/spreadsheet.h \
-    gui/CentralTabWidget.h
+    gui/CentralTabWidget.h \
+    EvaluationThread.h \
+    geometry.h \
+    output.h \
+    config.h
 LIBS += -lgiac \
     -lgmp
 OTHER_FILES += 

@@ -29,6 +29,7 @@ private slots:
     void addFormalSheet();
     void addSpreadSheet();
     void addProgrammingSheet();
+    void closeTab(int);
 };
 
 

@@ -70,14 +70,14 @@ void WizardCatalog::createGui(){
 void WizardCatalog::find(){
     QString keyWord(lineEdit->text());
     addHistory("seek "+keyWord);
-    zone->setText(mainWindow->getCas()->seekForKeyword(keyWord));
+    zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
 }
 
 
 void WizardCatalog::displayPage(QUrl url){
     QString keyWord=url.path();
     addHistory(keyWord);
-    zone->setText(mainWindow->getCas()->displayPage(keyWord));
+    zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
 }
 void WizardCatalog::updateButtons(){
     previousAction->setEnabled(historyIndex>0);
@@ -96,18 +96,18 @@ void WizardCatalog::goBack(){
     --historyIndex;
     QString url=history->at(historyIndex);
     if (url.startsWith("seek ")){
-        zone->setText(mainWindow->getCas()->seekForKeyword(url.remove(0,5)));
+        zone->setText(mainWindow->getCommandInfo()->seekForKeyword(url.remove(0,5)));
     }
-    else zone->setText(mainWindow->getCas()->displayPage(url));
+    else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
     updateButtons();
 }
 void WizardCatalog::goNext(){
     ++historyIndex;
     QString url=history->at(historyIndex);
     if (url.startsWith("seek ")){
-        zone->setText(mainWindow->getCas()->seekForKeyword(url.remove(0,5)));
+        zone->setText(mainWindow->getCommandInfo()->seekForKeyword(url.remove(0,5)));
     }
-    else zone->setText(mainWindow->getCas()->displayPage(url));
+    else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
     updateButtons();
 
 }

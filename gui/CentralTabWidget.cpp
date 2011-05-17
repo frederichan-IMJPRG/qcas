@@ -36,6 +36,23 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     addTab(new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°1"));
     addTab(new QLabel(""),"");
     tabBar()->setTabButton(1,QTabBar::RightSide,add);
+
+    connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
+}
+void MainTabWidget::closeTab(int id){
+    MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(widget(id));
+            this->removeTab(id);
+            delete form;
+        }
+        break;
+    case MainSheet::SPREADSHEET_TYPE:
+        break;
+    case MainSheet::PROGRAMMING_TYPE:
+        break;
+    }
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));

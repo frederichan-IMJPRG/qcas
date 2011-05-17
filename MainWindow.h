@@ -1,23 +1,48 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include "EvaluationThread.h"
 #include <QMainWindow>
 class QAction;
-class CasManager;
 class QListWidget;
 class QStackedWidget;
 class QMenu;
 class QListWidgetItem;
 class QToolBar;
 class MainTabWidget;
+class QPlainTextEdit;
+class QLabel;
+class QCompleter;
+class QToolButton;
+class QTime;
+struct TaskProperties{
+    bool firstPrintMessage;
+    int currentLine;
+    int currentSheet;
+};
+class CommandInfo{
+public:
+    CommandInfo();
+    QString seekForKeyword(const QString &) const;
+    QString displayPage(const QString &) const;
+    QCompleter* getCompleter() const;
+    QStringList getCommands();
+    bool isCommand(const QString &) const;
+private:
+    QCompleter *completer;
+    void listAllCommands();
+    QStringList commandList;
+};
 
 class MainWindow :public QMainWindow {
     Q_OBJECT
  public:
     MainWindow();    
-    CasManager* getCas() const;
     void displayHelp(const QString &) const;
     void sendText(const QString &);
+    bool isEvaluating();
+    CommandInfo* getCommandInfo() const;
+    void evaluate(const QString & formula);
+    QToolButton* getStopButton() const;
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -38,7 +63,7 @@ private:
     QString curFile;
     QStringList recentFiles;
     QString strippedName(const QString & fullFileName);
-    CasManager *cas;
+    void displayGiacMessages();
 
     enum{MaxRecentFiles=5};
     QAction* recentFileActions[MaxRecentFiles];
@@ -66,13 +91,21 @@ private:
     QAction *prefAction;
     QAction *aboutAction;
 
+    QAction *stopAction;
+    QToolButton * stopButton;
+
     QListWidget *wizardList;
     QStackedWidget *wizardPages;
     MainTabWidget *tabPages;
-
+    QPlainTextEdit* giacMessages;
     QToolBar* toolBar;
-
-
+    QLabel* warningFirstEvaluation;
+    EvaluationThread ev;
+    TaskProperties taskProperties;
+    CommandInfo* commandInfo;
+    QTime* time;
+    bool displayTimeAfterProcess;
+    void printHeader();
 
 private slots:
     void newFile();
@@ -89,7 +122,7 @@ private slots:
     void evaluate();
     void openRecentFile();
     void changeWizard(QListWidgetItem*,QListWidgetItem*);
+    void displayResult();
+    void killThread();
 };
-
-
 #endif // MAINWINDOW_H

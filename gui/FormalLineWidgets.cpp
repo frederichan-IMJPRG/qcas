@@ -8,20 +8,145 @@
 #include "FormalSheet.h"
 #include "FormalLineWidgets.h"
 #include "FormalLine.h"
-#include "../CasManager.h"
 #include "../MainWindow.h"
 #include "src/qtmmlwidget.h"
-TextInput::TextInput(Line *parent):QTextEdit(parent){
+TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     line=parent;
-
-    setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin());
-    new Highlighter(document(),line->getWorkSheet()->getApp()->getCas());
+    // +1 devrait sufire en théorie mais problème sous KDE plasma sur mon netbook
+    setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
+    highlighter=new Highlighter(document(),line->getWorkSheet()->getApp()->getCommandInfo());
     connect(document(),SIGNAL(contentsChange(int,int,int)),this,SLOT(addMultiLines(int,int,int)));
-    connect(this,SIGNAL(cursorPositionChanged()),this,SLOT(matchBraces()));
-
+    connect(this,SIGNAL(cursorPositionChanged()),this,SLOT(matchDelimiters()));
 }
+TextInput::~TextInput(){
+    delete highlighter;
+}
+
+void TextInput::matchDelimiters(){
+    QList<QTextEdit::ExtraSelection> selections;
+       setExtraSelections(selections);
+
+     TextBlockData *data =static_cast<TextBlockData *>(
+                textCursor().block().userData());
+    if (data) {
+       int pos = textCursor().block().position();
+       int curPos = textCursor().position()-pos;
+       for (int i = 0; i < data->size(); ++i) {
+          DelimiterInfo *info = data->infoAt(i);
+          // the previous character is a delimiter
+          if (info->position == curPos-1){
+              int index=QString("([{").indexOf(info->character);
+              if (index!=-1){
+                  QChar right=QString(")]}").at(index);
+                  if (matchLeftDelimiter(info->character,right,textCursor().block(), i+1, 0))
+                      createDelimiterSelection(pos + info->position,true);
+                    else createDelimiterSelection(pos + info->position,false);
+              }
+              else {
+                  index=QString(")]}").indexOf(info->character);
+                  if (index!=-1){
+                      QChar left=QString("([{").at(index);
+                      if (matchRightDelimiter(left,info->character,textCursor().block(), data->size()-i, 0))
+                          createDelimiterSelection(pos + info->position,true);
+                        else createDelimiterSelection(pos + info->position,false);
+                  }
+              }
+          }
+/*          if (info->position == curPos){
+              int index=QString("([{").indexOf(info->character);
+              if (index!=-1){
+                  QChar right=QString(")]}").at(index);
+                  if (matchLeftDelimiter(info->character,right,textCursor().block(), i+1, 0))
+                      createDelimiterSelection(pos + info->position,true);
+                    else createDelimiterSelection(pos + info->position,false);
+              }
+              else {
+                  index=QString(")]}").indexOf(info->character);
+                  if (index!=-1){
+                      QChar left=QString("([{").at(index);
+                      if (matchRightDelimiter(left,info->character,textCursor().block(), data->size()-i, 0))
+                          createDelimiterSelection(pos + info->position,true);
+                        else createDelimiterSelection(pos + info->position,false);
+                  }
+              }*/
+          }
+      }
+   }
+
+
+void TextInput::createDelimiterSelection(int pos,bool found)
+{
+    QList<QTextEdit::ExtraSelection> selections = extraSelections();
+
+    QTextEdit::ExtraSelection selection;
+    QTextCharFormat format = selection.format;
+    if (found) format.setBackground(Qt::green);
+    else format.setBackground(Qt::red);
+    selection.format = format;
+
+    QTextCursor cursor = textCursor();
+    cursor.setPosition(pos);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+    selection.cursor = cursor;
+
+    selections.append(selection);
+
+    setExtraSelections(selections);
+}
+
+bool TextInput::matchLeftDelimiter(QChar left,QChar right,QTextBlock currentBlock, int i, int numLeftParentheses){
+    TextBlockData *data = static_cast<TextBlockData *>(currentBlock.userData());
+    int docPos = currentBlock.position();
+    for (; i < data->size(); ++i) {
+        DelimiterInfo *info = data->infoAt(i);
+        if (info->character == left) {
+            ++numLeftParentheses;
+            continue;
+        }
+        if (info->character == right){
+            if(numLeftParentheses == 0) {
+                createDelimiterSelection(docPos+info->position,true);
+                return true;
+            }
+            else --numLeftParentheses;
+        }
+    }
+    currentBlock = currentBlock.next();
+    if (currentBlock.isValid())
+        return matchLeftDelimiter(left,right,currentBlock, 0, numLeftParentheses);
+    return false;
+}
+bool TextInput::matchRightDelimiter(QChar left,QChar right,QTextBlock currentBlock, int i, int numRightParentheses)
+{
+    TextBlockData *data = static_cast<TextBlockData *>(currentBlock.userData());
+
+    int docPos = currentBlock.position();
+    for (; i < data->size() ; ++i) {
+        DelimiterInfo *info = data->infoAt(data->size()-i-1);
+        if (info->character == right) {
+            ++numRightParentheses;
+            continue;
+        }
+        if (info->character == left){
+            if (numRightParentheses == 0) {
+                createDelimiterSelection(docPos + info->position,true);
+                return true;
+            }
+            else
+                --numRightParentheses;
+        }
+    }
+    currentBlock = currentBlock.previous();
+    if (currentBlock.isValid())
+        return matchRightDelimiter(left,right,currentBlock, 0, numRightParentheses);
+
+    return false;
+}
+
+
+
 void TextInput::installCompleter(){
-    completer=line->getWorkSheet()->getApp()->getCas()->getCompleter();
+    completer=line->getWorkSheet()->getApp()->getCommandInfo()->getCompleter();
     completer->setWidget(this);
     completer->setCompletionMode(QCompleter::PopupCompletion);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -63,31 +188,30 @@ void TextInput::keyPressEvent(QKeyEvent *e){
         if (e->modifiers()&Qt::ControlModifier){
             updateCompleter();
         }
-        else QTextEdit::keyPressEvent(e);
+        else QPlainTextEdit::keyPressEvent(e);
         break;
         // User has pressed Return or Enter Key
         // If Shift is pressed, evaluate and go to next line
         // else adjust the size of the text zone
         case Qt::Key_Return:
         case Qt::Key_Enter:
-            if (e->modifiers()&Qt::ShiftModifier) {
-                line->output(toPlainText());
-                line->getWorkSheet()->goToNextLine();
+            if (e->modifiers()&Qt::ShiftModifier) {                
+                line->evaluate(toPlainText());
             }
             else {
-                QTextEdit::keyPressEvent(e);
+                QPlainTextEdit::keyPressEvent(e);
                 setFixedHeight(height()+fontMetrics().lineSpacing()+1);
             }
          break;
 
         case Qt::Key_Down:
          if (goDown()){
-             QTextEdit::keyPressEvent(e);
+             QPlainTextEdit::keyPressEvent(e);
          }
         break;
         case Qt::Key_Up:
             if (goUp())
-                QTextEdit::keyPressEvent(e);
+                QPlainTextEdit::keyPressEvent(e);
             break;
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
@@ -109,14 +233,14 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             }
             int count=st.count(QChar(0x2029));
             setFixedHeight(height()-count*(fontMetrics().lineSpacing()+1));
-            QTextEdit::keyPressEvent(e);
+            QPlainTextEdit::keyPressEvent(e);
             if (completer->popup()->isVisible()){
                updateCompleter();
             }
 
         break;}
        default:
-         QTextEdit::keyPressEvent(e);
+         QPlainTextEdit::keyPressEvent(e);
          if (completer->popup()->isVisible()){
             updateCompleter();
          }
@@ -134,16 +258,20 @@ void TextInput::updateCompleter(){
     completer->complete(cr);
 }
 void TextInput::focusInEvent(QFocusEvent *e){
+    matchDelimiters();
     installCompleter();
 //    line->getWorkSheet()->getHighlighter()->setDocument(document());
     line->getWorkSheet()->setCurrent(line->getId());
-    QTextEdit::focusInEvent(e);
+    QPlainTextEdit::focusInEvent(e);
 }
 void TextInput::focusOutEvent(QFocusEvent *e){
  //   line->getWorkSheet()->getHighlighter()->setDocument(0);
+    QList<QTextEdit::ExtraSelection> selections;
+    setExtraSelections(selections);
+
     QObject::disconnect(completer,0,this,0);
 
-    QTextEdit::focusOutEvent(e);
+    QPlainTextEdit::focusOutEvent(e);
 }
 /**
   This method returns true if the user is able to go down with the "Down" Key"
@@ -187,7 +315,7 @@ bool TextInput::event(QEvent* event){
         cursor.select(QTextCursor::WordUnderCursor);
         QString st=cursor.selectedText();
         if (!st.isEmpty()&&
-            line->getWorkSheet()->getApp()->getCas()->isCommand(st)) {
+            line->getWorkSheet()->getApp()->getCommandInfo()->isCommand(st)) {
             setProperty("myToolTip",st);
             st.prepend("<b>");
             st.append("&nbsp;&nbsp;</b><img src=\":/images/f1.png\" align=\"absmiddle\" height=");
@@ -202,16 +330,16 @@ bool TextInput::event(QEvent* event){
                 QToolTip::hideText();
         return true;
         }
-        return QTextEdit::event(event);
+        return QPlainTextEdit::event(event);
 }
 
 
-void TextInput::addMultiLines(int pos,int,int charsAdded){
+void TextInput::addMultiLines(int pos,int removed,int charsAdded){
     //User paste a text in the editor
-    if (charsAdded>1){
+    if (charsAdded-removed>1){
         QTextCursor newcursor(document());
         newcursor.setPosition(pos,QTextCursor::MoveAnchor);
-        newcursor.setPosition(pos+charsAdded,QTextCursor::KeepAnchor);
+        newcursor.setPosition(pos+charsAdded-removed,QTextCursor::KeepAnchor);
        QString s=newcursor.selectedText();
        int count=s.count(QChar(0x2029));
        setFixedHeight(height()+count*(fontMetrics().lineSpacing()+1));
@@ -219,11 +347,7 @@ void TextInput::addMultiLines(int pos,int,int charsAdded){
 
     }
 }
-void TextInput::matchBraces(){
-    QChar c=document()->characterAt(textCursor().position());
-    if (c=='{') qDebug()<<"test";
 
-}
 QString TextInput::textUnderCursor() const{
     QTextCursor tc=textCursor();
     tc.select(QTextCursor::WordUnderCursor);
@@ -256,16 +380,4 @@ void Highlighter::highlightBlock(const QString &text)
 
 
 
-OutputWidget::OutputWidget(QWidget*):QWidget(){
-
-}
-void OutputWidget::setLine(Line* l){
-    line=l;
-}
-
-FormulaWidget::FormulaWidget(QtMmlWidget *mml){
-    QHBoxLayout *layout=new QHBoxLayout;
-    layout->addWidget(mml);
-    setLayout(layout);
-}
 

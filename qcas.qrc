@@ -16,7 +16,6 @@
         <file>images/open.png</file>
         <file>images/previous.png</file>
         <file>images/process-stop.png</file>
-        <file>images/stop.png</file>
         <file>images/matrix.png</file>
         <file>images/equation.png</file>
         <file>aide_cas</file>
@@ -24,5 +23,6 @@
         <file>images/document-new.png</file>
         <file>images/f1.png</file>
         <file>images/add.png</file>
+        <file>images/stop.png</file>
     </qresource>
 </RCC>

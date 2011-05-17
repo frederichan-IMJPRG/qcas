@@ -13,21 +13,39 @@
 #include "FormalLineWidgets.h"
 #include "FormalLine.h"
 #include "../MainWindow.h"
-#include "../CasManager.h"
 
+TextBlockData::TextBlockData():QTextBlockUserData(){
+}
+DelimiterInfo* TextBlockData::infoAt(const int i){
+    return delimiters.at(i);
 
-Highlighter::Highlighter(QTextDocument *parent,CasManager* cas)
+}
+
+void TextBlockData::insert(DelimiterInfo *info){
+    int i = 0;
+    while (i < delimiters.size() && info->position > delimiters.at(i)->position)
+        ++i;
+
+    delimiters.insert(i, info);
+}
+int TextBlockData::size() const{
+    return delimiters.size();
+}
+
+Highlighter::Highlighter(QTextDocument *parent,CommandInfo* commandInfo)
     :QSyntaxHighlighter(parent){
-    this->cas=cas;
+    this->commandInfo=commandInfo;
 
     keywordFormat.setForeground(Qt::darkBlue);
     keywordFormat.setFontWeight(QFont::Bold);
 
     quotationFormat.setForeground(Qt::darkGreen);
-
     commentFormat.setForeground(Qt::darkGray);
 }
+
 void Highlighter::highlightBlock(const QString &text){
+    TextBlockData * data=new TextBlockData;
+
     int start=0;
     // First, we look for previous comment not finished
     if (previousBlockState()==comment){
@@ -85,6 +103,24 @@ void Highlighter::highlightBlock(const QString &text){
             slash=-1;
             backslash=false;
         }
+        // Delimiters symbol
+        else if (QString("()[]{}").contains(c)&& quote==-1){
+            DelimiterInfo* info=new DelimiterInfo;
+            info->character=c;
+            info->position=i;
+
+            data->insert(info);
+            if( key!=-1){
+                QString s=text.mid(key,i-key);
+                if (commandInfo->isCommand(s)){
+                    setFormat(key,i-key,keywordFormat);
+                }
+            }
+            key=-1;
+
+
+            //            qDebug()<< c <<"inserted at "<<i;
+        }
         else if (c==QChar('"')){
             // Character \"
             if (backslash) backslash=false;
@@ -119,7 +155,7 @@ void Highlighter::highlightBlock(const QString &text){
         else{
             if( key!=-1){
                 QString s=text.mid(key,i-key);
-                if (cas->isCommand(s)){
+                if (commandInfo->isCommand(s)){
                     setFormat(key,i-key,keywordFormat);
                 }
             }
@@ -129,20 +165,32 @@ void Highlighter::highlightBlock(const QString &text){
     }
     if( key!=-1){
         QString s=text.mid(key,text.length()-key);
-        if (cas->isCommand(s)){
+        if (commandInfo->isCommand(s)){
             setFormat(key,text.length()-key,keywordFormat);
         }
     }
-
-
+    setCurrentBlockUserData(data);
 }
 
+FormalWorkSheet::~FormalWorkSheet(){
+    for(int i=lines->size()-1;i>=0;--i){
+        delete lines->at(i);
+        lines->remove(i);
+    }
+    delete vLayout;
+    delete mainPanel;
 
+}
+void FormalWorkSheet::removeStop(int a){
+    Line* l=lines->at(a);
+    l->removeStopButton();
+}
 
 FormalWorkSheet::FormalWorkSheet(MainWindow *parent):QScrollArea(),MainSheet(MainSheet::FORMAL_TYPE){
 
     current=0;
     mainWindow=parent;
+    selectedLevels.clear();
 
     mainPanel=new QWidget;
 
@@ -163,54 +211,41 @@ FormalWorkSheet::FormalWorkSheet(MainWindow *parent):QScrollArea(),MainSheet(Mai
     lines->last()->getTextInput()->setFocus(Qt::OtherFocusReason);
 
 }
-/*Highlighter* FormalWorkSheet::getHighlighter() const{
-    return highlighter;
+void FormalWorkSheet::addSelectedLevel(int level){
+    if (shift){
+        if (selectedLevels.empty()) selectedLevels.append(level);
+        else{
+            int last=selectedLevels.last();
+            selectedLevels.clear();
+            if (last<level) {
+                int tmp=level;
+                level=last;
+                last=tmp;
+            }
+            for (int i=level;i<=last;++i){
+                selectedLevels.append(i);
+            }
+        }
+    }
+    else {
+        int index=selectedLevels.indexOf(level);
+        if (index!=-1){
+            selectedLevels.remove(index);
+        }
+        else selectedLevels.append(level);
+    }
 }
-
-    QObject* formulaInterface =new FormulaObject;
-    document()->documentLayout()->registerHandler(FormulaFormat,formulaInterface);
-
-    QTextCharFormat formulaChar;
-    formulaChar.setObjectType(FormulaFormat);
-
-    QString mmlText("<math>"
-                    "<msqrt><mn>2</mn></msqrt><mo>+</mo><mn>2</mn><msqrt><mn>2</mn></msqrt>"
-                    "</math>");
-
-    QWidget *w=new QWidget;
-    QPalette pal=w->palette();
-    pal.setColor(w->backgroundRole(),Qt::yellow);
-w->setPalette(pal);
-    QtMmlWidget *mmlWidget=new QtMmlWidget(w);
-    //    mmlWidget->setsetFontName(QtMmlWidget::SansSerifFont,);
-    QString errorMsg;
-    int errorLine;
-    int errorColumn;
-    bool ok = mmlWidget->setContent(mmlText, &errorMsg, &errorLine, &errorColumn);
-    if (!ok) {
-      qWarning("MathML error: %s, Line: %d, Column: %d",
-      errorMsg.toLatin1(), errorLine, errorColumn);
-    }    
-    QSize s=mmlWidget->sizeHint();
-
-    std::cout<<s.width()<<s.height()<<std::endl;
-    mmlWidget->setBaseFontPointSize(80);
-    mmlWidget->adjustSize();
-    std::cout<<s.width()<<s.height()<<std::endl;
-    this->adjustSize();
-
-    //    std::cout<<qPrintable(mmlWidget->sizeHint())<<std::endl;
-
-    QPixmap pix=QPixmap::grabWidget(mmlWidget);
-    formulaChar.setProperty(MML,pix.toImage());
-
-    QTextCursor cursor=this->textCursor();
-    cursor.insertText(QString(QChar::ObjectReplacementCharacter),formulaChar);
-    setTextCursor(cursor);
+void FormalWorkSheet::keyPressEvent(QKeyEvent *e){
+    if (e->key()==Qt::Key_Shift)
+        shift=true;
+    else shift=false;
+    qDebug()<<"press"<<shift;
+}
+void FormalWorkSheet::keyReleaseEvent(QKeyEvent *){
+    shift=false;
+    qDebug()<<"release"<<shift;
 
 }
-
-*/
 MainWindow* FormalWorkSheet::getApp(){
     return mainWindow;
 }
@@ -227,10 +262,6 @@ void FormalWorkSheet::goToNextLine(){
 
         lines->at(current)->getTextInput()->setFocus(Qt::OtherFocusReason);
         lines->at(current)->show();
-/*        for(int i=0;i<=current;++i){
-            lines->at(i)->info();
-            qDebug()<<"geometry "<<lines->at(i)->geometry();
-    }*/
     }
     QRect r=lines->at(current)->geometry();
     ensureVisible(r.x(),r.y()+r.height());
@@ -279,6 +310,14 @@ void FormalWorkSheet::undo(){
 
 }
 void FormalWorkSheet::sendText(const QString & s){
-    lines->at(current)->getTextInput()->append(s);
+    lines->at(current)->getTextInput()->insertPlainText(s);
 }
-
+Line* FormalWorkSheet::getCurrentLine(){
+    return lines->at(current);
+}
+void FormalWorkSheet::displayResult(int lineIndex, OutputWidget* result){
+    lines->at(lineIndex)->displayResult(result);
+}
+Line* FormalWorkSheet::getLineAt(int i){
+    return lines->at(i);
+}

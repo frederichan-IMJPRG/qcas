@@ -1,33 +1,41 @@
-//#include <QtGui>
+#include <QApplication>
 #include <QMenuBar>
 #include <QMessageBox>
-//#include <QLabel>
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QSplitter>
 #include <QCloseEvent>
 #include <QDebug>
-//#include <QScrollArea>
+#include <QLabel>
 #include <QToolBox>
-//#include <QToolButton>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QStackedWidget>
+#include <QStatusBar>
 #include <QMenu>
+#include <QScrollBar>
+#include <QPlainTextEdit>
 #include <QToolBar>
 #include "MainWindow.h"
 #include "gui/FormalSheet.h"
 #include "gui/WizardEquation.h"
 #include "gui/WizardMatrix.h"
 #include "gui/WizardCatalog.h"
-#include "CasManager.h"
 #include "gui/CentralTabWidget.h"
+#include "gui/FormalLine.h"
+#include "gui/FormalLineWidgets.h"
+#include <QToolButton>
+#include <QTime>
 //#include "gui/FormalSheet.h"
 //#include <Qsci/qsciscintilla.h>
 //#include <Qsci/qscilexerjava.h>
 #include <QUrl>
+#include <QGroupBox>
+#include "EvaluationThread.h"
+#include <QCompleter>
+#include <giac/giac.h>
 
 
 /** MainWindow constructor
@@ -36,7 +44,11 @@
 
 
 MainWindow::MainWindow(){
-    cas=new CasManager;
+    displayTimeAfterProcess=true;
+    time=new QTime;
+
+    commandInfo=new CommandInfo;
+    taskProperties.firstPrintMessage=true;
     createAction();
     createMenus();
     createContextMenu();
@@ -127,6 +139,15 @@ void MainWindow::createAction(){
     aboutAction=new QAction(tr("&A propos"),this);
     aboutAction->setStatusTip(tr("Principales informations concernant QCAS"));
     connect(aboutAction,SIGNAL(triggered()),this,SLOT(about()));
+
+
+    stopButton=new QToolButton;
+    connect(stopButton,SIGNAL(clicked()),this,SLOT(killThread()));
+    stopButton->setIcon(QIcon(":/images/stop.png"));
+    stopButton->setToolTip(tr("Interrompre le calcul en cours"));
+    stopButton->setStatusTip(tr("Interrompre le calcul en cours"));
+
+
 
     prefAction=new QAction(tr("&Préférences..."),this);
     prefAction->setStatusTip(tr("Afficher la fenêtre des préférences"));
@@ -274,15 +295,34 @@ void MainWindow::createGui(){
     tabPages=new MainTabWidget(this);
     QSplitter *vertSplit=new QSplitter(Qt::Horizontal);
 
-    QWidget *leftToppanel=new QWidget;
+    QWidget *leftPanel=new QWidget;
 
     QHBoxLayout *h=new QHBoxLayout;
     h->addWidget(wizardList);
     h->addWidget(wizardPages,1);
+
+    giacMessages=new QPlainTextEdit;
+    giacMessages->setReadOnly(true);
+    QPalette p=giacMessages->palette();
+    p.setColor(QPalette::Base,QColor::fromRgb(251,251,113,128));
+    giacMessages->setPalette(p);
+    giacMessages->setMaximumBlockCount(1000);
+    QGroupBox *giacPanel=new QGroupBox;
+
+    giacPanel->setTitle(tr("Messages Giac"));
+    QVBoxLayout *giacLayout=new QVBoxLayout;
+    giacLayout->addWidget(giacMessages);
+    giacPanel->setLayout(giacLayout);
+
     QVBoxLayout *leftLayout=new QVBoxLayout;
     leftLayout->addLayout(h);
     leftLayout->addStretch(1);
-    leftToppanel->setLayout(leftLayout);
+    leftLayout->addWidget(giacPanel);
+    leftPanel->setLayout(leftLayout);
+
+
+
+
 
 /*    QsciScintilla *text=new QsciScintilla;
 
@@ -309,13 +349,41 @@ void MainWindow::createGui(){
 
 
     this->setCentralWidget(vertSplit);
-    vertSplit->addWidget(leftToppanel);
+    vertSplit->addWidget(leftPanel);
     vertSplit->addWidget(rightPanel);
 
     vertSplit->setStretchFactor(0,1);
     vertSplit->setStretchFactor(1,8);
 
+    warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
+    warningFirstEvaluation->setAlignment(Qt::AlignRight);
+    warningFirstEvaluation->setIndent(20);
+    warningFirstEvaluation->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    statusBar()->addWidget(warningFirstEvaluation,1);
+    warningFirstEvaluation->show();
+    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
 }
+void MainWindow::printHeader(){
+    if (ev.getGiacDisplay().isEmpty()&&!displayTimeAfterProcess) return;
+
+    if (taskProperties.firstPrintMessage) {
+        QString title=tr("Feuille ")+QString::number(taskProperties.currentSheet+1)+tr(", ligne ")+QString::number(taskProperties.currentLine+1)+":";
+        giacMessages->appendHtml("<b><u><font color=\"#40A497\">"+title+"</font></u></b>");
+        taskProperties.firstPrintMessage=false;
+    }
+
+}
+
+void MainWindow::displayGiacMessages(){
+    printHeader();
+    QStringList list=ev.getGiacDisplay();
+    for (int  i=0;i<list.count();++i){
+        giacMessages->appendHtml(list.at(i));
+    }
+    giacMessages->appendHtml(tr("<br><font color=\"gray\">Temps mis:")+QString::number(time->elapsed())+" ms</font><br>");
+    giacMessages->verticalScrollBar()->setValue(giacMessages->verticalScrollBar()->maximum());
+}
+
 
 void MainWindow::createWizards(){
     wizardList=new QListWidget;
@@ -373,9 +441,6 @@ void MainWindow::readSettings(){
 
 void MainWindow::writeSettings(){}
 
-CasManager* MainWindow::getCas() const{
-    return cas;
-}
 void MainWindow::copy(){
    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
    switch(sheet->getType()){
@@ -443,7 +508,80 @@ void MainWindow::redo(){
         break;
     }
 }
+void MainWindow::killThread(){
+
+    ev.killThread();
+}
+void MainWindow::evaluate(const QString &formula){
+    if (warningFirstEvaluation!=NULL) {
+        statusBar()->removeWidget(warningFirstEvaluation);
+        delete warningFirstEvaluation;
+        warningFirstEvaluation=NULL;
+    }
+
+    taskProperties.firstPrintMessage=true;
+    taskProperties.currentSheet=tabPages->currentIndex();
+    taskProperties.currentLine=-1;
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+            form->getCurrentLine()->addStopButton(stopButton);
+            taskProperties.currentLine=form->getCurrentLine()->getId();
+            EvaluationThread::warning id=ev.setCommand(formula);
+            if (id==EvaluationThread::WARNING){
+                QString s("<font color=\"red\"");
+                s.append(tr("Attention! <br> Pour affecter une valeur à une variable, vous devez utiliser le symbole :="));
+                s.append("<br><u>Exemple</u>: a:=2 ou f(x):=x^2");
+                s.append("</font>");
+                printHeader();
+                giacMessages->appendHtml(s);
+                form->getCurrentLine()->getTextInput()->setFocus();
+            }
+            ev.start();
+            time->start();
+        }
+        break;
+    case MainSheet::SPREADSHEET_TYPE:
+        break;
+    case MainSheet::PROGRAMMING_TYPE:
+        break;
+    }
+}
+void MainWindow::displayResult(){
+    displayGiacMessages();
+    tabPages->setCurrentIndex(taskProperties.currentSheet);
+    // Formal Sheet
+    if (taskProperties.currentLine>-1){
+        FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->widget(taskProperties.currentSheet));
+
+        form->removeStop(taskProperties.currentLine);
+        stopButton->setParent(this);
+
+//        return form->getLineAt(taskProperties.currentLine)->getOuputWidget();
+        form->displayResult(taskProperties.currentLine,ev.displayResult());
+
+    }
+}
+QToolButton* MainWindow::getStopButton() const{
+    return stopButton;
+}
+
+
 void MainWindow::evaluate(){
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+                evaluate(form->getCurrentLine()->getTextInput()->toPlainText());
+            }
+        break;
+    case MainSheet::SPREADSHEET_TYPE:
+        break;
+    case MainSheet::PROGRAMMING_TYPE:
+        break;
+    }
+
 }
 void MainWindow::displayHelp(const QString & keyWord) const{
     qDebug()<<keyWord;
@@ -463,3 +601,145 @@ void MainWindow::sendText(const QString & s){
         break;
     }
 }
+
+bool MainWindow::isEvaluating(){
+    return ev.isRunning();
+}
+CommandInfo* MainWindow::getCommandInfo()const{
+return commandInfo;
+}
+CommandInfo::CommandInfo(){
+    listAllCommands();
+    completer=new QCompleter(commandList);
+
+}
+void CommandInfo::listAllCommands(){
+    QFile file("aide_cas");
+    file.open(QIODevice::ReadOnly);
+    QTextStream stream(&file);
+    QString line;
+    // Only take command with alpanumeric characters
+    // For example %{ %} is excluded.
+
+    QRegExp expr("([a-z]|[A-Z]|[_]|[0-9])+");
+
+    while(!stream.atEnd()){
+        line=stream.readLine();
+        if (line.startsWith("#")) {
+            QStringList list=line.remove(0,2).split(" ",QString::SkipEmptyParts);
+            for(int i=0;i<list.size();++i){
+                QString s(list.at(i));
+                if (expr.exactMatch(s))
+                    commandList.append(list.at(i));
+            }
+        }
+    }
+    commandList.sort();
+}
+
+
+
+QString CommandInfo::displayPage(const QString& keyWord) const{
+    QFile file(":/aide_cas");
+    file.open(QIODevice::ReadOnly);
+    QTextStream stream(&file);
+    QString command,description;
+    QStringList synonym,seeAlso,examples;
+    QString line;
+    while(!stream.atEnd()){
+        line=stream.readLine();
+        if (line.startsWith("#")&& (line.contains(" "+keyWord+" ",Qt::CaseSensitive)||line.endsWith(" "+keyWord,Qt::CaseSensitive))) {
+            QStringList list=line.split(" ",QString::SkipEmptyParts);
+            for(int i=0;i<list.size();++i){
+                if (i==1) command=list.at(1);
+                else if (i>1) synonym.append(list.at(i));
+            }
+            do{
+                line=stream.readLine();
+                if (line.startsWith("#")) break;
+                if (line.startsWith("0")){
+                    list=line.split(" ",QString::SkipEmptyParts);
+                    if (list.size()>1){
+                        command.append("(").append(list.at(1)).append(")");
+                    }
+                }
+                else if (line.startsWith("1")){
+                    description=line.remove(0,2);
+                }
+                else if (line.startsWith("-")){
+                    list=line.split(" ",QString::SkipEmptyParts);
+                    if (list.size()>1) seeAlso.append(list.at(1));
+                }
+                else if (line.length()>0 ){
+                    QChar c=line.at(0);
+                    if (!QString("123456789").contains(c))
+                     examples.append(line);
+                }
+            }  while (!stream.atEnd());
+            break;
+        }
+        }
+        line.clear();
+        line.append("<h3><font color=\"#40A497\">").append(command).append("</font></h3>");
+        if (!synonym.isEmpty()){
+            line.append("<b>").append(QObject::tr("Synonyme(s):")).append("</b>");
+            for( int i=0;i<synonym.size();++i){
+                line.append(" ").append(synonym.at(i));
+            }
+        }
+        line.append("<hr>");
+        line.append(description);
+        line.append("<br>");
+        if (!examples.isEmpty()){
+            line.append("<br><b>").append(QObject::tr("Exemples:")).append("</b><br>");
+            for( int i=0;i<examples.size();++i){
+                line.append(examples.at(i)).append("<br>");
+            }
+        }
+        if (!seeAlso.isEmpty()){
+            line.append(QObject::tr("Voir aussi: ")).append("<ul>");
+            for( int i=0;i<seeAlso.size();++i){
+                line.append("<li><a href=\"").append(seeAlso.at(i)).append("\">").append(seeAlso.at(i)).append("</a></li>");
+            }
+            line.append("</ul>");
+        }
+        return(line);
+    }
+
+QString CommandInfo::seekForKeyword(const QString & keyWord) const{
+    QFile file(":/aide_cas");
+        file.open(QIODevice::ReadOnly);
+        QTextStream stream(&file);
+        QString currentCommand;
+        QString html;
+        QString line;
+        while(!stream.atEnd()){
+            line=stream.readLine();
+            if (line.startsWith("#")) currentCommand=line.remove(0,2);
+            else if (line.startsWith("1")&&
+                     (line.contains(keyWord,Qt::CaseInsensitive)||currentCommand.contains(keyWord,Qt::CaseInsensitive))){
+                html.append("<a href=\"");
+                html.append(currentCommand);
+                html.append("\">");
+                html.append(currentCommand);
+                html.append("</a><br>\n");
+                html.append(line.remove(0,2));
+                html.append("<br><br>");
+            }
+        }
+        if (html.isEmpty()) {
+            return(QObject::tr("Aucun résultat"));
+        }
+        else return(html);
+
+    }
+bool CommandInfo::isCommand(const QString &st) const{
+    return (commandList.contains(st));
+}
+QCompleter* CommandInfo::getCompleter() const{
+    return completer;
+}
+QStringList CommandInfo::getCommands(){
+    return commandList;
+}
+
