@@ -9,11 +9,11 @@ TEMPLATE = app
 QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
-    -Wno-unused-parameter
+    -Wno-unused-parameter -fpermissive -DGIAC_GENERIC_CONSTANTS
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
-    -Wno-unused-parameter
+    -Wno-unused-parameter -fpermissive -DGIAC_GENERIC_CONSTANTS
 DEPENDPATH += . \
     qt \
     giac \
@@ -299,7 +299,7 @@ SOURCES += qt/output.cpp \#qt/Window.cpp \
     libtommath/bn_s_mp_sub.c \
     libtommath/bncore.c \
 
-LIBS += -lgmp
+LIBS += -ldl
 #    -lgmp
 OTHER_FILES +=
 RESOURCES += qt/qcas.qrc

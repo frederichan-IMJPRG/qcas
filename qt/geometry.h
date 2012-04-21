@@ -3,65 +3,141 @@
 #include <QVector>
 #include <QColor>
 #include <QPainterPath>
+
 class QPainter;
-class GraphWidget;
+class Canvas2D;
+class QTreeWidgetItem ;
+
+
+
 class MyItem{
 public:
-  MyItem(GraphWidget*);
+  MyItem(Canvas2D*);
   virtual bool isPoint() const;
   virtual bool isLine() const;
   virtual bool isSegment() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
   virtual bool isCircle() const;
+
   virtual void draw(QPainter*) const =0 ;
-  void setColor(const QColor&);
-  void setWidth(const int);
-  void setVisible(const bool);
-  void setLabelPos(const int );
+  virtual void updateScreenCoords(const bool)=0;
+  virtual QString getType()=0;
+  virtual bool isUnderMouse(const QRectF &p) const;
+  QTreeWidgetItem * getTreeItem();
+  void setColor(QColor &);
+  virtual void setWidth(const int);
+  virtual int getPenWidth();
+
+  void setHighLighted(const bool& );
+  void setLabelVisible(const bool);
+//  void setLabelPos(const int );
+
+
+  Qt::PenCapStyle getPenStyle();
+  Qt::PenStyle getLineType();
+  void setAttributes(const int &);
+  QColor getColor() const;
+  bool labelVisible() const;
+  void setLegend(const QString &) ;
+  QString getLegend() const;
+
+
+
 protected:
-  GraphWidget* g2d;
-  QColor color;
-  int penWidth;
-  bool visible;
-  int labelPos;
+  Canvas2D* g2d;
+  int attributes;
+    bool highLighted;
+  private:
+
+    QString legend;
+    QTreeWidgetItem* treeItem;
 };
 class Point:public MyItem{
 public:
-    Point(const int x,const int y,GraphWidget*);
+    Point(const int x,const int y,Canvas2D*);
     double getX();
     double getY();
     virtual bool isPoint() const;
     virtual void draw(QPainter*) const;
-    void setPointStyle(const int);
-    void setPointWidth(const int);
+    virtual void updateScreenCoords(const bool);
+    virtual bool isUnderMouse(const QRectF & p) const;
+    virtual void setWidth(const int);
+    virtual QString getType();
+    int getPointStyle();
+    virtual int getPenWidth();
+
 private:
+    QRectF recSel;
     double x,y;
-    mutable double xScreen,yScreen;
-    int width;
-    int style;
+    double xScreen,yScreen;
 };
+
+class LineItem:public MyItem{
+public:
+    LineItem(const QPointF&,const QPointF&,Canvas2D*);
+    virtual bool isLine() const;
+    virtual void draw(QPainter*) const;
+    virtual void updateScreenCoords(const bool);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual QString getType();
+
+
+private:
+    QPointF startPoint;
+    QPointF endPoint;
+    QPainterPath p;
+    QPainterPath envelop;
+
+
+};
+
+
+class HalfLineItem:public MyItem{
+public:
+    HalfLineItem(const QPointF&,const QPointF&,Canvas2D*);
+    virtual bool isHalfLine() const;
+    virtual void draw(QPainter*) const;
+    virtual void updateScreenCoords(const bool );
+    virtual QString getType();
+
+    virtual bool isUnderMouse(const QRectF& p) const;
+
+private:
+    QPointF startPoint;
+    QPointF endPoint;
+    QPainterPath p;
+    QPainterPath envelop;
+
+//    QPointF startScreen,endScreen;
+
+};
+
+
 
 class Curve:public MyItem{
 public:
-    Curve(const QPainterPath & ,GraphWidget*);
-  //  double getX();
-  //  double getY();
+    Curve(const QPainterPath & ,Canvas2D*);
     void addPath();
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
     virtual bool isCurve() const;
     virtual void draw(QPainter*) const;
-    void updatePath();
-//    void setPath(const & QPainterPath);
-//    void setPointWidth(const int);
+    virtual QString getType();
+
+    void setVector(const bool&);
+    bool isSegment() const;
+    bool isVector() const;
+
 private:
-  //  double x,y;
+    bool vector;
+    QPainterPathStroker stroke;
     QPainterPath pathScreen;
     QPainterPath path;
-    mutable double xScreen,yScreen;
-//    int width;
-//    int style;
-};
+    QPainterPath envelop;
+//    mutable double xScreen,yScreen;
 
+};
 
 
 

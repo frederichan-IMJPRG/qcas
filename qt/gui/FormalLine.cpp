@@ -104,7 +104,7 @@ OutputWidget* Line::gen2Widget(const QString &mathml){
       bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
       if (!ok) {
         qWarning("MathML error: %s, Line: %d, Column: %d",
-        errorMsg.toLatin1(), errorLine, errorColumn);
+        errorMsg.constData()->toLatin1(), errorLine, errorColumn);
       }
       QPalette p=mmlWidget->palette();
       p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));

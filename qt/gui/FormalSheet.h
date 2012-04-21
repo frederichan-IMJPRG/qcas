@@ -6,6 +6,7 @@
 #include "CentralTabWidget.h"
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
+#include <QDomElement>
 class OutputWidget;
 class QCheckBox;
 class QGridLayout;
@@ -90,6 +91,7 @@ public:
     void displayResult(int line,OutputWidget* );
     void addSelectedLevel(int);
     void removeStop(int);
+    void toXML(QDomElement & root);
 protected:
     void keyPressEvent(QKeyEvent *);
     void keyReleaseEvent(QKeyEvent *);

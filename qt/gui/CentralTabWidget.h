@@ -13,6 +13,7 @@ public:
     sheetType getType() const;
 protected:
     sheetType type;
+
 };
 class MainTabWidget:public QTabWidget{
     Q_OBJECT
@@ -25,7 +26,7 @@ private:
     QAction* spreadsheetAction;
     QAction* programmingAction;
     MainWindow *mainWindow;
-private slots:
+public slots:
     void addFormalSheet();
     void addSpreadSheet();
     void addProgrammingSheet();

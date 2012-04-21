@@ -321,3 +321,25 @@ void FormalWorkSheet::displayResult(int lineIndex, OutputWidget* result){
 Line* FormalWorkSheet::getLineAt(int i){
     return lines->at(i);
 }
+void  FormalWorkSheet::toXML(QDomElement & root){
+    QDomElement formal=root.ownerDocument().createElement("formal");
+
+    for (int i=0;i<lines->size();++i){
+        Line* line=lines->at(i);
+        QDomElement command=root.ownerDocument().createElement("command");
+        QDomText text=root.ownerDocument().createTextNode(line->getTextInput()->toPlainText());
+        command.appendChild(text);
+        formal.appendChild(command);
+
+
+ //       formal.appendChild(command);
+
+
+
+   //     line->getOuputWidget();
+
+    }
+    root.appendChild(formal);
+
+
+}

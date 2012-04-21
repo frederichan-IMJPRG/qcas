@@ -51,7 +51,7 @@ private:
     giac::gen expression;
     giac::gen answer;
     giac::context *context;
-    void info(giac::gen);
+    void info(giac::gen &, int decal ) const;
     OutputWidget* formula2Widget(const QString &mathml);
     OutputWidget* graph2Widget(const giac::gen&);
     void drawOnScene(QGraphicsScene &,const giac::gen &);

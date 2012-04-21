@@ -94,6 +94,9 @@ EvaluationThread::warning CasManager::initExpression(const QString *str){
     if (!b){
         return EvaluationThread::WARNING;
     }
+
+
+
     return EvaluationThread::NO_WARNING;
 }
 
@@ -191,7 +194,7 @@ QString CasManager::displaySubType(int c){
     return "_PNT__VECT_||_CURVE_VECT";
     break;
     case 9:
-    return "_CURVE__VECT";
+    return "_HALF_LINE__VECT";
     break;
     case 10:
     return "_HALF_LINE__VECT";
@@ -200,32 +203,47 @@ QString CasManager::displaySubType(int c){
     }
 }
 
-void CasManager::info(giac::gen  gg){
+void CasManager::info(giac::gen & gg,int decal) const{
+        QString s;
+
+        for (int j=0;j<decal;j++){
+            s.append(" ");
+        }
+
     if (gg.type==giac::_SYMB){
-        qDebug()<<"_SYMB Sommet";
-        dbgprint(gg._SYMBptr->sommet);
+        qDebug()<< s << "_SYMB Sommet";
+        qDebug()<< s << QString::fromStdString(gg._SYMBptr->sommet.ptr()->print(context));
         giac::gen g=gg._SYMBptr->feuille;
-        info(g);
+        qDebug()<< s << "_SYMB feuille";
+        info(g,decal);
     }
     else if (gg.type==giac::_VECT){
-        giac::vecteur *v=gg._VECTptr;
-        qDebug()<<"_VECT subtype"<< displaySubType(gg.subtype);
-        qDebug()<<"size"<<QString::number(v->size());
-        for (int i=0;i<v->size();i++){
-            qDebug()<<"//vect////////////// élément"<<i;
-            // info(v->at(i));
-        }
-        qDebug()<<"//fin vect";
+        decal=decal+5;
 
+        giac::vecteur *v=gg._VECTptr;
+        qDebug()<< s << "_VECT subtype"<< displaySubType(gg.subtype);
+        qDebug()<< s << "size"<<QString::number(v->size());
+        vecteur::iterator it;
+        unsigned int i=0;
+        for(it=v->begin();it<v->end();it++){
+
+
+            qDebug()<< s<< "element"<<i;
+            info(*it,decal);
+            i++;
+        }
+        qDebug()<< s <<"//fin vect";
+        decal=decal-5;
     }
     else     {
-        qDebug()<<displayType(gg.type);
-        gg.dbgprint();
+        qDebug()<< s << "autres";
+        qDebug()<< s << displayType(gg.type);
+        qDebug()<< s << QString::fromStdString(gg.print());
     }
 
     }
 OutputWidget* CasManager::createDisplay(){
-    info(answer);
+    info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();
@@ -305,7 +323,7 @@ OutputWidget* CasManager::formula2Widget(const QString &mathml){
       bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
       if (!ok) {
         qWarning("MathML error: %s, Line: %d, Column: %d",
-        errorMsg.toLatin1(), errorLine, errorColumn);
+                 errorMsg.constData(), errorLine, errorColumn);
       }
       QPalette p=mmlWidget->palette();
       p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));

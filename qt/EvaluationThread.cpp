@@ -6,7 +6,7 @@ EvaluationThread::EvaluationThread(){
 //    connect(this,SIGNAL(finished()),this,SLOT(closeTimer()));
 }
 void EvaluationThread::appendPrintCache(const QChar& c){
-    qDebug()<<fullDisplay;
+    qDebug()<<"appendPrintCache: fullldisplay:"<<fullDisplay;
     if(c=='"') printCache.append("&quot;");
     else if(c=='&') printCache.append("&amp;");
     else if(c=='<') printCache.append("&lt;");
@@ -43,6 +43,7 @@ void EvaluationThread::run(){
     printCache="";
     fullDisplay.clear();
     cas->evaluate();
+    if (!printCache.isEmpty()) fullDisplay.append(printCache);
 }
 
 OutputWidget*  EvaluationThread::displayResult(){

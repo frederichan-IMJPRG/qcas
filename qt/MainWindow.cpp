@@ -31,8 +31,14 @@
 //#include "gui/FormalSheet.h"
 //#include <Qsci/qsciscintilla.h>
 //#include <Qsci/qscilexerjava.h>
+
 #include <QUrl>
 #include <QGroupBox>
+# include <QDomDocument>
+# include <QDomText>
+
+
+
 #include "EvaluationThread.h"
 #include <QCompleter>
 #include <giac/giac.h>
@@ -222,8 +228,60 @@ void MainWindow::open(){
 }
 
 bool MainWindow::loadFile(const QString &fileName){
+    QDomDocument doc("xml");
+     QFile file(fileName);
+     if (!file.open(QIODevice::ReadOnly))
+         return false;
+     if (!doc.setContent(&file)) {
+         file.close();
+         return false;
+     }
+     file.close();
+     qDebug()<<"Loading...";
+     qDebug()<<doc.toString();
+
+     QDomElement root = doc.documentElement();
+     if (root.tagName()!="qcas") return false;
+
+    int tabBeforeLoad=tabPages->count();
+
+     QDomNode node = root.firstChild();
+     while(!node.isNull()) {
+        QDomElement sheet = node.toElement(); // try to convert the node to an element.
+         if(!sheet.isNull()) {
+             if (sheet.tagName()=="formal"){
+                tabPages->addFormalSheet();
+                FormalWorkSheet *f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+                QDomNode first=sheet.firstChild();
+                while(!first.isNull()){
+                    QDomElement element=first.toElement();
+                    if (!element.isNull()) {
+                        QString tag=element.tagName();
+                        if (tag=="command"){
+                            f->sendText(element.text());
+                            f->goToNextLine();
+
+                        }
+                        else if (tag=="answer"){
+                            qDebug()<<"TODO";
+                        }
+                    }
+                    first=first.nextSibling();
+
+                }
+             }
+                       node= node.nextSibling();
+         }
+
+     }
+
+
     return true;
 }
+
+
+
+
 bool MainWindow::save(){
     if (curFile.isEmpty())
         return saveAs();
@@ -231,10 +289,48 @@ bool MainWindow::save(){
         return saveFile(curFile);
 }
 bool MainWindow::saveFile(const QString &fileName){
+    QDomDocument doc;
+
+    QDomElement root=doc.createElement("qcas");
+
+    for (int i=0;i<tabPages->count()-1;++i){
+        MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->widget(i));
+        switch(sheet->getType()){
+        case MainSheet::FORMAL_TYPE:
+            {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->widget(i));
+            form->toXML(root);
+        }
+            break;
+        case MainSheet::SPREADSHEET_TYPE:
+            break;
+        case MainSheet::PROGRAMMING_TYPE:
+            break;
+        }
+
+   }
+    doc.appendChild(root);
+//    qDebug()<<doc.toString();
+//    qDebug()<<"Nom du fichier"<<fileName;
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly))
+    {
+    QTextStream out(&file);
+    doc.save(out, 4);
+    file.close();
+    }
+    else
+    return(false);
+
+
+
+
+
+    setCurrentFile(fileName);
+
     return true;
 }
 bool MainWindow::saveAs(){
-    QString fileName=QFileDialog::getSaveFileName(this,tr("Enregistrer sous..."),tr("QCAS files (*.qcas)"));
+    QString fileName=QFileDialog::getSaveFileName(this,tr("Enregistrer sous..."),".qcas",tr("QCAS files (*.qcas)"));
     if (fileName.isEmpty()){
         return false;
     }
@@ -251,7 +347,7 @@ void MainWindow::setCurrentFile(const QString &fileName){
         recentFiles.removeAll(curFile);
         recentFiles.prepend(curFile);
         updateRecentFileActions();
-        setWindowTitle(tr("%1[*] - %2").arg(shownName.arg(tr("QCAS"))));
+        setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("QCAS")));
 
     }
 }

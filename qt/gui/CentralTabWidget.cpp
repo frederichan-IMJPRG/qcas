@@ -53,6 +53,10 @@ void MainTabWidget::closeTab(int id){
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
+    for (int i=id;i<=count()-2;i++){
+        tabBar()->setTabText(i,tr("Feuille n°")+QString::number(i+1));
+    }
+
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
