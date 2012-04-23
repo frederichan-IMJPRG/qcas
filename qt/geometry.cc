@@ -7,6 +7,7 @@
 MyItem::MyItem(Canvas2D *graph){
     g2d=graph;
     highLighted=false;
+    angleLegend=-1;
     treeItem=new QTreeWidgetItem;
 
 
@@ -22,6 +23,7 @@ void MyItem::setColor(QColor &c ){
 void MyItem::setHighLighted(const bool &b){
     highLighted=b;
 }
+
 
 bool MyItem::isPoint() const{
     return false;
@@ -51,13 +53,20 @@ QString MyItem::getLegend() const{
 void MyItem::setLegend(const QString &s){
     legend=s;
 }
-void MyItem::setLabelVisible(const bool b){
+
+void MyItem::setLegendVisible(const bool b){
     if (b) {
+
         attributes=std::abs(attributes);
     }
     else attributes=-std::abs(attributes);
+
+    qDebug()<<attributes<< "après click";
 }
 
+void MyItem::setPointStyle(const int c){
+    attributes=(attributes& 0xf1ffffff)+(c<<25);
+}
 
 QTreeWidgetItem * MyItem::getTreeItem(){
     return treeItem;
@@ -66,6 +75,25 @@ QTreeWidgetItem * MyItem::getTreeItem(){
 bool MyItem::isUnderMouse(const QRectF& p) const{
     return false;
 }
+void MyItem::setStyle(const int c) {
+    attributes=(attributes& 0xfe3fffff)+(c<<22);
+
+}
+double MyItem::getAngleLegend() const{
+    if (angleLegend==-1){
+        qDebug()<<    "quadrant"    <<((attributes & 0x30000000)>>28);
+        return ((attributes & 0x30000000)>>28)*3.14159/2+3.14159/4;
+    }
+    else return angleLegend;
+}
+
+
+int MyItem::getStyle(){
+    qDebug()<<attributes;
+    return (attributes & 0x01c00000)>>22;
+}
+
+
 Qt::PenCapStyle MyItem::getPenStyle(){
    int type_line=((attributes & 0x01c00000));
    if (type_line==giac::_CAP_FLAT_LINE) return Qt::FlatCap;
@@ -73,6 +101,9 @@ Qt::PenCapStyle MyItem::getPenStyle(){
    return Qt::RoundCap;
 
 }
+
+
+
 Qt::PenStyle MyItem::getLineType(){
     int type_line=((attributes & 0x01c00000));
 //    qDebug()<<" type ligne"<<type_line;
@@ -87,13 +118,128 @@ Qt::PenStyle MyItem::getLineType(){
 int MyItem::getPenWidth(){
     return ((attributes & 0x00070000) >> 16);
 }
-bool MyItem::labelVisible()const{
-    return (attributes<0);
+bool MyItem::legendVisible()const{
+    return (attributes>0);
 }
 void MyItem::setAttributes(const int& c){
     attributes=c;
 }
+////////////////////////////////////////////////////////////////
 
+
+QColor MyItem::getFltkColor(int& c){
+    if (c<16){
+        switch(c){
+           case 0:
+            {return Qt::black;}
+            break;
+            case 1:
+            {return Qt::red;}
+            break;
+            case 2:
+            {return Qt::green;}
+            break;
+            case 3:
+            {return Qt::yellow;}
+            break;
+            case 4:
+            {return Qt::blue;}
+            break;
+            case 5:
+            {return Qt::magenta;}
+            break;
+            case 6:
+            {return Qt::cyan;}
+            break;
+            case 7:
+            {return Qt::white;}
+            break;
+            case 8:
+             {return QColor(85,85,85);} // 1/3 gray
+             break;
+        case 9:
+         {return QColor(198,113,113);}// salmon? pale red?
+         break;
+        case 10:
+         {return QColor(113,198,113);}// pale green
+         break;
+        case 11:
+         {return QColor(142,142,56);}// khaki
+         break;
+        case 12:
+         {return QColor(113,113,198);}// pale blue
+         break;
+        case 13:
+         {return QColor(142,56,142);}// purple, orchid, pale magenta
+         break;
+        case 14:
+         {return QColor(56,142,142);}// cadet blue, aquamarine, pale cyan
+         break;
+        case 15:
+         {return QColor(170,170,170);}// cadet blue, aquamarine, pale cyan
+         break;
+        }
+    }
+    else if (c<32){
+        return QColor(85,85,85);
+    }
+    else if (c<56){
+        // initial algorith to populate the table (from fltk source)
+        //
+           /*
+
+        #define FL_GRAY_RAMP 32
+        #define FL_NUM_GRAY  24
+        #define FL_GRAY 49
+
+        if (!r) r = 1; else if (r==255) r = 254;
+        double powr = log(254/255.0)/log((FL_GRAY-FL_GRAY_RAMP)/(FL_NUM_GRAY-1.0));
+        if (!g) g = 1; else if (g==255) g = 254;
+        double powg = log(g/255.0)/log((FL_GRAY-FL_GRAY_RAMP)/(FL_NUM_GRAY-1.0));
+        if (!b) b = 1; else if (b==255) b = 254;
+        double powb = log(b/255.0)/log((FL_GRAY-FL_GRAY_RAMP)/(FL_NUM_GRAY-1.0));
+        for (int i = 0; i < FL_NUM_GRAY; i++) {
+          double gray = i/(FL_NUM_GRAY-1.0);
+          cmap[i+FL_GRAY_RAMP][0] = uchar(pow(gray,powr)*255+.5);
+          cmap[i+FL_GRAY_RAMP][1] = uchar(pow(gray,powg)*255+.5);
+          cmap[i+FL_GRAY_RAMP][2] = uchar(pow(gray,powb)*255+.5);
+        }
+        */
+        if (c==39) return QColor(85,85,85);
+        else if(c==47) return QColor(170,170,170);
+        else{
+            int r = 170;
+            double powr = log(r/255.0)/log(17/23);
+            int g=170;
+            double powg = log(g/255.0)/log(17/23);
+            int b=170;
+            double powb = log(b/255.0)/log(17/23);
+            c-=32;
+            return QColor(uchar(pow(c/23.0,powr)*255+.5),uchar(pow(c/23.0,powg)*255+.5),uchar(pow(c/23.0,powb)*255+.5));
+        }
+    }
+    else if (c<256){
+       // initial algorith to populate the table (from fltk source)
+       /*
+        i = 56;
+         for (b=0; b<5; b++)
+           for (r=0; r<5; r++)
+             for (g=0; g<8; g++) {
+           cmap[i][0] = r*255/4;
+           cmap[i][1] = g*255/7;
+           cmap[i][2] = b*255/4;
+           i++;
+             }*/
+        c-=56;
+        int b=c/40;
+        int r=(c%40)/5;
+        int g=(c%40)%8;
+        qDebug()<<"couleurs composante"<<r<<g<<b;
+        return QColor(255*r/4,255*g/7,255*b/4);
+
+    }
+
+}
 
 QColor arcenciel(int k){
     int r,g,b;
@@ -123,47 +269,27 @@ QColor arcenciel(int k){
 
 QColor MyItem::getColor() const{
     int color=(attributes & 0x0000ffff);
+
+    if (g2d->isFirstColorEvaluation()){
+        qDebug()<<"couleur"<<color;
+        if (color<256){
+            QColor tmp=getFltkColor(color);
+            setColor(tmp);
+            return tmp;
+        }
+        else if (color<0x17e ){
+            QColor tmp=arcenciel(color);
+            setColor(tmp);
+            return tmp;
+
+        }
+    }
     int r=(color>>12)*16;
     int g=((color& 0x0f00)>>8)*16;
     int b=((color&0x00f0)>>4)*16;
     int alpha=255; //(color&0x000f)*16;
     return QColor(r,g,b,alpha);
 
-/*    switch(color){
-        case 0:
-        {return Qt::black;}
-        break;
-        case 1:
-        {return Qt::red;}
-        break;
-        case 2:
-        {return Qt::green;}
-        break;
-        case 3:
-        {return Qt::yellow;}
-       break;
-        case 4:
-        {return Qt::blue;}
-        break;
-        case 5:
-        {return Qt::magenta;}
-        break;
-        case 6:
-        {return Qt::cyan;}
-        break;
-        case 7:
-        {return Qt::white;}
-        break;
-    default:
-    {
-        if (color>0x100&& color<0x17e ){
-            return arcenciel(color);
-
-        }
-
-    }
-    }
-    return Qt::black;*/
 }
 Point::Point(const int a,const int b,Canvas2D* graph):MyItem(graph){
     x=a;
@@ -181,7 +307,7 @@ double Point::getY() {
 bool Point::isUnderMouse(const QRectF& p) const{
     return recSel.intersects(p);
 }
-QString Point::getType(){
+QString Point::getType() const{
     return QObject::tr("Point");
 }
 
@@ -286,7 +412,35 @@ void Point::draw(QPainter * painter) const{
         break;
 
     }
+
+    if (legendVisible()){
+        if (legend.trimmed().isEmpty()) return;
+        int h=painter->fontMetrics().height();
+        int w=painter->fontMetrics().width(legend);
+
+        double angle=getAngleLegend();
+        qDebug()<<angle<<"angle";
+        QPointF p(xScreen+10*std::cos(angle),yScreen-10*sin(angle));
+        if (0<angle<3.14159/2){
+            painter->drawText(p.x(),p.y()-h,legend);
+        }
+        else if (3.14159/2<=angle<3.14159){
+            painter->drawText(p.x()-w,p.y()-h,legend);
+
+        }
+        else if (3.14159<=angle<3*3.14159/2){
+            painter->drawText(p.x()-w,p.y(),legend);
+
+        }
+        else{
+            painter->drawText(p.x(),p.y(),legend);
+
+        }
+
+    }
 }
+
+
 int Point::getPointStyle(){
     return (attributes & 0x0e000000);
 
@@ -356,7 +510,9 @@ void LineItem::updateScreenCoords(const bool compute){
 
     }
     QPainterPathStroker stroke;
-    stroke.setWidth(getPenWidth());
+    stroke.setCapStyle(Qt::FlatCap);
+    stroke.setDashPattern(getLineType());
+    stroke.setWidth(getPenWidth()+1);
     envelop=stroke.createStroke(p);
 
 }
@@ -364,7 +520,7 @@ bool LineItem::isLine() const{
     return true;
 }
 
-QString LineItem::getType(){
+QString LineItem::getType() const{
     return QObject::tr("Droite");
 }
 void LineItem::draw(QPainter* painter) const{
@@ -374,7 +530,7 @@ void LineItem::draw(QPainter* painter) const{
         color.setAlpha(100);
         width=3;
     }
-    painter->setPen(QPen(color,width,  getLineType() ,getPenStyle()));
+    painter->setPen(QPen(color,width,  Qt::SolidLine));
     painter->setBrush(QBrush(color,Qt::SolidPattern));
     painter->drawPath(envelop);
 }
@@ -457,7 +613,9 @@ void HalfLineItem::updateScreenCoords(const bool compute){
 
     }
     QPainterPathStroker stroke;
-    stroke.setWidth(getPenWidth());
+    stroke.setWidth(getPenWidth()+1);
+    stroke.setCapStyle(Qt::FlatCap);
+    stroke.setDashPattern(getLineType());
     envelop=stroke.createStroke(p);
 }
 bool HalfLineItem::isHalfLine() const{
@@ -476,12 +634,12 @@ void HalfLineItem::draw(QPainter* painter) const{
         width=3;
     }
 
-    painter->setPen(QPen(color,width,  getLineType() ,getPenStyle()));
+    painter->setPen(QPen(color,width,  Qt::SolidLine));
     painter->setBrush(QBrush(color,Qt::SolidPattern));
 
     painter->drawPath(envelop);
 }
-QString HalfLineItem::getType(){
+QString HalfLineItem::getType() const{
     return QObject::tr("Demie-droite");
 }
 
@@ -489,6 +647,7 @@ QString HalfLineItem::getType(){
 
 Curve::Curve(const QPainterPath &p,Canvas2D *graph):MyItem(graph){
     vector=false;
+    polygon=false;
     path=p;
 }
 void Curve::draw(QPainter *painter) const{
@@ -500,7 +659,7 @@ void Curve::draw(QPainter *painter) const{
     }
 
     painter->setBrush(QBrush(color,Qt::SolidPattern));
-    painter->setPen(QPen(color,width,  getLineType() ,getPenStyle()));
+    painter->setPen(QPen(color,width,  Qt::SolidLine));
 
     painter->drawPath(envelop);
 }
@@ -543,7 +702,9 @@ void Curve::updateScreenCoords(const bool compute){
             pathScreen.lineTo(x2,y2);
         }
     }
-    int width=getPenWidth();
+    int width=getPenWidth()+1;
+    stroke.setCapStyle(Qt::FlatCap);
+    stroke.setDashPattern(getLineType());
     stroke.setWidth(width);
     envelop=stroke.createStroke(pathScreen);
 
@@ -560,12 +721,73 @@ bool Curve::isSegment() const{
     else return (path.elementCount()==2);
 }
 
-QString Curve::getType(){
+QString Curve::getType() const{
     if (vector) return QObject::tr("Vecteur");
     else if (isSegment()) return QObject::tr("Segment");
+    else if (polygon) return QObject::tr("Polygône");
     return QObject::tr("Courbe");
+}
+bool Curve::isPolygon() const{
+    return polygon;
+}
+void Curve::setPolygon(const bool & b){
+    polygon=b;
+}
+
+Circle::Circle(const QPointF &p, const double &d, const double &st, const double &end, const Canvas2D *graph):MyItem(graph){
+    center=p;
+    diametre=d;
+    startAngle=st*180/3.14159;
+    endAngle=end*180/3.14159;
+
+
+
+}
+
+bool Circle::isCircle() const{
+    return true;
+}
+void Circle::updateScreenCoords(const bool compute){
+
+    if (compute){
+        double a,b;
+        double r=diametre/2;
+        g2d->toScreenCoord(center.x()-r,center.y()+r,a,b);
+        QPointF leftUp(a,b);
+        g2d->toScreenCoord(center.x()+r,center.y()-r,a,b);
+        QPointF rightBottom(a,b);
+        g2d->toScreenCoord(center.x()+r*std::cos(startAngle/180*3.14159),center.y()+r*std::sin(startAngle/180*3.14159),a,b);
+        QPointF start(a,b);
+
+        p=QPainterPath();
+        p.moveTo(start);
+        p.arcTo(QRectF(leftUp,rightBottom),startAngle,endAngle-startAngle);
+    }
+    QPainterPathStroker stroke;
+    stroke.setWidth(getPenWidth()+1);
+    stroke.setCapStyle(Qt::FlatCap);
+    stroke.setDashPattern(getLineType());
+    envelop=stroke.createStroke(p);
 }
 
 
+void Circle::draw(QPainter* painter) const{
+    QColor color=getColor();
+    int width=1;
+    if (highLighted){
+        color.setAlpha(100);
+        width=3;
+    }
 
+    painter->setPen(QPen(color,width,  Qt::SolidLine));
+    painter->setBrush(QBrush(color,Qt::SolidPattern));
 
+    painter->drawPath(envelop);
+}
+QString Circle::getType() const{
+    return QObject::tr("Cercle");
+}
+
+bool Circle::isUnderMouse(const QRectF &p) const{
+    return envelop.intersects(p);
+}

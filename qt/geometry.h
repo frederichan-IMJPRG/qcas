@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QPainterPath>
 
+
 class QPainter;
 class Canvas2D;
 class QTreeWidgetItem ;
@@ -22,15 +23,18 @@ public:
 
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
-  virtual QString getType()=0;
+  virtual QString getType()const =0 ;
   virtual bool isUnderMouse(const QRectF &p) const;
   QTreeWidgetItem * getTreeItem();
   void setColor(QColor &);
+  void setPointStyle(const int );
+  void setStyle(const int);
+  int getStyle();
+
   virtual void setWidth(const int);
   virtual int getPenWidth();
 
   void setHighLighted(const bool& );
-  void setLabelVisible(const bool);
 //  void setLabelPos(const int );
 
 
@@ -38,7 +42,10 @@ public:
   Qt::PenStyle getLineType();
   void setAttributes(const int &);
   QColor getColor() const;
-  bool labelVisible() const;
+  QColor getFltkColor(int &c);
+  double getAngleLegend() const;
+  bool legendVisible() const;
+  void setLegendVisible(const bool);
   void setLegend(const QString &) ;
   QString getLegend() const;
 
@@ -47,10 +54,12 @@ public:
 protected:
   Canvas2D* g2d;
   int attributes;
-    bool highLighted;
+  bool highLighted;
+  double angleLegend;
+  QString legend;
+
   private:
 
-    QString legend;
     QTreeWidgetItem* treeItem;
 };
 class Point:public MyItem{
@@ -63,7 +72,7 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual bool isUnderMouse(const QRectF & p) const;
     virtual void setWidth(const int);
-    virtual QString getType();
+    virtual QString getType() const;
     int getPointStyle();
     virtual int getPenWidth();
 
@@ -80,7 +89,7 @@ public:
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool);
     virtual bool isUnderMouse(const QRectF& p) const;
-    virtual QString getType();
+    virtual QString getType() const;
 
 
 private:
@@ -99,7 +108,7 @@ public:
     virtual bool isHalfLine() const;
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool );
-    virtual QString getType();
+    virtual QString getType() const;
 
     virtual bool isUnderMouse(const QRectF& p) const;
 
@@ -123,14 +132,16 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual bool isCurve() const;
     virtual void draw(QPainter*) const;
-    virtual QString getType();
-
+    virtual QString getType() const;
+    void setPolygon(const bool&);
     void setVector(const bool&);
     bool isSegment() const;
     bool isVector() const;
+    bool isPolygon() const;
 
 private:
     bool vector;
+    bool polygon;
     QPainterPathStroker stroke;
     QPainterPath pathScreen;
     QPainterPath path;
@@ -140,5 +151,24 @@ private:
 };
 
 
+class Circle:public MyItem{
+public:
+    Circle(const QPointF & ,const double&,const double& ,const double   & , const Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual bool isCircle() const;
+    virtual void draw(QPainter*) const;
+    virtual QString getType() const;
 
+
+private:
+    QPointF center;
+    double diametre;
+    double startAngle;
+    double endAngle;
+    QPainterPath p;
+    QPainterPath envelop;
+
+
+};
 #endif // GEOMETRY_H

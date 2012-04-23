@@ -18,7 +18,6 @@
 #include "gui/qtmmlwidget.h"
 #include "output.h"
 
-
 using namespace giac;
 
 OutputWidget::OutputWidget(QWidget*):QWidget(){
@@ -170,8 +169,9 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       gen point=f[0];
       if (point.type==_VECT && point.subtype==_POINT__VECT)
         return;
+      bool isCurve=false;
       if ( (f[0].type==_SYMB) && (f[0]._SYMBptr->sommet==at_curve) && (f[0]._SYMBptr->feuille.type==_VECT) && (f[0]._SYMBptr->feuille._VECTptr->size()) ){
-        // Mon_image.show_mouse_on_object=false;
+         isCurve=true;
         point=f[0]._SYMBptr->feuille._VECTptr->back();
       }
       if (is_undef(point))
@@ -187,22 +187,29 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           return;
         if (point._SYMBptr->sommet==at_cercle){
           vecteur v=*point._SYMBptr->feuille._VECTptr;
-          gen diametre=remove_at_pnt(v[0]);
 
+          gen diametre=remove_at_pnt(v[0]);
           gen e1=diametre._VECTptr->front().evalf_double(1,context);
           gen e2=diametre._VECTptr->back().evalf_double(1,context);
+
+
+
           gen centre=rdiv(e1+e2,2.0);
           gen e12=e2-e1;
           double ex=evalf_double(re(e12,context),1,context)._DOUBLE_val,ey=evalf_double(im(e12,context),1,context)._DOUBLE_val;
-        // TODO A compléter
-
-          /*          Mon_image.findij(centre,x_scale,y_scale,i0,j0,context);
           gen diam=std::sqrt(ex*ex+ey*ey);
           gen angle=std::atan2(ey,ex);
+
           gen a1=v[1].evalf_double(1,context),a2=v[2].evalf_double(1,context);
+
+
+
+
+
+
           if ( (diam.type==_DOUBLE_) && (a1.type==_DOUBLE_) && (a2.type==_DOUBLE_) ){
-            i1=diam._DOUBLE_val*x_scale/2.0;
-            j1=diam._DOUBLE_val*y_scale/2.0;
+//            i1=diam._DOUBLE_val*x_scale/2.0;
+//            j1=diam._DOUBLE_val*y_scale/2.0;
             double a1d=a1._DOUBLE_val,a2d=a2._DOUBLE_val,angled=angle._DOUBLE_val;
             bool changer_sens=a1d>a2d;
             if (changer_sens){
@@ -210,7 +217,17 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               a1d=a2d;
               a2d=tmp;
             }
-            if (fill_polygon)
+            QPointF c(evalf_double(re(centre,context),1,context)._DOUBLE_val, evalf_double(im(centre,context),1,context)._DOUBLE_val);
+            Circle* circle=new Circle(c,diam._DOUBLE_val,angled+a1d,angled+a2d,this);
+            circle->setAttributes(ensemble_attributs);
+            circle->setLegend(QString::fromStdString(the_legend));
+            lineItems.append(circle);
+
+
+
+
+
+/*            if (fill_polygon)
               fl_pie(deltax+round(i0-i1),deltay+round(j0-j1),round(2*i1),round(2*j1),(angled+a1d)*180/M_PI,(angled+a2d)*180/M_PI);
             else {
               double anglei=(angled+a1d),anglef=(angled+a2d);
@@ -221,16 +238,16 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                 else
                   petite_fleche(i0+i1*std::cos(anglef),j0-j1*std::sin(anglef),i1*std::sin(anglef),j1*std::cos(anglef),deltax,deltay,width);
               }
-            }
+            }*/
             // Label a few degrees from the start angle,
             // FIXME should use labelpos
-            i0=i0+i1*std::cos(angled+a1d+0.3);
-            j0=j0-j1*std::sin(angled+a1d+0.3);
-            if (!hidden_name)
-              draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
-            return;
+    //        i0=i0+i1*std::cos(angled+a1d+0.3);
+    //        j0=j0-j1*std::sin(angled+a1d+0.3);
+    //        if (!hidden_name)
+    //          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
+    //        return;
           }
-          */
+
         } // end circle
 
         else if (point._SYMBptr->sommet==at_pixon){
@@ -501,14 +518,16 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         if (!hidden_name);
       //    draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
       }
+
       Curve *curve=new Curve(path,this);
       curve->setAttributes(ensemble_attributs);
       curve->setLegend(QString::fromStdString(the_legend));
       if (point.subtype==_VECTOR__VECT){
-          curve->setVector(true);
+              curve->setVector(true);
+        }
+      if (!isCurve&&path.elementCount()!=2){
+          curve->setPolygon(true);
       }
-
-
       lineItems.append(curve);
     } // end pnt subcase
 //*/
@@ -556,7 +575,9 @@ QSize Canvas2D::sizeHint() const{
 }
 
 
-
+bool Canvas2D::isFirstColorEvaluation() const{
+    return firstColorEvaluation;
+}
 
 Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
     selection=false;
@@ -605,8 +626,9 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
     menuGeneral->addAction(zoomOut);
 
 
+    firstColorEvaluation=true;
     updatePixmap(true);
-
+    firstColorEvaluation=false;
 
    // Contextual menu
    setContextMenuPolicy(Qt::CustomContextMenu);
@@ -617,6 +639,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
 
 void Canvas2D::zoom_In(){
     QRect r(startSel,endSel);
+
     if (selection&& r.width()>10&& r.width()>10){
         double tmpx,tmpy,tmpx2,tmpy2;
 /*        qDebug()<<"debut";
@@ -625,6 +648,9 @@ void Canvas2D::zoom_In(){
 */
         toXY(startSel.x(),startSel.y(),tmpx,tmpy);
         toXY(endSel.x(),endSel.y(),tmpx2,tmpy2);
+
+
+
         if (tmpx2>tmpx) {
             xmin=tmpx;
             xmax=tmpx2;
@@ -641,9 +667,7 @@ void Canvas2D::zoom_In(){
             ymin=tmpy2;
             ymax=tmpy;
         }
-/*        qDebug()<<"fin";
-        qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit;
-  */  }
+    }
     else {
         double xstep=(xmax-xmin)/10;
         double ystep=(ymax-ymin)/10;
@@ -873,9 +897,10 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
     if (b==Qt::RightButton&& selection) {
             endSel=e->pos();
             setMouseTracking(true);
-            selection=false;
             zoom_In();
-        }
+            selection=false;
+
+    }
     else if (b==Qt::LeftButton){
         if (focusOwner!=0){
             focusOwner->getTreeItem()->treeWidget()->collapseAll();
@@ -950,6 +975,8 @@ PanelProperties::PanelProperties(Canvas2D* c){
 }
 void PanelProperties::initGui(){
     hbox=new QHBoxLayout;
+    displayPanel=new DisplayProperties(parent);
+    displayPanel->hide();
     tree=new QTreeWidget;
     tree->setColumnCount(1);
     tree->headerItem()->setTextAlignment(0,Qt::AlignCenter);
@@ -972,8 +999,8 @@ void PanelProperties::initGui(){
     nodeLine->setText(0,tr("Droite"));
     nodeSegment->setText(0,tr("Segment"));
     nodeHalfLine->setText(0,tr("Demie-droite"));
-    nodeCircle->setText(0,tr("Polygône"));
-    nodePolygon->setText(0,tr("Cercle"));
+    nodePolygon->setText(0,tr("Polygône"));
+    nodeCircle->setText(0,tr("Cercle"));
 
 
     // Fill the treeWidget
@@ -994,6 +1021,7 @@ void PanelProperties::initGui(){
 
     tree->addTopLevelItems(topLevel);
     hbox->addWidget(tree);
+    hbox->addWidget(displayPanel);
 
     setLayout(hbox);
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
@@ -1020,8 +1048,14 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
                 nodeVector->addChild(item->getTreeItem());
             else if (c->isSegment())
                 nodeSegment->addChild(item->getTreeItem());
+            else if (c->isPolygon())
+                nodePolygon->addChild(item->getTreeItem());
             else
                 nodeCurve->addChild(item->getTreeItem());
+        }
+        else if(item->isCircle()){
+            nodeCircle->addChild(item->getTreeItem());
+
         }
         nodeLinks.insert(item->getTreeItem(),item);
         QString legend=item->getLegend();
@@ -1034,6 +1068,7 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
     }
 }
 void PanelProperties::updateTree(){
+
    QList<QTreeWidgetItem*> list=tree->selectedItems();
    if (list.isEmpty()) return;
    QList<MyItem*>* listItems=new QList<MyItem*>();
@@ -1042,7 +1077,6 @@ void PanelProperties::updateTree(){
        if (list.at(i)->parent()==0){
            QTreeWidgetItem* treeItem=list.at(i);
            for (int j=0;j<treeItem->childCount();++j){
-               qDebug()<<QString::number(j);
                treeItem->child(j)->setSelected(true);
                listItems->append(nodeLinks.value(treeItem->child(j)));
            }
@@ -1054,14 +1088,7 @@ void PanelProperties::updateTree(){
        }
    }
    parent->repaint();
-
-   if (displayPanel!=0) {
-       hbox->removeWidget(displayPanel);
-     delete displayPanel;
-   }
-   displayPanel=new DisplayProperties(listItems,parent);
-   hbox->addWidget(displayPanel);
-//    displayPanel->show();
+   displayPanel->updateDisplayPanel(listItems);
 }
 
 
@@ -1084,24 +1111,58 @@ void PanelProperties::clearSelection(){
         displayPanel->hide();
     }
 }
-DisplayProperties::DisplayProperties(QList<MyItem *> * l, Canvas2D *canvas){
+DisplayProperties::DisplayProperties(Canvas2D *canvas){
     parent=canvas;
-    listItems=l;
     initGui();
+}
+DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
+    listItems=l;
+
+    colorPanel->setColor(listItems->at(0)->getColor());
+    legendPanel->setChecked(listItems->at(0)->legendVisible());
+    legendPanel->setLegend(listItems->at(0)->getLegend());
+    widthPanel->setWidth(listItems->at(0)->getPenWidth()+1);
+
+    if (!checkForOnlyPoints()) {
+        typePointPanel->hide();
+        typeLinePanel->setStyle(listItems->at(0)->getStyle());
+
+        typeLinePanel->show();
+    }
+    else {
+        typeLinePanel->hide();
+        typePointPanel->setStyle(dynamic_cast<Point*>(listItems->at(0))->getPointStyle()>>25);
+        typePointPanel->setVisible(true);
+    }
+
+    show();
+
 }
 void DisplayProperties::initGui(){
     vLayout=new QVBoxLayout;
-    ColorPanel *colorPanel=new ColorPanel(listItems->at(0)->getColor(),this);
-    LegendPanel*legendPanel=new LegendPanel(listItems->at(0)->labelVisible(),listItems->at(0)->getLegend(),this);
-    WidthPanel* widthPanel=new WidthPanel(listItems->at(0)->getPenWidth()+1,this);
-    TypePointPanel* typePointPanel=new TypePointPanel(2,this);
+    colorPanel=new ColorPanel(this);
+    legendPanel=new LegendPanel(this);
+    widthPanel=new WidthPanel(this);
+    typePointPanel=new TypePointPanel(2,this);
+    typeLinePanel=new TypeLinePanel(2,this);
 
     vLayout->addWidget(colorPanel);
     vLayout->addWidget(legendPanel);
     vLayout->addWidget(widthPanel);
     vLayout->addWidget(typePointPanel);
+    vLayout->addWidget(typeLinePanel);
     setLayout(vLayout);
 }
+
+bool DisplayProperties::checkForOnlyPoints(){
+
+    for (int i=0;i<listItems->size();++i){
+        if (!listItems->at(i)->isPoint()) return false;
+    }
+    return true;
+
+}
+
 void DisplayProperties::updateCanvas(){
     parent->updatePixmap(false);
     parent->repaint();
@@ -1111,10 +1172,13 @@ QList<MyItem*>* DisplayProperties::getListItems() const{
 }
 
 
-ColorPanel::ColorPanel(const QColor &c, DisplayProperties *p):QWidget(p){
+ColorPanel::ColorPanel(DisplayProperties *p):QWidget(p){
     parent=p;
-    color=c;
     initGui();
+}
+void ColorPanel::setColor(const QColor & c){
+    color=c;
+    updateButton();
 }
 void ColorPanel::initGui(){
     QHBoxLayout* hLayout=new QHBoxLayout;
@@ -1136,10 +1200,8 @@ void ColorPanel::chooseColor(){
         updateButton();
         for (int i=0;i<parent->getListItems()->count();++i){
             parent->getListItems()->at(i)->setColor(color);
-            parent->updateCanvas();
         }
-
-
+        parent->updateCanvas();
     }
 }
 
@@ -1153,26 +1215,32 @@ void ColorPanel::updateButton(){
 //QColor ColorPanel::getColor() const{
 //    return color;
 //}
-LegendPanel::LegendPanel(const bool b, const QString &s, DisplayProperties * p):QWidget(p){
+LegendPanel::LegendPanel(DisplayProperties * p):QWidget(p){
     parent=p;
-    legend=s;
-    initGui(b);
+    initGui();
 }
-
-void LegendPanel::initGui(bool b){
+void LegendPanel::setLegend(const QString & s){
+    legend=s;
+    legendEdit->setText(legend);
+}
+void LegendPanel::setChecked(bool b){
+    legendCheck->setChecked(b);
+    legendPanel->setEnabled(b);
+}
+void LegendPanel::initGui(){
     QHBoxLayout * hbox=new QHBoxLayout;
     QVBoxLayout * vbox=new QVBoxLayout;
 
     legendCheck=new QCheckBox(tr("Afficher la légende"),this);
-    legendCheck->setChecked(b);
+
     QLabel * legendLabel=new QLabel(tr("Légende:"),this);
-    legendEdit=new QLineEdit(legend,this);
+    legendEdit=new QLineEdit(this);
     hbox->addWidget(legendLabel);
     hbox->addWidget(legendEdit);
 
-    QWidget* legendPanel=new QWidget;
+    legendPanel=new QWidget;
     legendPanel->setLayout(hbox);
-    legendPanel->setEnabled(b);
+
     vbox->addWidget(legendCheck);
     vbox->addWidget(legendPanel);
     setLayout(vbox);
@@ -1184,18 +1252,21 @@ void LegendPanel::initGui(bool b){
 
 void LegendPanel::updateCanvas(){
     for (int i=0;i<parent->getListItems()->count();++i){
-        parent->getListItems()->at(i)->setLabelVisible(legendCheck->isChecked());
-        parent->getListItems()->at(i)->setLegend(legendEdit->text());
-        parent->updateCanvas();
+        parent->getListItems()->at(i)->setLegendVisible(legendCheck->isChecked());
 
+        parent->getListItems()->at(i)->setLegend(legendEdit->text());
     }
+    parent->updateCanvas();
 
 }
 
-WidthPanel::WidthPanel(const int w, DisplayProperties * p):QGroupBox(p){
-    width=w;
+WidthPanel::WidthPanel(DisplayProperties *p):QGroupBox(p){
     parent=p;
     initGui();
+}
+void WidthPanel::setWidth(const int w ){
+    width=w;
+    slider->setValue(width);
 }
 void WidthPanel::initGui(){
     setTitle(tr("Épaisseur:"));
@@ -1204,7 +1275,6 @@ void WidthPanel::initGui(){
     slider->setMinimum(1);
     slider->setMaximum(8);
     slider->setSingleStep(1);
-    slider->setValue(width);
     slider->setTickInterval(1);
     slider->setTickPosition(QSlider::TicksAbove);
     hbox->addWidget(slider);
@@ -1216,8 +1286,8 @@ void WidthPanel::initGui(){
 void WidthPanel::updateCanvas(){
     for (int i=0;i<parent->getListItems()->count();++i){
         parent->getListItems()->at(i)->setWidth(slider->value()-1);
-        parent->updateCanvas();
     }
+    parent->updateCanvas();
 
 }
 
@@ -1230,55 +1300,200 @@ void TypePointPanel::initGui(){
     QHBoxLayout* hbox=new  QHBoxLayout;
     QLabel * labelType=new QLabel(tr("Style:"));
     combo=new QComboBox;
-    combo->setIconSize(QSize(100,30));
-    QPixmap pixmap(100,30);
+
+    combo->setIconSize(QSize(40,30));
+    QPixmap pixmap(40,30);
     QPainterPath p;
 
     QPainter painter(&pixmap);
-    pixmap.fill(Qt::white);
     painter.setRenderHint(QPainter::Antialiasing,true);
-    p.moveTo(50,5);
-    p.lineTo(60,15);
-    p.lineTo(50,25);
-    p.lineTo(40,15);
-    p.closeSubpath();
-    painter.setPen(QPen(Qt::black,2));
-    painter.drawPath(p);
 
-    combo->addItem(pixmap,"");
-
-//    pixmap=QPixmap(100,30);
     pixmap.fill(Qt::white);
-//    painter.setBrush(QBrush(Qt::white));
-//    painter.fillRect(0,0,100,30,Qt::SolidPattern);
-    p=QPainterPath();
-    p.moveTo(43,8);
-    p.lineTo(57,8);
-    p.lineTo(57,22);
-    p.lineTo(43,22);
-    p.closeSubpath();
-
+    p.moveTo(13,8);
+    p.lineTo(27,22);
+    p.moveTo(13,22);
+    p.lineTo(27,8);
     painter.setPen(QPen(Qt::black,2));
-
     painter.drawPath(p);
-
-    combo->addItem(pixmap,"");
-
+    combo->addItem(pixmap,tr("point_croix"));
 
 
+    pixmap.fill(Qt::white);
+    p=QPainterPath();
+    p.moveTo(20,5);
+    p.lineTo(30,15);
+    p.lineTo(20,25);
+    p.lineTo(10,15);
+    p.closeSubpath();
+    painter.setPen(QPen(Qt::black,2));
+    painter.drawPath(p);
+    combo->addItem(pixmap,tr("point_losange"));
+
+    pixmap.fill(Qt::white);
+    p=QPainterPath();
+    p.moveTo(20,5);
+    p.lineTo(20,25);
+    p.moveTo(10,15);
+    p.lineTo(30,15);
+    painter.setPen(QPen(Qt::black,2));
+    painter.drawPath(p);
+    combo->addItem(pixmap,tr("point_plus"));
+
+
+    pixmap.fill(Qt::white);
+    p=QPainterPath();
+    p.moveTo(13,8);
+    p.lineTo(27,8);
+    p.lineTo(27,22);
+    p.lineTo(13,22);
+    p.closeSubpath();
+    painter.setPen(QPen(Qt::black,2));
+    painter.drawPath(p);
+    combo->addItem(pixmap,tr("point_square"));
+
+    pixmap.fill(Qt::white);
+    combo->addItem(pixmap,tr("point_invisible"));
+
+
+    pixmap.fill(Qt::white);
+    p=QPainterPath();
+    p.moveTo(20,5);
+    p.lineTo(29,20);
+    p.lineTo(11,20);
+    p.closeSubpath();
+    painter.setPen(QPen(Qt::black,2));
+    painter.setBrush(QBrush());
+    painter.drawPath(p);
+    combo->addItem(pixmap,tr("point_triangle"));
+
+
+    pixmap.fill(Qt::white);
+    p=QPainterPath();
+    p.moveTo(20,5);
+    p.lineTo(20,25);
+    p.moveTo(13,8);
+    p.lineTo(27,22);
+    p.moveTo(27,8);
+    p.lineTo(13,22);
+    painter.setPen(QPen(Qt::black,2));
+    painter.drawPath(p);
+    combo->addItem(pixmap,tr("point_etoile"));
 
 
 
+    pixmap.fill(Qt::white);
+
+    p=QPainterPath();
+    painter.setPen(QPen(Qt::black,2));
+    painter.setBrush(Qt::SolidPattern);
+    painter.drawEllipse(QPoint(20,15),10,10);
+    combo->addItem(pixmap,tr("point_point"));
 
 
     hbox->addWidget(labelType);
     hbox->addWidget(combo);
     setLayout(hbox);
 
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
 }
 
 
-void TypePointPanel::updateCanvas(){
+void TypePointPanel::updateCanvas(int c){
+    for (int i=0;i<parent->getListItems()->count();++i){
+        parent->getListItems()->at(i)->setPointStyle(c);
+    }
+    parent->updateCanvas();
 
+}
+void TypePointPanel::setStyle(int c){
+    combo->setCurrentIndex(c);
+}
+
+TypeLinePanel::TypeLinePanel(const int t, DisplayProperties * p):QWidget(p){
+    type=t;
+    parent=p;
+    initGui();
+}
+void TypeLinePanel::initGui(){
+    QHBoxLayout* hbox=new  QHBoxLayout;
+    QLabel * labelType=new QLabel(tr("Style:"));
+    combo=new QComboBox;
+
+    combo->setIconSize(QSize(40,30));
+    QPixmap pixmap(40,30);
+    QPainterPath p;
+
+    QPainter painter(&pixmap);
+    pixmap.fill(Qt::white);
+    painter.setRenderHint(QPainter::Antialiasing,true);
+    painter.setPen(QPen(Qt::black,2));
+    painter.setBrush(QBrush(Qt::SolidPattern));
+    painter.drawLine(5,15,35,15);
+    combo->addItem(pixmap,tr("solid_line"));
+
+    pixmap.fill(Qt::white);
+    painter.setPen(QPen(Qt::black,2,Qt::DashLine));
+    painter.drawLine(5,15,35,15);
+    combo->addItem(pixmap,tr("dash_line"));
+
+    pixmap.fill(Qt::white);
+    painter.setPen(QPen(Qt::black,2,Qt::DotLine));
+    painter.drawLine(5,15,35,15);
+    combo->addItem(pixmap,tr("dot_line"));
+
+
+    pixmap.fill(Qt::white);
+    painter.setPen(QPen(Qt::black,2,Qt::DashDotLine));
+    painter.drawLine(5,15,35,15);
+    combo->addItem(pixmap,tr("dashdot_line"));
+
+    pixmap.fill(Qt::white);
+    painter.setPen(QPen(Qt::black,2,Qt::DashDotDotLine));
+    painter.drawLine(5,15,35,15);
+    combo->addItem(pixmap,tr("dashdotdot_line"));
+
+
+    pixmap.fill(Qt::white);
+    painter.setPen(QPen(Qt::black,2,Qt::SolidLine));
+    painter.fillRect(QRect(10,10,20,10),Qt::SolidPattern);
+    combo->addItem(pixmap,tr("cap_flat"));
+
+
+    pixmap.fill(Qt::white);
+    painter.setBrush(QBrush(QColor(0,0,0,100),Qt::SolidPattern));
+    painter.setPen(QPen(QColor(0,0,0,100),1,Qt::SolidLine));
+    painter.drawEllipse(QPoint(10,15),5,5);
+    painter.drawEllipse(QPoint(30,15),5,5);
+
+    painter.setPen(QPen(Qt::black,2,Qt::SolidLine));
+    painter.fillRect(QRect(10,10,20,10),Qt::SolidPattern);
+    combo->addItem(pixmap,tr("cap_round"));
+
+
+    pixmap.fill(Qt::white);
+    painter.setBrush(QBrush(QColor(0,0,0,100),Qt::SolidPattern));
+    painter.setPen(QPen(QColor(0,0,0,100),1,Qt::SolidLine));
+    painter.drawRect(5,10,30,10 );
+    painter.setPen(QPen(Qt::black,2,Qt::SolidLine));
+    painter.fillRect(10,10,20,10,Qt::SolidPattern);
+    combo->addItem(pixmap,tr("cap_square"));
+
+    hbox->addWidget(labelType);
+    hbox->addWidget(combo);
+    setLayout(hbox);
+
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+}
+
+
+void TypeLinePanel::updateCanvas(int c){
+    for (int i=0;i<parent->getListItems()->count();++i){
+        parent->getListItems()->at(i)->setStyle(c);
+    }
+    parent->updateCanvas();
+
+}
+void TypeLinePanel::setStyle(int c){
+    combo->setCurrentIndex(c);
 }
 

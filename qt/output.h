@@ -22,6 +22,11 @@ class DisplayProperties;
 class QTreeWidget;
 class QSlider;
 class QtMmlWidget;
+class WidthPanel;
+class TypePointPanel;
+class TypeLinePanel;
+class ColorPanel;
+class LegendPanel;
 class OutputWidget:public QWidget{
 public:
     OutputWidget(QWidget* widget=0);
@@ -77,6 +82,7 @@ public:
     QVector<MyItem*>* getFilledItem() const;
     void setFocusOwner(MyItem*);
     void updatePixmap(bool compute);
+    bool isFirstColorEvaluation() const;
 
 
 protected:
@@ -86,6 +92,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
 
 private:
+
     MyItem* focusOwner;
     // x,y range and units
     double xmin,xmax,ymin,ymax,xunit,yunit;
@@ -106,6 +113,9 @@ private:
     QPoint endSel;
     // The Pixmap on which all Items are drawn.
     QPixmap pixmap;
+    // The first translation for colors using fltk system
+    bool firstColorEvaluation;
+
 
     void setXYUnit();
     void createScene(const giac::gen &,giac::context*);
@@ -152,21 +162,29 @@ private slots:
 class DisplayProperties:public QWidget{
     Q_OBJECT
 public:
-    DisplayProperties(QList<MyItem*>*,Canvas2D* canvas);
+    DisplayProperties(Canvas2D* canvas);
     QVBoxLayout *vLayout;
     void updateCanvas();
     QList<MyItem*>* getListItems() const;
+    updateDisplayPanel(QList<MyItem*>*);
 
 private:
     Canvas2D* parent;
     QList<MyItem*>* listItems;
+    ColorPanel *colorPanel;
+    LegendPanel*legendPanel;
+    WidthPanel* widthPanel;
+    TypePointPanel* typePointPanel;
+    TypeLinePanel* typeLinePanel;
+
     void initGui();
+    bool checkForOnlyPoints();
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
 public:
-    ColorPanel(const QColor&,DisplayProperties* );
-//   QColor getColor() const;
+    ColorPanel(DisplayProperties* );
+   void setColor(const QColor &);
 private:
     DisplayProperties * parent;
     QColor color;
@@ -180,16 +198,19 @@ private slots:
 class LegendPanel:public QWidget{
     Q_OBJECT
 public:
-    LegendPanel(const bool, const QString&,DisplayProperties* );
+    LegendPanel(DisplayProperties *p );
     bool hasLegend() const;
+    void setLegend(const QString &);
+    void setChecked(bool);
 //    QString getlegend() const;
 private:
     DisplayProperties * parent;
-
-    QString legend;
+    QWidget* legendPanel;
     QCheckBox* legendCheck;
-    QLineEdit* legendEdit;
-    void initGui(bool);
+    QLineEdit *legendEdit;
+    QString legend;
+
+    void initGui();
 private slots:
     void updateCanvas();
 
@@ -198,7 +219,8 @@ private slots:
 class WidthPanel:public QGroupBox{
     Q_OBJECT
 public:
-    WidthPanel(const int,DisplayProperties* );
+    WidthPanel(DisplayProperties* );
+    void setWidth(const int);
 private:
     void initGui();
     DisplayProperties * parent;
@@ -213,14 +235,29 @@ class TypePointPanel:public QWidget{
     Q_OBJECT
 public:
     TypePointPanel(const int,DisplayProperties* );
-
+    void setStyle(int);
 private:
     void initGui();
     DisplayProperties * parent;
     int type;
     QComboBox *combo;
 private slots:
-    void updateCanvas();
+    void updateCanvas(int);
+
+
+};
+class TypeLinePanel:public QWidget{
+    Q_OBJECT
+public:
+    TypeLinePanel(const int,DisplayProperties* );
+    void setStyle(int);
+private:
+    void initGui();
+    DisplayProperties * parent;
+    int type;
+    QComboBox *combo;
+private slots:
+    void updateCanvas(int);
 
 };
 
