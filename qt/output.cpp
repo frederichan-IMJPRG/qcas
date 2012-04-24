@@ -577,9 +577,6 @@ QSize Canvas2D::sizeHint() const{
 }
 
 
-bool Canvas2D::isFirstColorEvaluation() const{
-    return firstColorEvaluation;
-}
 
 Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
     selection=false;
@@ -633,21 +630,16 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
     menuGeneral->addAction(zoomOut);
 
 
-    firstColorEvaluation=true;
     updatePixmap(true);
-    firstColorEvaluation=false;
 
    // Contextual menu
-   setContextMenuPolicy(Qt::CustomContextMenu);
-   connect(this,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(displayContextMenu(const QPoint&)));
-
+   setContextMenuPolicy(Qt::NoContextMenu);
 }
 
 
 void Canvas2D::zoom_In(){
-    QRect r(startSel,endSel);
 
-    if (selection&& r.width()>10&& r.width()>10){
+    if (selection){
         double tmpx,tmpy,tmpx2,tmpy2;
         toXY(startSel.x(),startSel.y(),tmpx,tmpy);
         toXY(endSel.x(),endSel.y(),tmpx2,tmpy2);
@@ -702,9 +694,9 @@ void Canvas2D::zoom_Out(){
 //void GraphWidget::zoom_Factor(const int &){}
 
 
-void Canvas2D::displayContextMenu(const QPoint &pos){
-//    menuGeneral->popup(this->mapToGlobal(pos));
-}
+//void Canvas2D::displayContextMenu(const QPoint &pos){
+//
+//}
 void Canvas2D::updatePixmap(bool compute){
     pixmap=QPixmap(size());
     pixmap.fill(this,0,0);
@@ -898,11 +890,15 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
 void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
     Qt::MouseButton b=e->button();
     if (b==Qt::RightButton&& selection) {
-            endSel=e->pos();
-            setMouseTracking(true);
-            zoom_In();
-            selection=false;
+                endSel=e->pos();
+                setMouseTracking(true);
+                QRect r(startSel,endSel);
+                if (selection&& std::abs(r.width())>10&& std::abs(r.height())>10){
+                    zoom_In();
+                }
+                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
 
+                selection=false;
     }
     else if (b==Qt::LeftButton){
         if (focusOwner!=0){

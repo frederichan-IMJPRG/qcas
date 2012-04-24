@@ -82,7 +82,6 @@ public:
     QVector<MyItem*>* getFilledItem() const;
     void setFocusOwner(MyItem*);
     void updatePixmap(bool compute);
-    bool isFirstColorEvaluation() const;
 
 
 protected:
@@ -113,8 +112,6 @@ private:
     QPoint endSel;
     // The Pixmap on which all Items are drawn.
     QPixmap pixmap;
-    // The first translation for colors using fltk system
-    bool firstColorEvaluation;
 
 
     void setXYUnit();
@@ -126,7 +123,6 @@ private:
     bool checkUnderMouse(QVector<MyItem*>* v, const QPointF &);
 
 private slots:
-    void displayContextMenu(const QPoint & );
     void zoom_In();
     void zoom_Out();
 //    void zoom_Factor(const int&);
