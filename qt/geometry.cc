@@ -12,13 +12,6 @@ MyItem::MyItem(Canvas2D *graph){
 
 
 }
-void MyItem::setColor(QColor &c ){
-    int r=c.red()/16;
-    int g=c.green()/16;
-    int b=c.blue()/16;
-    int alpha=c.alpha()/16;
-    attributes=(0xffff0000&attributes)+(r<<12)+(g<<8)+(b<<4)+alpha;
-}
 
 void MyItem::setHighLighted(const bool &b){
     highLighted=b;
@@ -42,6 +35,9 @@ bool MyItem::isCurve() const{
 }
 bool MyItem::isCircle() const{
     return false;
+}
+bool MyItem::isPixel() const{
+        return false;
 
 }
 void MyItem::setWidth(const int w){
@@ -61,7 +57,7 @@ void MyItem::setLegendVisible(const bool b){
     }
     else attributes=-std::abs(attributes);
 
-    qDebug()<<attributes<< "après click";
+//    qDebug()<<attributes<< "après click";
 }
 
 void MyItem::setPointStyle(const int c){
@@ -266,12 +262,18 @@ QColor arcenciel(int k){
       }
       return QColor(r,g,b);
 }
+void MyItem::setColor(QColor &c ){
+    int r=c.red()/16;
+    int g=c.green()/16;
+    int b=c.blue()/16;
+    int alpha=c.alpha()/32;
+
+    attributes=(0xffff0000&attributes)+(1<<15)+(alpha<<12)+(r<<8)+(g<<4)+b;
+}
 
 QColor MyItem::getColor() const{
     int color=(attributes & 0x0000ffff);
-
-    if (g2d->isFirstColorEvaluation()){
-        qDebug()<<"couleur"<<color;
+    if (0==(color>>15)){
         if (color<256){
             QColor tmp=getFltkColor(color);
             setColor(tmp);
@@ -284,14 +286,14 @@ QColor MyItem::getColor() const{
 
         }
     }
-    int r=(color>>12)*16;
-    int g=((color& 0x0f00)>>8)*16;
-    int b=((color&0x00f0)>>4)*16;
-    int alpha=255; //(color&0x000f)*16;
+    int r=((color& 0x0f00)>>8)*16;
+    int g=((color&0x00f0)>>4)*16;
+    int b=(color&0x000f)*16;
+    int alpha=((color& 0x7000)>>12)*32+31; //(color&0x000f)*16;
     return QColor(r,g,b,alpha);
 
 }
-Point::Point(const int a,const int b,Canvas2D* graph):MyItem(graph){
+Point::Point(const double a,const double b,Canvas2D* graph):MyItem(graph){
     x=a;
     y=b;
 }
@@ -393,8 +395,8 @@ void Point::draw(QPainter * painter) const{
         break;
     case giac::_POINT_POINT:
     {
-        painter->setBrush(QBrush(getColor(),Qt::SolidPattern));
-        painter->drawEllipse(QPointF(xScreen,yScreen),width,width);
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->drawEllipse(QPointF(xScreen,yScreen),width-2,width-2);
     }
 
         break;
@@ -790,4 +792,36 @@ QString Circle::getType() const{
 
 bool Circle::isUnderMouse(const QRectF &p) const{
     return envelop.intersects(p);
+}
+Pixel::Pixel(const QPointF &p, const Canvas2D * parent):MyItem(parent){
+    pixelScreen=p;
+    double x,y;
+    g2d->toXY(p.x(),p.y(),x,y);
+    pixel=QPointF(x,y);
+
+}
+bool Pixel::isUnderMouse(const QRectF &p) const{
+    return false;
+}
+
+QString Pixel::getType() const{
+    return QObject::tr("Pixel");
+}
+bool Pixel::isPixel() const{
+    return true;
+}
+
+void Pixel::updateScreenCoords(const bool compute){
+    if (compute){
+        double x,y;
+        g2d->toScreenCoord(pixel.x(),pixel.y(),x,y);
+        pixelScreen=QPointF(x,y);
+
+    }
+}
+
+void Pixel::draw(QPainter * p) const{
+    p->setPen(getColor());
+    p->drawPoint((int)pixelScreen.x(),(int)pixelScreen.y());
+
 }

@@ -251,28 +251,27 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         } // end circle
 
         else if (point._SYMBptr->sommet==at_pixon){
-/*          // pixon (i,j,color)
+        //    pixon (i,j,color)
           if (point._SYMBptr->feuille.type!=_VECT)
             return;
           vecteur &v=*point._SYMBptr->feuille._VECTptr;
-          if (v.size()<3 || v[0].type!=_INT_ || v[1].type!=_INT_ || v[2].type!=_INT_)
+          if (v.size()<3 ||  v[2].type!=_INT_)
             return;
-          int delta_i=v[0].val,delta_j=v[1].val;
-          xcas_color(v[2].val);
-#ifdef IPAQ
-          if (delta_i>0 && delta_i<mxw && delta_j>0 && delta_j<myw)
-            check_fl_point(+delta_i,deltay+delta_j,clip_x,clip_y,clip_w,clip_h,0,0);
-#else
-          delta_i *= 2;
-          delta_j *= 2;
-          if (delta_i>0 && delta_i<mxw && delta_j>0 && delta_j<myw){
-            check_fl_point(deltax+delta_i,deltay+delta_j,clip_x,clip_y,clip_w,clip_h,0,0);
-            check_fl_point(deltax+delta_i,deltay+delta_j+1,clip_x,clip_y,clip_w,clip_h,0,0);
-            check_fl_point(deltax+delta_i+1,deltay+delta_j,clip_x,clip_y,clip_w,clip_h,0,0);
-            check_fl_point(deltax+delta_i+1,deltay+delta_j+1,clip_x,clip_y,clip_w,clip_h,0,0);
+          if (v[0].type!=_INT_ || v[1].type!=_INT_){
+              double delta_i=v[0]._DOUBLE_val,delta_j=v[1]._DOUBLE_val;
+              Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
+              pix->setAttributes(v[2].val);
+              filledItems.append(pix);
+
           }
-#endif
-          return;*/
+          else{
+              int delta_i=v[0].val,delta_j=v[1].val;
+              Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
+              pix->setAttributes(v[2].val);
+              filledItems.append(pix);
+
+          }
+          return;
         }
         else if (point._SYMBptr->sommet==at_bitmap){
          /*
@@ -351,9 +350,12 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       } // end point.type==_SYMB
       if (point.type!=_VECT){ // single point
           gen e,f0,f1;
+
           evalfdouble2reim(point,e,f0,f1,context);
+
           if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
-               Point* pt=new Point(f0._DOUBLE_val,f1._DOUBLE_val,this);
+
+              Point* pt=new Point(f0._DOUBLE_val,f1._DOUBLE_val,this);
                pt->setAttributes(ensemble_attributs);
                pt->setLegend(QString::fromStdString(the_legend));
                pointItems.append(pt);
@@ -590,8 +592,13 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
        bool ortho=giac::autoscaleg(g,vx,vy,vz,context);
        giac::autoscaleminmax(vx,xmin,xmax);
        giac::autoscaleminmax(vy,ymin,ymax);
+
        setXYUnit();
-//       qDebug()<<xmin,xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
+       if (ymin==ymax||xmin==xmax){
+        xmin=-5;ymin=-5;xmax=5;ymax=5;
+         setXYUnit();
+       }
+//       qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
 
       createScene(g,context);
 
@@ -642,10 +649,6 @@ void Canvas2D::zoom_In(){
 
     if (selection&& r.width()>10&& r.width()>10){
         double tmpx,tmpy,tmpx2,tmpy2;
-/*        qDebug()<<"debut";
-        qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit;
-        qDebug()<<startSel<<endSel;
-*/
         toXY(startSel.x(),startSel.y(),tmpx,tmpy);
         toXY(endSel.x(),endSel.y(),tmpx2,tmpy2);
 
@@ -1030,6 +1033,7 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
 
     for (int i=0;i<v->size();++i){
         MyItem* item=v->at(i);
+        if (item->isPixel()) continue;
 
         if (item->isPoint()){
            nodePoint->addChild(item->getTreeItem());

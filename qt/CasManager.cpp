@@ -243,7 +243,7 @@ void CasManager::info(giac::gen & gg,int decal) const{
 
     }
 OutputWidget* CasManager::createDisplay(){
-    info(answer,0);
+//    info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();
@@ -311,9 +311,9 @@ OutputWidget* CasManager::formula2Widget(const QString &mathml){
     m.append("\n</math>");
 
 
-    qDebug()<<"----------------------";
-    qDebug()<<m;
-    qDebug()<<"----------------------";
+//    qDebug()<<"----------------------";
+//    qDebug()<<m;
+//    qDebug()<<"----------------------";
 
     QtMmlWidget *mmlWidget=new QtMmlWidget;
 

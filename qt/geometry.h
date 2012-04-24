@@ -20,6 +20,7 @@ public:
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
   virtual bool isCircle() const;
+  virtual bool isPixel() const;
 
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
@@ -64,7 +65,7 @@ protected:
 };
 class Point:public MyItem{
 public:
-    Point(const int x,const int y,Canvas2D*);
+    Point(const double x,const double y,Canvas2D*);
     double getX();
     double getY();
     virtual bool isPoint() const;
@@ -168,7 +169,22 @@ private:
     double endAngle;
     QPainterPath p;
     QPainterPath envelop;
-
-
 };
+
+class Pixel:public MyItem{
+public:
+    Pixel(const QPointF & , const Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual bool isPixel() const;
+    virtual QString getType() const;
+
+private:
+    QPointF pixel;
+    QPointF pixelScreen;
+};
+
+
+
 #endif // GEOMETRY_H
