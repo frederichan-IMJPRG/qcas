@@ -101,8 +101,10 @@ EvaluationThread::warning CasManager::initExpression(const QString *str){
 }
 
 void CasManager::evaluate(){
+    giac::ctrl_c=true;
 
     answer=protecteval(expression,25,context);
+
 
     // Add result to history
     giac::history_in(context).push_back(expression);
@@ -121,7 +123,7 @@ void CasManager::killThread(){
 }
 
 
-QString CasManager::displayType(int c){
+QString CasManager::displayType(int c) const{
     switch(c){
     case 0:
         return "_INT";
@@ -167,7 +169,7 @@ QString CasManager::displayType(int c){
 
 }
 
-QString CasManager::displaySubType(int c){
+QString CasManager::displaySubType(int c) const{
     switch(c){
     case 1:
         return "_SEQ__VECT";
@@ -243,7 +245,7 @@ void CasManager::info(giac::gen & gg,int decal) const{
 
     }
 OutputWidget* CasManager::createDisplay(){
-//    info(answer,0);
+    info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

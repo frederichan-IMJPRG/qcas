@@ -934,10 +934,26 @@ namespace giac {
       return res;
     }
 #else
+#if !defined(WIN32) && defined HAVE_PTHREAD_H
+    if (contextptr){
+      // cerr << &slevel << " " << thread_param_ptr(contextptr)->stackaddr << endl;
+      if ( ((unsigned long) &res) < ((unsigned long) thread_param_ptr(contextptr)->stackaddr)+8192){
+	gensizeerr("Too many recursion levels",res); // two many recursion levels
+	return res;
+      }
+    }
+    else {
+      if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL+1){
+	gensizeerr("Too many recursions",res);
+	return res;
+      }
+    }
+#else
     if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL+1){
       gensizeerr("Too many recursions",res);
       return res;
     }
+#endif
 #endif
     dbgptr->sst_at_stack.push_back(dbgptr->sst_at);
     dbgptr->sst_at.clear();
@@ -5195,7 +5211,8 @@ namespace giac {
     gen tmp=check_secure();
     if (is_undef(tmp)) return tmp;
     if (args.type==_VECT){
-      vecteur & v=*args._VECTptr;
+      vecteur v=*args._VECTptr;
+      v.front()=eval(v.front(),eval_level(contextptr),contextptr);
       if (v.size()<2 || v.front().type!=_STRNG)
 	return gensizeerr(contextptr);
       ofstream inf(v[0]._STRNGptr->c_str());

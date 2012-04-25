@@ -64,6 +64,13 @@ namespace giac {
   define_unary_function_ptr5( at_moyal ,alias_at_moyal,&__moyal,0,true);
 
   gen Beta(const gen & a,const gen& b,GIAC_CONTEXT){
+    if (a.type==_DOUBLE_ || b.type==_DOUBLE_ ||
+	a.type==_FLOAT_ || b.type==_FLOAT_ ||
+	a.type==_CPLX || b.type==_CPLX ){
+      gen A=evalf_double(a,1,contextptr);
+      gen B=evalf_double(b,1,contextptr);
+      return exp(lngamma(A,contextptr)+lngamma(B,contextptr)-lngamma(A+B,contextptr),contextptr);
+    }
     return Gamma(a,contextptr)*Gamma(b,contextptr)/Gamma(a+b,contextptr);
   }
   gen _Beta(const gen & args,GIAC_CONTEXT){
@@ -247,7 +254,7 @@ namespace giac {
     if (k.type==_DOUBLE_ || k.type==_FLOAT_ || k.type==_FRAC)
       return binomial(n,p,k,contextptr);
     if (p.type==_DOUBLE_ || p.type==_FLOAT_){
-#ifdef VISUALC
+#if 0 //def VISUALC
       gen nd=evalf2bcd(n,1,contextptr);
       gen kd=evalf2bcd(k,1,contextptr);
       gen pd=evalf2bcd(p,1,contextptr);
@@ -260,7 +267,7 @@ namespace giac {
       gen pd=evalf_double(p,1,contextptr);
       if (nd.type==_DOUBLE_ && kd.type==_DOUBLE_ && pd.type==_DOUBLE_){
 	double ndd=nd._DOUBLE_val,kdd=kd._DOUBLE_val,pdd=pd._DOUBLE_val,nk=ndd-kdd;
-	return std::exp(lgamma(ndd+1)-lgamma(kdd+1)-lgamma(nk+1)+kdd*std::log(pdd)+nk*std::log(1-pdd));
+	return std::exp(lngamma(ndd+1)-lngamma(kdd+1)-lngamma(nk+1)+kdd*std::log(pdd)+nk*std::log(1-pdd));
       }
 #endif
     }
@@ -282,6 +289,54 @@ namespace giac {
   static define_unary_function_eval (__binomial,&_binomial,_binomial_s);
   define_unary_function_ptr5( at_binomial ,alias_at_binomial,&__binomial,0,true);
 
+  gen incomplete_beta(int a,int b,double p){
+    // I_p(a,b)=1/B(a,b)*int(t^(a-1)*(1-t)^(b-1),t=0..p)
+    // =p^a*(1-p)^(b-1)/B(a,b)*continued fraction expansion
+    // 1/(1+e2/(1+e3/(1+...)))
+    // e_2m=-(a+m-1)*(b-m)/(a+2*m-2)/(a+2*m-1)*(x/(1-x))
+    // e_2m+1= m*(a+b-1+m)/(a+2*m-1)/(a+2*m)*(x/(1-x))
+    // assumes p in [0,1]
+    if (p<=0)
+      return 0;
+    if (a<=0 || b<=0)
+      return 1;
+    // add here test for returning 1 if b>>a
+    if (p>a/double(a+b))
+      return 1-incomplete_beta(b,a,1-p);
+    // Continued fraction expansion: a1/(b1+a2/(b2+...)))
+    // P0=1, P1=a1, Q0=1, Q1=b1
+    // j>=2: Pj=bj*Pj-1+aj*Pj-2, Qj=bj*Qj-1+aj*Qj-2
+    // Here bm=1, am=em, etc.
+    long double Pm2=0,Pm1=1,Pm,Qm2=1,Qm1=1,Qm,am,x=p/(1-p);
+    for (long double m=1;m<100;++m){
+      // odd term
+      am=-(a+m-1)*(b-m)/(a+2*m-2)/(a+2*m-1)*x;
+      Pm=Pm1+am*Pm2;
+      Qm=Qm1+am*Qm2;
+      Pm2=Pm1; Pm1=Pm;
+      Qm2=Qm1; Qm1=Qm;
+      // even term
+      am=m*(a+b-1+m)/(a+2*m-1)/(a+2*m)*x;
+      Pm=Pm1+am*Pm2;
+      Qm=Qm1+am*Qm2;
+      // cerr << Pm/Qm << " " << Pm2/Qm2 << endl;
+      if (std::abs(Pm/Qm-Pm2/Qm2)<1e-16){
+	double res=Pm/Qm;
+#if 0 // def VISUALC // no lgamma available
+	gen r=res/a*std::pow(p,a)*std::pow(1-p,b-1);
+	r=r*Gamma(a+b,context0)/Gamma(a,context0)/Gamma(b,context0);
+	return r;
+#else
+	res = res/a*std::exp(a*std::log(p)+(b-1)*std::log(1-p)+lngamma(a+b)-lngamma(a)-lngamma(b));
+	return res;
+#endif
+      }	
+      Pm2=Pm1; Pm1=Pm;
+      Qm2=Qm1; Qm1=Qm;
+    }
+    return undef; //error
+  }
+
   gen binomial_cdf(const gen & n,const gen &p,const gen & x0,const gen & x,GIAC_CONTEXT){
     gen fx=_floor(x,contextptr),fx0=_ceil(x0,contextptr);
     if (fx.type==_FLOAT_)
@@ -294,6 +349,38 @@ namespace giac {
       return 0;
     gen pd=p;
     if (pd.type==_FLOAT_) pd=evalf_double(p,1,contextptr);
+    if (n.type==_INT_ && pd.type==_DOUBLE_ && (fx.val-fx0.val)>100){
+      // improve if n large using Abramowitz-Stegun p. 944-945
+      // [Not very useful, perhaps for much larger values?]
+      // sum(binomial(n,p,k),k=a..n)=Ip(a,n-a+1)
+      // hence binomial_cdf(n,p,fx0,fx)=Ip(fx0,n-fx0+1)-Ip(fx+1,n-(fx+1)+1)
+      // If more than 100 terms to compute use
+      // I_p(a,b)=p^a*(1-p)^b/a/B(a,b)*[1+sum(B(a+1,n+1)/B(a+b,n+1)*p^(n+1))]
+      // B(a,b)=Gamma(a)*Gamma(b)/Gamma(a+b)
+      double p=pd._DOUBLE_val;
+      gen res;
+      if (fx0.val<=0){
+	if (fx.val>=n.val)
+	  return 1;
+	res=1-incomplete_beta(fx.val+1,n.val-fx.val,p);
+      }
+      else {
+	if (fx.val>=n.val)
+	  res=incomplete_beta(fx0.val,n.val-fx0.val+1,p);
+	else
+	  res=incomplete_beta(fx0.val,n.val-fx0.val+1,p)-incomplete_beta(fx.val+1,n.val-fx.val,p);
+      }
+      if (!is_undef(res))
+	return res;
+      // Other formula
+      // n=a+b-1
+      // I_{1-p}(b,a)=sum(i=0,a-1,comb(a+b-1,i)*p^i*(1-p)^(a+b-1-i)=binomial_cdf(a+b-1,p,0,a-1)
+      // I_p(a,b)=1-I_{1-p}(b,a)
+      // I_{1-p}(b,a)= Gamma(b,y)/Gamma(b)-1/24/N^2*y^b*exp(-y)/(b-2)!*(b+1+y) +
+      //   +1/5760/N^4*y^b*exp(-y)/(b-2)!*[(b-3)*(b-2)*(5*b+7)*(b+1+y)-(5b-7)*(b+3+y)*y^2]
+      // N=a+b/2-1/2, y=-N*ln(p), a>>b
+      // Gamma(b,y) = y^(b-1)*exp(-y)*(1+(b-1)/y+(b-1)*(b-2)/y^2+...)
+    }
     gen last=binomial(n,fx0.val,pd,contextptr);
     if (last.type==_FLOAT_)
       last=evalf_double(last,1,contextptr);

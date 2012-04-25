@@ -77,7 +77,7 @@ void MyItem::setStyle(const int c) {
 }
 double MyItem::getAngleLegend() const{
     if (angleLegend==-1){
-        qDebug()<<    "quadrant"    <<((attributes & 0x30000000)>>28);
+        qDebug()<<    "quadrant"    <<1+((attributes & 0x30000000)>>28);
         return ((attributes & 0x30000000)>>28)*3.14159/2+3.14159/4;
     }
     else return angleLegend;
@@ -111,11 +111,11 @@ Qt::PenStyle MyItem::getLineType(){
     return Qt::SolidLine;
 
 }
-int MyItem::getPenWidth(){
+int MyItem::getPenWidth() const{
     return ((attributes & 0x00070000) >> 16);
 }
 bool MyItem::legendVisible()const{
-    return (attributes>0);
+    return (attributes>=0);
 }
 void MyItem::setAttributes(const int& c){
     attributes=c;
@@ -123,7 +123,7 @@ void MyItem::setAttributes(const int& c){
 ////////////////////////////////////////////////////////////////
 
 
-QColor MyItem::getFltkColor(int& c){
+QColor MyItem::getFltkColor(int& c) const{
     if (c<16){
         switch(c){
            case 0:
@@ -262,7 +262,7 @@ QColor arcenciel(int k){
       }
       return QColor(r,g,b);
 }
-void MyItem::setColor(QColor &c ){
+void MyItem::setColor(const QColor &c ){
     int r=c.red()/16;
     int g=c.green()/16;
     int b=c.blue()/16;
@@ -276,12 +276,12 @@ QColor MyItem::getColor() const{
     if (0==(color>>15)){
         if (color<256){
             QColor tmp=getFltkColor(color);
-            setColor(tmp);
+          //  setColor(tmp);
             return tmp;
         }
         else if (color<0x17e ){
             QColor tmp=arcenciel(color);
-            setColor(tmp);
+            //setColor(tmp);
             return tmp;
 
         }
@@ -297,7 +297,7 @@ Point::Point(const double a,const double b,Canvas2D* graph):MyItem(graph){
     x=a;
     y=b;
 }
-int Point::getPenWidth(){
+int Point::getPenWidth() const{
     return ((attributes& 0x00380000) >> 19);
 }
 double Point::getX() {
@@ -327,7 +327,6 @@ void Point::updateScreenCoords(const bool compute){
 }
 
 void Point::draw(QPainter * painter) const{
-
     int width=getPenWidth()+3;
     QColor color=getColor();
 
@@ -417,25 +416,24 @@ void Point::draw(QPainter * painter) const{
 
     if (legendVisible()){
         if (legend.trimmed().isEmpty()) return;
-        int h=painter->fontMetrics().height();
+        int h=painter->fontMetrics().ascent();
         int w=painter->fontMetrics().width(legend);
-
         double angle=getAngleLegend();
-        qDebug()<<angle<<"angle";
-        QPointF p(xScreen+10*std::cos(angle),yScreen-10*sin(angle));
-        if (0<angle<3.14159/2){
-            painter->drawText(p.x(),p.y()-h,legend);
-        }
-        else if (3.14159/2<=angle<3.14159){
-            painter->drawText(p.x()-w,p.y()-h,legend);
 
+        QPointF p(xScreen+10*std::cos(angle),yScreen-10*sin(angle));
+        if ((0<angle)&&(angle<3.14159/2)){
+            painter->drawText(p.x(),p.y(),legend);
         }
-        else if (3.14159<=angle<3*3.14159/2){
+        else if ((3.14159/2<=angle)&&(angle<3.14159)){
             painter->drawText(p.x()-w,p.y(),legend);
 
         }
+        else if ((3.14159<=angle)&&(angle<3*3.14159/2)){
+            painter->drawText(p.x()-w,p.y()+h,legend);
+
+        }
         else{
-            painter->drawText(p.x(),p.y(),legend);
+            painter->drawText(p.x(),p.y()+h,legend);
 
         }
 
@@ -443,7 +441,7 @@ void Point::draw(QPainter * painter) const{
 }
 
 
-int Point::getPointStyle(){
+int Point::getPointStyle() const{
     return (attributes & 0x0e000000);
 
 }
@@ -736,7 +734,7 @@ void Curve::setPolygon(const bool & b){
     polygon=b;
 }
 
-Circle::Circle(const QPointF &p, const double &d, const double &st, const double &end, const Canvas2D *graph):MyItem(graph){
+Circle::Circle(const QPointF &p, const double &d, const double &st, const double &end, Canvas2D *graph):MyItem(graph){
     center=p;
     diametre=d;
     startAngle=st*180/3.14159;
@@ -793,7 +791,7 @@ QString Circle::getType() const{
 bool Circle::isUnderMouse(const QRectF &p) const{
     return envelop.intersects(p);
 }
-Pixel::Pixel(const QPointF &p, const Canvas2D * parent):MyItem(parent){
+Pixel::Pixel(const QPointF &p, Canvas2D * parent):MyItem(parent){
     pixelScreen=p;
     double x,y;
     g2d->toXY(p.x(),p.y(),x,y);

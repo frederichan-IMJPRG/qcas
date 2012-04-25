@@ -1254,7 +1254,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   int TRY_FU_UPRIME=5;
   int SOLVER_MAX_ITERATE=25;
   int MAX_PRINTABLE_ZINT=1000000;
-  int MAX_RECURSION_LEVEL=50;
+  int MAX_RECURSION_LEVEL=100;
   const int BUFFER_SIZE=16384;
 #endif
   bool ctrl_c=false,interrupted=false;
@@ -2244,7 +2244,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     bool url=false;
     if (file.substr(0,4)=="http"){
       url=true;
-      s=file;
+      s="'"+file+"'";
     }
     else {
       if (file[0]!='/'){
@@ -2461,6 +2461,11 @@ extern "C" void Sleep(unsigned int miliSecond);
     case 8:
       return "zh/";
       break;
+      /*
+    case 9:
+      return "de/";
+      break;
+      */
     default:
       return "local/";
     }  
@@ -2494,6 +2499,11 @@ extern "C" void Sleep(unsigned int miliSecond);
     case 8:
       return "doc/zh/";
       break;
+      /*
+    case 9:
+      return "doc/de/";
+      break;
+      */
     default:
       return "doc/local/";
     }  
@@ -2597,6 +2607,8 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (s=="tr")
       return 7;
     if (s=="zh")
+      return 8;
+    if (s=="de")
       return 8;
     return 0;
   }
@@ -2999,6 +3011,9 @@ extern "C" void Sleep(unsigned int miliSecond);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
     vecteur *v = (vecteur *) arg;
     context * contextptr=(context *) (*v)[2]._POINTER_val;
+    thread_param * ptr =thread_param_ptr(contextptr);
+    pthread_attr_getstacksize(&ptr->attr,&ptr->stacksize);
+    ptr->stackaddr=(void *) ((unsigned long) &ptr-ptr->stacksize);
 #ifndef __MINGW_H
     struct tms tmp1,tmp2;
     times(&tmp1);
@@ -3038,7 +3053,8 @@ extern "C" void Sleep(unsigned int miliSecond);
     ptr->f=f;
     ptr->f_param=f_param;
     thread_eval_status(1,contextptr);
-    int cres=pthread_create (&ptr->eval_thread, (pthread_attr_t *) NULL, in_thread_eval,(void *)&ptr->v);
+    pthread_attr_init(&ptr->attr);
+    int cres=pthread_create (&ptr->eval_thread, &ptr->attr, in_thread_eval,(void *)&ptr->v);
     if (cres){
       thread_eval_status(0,contextptr);
       pthread_mutex_unlock(mutexptr(contextptr));
@@ -3417,8 +3433,8 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (d>=maxdouble || d<=-maxdouble)
       return d;
     if (d<0)
-      return int(d);
-    double k=int(d);
+      return longlong(d);
+    double k=longlong(d);
     if (k==d)
       return k;
     else

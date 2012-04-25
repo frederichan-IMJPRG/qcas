@@ -47,6 +47,12 @@ namespace giac {
   extern const unary_function_ptr * const  at_solve ;
   gen in_fsolve(vecteur & v,GIAC_CONTEXT);
   gen _fsolve(const gen & args,GIAC_CONTEXT);
+  // also sets iszero to -2 if endpoints have same sign, -1 if err or undef
+  // 1 if zero found, 2 if sign reversal (no undef),
+  // set iszero to 0 on entry if only one root
+  // set to -1 or positive if you want many sign reversals 
+  // -1 means no step specified, positive means nstep specified
+  vecteur bisection_solver(const gen & equation,const gen & var,const gen & a0,const gen &b0,int & iszero,GIAC_CONTEXT);
   // FIXME: implement msolve without GSL 
   // gen msolve(const gen & f,const vecteur & vars,const vecteur & g,int method,double eps,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_fsolve ;

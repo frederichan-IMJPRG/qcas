@@ -1426,7 +1426,7 @@ namespace giac {
       tmp=symbolic(at_prod,res);
     else {
       tmp=res->v.front();
-      delete res;
+      delete_ref_vecteur(res);
     }
     return negatif?-tmp:tmp;
   }
@@ -1438,7 +1438,7 @@ namespace giac {
       return gensizeerr(gettext("sym2poly/r2sym(const gen & e,const index_m & i,const vecteur & l)"));
     vecteur::const_iterator l_it=l.begin();
     index_t::const_iterator it=i.begin(),itend=i.end();
-    ref_vecteur * res=new ref_vecteur;
+    ref_vecteur * res=new_ref_vecteur(0);
     res->v.reserve(itend-it+1);
     bool negatif=false;
     if (!is_one(e) || (e.type==_MOD) ){
@@ -1455,7 +1455,7 @@ namespace giac {
 	res->v.push_back(pow(*l_it,*it));
     }
     if (res->v.empty()){
-      delete res;
+      delete_ref_vecteur(res);
       return e;
     }
     return niceprod(res,negatif);
@@ -1466,7 +1466,7 @@ namespace giac {
     monomial_v::const_iterator itend=p.coord.end();
     if (itend-it==1)
       return r2sym(it->value,it->index,l,contextptr);
-    ref_vecteur * res=new ref_vecteur;
+    ref_vecteur * res=new_ref_vecteur(0);
     res->v.reserve(itend-it);
     for (;it!=itend;++it){
       res->v.push_back(r2sym(it->value,it->index,l,contextptr)) ;
@@ -1518,7 +1518,7 @@ namespace giac {
 
   gen r2sym(const vecteur & v,const vecteur & l,GIAC_CONTEXT){
     const_iterateur it=v.begin(),itend=v.end();
-    ref_vecteur * res=new ref_vecteur;
+    ref_vecteur * res=new_ref_vecteur(0);
     res->v.reserve(itend-it);
     for (;it!=itend;++it)
       res->v.push_back(r2sym(*it,l,contextptr));

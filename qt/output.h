@@ -1,8 +1,8 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
-#include <QWidget>
 #include "geometry.h"
 #include "giac/gen.h"
+#include <QWidget>
 #include <QVector>
 #include <QDomElement>
 #include <QPixmap>
@@ -57,7 +57,7 @@ class GraphWidget:public OutputWidget{
     Canvas2D* canvas;
     PanelProperties * propPanel;
 
-    initGui();
+    void initGui();
 };
 
 
@@ -77,9 +77,9 @@ public:
     double getXmax() const ;
     double getYmin() const;
     double getYmax() const;
-    QVector<MyItem*>* getPointItem() const;
-    QVector<MyItem*>* getLineItem() const;
-    QVector<MyItem*>* getFilledItem() const;
+    QVector<MyItem*>* getPointItem();
+    QVector<MyItem*>* getLineItem();
+    QVector<MyItem*>* getFilledItem();
     void setFocusOwner(MyItem*);
     void updatePixmap(bool compute);
 
@@ -103,7 +103,7 @@ private:
     QMenu * menuGeneral;
     QAction* zoomIn;
     QAction* zoomOut;
-    QAction* ratio;
+    QAction* orthoAction;
 
     GraphWidget *parent;
     // To draw a rectangle selection
@@ -125,7 +125,8 @@ private:
 private slots:
     void zoom_In();
     void zoom_Out();
-//    void zoom_Factor(const int&);
+    void make_ortho();
+    //    void zoom_Factor(const int&);
 };
 
 class PanelProperties:public QWidget{
@@ -148,7 +149,7 @@ private:
 
     QHash<QTreeWidgetItem*,MyItem*> nodeLinks;
     QHBoxLayout*  hbox;
-    DisplayProperties* displayPanel=0;
+    DisplayProperties* displayPanel;
     void fillTree(QVector<MyItem*>* );
     void initGui();
 private slots:
@@ -162,7 +163,7 @@ public:
     QVBoxLayout *vLayout;
     void updateCanvas();
     QList<MyItem*>* getListItems() const;
-    updateDisplayPanel(QList<MyItem*>*);
+    void updateDisplayPanel(QList<MyItem*>*);
 
 private:
     Canvas2D* parent;
@@ -174,7 +175,8 @@ private:
     TypeLinePanel* typeLinePanel;
 
     void initGui();
-    bool checkForOnlyPoints();
+    bool checkForOnlyPoints() const;
+    bool checkForOnlyLines() const;
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
@@ -196,7 +198,7 @@ class LegendPanel:public QWidget{
 public:
     LegendPanel(DisplayProperties *p );
     bool hasLegend() const;
-    void setLegend(const QString &);
+    void setLegend(const bool &,const QString & s="");
     void setChecked(bool);
 //    QString getlegend() const;
 private:

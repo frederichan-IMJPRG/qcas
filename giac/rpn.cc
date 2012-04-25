@@ -80,6 +80,71 @@ namespace giac {
   string printasconstant(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     return sommetstr;
   }
+#ifdef RTOS_THREADX
+  gen return_undef(const gen &,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _rpn_s []="rpn";
+  static define_unary_function_eval2 (__rpn,&return_undef,_rpn_s,&printasconstant);
+  define_unary_function_ptr5( at_rpn ,alias_at_rpn ,(unary_function_eval*)&__rpn,0,true);
+
+  static const char _alg_s []="alg";
+  static define_unary_function_eval2 (__alg,&return_undef,_alg_s,&printasconstant);
+  define_unary_function_ptr5( at_alg ,alias_at_alg ,(unary_function_eval *)&__alg,0,true);
+
+  static const char _ROLL_s []="ROLL";
+  static define_unary_function_eval (__ROLL,&return_undef,_ROLL_s);
+  define_unary_function_ptr( at_ROLL ,alias_at_ROLL ,&__ROLL);
+
+  static const char _ROLLD_s []="ROLLD";
+  static define_unary_function_eval (__ROLLD,&return_undef,_ROLLD_s);
+  define_unary_function_ptr( at_ROLLD ,alias_at_ROLLD ,&__ROLLD);
+
+  static const char _SWAP_s []="SWAP";
+  static define_unary_function_eval (__SWAP,&return_undef,_SWAP_s);
+  define_unary_function_ptr5( at_SWAP ,alias_at_SWAP ,&__SWAP,0,T_RPN_OP);
+
+  static const char _DUP_s []="DUP";
+  static define_unary_function_eval (__DUP,&return_undef,_DUP_s);
+  define_unary_function_ptr5( at_DUP ,alias_at_DUP ,&__DUP,0,T_RPN_OP);
+
+  static const char _OVER_s []="OVER";
+  static define_unary_function_eval (__OVER,&return_undef,_OVER_s);
+  define_unary_function_ptr5( at_OVER ,alias_at_OVER ,&__OVER,0,T_RPN_OP);
+
+  static const char _PICK_s []="PICK";
+  static define_unary_function_eval (__PICK,&return_undef,_PICK_s);
+  define_unary_function_ptr5( at_PICK ,alias_at_PICK ,&__PICK,0,T_RPN_OP);
+
+  static const char _DROP_s []="DROP";
+  static define_unary_function_eval (__DROP,&return_undef,_DROP_s);
+  define_unary_function_ptr5( at_DROP ,alias_at_DROP ,&__DROP,0,T_RPN_OP);
+
+  static const char _NOP_s []="NOP";
+  static define_unary_function_eval2_index (136,__NOP,&return_undef,_NOP_s,&printasconstant);
+  define_unary_function_ptr5( at_NOP ,alias_at_NOP ,&__NOP,0,T_RPN_OP);
+
+  static const char _IFTE_s []="IFTE";
+  static define_unary_function_eval2_index (126,__IFTE,&return_undef,_IFTE_s,&printasconstant);
+  define_unary_function_ptr5( at_IFTE ,alias_at_IFTE ,&__IFTE,0,T_RPN_OP);
+
+  static const char _RPN_LOCAL_s []="RPN_LOCAL";
+  static define_unary_function_eval2_index (130,__RPN_LOCAL,&return_undef,_RPN_LOCAL_s,&printasconstant);
+  define_unary_function_ptr5( at_RPN_LOCAL ,alias_at_RPN_LOCAL ,&__RPN_LOCAL,0,T_RPN_OP);
+
+  static const char _RPN_FOR_s []="RPN_FOR";
+  static define_unary_function_eval2_index (132,__RPN_FOR,&return_undef,_RPN_FOR_s,&printasconstant);
+  define_unary_function_ptr5( at_RPN_FOR ,alias_at_RPN_FOR ,&__RPN_FOR,0,T_RPN_OP);
+
+  static const char _RPN_WHILE_s []="RPN_WHILE";
+  static define_unary_function_eval2_index (134,__RPN_WHILE,&return_undef,_RPN_WHILE_s,&printasconstant);
+  define_unary_function_ptr5( at_RPN_WHILE ,alias_at_RPN_WHILE ,&__RPN_WHILE,0,T_RPN_OP);
+
+  static const char _RPN_CASE_s []="RPN_CASE";
+  static define_unary_function_eval2_index (128,__RPN_CASE,&return_undef,_RPN_CASE_s,&printasconstant);
+  define_unary_function_ptr5( at_RPN_CASE ,alias_at_RPN_CASE ,&__RPN_CASE,0,T_RPN_OP);
+
+#else
   static gen symb_rpn(const gen & args){
     return symbolic(at_rpn,args);
   }
@@ -539,6 +604,7 @@ namespace giac {
   static const char _RPN_CASE_s []="RPN_CASE";
   static define_unary_function_eval2_index (128,__RPN_CASE,&_RPN_CASE,_RPN_CASE_s,&printasRPN_CASE);
   define_unary_function_ptr5( at_RPN_CASE ,alias_at_RPN_CASE ,&__RPN_CASE,0,T_RPN_OP);
+#endif
 
   static gen symb_RCL(const gen & a){
     return symbolic(at_RCL,a);
@@ -2000,6 +2066,8 @@ namespace giac {
     }
     else {
       gen args=evalf(args0,1,contextptr);
+      if (!is_squarematrix(args))
+	return gensizeerr(contextptr);
       gen invargs=inv(args,contextptr);
       return _colNorm(args,contextptr)*_colNorm(invargs,contextptr);
       // return _colNorm(args,contextptr)*_rowNorm(args,contextptr)/abs(_det(args,contextptr),contextptr);
@@ -3165,13 +3233,13 @@ namespace giac {
     gen n_minus_1=n__IDNT_e-1;
     for (int i=0;i<dim;++i){
       gen uk=tab_uk[3*i+2];
-      vars0.push_back(new ref_symbolic(symbolic(at_of,makenewvecteur(uk,n_minus_1))));
+      vars0.push_back(new_ref_symbolic(symbolic(at_of,makenewvecteur(uk,n_minus_1))));
       vars.push_back(tab_uk[3*i]);
     }
     gen n_minus_2=n__IDNT_e-2;
     for (int i=0;i<dim;++i){
       gen uk=tab_uk[3*i+2];
-      vars0.push_back(new ref_symbolic(symbolic(at_of,makenewvecteur(uk,n_minus_2))));
+      vars0.push_back(new_ref_symbolic(symbolic(at_of,makenewvecteur(uk,n_minus_2))));
       vars.push_back(tab_uk[3*i+1]);
     }
     expr=subst(expr_un,vars0,vars,true,contextptr);

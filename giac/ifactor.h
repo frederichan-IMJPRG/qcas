@@ -35,8 +35,8 @@ namespace giac {
   gen _maple_ifactors(const gen & args,GIAC_CONTEXT);
 
   symbolic symb_ifactor(const gen & args);
-  vecteur ifactors(const gen & n0);
-  gen ifactors(const gen & args,int maplemode);
+  vecteur ifactors(const gen & n0,GIAC_CONTEXT);
+  gen ifactors(const gen & args,int maplemode,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_ifactors;
   extern const unary_function_ptr * const  at_maple_ifactors;
 
@@ -47,21 +47,21 @@ namespace giac {
   gen _divis(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_divis ;
 
-  gen idivis(const gen & n);
+  gen idivis(const gen & n,GIAC_CONTEXT);
   gen _idivis(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_idivis ;
 
   vecteur pfacprem(gen & n,bool addlast,GIAC_CONTEXT);
 
-  gen ifactor(const gen & n);
+  gen ifactor(const gen & n,GIAC_CONTEXT);
   gen _ifactor(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_ifactor ;
 
-  gen euler(const gen & e);
+  gen euler(const gen & e,GIAC_CONTEXT);
   gen _euler(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_euler;
 
-  gen pa2b2(const gen & p);
+  gen pa2b2(const gen & p,GIAC_CONTEXT);
   gen _pa2b2(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_pa2b2 ;
  

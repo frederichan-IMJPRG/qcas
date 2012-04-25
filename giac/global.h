@@ -314,6 +314,9 @@ namespace giac {
     void * f_param;
 #ifdef HAVE_LIBPTHREAD
     pthread_t eval_thread;
+    pthread_attr_t attr;
+    size_t stacksize;
+    void * stackaddr;
 #endif
     giac::vecteur v;
     thread_param();

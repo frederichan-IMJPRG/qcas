@@ -826,7 +826,7 @@ namespace giac {
 #ifdef GIAC_HAS_STO_38 
     vecteur u(pfacprem(e_copy,true,contextptr));
 #else
-    vecteur u(ifactors(e_copy));
+    vecteur u(ifactors(e_copy,contextptr));
 #endif
     // *logptr(contextptr) << u.size() << endl;
     gen f;
@@ -938,24 +938,39 @@ namespace giac {
 	pn=pn*p;
       }
     }
+    return res;
   }
   gen sqrt_mod(const gen & a,const gen & b,GIAC_CONTEXT){
     if (!is_integer(b))
       return gensizeerr(contextptr);
     if (is_one(a) || is_zero(a))
       return a;
-    if (b.type==_INT_ && b.val<4096){
-      int A=smod(a,b).val;
+    if (b.type==_INT_ && b.val<24000){
+      int A=smod(a,b).val,p=b.val;
+#if 1
+      if (A<0) A+=p;
+      if (A==0) return A;
+      int sq=0,add=1;
+      for (;add<=p;add+=2){
+	sq+=add;
+	if (sq>=p)
+	  sq-=p;
+	if (sq==A)
+	  return add/2+1;
+      }
+      return undef;
+#else
       for (int i=0;i<b.val;++i){
 	if ((i*i-A)%b.val==0)
 	  return i;
       }
       return undef;
+#endif
     }
     int l=legendre(a,b);
     if (l==-1)
       return undef;
-    vecteur v=ifactors(b);
+    vecteur v=ifactors(b,contextptr);
     gen oldres(0),pip(1);
     for (unsigned i=0;i<v.size()/2;++i){
       gen p=v[2*i],n=v[2*i+1],pn;
@@ -969,6 +984,11 @@ namespace giac {
 	oldres=res;
       pip=pip*pn;
     }
+    if (is_positive(-oldres,contextptr))
+      oldres=-oldres;
+    pip=b-oldres;
+    if (is_greater(oldres,pip,contextptr))
+      oldres=pip;
     return oldres;
   }
 
@@ -1652,6 +1672,16 @@ namespace giac {
       return symbolic(at_program,makevecteur(a,0,asin(b,contextptr)));
     if ((e.type==_SYMB) && (e._SYMBptr->sommet==at_neg))
       return -asin(e._SYMBptr->feuille,contextptr);
+    if (e.is_symb_of_sommet(at_cos))
+      e=symbolic(at_sin,cst_pi_over_2-e._SYMBptr->feuille);
+    if (e.is_symb_of_sommet(at_sin) && has_evalf(e._SYMBptr->feuille,a,1,contextptr)){
+      // asin(sin(a))==a-2*k*pi or pi-a-2*k*pi
+      gen n=_round(a/cst_pi,contextptr);
+      b=a-n*cst_pi; // in [-pi/2,pi/2]
+      if (n.type==_INT_ && n.val%2==0)
+	return e._SYMBptr->feuille-n*cst_pi;
+      return n*cst_pi-e._SYMBptr->feuille;
+    }
     if ( (e.type==_INT_) && (e.val<0) )
       return -asin(-e,contextptr);
     if (is_equal(e))
@@ -3318,9 +3348,9 @@ namespace giac {
     if (it==itend){
       // improve: if a is an idnt/symb and b also do not rebuild the vector
       if (idnt_symb_int(b) && plus_idnt_symb(a))
-	return new ref_symbolic(symbolic(at_plus,args));
+	return new_ref_symbolic(symbolic(at_plus,args));
       if (idnt_symb_int(a) && plus_idnt_symb(b))
-	return new ref_symbolic(symbolic(at_plus,args));
+	return new_ref_symbolic(symbolic(at_plus,args));
       return operator_plus(a,b,contextptr);
     }
     gen sum(operator_plus(a,b,contextptr));
@@ -4197,6 +4227,8 @@ namespace giac {
   // static symbolic symb_gcd(const gen & a,const gen & b){    return symbolic(at_gcd,makevecteur(a,b));  }
   gen _gcd(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (is_integer(args))
+      return abs(args,contextptr);
     if (args.type!=_VECT)
       return args;
     if (debug_infolevel)
@@ -5512,6 +5544,82 @@ namespace giac {
   static define_unary_function_eval (__multistring,&giac::_multistring,_multistring_s);
   define_unary_function_ptr( at_multistring ,alias_at_multistring ,&__multistring);
 
+  static const long double LN_SQRT2PI = 0.9189385332046727418L; //log(2*PI)/2
+  static const long double M_PIL=3.141592653589793238462643383279L;
+  static const long double LC1 = 0.08333333333333333L,
+    LC2 = -0.002777777777777778L,
+    LC3 = 7.936507936507937E-4L,
+    LC4 = -5.952380952380953E-4L;
+  static const long double L9[] = {
+    0.99999999999980993227684700473478L,
+    676.520368121885098567009190444019L,
+    -1259.13921672240287047156078755283L,
+    771.3234287776530788486528258894L,
+    -176.61502916214059906584551354L,
+    12.507343278686904814458936853L,
+    -0.13857109526572011689554707L,
+    9.984369578019570859563e-6L,
+    1.50563273514931155834e-7L
+  };
+
+  // Stirling/Lanczos approximation for ln(Gamma())
+  double lngamma(double X){
+    long double res,x(X);
+    if (x<0.5)
+      res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.L-x);
+    else {
+      --x;
+      if (x<20){
+	long double a = L9[0];
+	for (int i = 1; i < 9; ++i) {
+	  a+= L9[i]/(x+double(i));
+	}
+	res= (LN_SQRT2PI + std::log(a) - 7.L) + (x+.5L)*(std::log(x+7.5L)-1.L);
+      }
+      else {
+	long double
+	  r1 = 1.L/x,
+	  r2 = r1*r1,
+	  r3 = r1*r2,
+	  r5 = r2*r3,
+	  r7 = r3*r3*r1;
+	res=(x+.5L)*std::log(x) - x + LN_SQRT2PI + LC1*r1 + LC2*r3 + LC3*r5 + LC4*r7;
+      }
+    }
+    return res;
+  }
+  
+  static complex<long double> lngamma(complex<long double> x){
+    complex<long double> res;
+    if (x.real()<0.5)
+      res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.L-x);
+    else {
+      x=x-1.L;
+      complex<long double> a = L9[0];
+      for (int i = 1; i < 9; ++i) {
+	a+= L9[i]/(x+(long double)(i));
+      }
+      res= (LN_SQRT2PI + std::log(a) - 7.L) + (x+.5L)*(std::log(x+7.5L)-1.L);
+    }
+    return res;
+  }
+  
+  gen lngamma(const gen & x,GIAC_CONTEXT){
+    gen g(x);
+    if (g.type==_FLOAT_)
+      g=evalf_double(g,1,contextptr);
+    if (g.type==_DOUBLE_)
+      return lngamma(g._DOUBLE_val);
+    if (g.type==_CPLX && (g._CPLXptr->type==_DOUBLE_ || (g._CPLXptr+1)->type==_DOUBLE_ ||
+			  g._CPLXptr->type==_FLOAT_ || (g._CPLXptr+1)->type==_FLOAT_)){
+      g=evalf_double(g,1,contextptr);
+      complex<long double> z(re(g,contextptr)._DOUBLE_val,im(g,contextptr)._DOUBLE_val);
+      z=lngamma(z);
+      return gen(double(z.real()),double(z.imag()));
+    }
+    return ln(Gamma(x,contextptr),contextptr);
+  }
+
   // Gamma function
   // lnGamma_minus is ln(Gamma)-(z-1/2)*ln(z)+z which is tractable at +inf
   static gen taylor_lnGamma_minus(const gen & lim_point,const int ordre,const unary_function_ptr & f, int direction,gen & shift_coeff,GIAC_CONTEXT){
@@ -6208,8 +6316,29 @@ namespace giac {
 	    break;
 	}
 	erfc=2/std::sqrt(M_PI)*double(std::exp(-1/z/z)*z*res);
-	return sign(x,contextptr)*(1-erfc);
+	gen e=1-erfc;
+	if (x._DOUBLE_val>=0)
+	  return e;
+	erfc=2-erfc;
+	return -e;
       }
+      else { 
+	// erf(x)=2*x*exp(-x^2)/sqrt(pi)*sum(2^j*x^(2j)/1/3/5/.../(2j+1),j=0..inf)
+	// or continued fraction
+	// 2*exp(z^2)*int(exp(-t^2),t=z..inf)=1/(z+1/2/(z+1/(z+3/2/(z+...))))
+	long double z=absx,res=0;
+	for (long double n=40;n>=1;n--){
+	  res=n/2/(z+res);
+	}
+	res=1/(z+res);
+	erfc=std::exp(-absx*absx)*double(res)/std::sqrt(M_PI);
+	gen e=1-erfc;
+	if (x._DOUBLE_val>=0)
+	  return e;
+	erfc=2-erfc;
+	return -e;
+      }
+#if 0
       // a:=convert(series(erfc(x)*exp(x^2),x=X,24),polynom):; b:=subst(a,x=X+h):;
       if (absx>3 && absx<=5){
 	// Digits:=30; evalf(symb2poly(subst(b,X,4),h))
@@ -6235,9 +6364,71 @@ namespace giac {
 	erfc = double(std::exp(-absx*absx)*res);
 	return sign(x,contextptr)*(1-erfc);
       }
-    }
+#endif
+    } // end x.type==_DOUBLE_
     gen z=evalf_double(abs(x,contextptr),1,contextptr);
-    // loss of accuracy
+    if (x.type==_CPLX && x._CPLXptr->type!=_REAL){
+      double absx=z._DOUBLE_val;
+      complex<long double> z(evalf_double(re(x,contextptr),1,contextptr)._DOUBLE_val,
+			     evalf_double(im(x,contextptr),1,contextptr)._DOUBLE_val);
+      if (absx<=3){
+	// numerical computation of int(exp(-t^2),t=0..x) 
+	// by series expansion at x=0
+	// x*sum( (-1)^n*(x^2)^n/n!/(2*n+1),n=0..inf)
+	complex<long double> z2=z*z,res=0,pi=1;
+	for (long double n=0;;){
+	  res += pi/(2*n+1);
+	  ++n;
+	  pi = -pi*z2/n;
+	  if (std::abs(pi)<1e-17)
+	    break;
+	}
+	res=(2.0L/std::sqrt(M_PI))*z*res;
+	gen e(double(res.real()),double(res.imag()));
+	erfc=1.0-e;
+	return e;
+      }
+      bool neg=z.real()<0;
+      if (neg)
+	z=-z;
+      if (absx>=6.5){
+	// asymptotic expansion at infinity of int(exp(-t^2),t=x..inf)
+	// z=1/x
+	// z*exp(-x^2)*(1/2 - 1/4 z^2 +3/8 z^4-15/16 z^6 + ...)
+	z=1.0L/z;
+	complex<long double> z2=z*z/2.0L,res=0,pi=0.5;
+	for (long double n=0;;++n){
+	  res += pi;
+	  pi = -pi*(2*n+1)*z2;
+	  if (std::abs(pi)<1e-16)
+	    break;
+	}
+	res=complex<long double>(2.0/std::sqrt(M_PI))*std::exp(-1.0L/z/z)*z*res;
+	erfc=gen(double(res.real()),double(res.imag()));
+	gen e=1-erfc;
+	if (!neg)
+	  return e;
+	erfc=2-erfc;
+	return -e;
+      }
+      else { 
+	// continued fraction
+	// 2*exp(z^2)*int(exp(-t^2),t=z..inf)=1/(z+1/2/(z+1/(z+3/2/(z+...))))
+	complex<long double> res=0;
+	for (long double n=40;n>=1;n--){
+	  res=(n/2)/(z+res);
+	}
+	res=1.0L/(z+res);
+	res=std::exp(-z*z)*res/complex<long double>(std::sqrt(M_PI));
+	erfc=gen(double(res.real()),double(res.imag()));
+	gen e=1-erfc;
+	if (!neg)
+	  return e;
+	erfc=2-erfc;
+	return -e;
+      }
+    } // end low precision
+    // take account of loss of accuracy
     int prec=decimal_digits(contextptr);
     int newprec,nbitsz=int(z._DOUBLE_val*z._DOUBLE_val/std::log(2.)),prec2=int(prec*std::log(10.0)/std::log(2.0)+.5);
     if (nbitsz>prec2){ 
@@ -6342,8 +6533,6 @@ namespace giac {
     gen erfc_;
     if (x.type==_DOUBLE_ || x.type==_CPLX || x.type==_REAL){
       erf0(x,erfc_,contextptr);
-      if (x.type==_DOUBLE_ && x._DOUBLE_val<-3)
-	erfc_=2-erfc_;
       return erfc_;
     }
 #if 0 // def GIAC_HAS_STO_38
@@ -6433,7 +6622,7 @@ namespace giac {
 #endif
     if (z.type==_DOUBLE_ && prec<=13){
       double Z=z._DOUBLE_val,fz,gz;
-#if defined HAVE_LIBGSL // && 0
+#if defined HAVE_LIBGSL && 0
       if (mode==1){
 	siz=gsl_sf_Si(Z);
 	return true;
@@ -6454,7 +6643,7 @@ namespace giac {
 	long double cz=std::cos(Z);
 	long double invZ=1/Z;
 	long double pi=invZ;
-	long double sizd=M_PI/2,cizd=0;
+	long double sizd=Z>0?M_PI/2:-M_PI/2,cizd=0;
 	for (int n=1;;++n){
 	  switch (n%4){
 	  case 1:
@@ -6478,8 +6667,8 @@ namespace giac {
 	    break;
 	  pi *= n*invZ;
 	}
-	siz = Z>0?double(sizd):double(-sizd);
-	ciz = double(cizd);
+	siz = double(sizd);
+	ciz = Z>0?double(cizd):gen(double(cizd),M_PI);
 	/*
 	double z8=Z*Z;
 	z8*=z8;
@@ -6650,6 +6839,24 @@ namespace giac {
     z=evalf_double(abs(z0,contextptr),1,contextptr);
     if (z.type!=_DOUBLE_)
       return false; // gentypeerr(gettext("sici")); 
+    if (prec<13){
+      gen z=z0;
+      bool p=is_positive(re(z0,contextptr),contextptr);
+      if (!p)
+	z=-z;
+      gen a=Ei(cst_i*z,contextptr),b=Ei(-cst_i*z,contextptr);
+      ciz=(a+b)/2;
+      if (!p){
+	if (is_positive(im(z0,contextptr),contextptr))
+	  ciz=ciz+cst_i*cst_pi;
+	else
+	  ciz=ciz-cst_i*cst_pi;
+      }
+      siz=(a-b)/2/cst_i-cst_pi_over_2;
+      if (!p)
+	siz=-siz;
+      return true;
+    }
     // find number of digits that must be added to prec
     // n^n/n! equivalent to e^n*sqrt(2*pi*n)
     int newprec,nbitsz=int(z._DOUBLE_val/std::log(2.)),prec2=int(prec*std::log(10.0)/std::log(2.0)+.5);
@@ -7050,9 +7257,19 @@ namespace giac {
       prec=13;
     if (args.type==_DOUBLE_ && prec<=13){
       double z=args._DOUBLE_val;
-#ifdef HAVE_LIBGSL
+#if 0 // def HAVE_LIBGSL
       return gsl_sf_expint_Ei(z);
 #endif
+      if (z>=40 || z<=-40){
+	long double ei=1,pi=1,Z=z;
+	for (long double n=1;;++n){
+	  if (pi<1e-16 && pi>-1e-16)
+	    break;
+	  pi = (n*pi)/Z;
+	  ei += pi;
+	}
+	return double(std::exp(Z)/Z*ei);
+      }
       if (z>=-4.8 && z<=40){
 	// ? use __float80 or __float128
 	/*
@@ -7073,6 +7290,17 @@ namespace giac {
 	ei=ei+std::log(std::abs(z))+0.577215664901532860610;
 	return double(ei);
       }
+      // continued fraction: http://people.math.sfu.ca/~cbm/aands/page_229.htm
+      long double x=-z;
+      long double result(1);
+      long double un(1);
+      for (long double n=40;n>=1;--n){
+	result = un+n/result;
+	result = x+n/result; 
+      }
+      result=-un/result*std::exp(-x);
+      return gen(double(result));
+#if 0
       // a:=convert(series(Ei(x)*exp(-x)*x,x=X,24),polynom):; b:=subst(a,x=X+h):; 
       if (z>=-6.8 && z<=-4.8){
 	// X:=-5.8; evalf(symb2poly(b,h),30)
@@ -7129,16 +7357,6 @@ namespace giac {
 	}
 	return double(res*std::exp(z)/z);
       }
-      if (z>=40 || z<=-40){
-	long double ei=1,pi=1,Z=z;
-	for (long double n=1;;++n){
-	  if (pi<1e-16 && pi>-1e-16)
-	    break;
-	  pi = (n*pi)/Z;
-	  ei += pi;
-	}
-	return double(std::exp(Z)/Z*ei);
-      }
       // not used anymore, too slow
       // z<0: int(e^t/t,t,-inf,z)=e^z*int(e^(-u)/(u-z),t,0,inf)
       // z>0: Ei(9.)+int(e^t/t,t,9,z) = Ei(9.)-e^z*int(e^(-u)/(u-z),u,0,z-9)
@@ -7184,7 +7402,65 @@ namespace giac {
       if (z<0)
 	return fz;
       return 1037.878290717090-fz;
+#endif 
+    } // end real cas
+    if (prec<=13 && z._DOUBLE_val>=2.5 && z._DOUBLE_val<=40){
+      // continued fraction: http://people.math.sfu.ca/~cbm/aands/page_229.htm
+      complex<long double> x(evalf_double(re(args,contextptr),1,contextptr)._DOUBLE_val,
+			evalf_double(im(args,contextptr),1,contextptr)._DOUBLE_val);
+      x=-x;
+      if (x.real()>0 || std::abs(x.imag()/x.real())>=1){
+	complex<long double> result(1);
+	long double un(1);
+	for (long double n=40;n>=1;--n){
+	  result = un+n/result;
+	  result = x+n/result; 
+	}
+	result=-un/result*std::exp(-x);
+	return gen(double(result.real()),double(result.imag())+M_PI*(x.imag()>0?-1:1));
+      }
     }
+#if 1 // defined(__x86_64__) || defined(__i386__) // if long double available use this
+    gen tmp=evalf_double(args,1,contextptr);
+    if (tmp.type==_CPLX && prec<=13){
+      complex<long double> Z(tmp._CPLXptr->_DOUBLE_val,(tmp._CPLXptr+1)->_DOUBLE_val);
+      if (z._DOUBLE_val>30){ 
+	// expansion at infinity, order 30, error 1e-13
+	complex<long double> ei=1.0,pi=1.0;
+	for (long double n=1;n<=30;n++){
+	  pi = (n*pi)/Z;
+	  ei += pi;
+	}
+	ei=std::exp(Z)/Z*ei;
+	gen eig=gen(double(ei.real()),double(ei.imag()));
+	// if (is_positive(-re(tmp,contextptr),contextptr))
+	  {
+	  gen pi=im(tmp,contextptr);
+	  if (is_strictly_positive(pi,contextptr))
+	    return eig+cst_pi*cst_i;
+	  if (is_strictly_positive(-pi,contextptr))
+	    return eig-cst_pi*cst_i;
+	  }
+	return eig;
+      }
+      else { 
+	// use expansion at 0, 
+	// cancellation for negative re(Z) but already computed with cont frac
+	complex<long double> ei=0,pi=1;
+	for (long double n=1;n<=70;++n){
+	  pi = pi*Z/n;
+	  ei += pi/n;
+	}
+	if (is_zero(im(tmp,contextptr)) && is_positive(-re(tmp,contextptr),contextptr))
+	  ei=ei+std::log(-Z);
+	else
+	  ei=ei+std::log(Z);
+	ei += 0.577215664901532860610L;
+	gen eig=gen(double(ei.real()),double(ei.imag()));
+	return eig;
+      }      
+    }
+#endif
     // find number of digits that must be added to prec
     // n^n/n! equivalent to e^n*sqrt(2*pi*n)
     // Note that Ei(z) might be as small as exp(-z) for relative prec
@@ -7215,19 +7491,25 @@ namespace giac {
       newprec = prec2+nbitsz+int(std::log(z._DOUBLE_val)/2)+2;
     else
       newprec = prec2+2;
+    gen ei=0,pi=1,eps=accurate_evalf(pow(10,-2*prec,contextptr)*exp(-2*abs(z,contextptr),contextptr),newprec)/4,r,i;
     z = accurate_evalf(args,newprec);
-    gen ei=0,pi=1,eps=accurate_evalf(pow(10,-prec,contextptr)*exp(-abs(z,contextptr),contextptr),newprec)/2;
     for (int n=1;;n++){
-      pi = pi*z/n;
-      if (is_greater(eps,abs(pi,contextptr),contextptr))
+      pi = accurate_evalf(pi*z/n,newprec);
+      reim(pi,r,i,contextptr);
+      if (is_greater(eps,r*r+i*i,contextptr))
 	break;
-      ei += pi/n;
+      ei = accurate_evalf(ei+pi/n,newprec);
     }
+    ei = accurate_evalf(ei,newprec);
     if (is_zero(im(z,contextptr)) && is_positive(-re(z,contextptr),contextptr))
-      ei=ei+ln(-z,contextptr)+m_gamma(newprec);
+      ei=ei+ln(-z,contextptr);
     else
-      ei=ei+ln(z,contextptr)+m_gamma(newprec);
-    ei = accurate_evalf(ei,prec2);
+      ei=ei+ln(z,contextptr);
+    r = re(ei,contextptr);
+    r = r+accurate_evalf(m_gamma(newprec),newprec);
+    r = accurate_evalf(r,prec2-nbitsz);
+    i = accurate_evalf(im(ei,contextptr),prec2-nbitsz);
+    ei = r+cst_i*i;
     return ei;
   }
   gen Ei(const gen & args,int n,GIAC_CONTEXT){

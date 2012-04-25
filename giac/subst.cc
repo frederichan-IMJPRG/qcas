@@ -333,7 +333,7 @@ namespace giac {
     }
     if (it==itend)
       return false;
-    gen res(new ref_vecteur(*e._VECTptr),e.subtype);
+    gen res(new_ref_vecteur(*e._VECTptr),e.subtype);
     vecteur & w =*res._VECTptr;
     iterateur jt=w.begin()+(it-v.begin());
     *jt=newe;
@@ -518,7 +518,7 @@ namespace giac {
       *it=vecteur(s);
 #else
       it->type=_VECT;
-      it->__VECTptr=new ref_vecteur(s);
+      it->__VECTptr=new_ref_vecteur(s);
 #endif
     }
     for (int i=0;i<s;++i){
@@ -947,7 +947,10 @@ namespace giac {
   gen sincos(const gen & e,GIAC_CONTEXT){
     if (angle_radian(contextptr)){
       gen tmp=subst(e,tan_tab,tan2sincos_tab,true,contextptr);
-      return subst(tmp,exp_tab,exp2sincos_tab,false,contextptr);
+      tmp=_pow2exp(tmp,contextptr);
+      tmp=subst(tmp,exp_tab,exp2sincos_tab,false,contextptr);
+      tmp=_exp2pow(tmp,contextptr);
+      return tmp;
     }
     else
       return e;

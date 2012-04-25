@@ -162,11 +162,11 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a){
-    return new ref_vecteur(vecteur(1,a));
+    return new_ref_vecteur(vecteur(1,a));
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b){
-    ref_vecteur *vptr=new ref_vecteur;
+    ref_vecteur *vptr=new_ref_vecteur(0);
     vptr->v.reserve(2);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -174,7 +174,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(3);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -183,7 +183,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(4);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -193,7 +193,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(5);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -204,7 +204,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(6);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -216,7 +216,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(7);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -229,7 +229,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(8);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -243,7 +243,7 @@ namespace giac {
   }
 
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i){
-    ref_vecteur * vptr=new ref_vecteur;
+    ref_vecteur * vptr=new_ref_vecteur(0);
     vptr->v.reserve(9);
     vptr->v.push_back(a);
     vptr->v.push_back(b);
@@ -773,7 +773,7 @@ namespace giac {
       int ncols=nrows?mptr->front()._VECTptr->size():0;
       if (Y>=ncols)
 	Y=ncols-1;
-      ref_vecteur * resptr=new ref_vecteur;
+      ref_vecteur * resptr=new_ref_vecteur(0);
       resptr->v.reserve((X-x+1)*(Y-y+1));
       ref_vecteur * vptr=0;
       for (int x0=x;x0<=X;++x0){
@@ -2092,7 +2092,7 @@ namespace giac {
   static define_unary_function_eval (__tran,&giac::_tran,_tran_s);
   define_unary_function_ptr5( at_tran ,alias_at_tran,&__tran,0,true);
   
-  bool matrice2std_matrix_double(const matrice & m,matrix_double & M){
+  bool matrice2std_matrix_double(const matrice & m,matrix_double & M,bool nomulti=false){
     int n=m.size(),c;
     gen g;
     M.resize(n);
@@ -2104,6 +2104,8 @@ namespace giac {
       v.reserve(c);
       const_iterateur it=mi.begin(),itend=mi.end();
       for (;it!=itend;++it){
+	if (nomulti && it->type==_REAL)
+	  return false;
 	g=evalf(*it,1,context0);
 	if (g.type==_FLOAT_){
 	  v.push_back(get_double(g._FLOAT_val));
@@ -2127,7 +2129,7 @@ namespace giac {
     return res;
   }
 
-  bool matrice2std_matrix_complex_double(const matrice & m,matrix_complex_double & M){
+  bool matrice2std_matrix_complex_double(const matrice & m,matrix_complex_double & M,bool nomulti=false){
     int n=m.size(),c;
     gen g;
     M.resize(n);
@@ -2139,6 +2141,8 @@ namespace giac {
       v.reserve(c);
       const_iterateur it=mi.begin(),itend=mi.end();
       for (;it!=itend;++it){
+	if (nomulti && (it->type==_REAL || (it->type==_CPLX && it->_CPLXptr->type==_REAL)))
+	  return false;
 	g=evalf_double(*it,1,context0);
 	if (g.type==_CPLX && g._CPLXptr->type==_DOUBLE_ && (g._CPLXptr+1)->type==_DOUBLE_){
 	  v.push_back(complex_double(g._CPLXptr->_DOUBLE_val,(g._CPLXptr+1)->_DOUBLE_val));
@@ -2164,7 +2168,7 @@ namespace giac {
 
   bool mmult_float(const matrice & a,const matrice & btran,matrice & res){
     matrix_double ad,btrand;
-    if (matrice2std_matrix_double(a,ad) && matrice2std_matrix_double(btran,btrand)){
+    if (matrice2std_matrix_double(a,ad,true) && matrice2std_matrix_double(btran,btrand,true)){
       matrix_double::const_iterator ita=ad.begin(),itaend=ad.end();
       matrix_double::const_iterator itbbeg=btrand.begin(),itb,itbend=btrand.end();
       int resrows=mrows(a);
@@ -2172,7 +2176,7 @@ namespace giac {
       res.clear();
       res.reserve(resrows);
       for (;ita!=itaend;++ita){
-	res.push_back(new ref_vecteur(rescols));
+	res.push_back(new_ref_vecteur(rescols));
 	vecteur & cur_row=*res.back()._VECTptr;
 	for (itb=itbbeg;itb!=itbend;++itb)
 	  cur_row[itb-itbbeg]=double(dotvecteur(*ita,*itb));
@@ -2180,7 +2184,7 @@ namespace giac {
       return true;
     }
     matrix_complex_double zad,zbtrand;
-    if (!matrice2std_matrix_complex_double(a,zad) || !matrice2std_matrix_complex_double(btran,zbtrand))
+    if (!matrice2std_matrix_complex_double(a,zad,true) || !matrice2std_matrix_complex_double(btran,zbtrand,true))
       return false;
     matrix_complex_double::const_iterator ita=zad.begin(),itaend=zad.end();
     matrix_complex_double::const_iterator itbbeg=zbtrand.begin(),itb,itbend=zbtrand.end();
@@ -2189,7 +2193,7 @@ namespace giac {
     res.clear();
     res.reserve(resrows);
     for (;ita!=itaend;++ita){
-      res.push_back(new ref_vecteur(rescols));
+      res.push_back(new_ref_vecteur(rescols));
       vecteur & cur_row=*res.back()._VECTptr;
       for (itb=itbbeg;itb!=itbend;++itb)
 	cur_row[itb-itbbeg]=dotvecteur(*ita,*itb);
@@ -2823,7 +2827,7 @@ namespace giac {
       num_mat=is_fully_numeric(res);
 #if 1 // ndef BCD
       matrix_double N;
-      if (num_mat && matrice2std_matrix_double(res,N)){
+      if (num_mat && matrice2std_matrix_double(res,N,true)){
 	// specialization for double
 	double ddet;
 	vector<int> maxrankcols;
@@ -2850,7 +2854,7 @@ namespace giac {
       lv=alg_lvar(res);
       if (!lv.empty() && lv.front().type==_VECT && lv.front()._VECTptr->size()>1){
 	vecteur lw=*tsimplify(lv.front(),contextptr)._VECTptr;
-	if (lvar(lw).size()<lw.front()._VECTptr->size()){
+	if (lvar(lw).size()<lv.front()._VECTptr->size()){
 	  res=*subst(gen(res),lv.front(),lw,false,contextptr)._VECTptr;
 	  lv=alg_lvar(res);
 	}
@@ -3775,11 +3779,17 @@ namespace giac {
   void add_identity(matrice & arref){
     int s=arref.size();
     vecteur v;
+    gen un(1),zero(0);
+    if (!arref.empty() && has_num_coeff(arref)){
+      gen tmp=arref.front()._VECTptr->front();
+      un=tmp/tmp;
+      zero=tmp-tmp;
+    }
     for (int i=0;i<s;++i){
       v = *arref[i]._VECTptr;
       v.reserve(2*s);
       for (int j=0;j<s;++j)
-	v.push_back(i==j);
+	v.push_back(i==j?un:zero);
       arref[i] = v;
     }
   }
@@ -8200,7 +8210,7 @@ namespace giac {
 	    // We should use the smallest possible |u| and |v|
 	    gen a = A[i][j0];
 	    gen b = A[i0][j0];
-	    egcd(a,b,u,v,d,env);
+	    egcd(b,a,v,u,d,env);
 	    linear_combination(v,U[i0],u,U[i],plus_one,B1,0.0,0);
 	    linear_combination(-a,U[i0],b,U[i],d,U[i],0.0,0);
 	    U[i0]=B1;
@@ -8244,7 +8254,7 @@ namespace giac {
 	    // We should use the smallest possible |u| and |v|
 	    gen a = A[i][i0];
 	    gen b = A[j0][i0];
-	    egcd(a,b,u,v,d,env);
+	    egcd(b,a,v,u,d,env);
 	    linear_combination(v,V[j0],u,V[i],plus_one,B2,0.0,0);
 	    linear_combination(-a,V[j0],b,V[i],d,V[i],0.0,0);
 	    V[j0]=B2;

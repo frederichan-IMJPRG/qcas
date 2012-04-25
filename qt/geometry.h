@@ -27,13 +27,13 @@ public:
   virtual QString getType()const =0 ;
   virtual bool isUnderMouse(const QRectF &p) const;
   QTreeWidgetItem * getTreeItem();
-  void setColor(QColor &);
+  void setColor(const QColor &) ;
   void setPointStyle(const int );
   void setStyle(const int);
   int getStyle();
 
   virtual void setWidth(const int);
-  virtual int getPenWidth();
+  virtual int getPenWidth() const;
 
   void setHighLighted(const bool& );
 //  void setLabelPos(const int );
@@ -43,7 +43,7 @@ public:
   Qt::PenStyle getLineType();
   void setAttributes(const int &);
   QColor getColor() const;
-  QColor getFltkColor(int &c);
+  QColor getFltkColor(int &c) const;
   double getAngleLegend() const;
   bool legendVisible() const;
   void setLegendVisible(const bool);
@@ -74,8 +74,8 @@ public:
     virtual bool isUnderMouse(const QRectF & p) const;
     virtual void setWidth(const int);
     virtual QString getType() const;
-    int getPointStyle();
-    virtual int getPenWidth();
+    int getPointStyle() const;
+    virtual int getPenWidth() const;
 
 private:
     QRectF recSel;
@@ -154,7 +154,7 @@ private:
 
 class Circle:public MyItem{
 public:
-    Circle(const QPointF & ,const double&,const double& ,const double   & , const Canvas2D*);
+    Circle(const QPointF & ,const double&,const double& ,const double   & , Canvas2D*);
     virtual bool isUnderMouse(const QRectF& p) const;
     virtual void updateScreenCoords(const bool);
     virtual bool isCircle() const;
@@ -173,7 +173,7 @@ private:
 
 class Pixel:public MyItem{
 public:
-    Pixel(const QPointF & , const Canvas2D*);
+    Pixel(const QPointF & , Canvas2D*);
     virtual bool isUnderMouse(const QRectF& p) const;
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;

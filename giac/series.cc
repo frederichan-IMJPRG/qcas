@@ -187,6 +187,22 @@ namespace giac {
     return true;
   }
 
+  void poly_truncate(sparse_poly1 & p,int ordre,GIAC_CONTEXT){
+    if ( (series_flags(contextptr) & 0x2) || p.empty() ){
+      sparse_poly1::iterator it=p.begin(),itend=p.end();
+      for (;it!=itend;++it){
+	if (is_undef(it->coeff))
+	  return ;
+	if (ck_is_strictly_greater(it->exponent,ordre,contextptr)){
+	  it->coeff=undef;
+	  p.erase(it+1,itend);
+	  return ;
+	}
+      }
+    }
+    return ;
+  }
+
   static gen remove_lnexp(const gen & e,GIAC_CONTEXT);
 
   bool padd(const sparse_poly1 & a,const sparse_poly1 &b, sparse_poly1 & res,GIAC_CONTEXT){
@@ -2518,6 +2534,7 @@ namespace giac {
       vecteur w=multvecteur(h,subvecteur(v,*l._VECTptr));
       gen newe=subst(e,v,w,false,contextptr);
       sparse_poly1 res=series__SPOL1(newe,*h._IDNTptr,zero,ordre,direction,contextptr);
+      poly_truncate(res,ordre,contextptr);
       if (!res.empty() && is_undef(res.back().coeff))
 	res.pop_back();
       // order term has been removed

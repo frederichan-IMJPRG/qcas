@@ -201,6 +201,10 @@ namespace giac {
     ref_vecteur(const vecteur & w):ref_count(1),v(w) {}
   };
 
+  void delete_ref_vecteur(ref_vecteur * ptr);
+  ref_vecteur * new_ref_vecteur(const vecteur & v);
+  ref_symbolic * new_ref_symbolic(const symbolic & s);
+
   template<class T> class Tref_fraction; // in fraction.h
   struct ref_void_pointer {
     volatile int ref_count;

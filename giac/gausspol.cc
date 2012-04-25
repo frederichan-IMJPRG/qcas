@@ -1080,7 +1080,7 @@ namespace giac {
 	  }
 	}
 	// FIXME : the comparison 10*lagr_time is not good at all for e.g int/double args
-	if (is_zero(reduce) && 10*lagrtime<double(c1)*c2*std::log(double(max(c1,c2)))){
+	if (is_zero(reduce) && 100*lagrtime<double(c1)*c2*std::log(double(max(c1,c2)))){
 	  vector< T_unsigned<gen,unsigned> > p1,p2,p;
 	  convert<gen,unsigned>(th,d,p1); 
 	  convert<gen,unsigned>(other,d,p2);

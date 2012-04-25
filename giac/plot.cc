@@ -1504,7 +1504,7 @@ namespace giac {
 	s=it-v.begin();
       switch (opt1.val){
       case _COLOR:
-	attributs[0]=bit_and(attributs[0],0xffff0000) + opt2;
+	attributs[0]=bit_and(attributs[0],0xcfff0000) + opt2;
 	break;
       case _STYLE:
 	if (opt2==at_point)
@@ -1559,8 +1559,11 @@ namespace giac {
 	break;
       case _XSTEP:
 	opt2=evalf_double(abs(opt2,context0),2,context0); // ok
-	if (opt2.type==_DOUBLE_)
+	if (opt2.type==_DOUBLE_){
 	  nstep=int((xmax-xmin)/opt2._DOUBLE_val+.5);
+	  if (!jstep)
+	    jstep=nstep;
+	}
 	break;
       case _YSTEP:
 	opt2=evalf_double(abs(opt2,context0),2,context0); // ok
@@ -2535,7 +2538,7 @@ namespace giac {
   }
   gen symb_pnt(const gen & x,const gen & c,GIAC_CONTEXT){
     if (is_undef(x)) return x;
-    gen ee = new ref_symbolic(symbolic(at_pnt,gen(makenewvecteur(x,c),_PNT__VECT)));
+    gen ee = new_ref_symbolic(symbolic(at_pnt,gen(makenewvecteur(x,c),_PNT__VECT)));
 #ifdef WITH_GNUPLOT
     ee.subtype=gnuplot_show_pnt(*ee._SYMBptr,contextptr);
 #else
@@ -2968,12 +2971,12 @@ namespace giac {
       gen d2=get_point(remove_at_pnt(eval(v[narg],contextptr)),2,contextptr);
       if (is_undef(d2)) return d2;
       gen d02=d2-d0;
+      ra=divide_by_2(d1-d0,contextptr);
       d02=cross(cross(ra,d02,contextptr),ra,contextptr); // normal in the same plan
       d02=sqrt(dotvecteur(ra,ra)/dotvecteur(d02,d02),contextptr)*d02; // normalized
       // Make a parametric plot
       identificateur t(" t"),u(" u");
       ce=divide_by_2(d0+d1,contextptr);
-      ra=divide_by_2(d1-d0,contextptr);
       return plotparam3d(ce+cos(t,contextptr)*ra+sin(t,contextptr)*d02,makevecteur(t,u),gnuplot_xmin,gnuplot_xmax,gnuplot_ymin,gnuplot_ymax,gnuplot_zmin,gnuplot_zmax,0,2*M_PI,0,0,false,false,attributs,M_PI/30,0,undef,makevecteur(t,u),contextptr);
       // gen theta=(2*M_PI/(gnuplot_tmax-gnuplot_tmin))*t;
       // return paramplotparam(gen(makevecteur(ce+cos(theta,contextptr)*ra+sin(theta,contextptr)*d02,t),_SEQ__VECT),false,contextptr);
@@ -2984,7 +2987,7 @@ namespace giac {
       a1=eval(v[narg],contextptr);
       a2=eval(v[narg+1],contextptr);
     }
-    gen res=pnt_attrib(new ref_symbolic(symbolic(at_cercle,gen(makenewvecteur(diametre,a1,a2),_PNT__VECT))),attributs,contextptr);
+    gen res=pnt_attrib(new_ref_symbolic(symbolic(at_cercle,gen(makenewvecteur(diametre,a1,a2),_PNT__VECT))),attributs,contextptr);
     if (s<3+narg)
       return res;
     vecteur w(1,res);
@@ -4449,7 +4452,7 @@ namespace giac {
       return pow(dotvecteur(n1,subvecteur(P2,P1)),2,contextptr)/dotvecteur(n1,n1);
     }
     if (e.type==_VECT){
-      if (e.subtype==_POINT__VECT){ // n-d point
+      if (e.subtype==_POINT__VECT || (f.type==_VECT && f.subtype==_POINT__VECT)){ // n-d point
 	vecteur & ev = *e._VECTptr;
 	if (f.type==_VECT && f.subtype==_POINT__VECT){ // square distance between 2 n-d points
 	  vecteur ef(subvecteur(*f._VECTptr,ev));
@@ -4524,11 +4527,11 @@ namespace giac {
 	      }
 	    }
 	  } // end 3-d
-	}
-      }
+	} // end f.type==_VECT && f._VECTptr->size()==2
+      } // end e._VECTptr->size()==2
       return gensizeerr(contextptr); // undef; // setsizeerr(contextptr); 
       // commented setsizeerr otherwise lots of bad arg when loading a Figure
-    }
+    } // end e.type==_VECT
     if (f.type==_VECT) // f is a line or a point
       return distance2pp(f,e,contextptr);
     if ((e.type==_SYMB) && (e._SYMBptr->sommet==at_curve))
@@ -9501,7 +9504,11 @@ namespace giac {
       if (my_isinf(e._DOUBLE_val) || my_isnan(e._DOUBLE_val) )
 	return archive(os,gen(e.print(contextptr),contextptr),contextptr);
       os << et << " ";
+#ifdef DOUBLEVAL
+      os.write((char *)&(e._DOUBLE_val),sizeof(double));
+#else
       os.write((char *)&e,sizeof(double));
+#endif
       return os << endl;
     case _CPLX:
       os << et << " ";
@@ -10066,7 +10073,7 @@ namespace giac {
       nxstep=int(std::sqrt(double(std::abs(nxstep))));
       nystep=nxstep;
     }
-    if (nxstep*nystep>100*100){
+    if (ulonglong(nxstep)*nystep>100*100){
       nxstep=100;
       nystep=100;
     }
@@ -10087,9 +10094,8 @@ namespace giac {
       fxy(nxstep+1,vector<double>(nystep+1)),
       dfxorig(nxstep+1,vector<double>(nystep+1)),
       dfyorig(nxstep+1,vector<double>(nystep+1)),
-      dfxyorig_abs(nxstep+1,vector<double>(nystep+1)),
-      xorig(nxstep+1,vector<double>(nystep+1)),
-      yorig(nxstep+1,vector<double>(nystep+1));
+      dfxyorig_abs(nxstep+1,vector<double>(nystep+1));
+    vector< vector<double> > xorig(nxstep+1,vector<double>(nystep+1)),yorig(nxstep+1,vector<double>(nystep+1));
     gen gtmp;
     // initialize each cell to non visited
     local_sto_double(ymin,yloc,newcontextptr);
@@ -10098,6 +10104,7 @@ namespace giac {
       for (int j=0;j<=nystep+1;++j)
 	visited[i][j]=false;
     }
+    vecteur singular_points,singular_points_tangents,singular_points_directions;
     for (int i=0;i<=nxstep;++i){
       local_sto_double(ymin,yloc,newcontextptr);
       // yloc.localvalue->back()._DOUBLE_val = ymin;
@@ -10115,13 +10122,147 @@ namespace giac {
     }
     leave(protect,localvar,newcontextptr);
     double xx=xmin,yy=ymin,tmp,xcurrent,ycurrent;
+    vecteur xy1(xy);
+    lvar(f_orig,xy1); // check for an algebraic curve
+    if (xy1==xy){
+      // Polynomial singular points: solve([f_orig,dfx,dfy],xy)
+      singular_points=gsolve(*exact(makevecteur(f_orig,dfx,dfy),contextptr)._VECTptr,xy,false,contextptr);
+      for (int k=0;k<singular_points.size();k++){
+	gen sp=singular_points[k];
+	gen spd=evalf_double(sp,1,contextptr);
+	if (sp.type!=_VECT || sp._VECTptr->size()!=2 || spd[0].type!=_DOUBLE_ || spd[1].type!=_DOUBLE_ )
+	  continue;
+	int i=int((spd[0]._DOUBLE_val-xmin)/xstep);
+	int j=int((spd[1]._DOUBLE_val-xmin)/xstep);
+	if (i>=nxstep || j>=nystep)
+	  continue;
+	// find all tangents starting from sp
+	for (int order=2;order<10;++order){
+	  gen tays=series(f_orig,xy,sp,order,0,contextptr);
+	  if (!is_zero(tays)){
+	    // non-zero homogeneous expansion
+	    // find roots of taylor expansion
+	    gen t(identificateur(" implicitplot"));
+	    tays=subst(tays,xy,subvecteur(makevecteur(1,t),*sp._VECTptr),false,contextptr);
+	    // search for a multiple root, if last_direction is near a multiple root
+	    // of even multiplicity change last_direction sign
+	    gen sqfftays=_quo(gen(makevecteur(tays,_gcd(gen(makevecteur(tays,derive(tays,t,contextptr)),_SEQ__VECT),contextptr),t),_SEQ__VECT),contextptr);
+	    gen r=_proot(gen(makevecteur(sqfftays,t),_SEQ__VECT),contextptr);
+	    *logptr(contextptr) << "Near " << sp << " " << tays << " roots " << r << endl;
+	    if (r.type==_VECT){
+	      int total=0;
+	      for (int kr=0;kr<r._VECTptr->size();++kr){
+		// find multiplicity
+		int mult=0;
+		gen quo,tmp=tays;
+		for (;;++mult,++total){
+		  quo=_quorem(gen(makevecteur(tmp,t-r[kr],t),_SEQ__VECT),contextptr);
+		  if (quo.type!=_VECT || quo._VECTptr->size()!=2 || !is_zero(quo._VECTptr->back()))
+		    break;
+		  tmp=quo._VECTptr->front();
+		}
+		if (!is_zero(im(r[kr],contextptr)))
+		  continue;
+		// add 2 half-tangents with slope r[kr]
+		singular_points_tangents.push_back(makevecteur(i,j,spd,1,r[kr],mult));
+		singular_points_tangents.push_back(makevecteur(i,j,spd,-1,-r[kr],mult));
+	      } // end for kr
+	      // add vertical half-tangents if any
+	      if (total<order){
+		singular_points_tangents.push_back(makevecteur(i,j,spd,0,1,order-total));
+		singular_points_tangents.push_back(makevecteur(i,j,spd,0,-1,order-total));
+	      }
+	    } // end if (r.type==_VECT)
+	    for (int sing=0;sing<singular_points_tangents.size();++sing){
+	      // replace tangents by directions
+	      gen tmp=singular_points_tangents[sing];
+	      if (tmp.type==_VECT && tmp._VECTptr->size()>=6){
+		gen sp=(*tmp._VECTptr)[2];
+		gen lastsing=gen(sp[0],sp[1]);
+		double x0=xcurrent=evalf_double(sp[0]+xstep/3*(*tmp._VECTptr)[3],1,contextptr)._DOUBLE_val;
+		double y0=ycurrent=evalf_double(sp[1]+xstep/3*(*tmp._VECTptr)[4],1,contextptr)._DOUBLE_val;
+		// find solutions near half tangent (no more than mult)
+		if (is_greater(abs(tmp[4],contextptr),abs(tmp[3],contextptr),contextptr)){
+		  // search x
+		  gen fx=subst(f_orig,y,ycurrent,false,contextptr);
+		  int iszero=-1;
+		  vecteur v=bisection_solver(fx,x,xcurrent-xstep,xcurrent+xstep,iszero,contextptr);
+		  for (int vi=0;vi<v.size();++vi){
+		    gen sol=v[vi];
+		    if (sol.type!=_DOUBLE_)
+		      continue;
+		    xcurrent=sol._DOUBLE_val;
+		    sol=gen(xcurrent,ycurrent);
+		    gen tst=arg((sol-lastsing)/(tmp[3]+cst_i*tmp[4]),contextptr);
+		    // check that sol-lastsing is in the same direction as tmp[3],tmp[4]
+		    if (is_greater(M_PI/2/order,abs(tst,contextptr),contextptr)){
+		      singular_points_directions.push_back(makevecteur(i,j,lastsing,sol));
+		      visited[tmp[0].val][tmp[1].val]=true;
+		    }
+		  }
+		}
+		else { // search y
+		  gen fy=subst(f_orig,x,xcurrent,false,contextptr);
+		  int iszero=-1;
+		  vecteur v=bisection_solver(fy,y,ycurrent-ystep,ycurrent+ystep,iszero,contextptr);
+		  for (int vi=0;vi<v.size();++vi){
+		    gen sol=v[vi];
+		    if (sol.type!=_DOUBLE_)
+		      continue;
+		    ycurrent=sol._DOUBLE_val;
+		    sol=gen(xcurrent,ycurrent);
+		    gen tst=arg((sol-lastsing)/(tmp[3]+cst_i*tmp[4]),contextptr);
+		    // check that sol-lastsing is in the same direction as tmp[3],tmp[4]
+		    if (is_greater(M_PI/2/order,abs(tst,contextptr),contextptr)){
+		      singular_points_directions.push_back(makevecteur(i,j,lastsing,sol));
+		      visited[tmp[0].val][tmp[1].val]=true;
+		    }
+		  }
+		}
+	      }
+	    }
+	    break; // end the for loop on order
+	  } // end if !is_zero(tays)
+	} // end loop on order
+      } // end if k<singular_points.size()
+      if (!singular_points.empty())
+	*logptr(contextptr) << "Singular points directions " << singular_points_directions << endl;
+    }
     bool pathfound;
     vecteur res;
-    for (int i=0;i<=nxstep;++i,xx += xstep){
-      if (debug_infolevel)
-	cout << "// Implicitplot row " << i << endl;
-      yy = ymin;
-      for (int j=0;j<=nystep;++j,yy+=ystep){
+    int i=-1,j=nystep,sing=0;
+    gen lastsing;
+    for (;;){ 
+      pathfound=false;
+      vecteur chemin;
+      int iorig,jorig;
+      bool chemin_ok=true;
+      bool orig_sing=sing<singular_points_directions.size();
+      // First paths from singular points
+      if (orig_sing){
+	gen tmp=singular_points_directions[sing];
+	++sing;
+	lastsing=tmp[2];
+	chemin.push_back(lastsing);
+	xcurrent=evalf_double(re(tmp[3],contextptr),1,contextptr)._DOUBLE_val;
+	ycurrent=evalf_double(im(tmp[3],contextptr),1,contextptr)._DOUBLE_val;
+	// set iorig,jorig
+	iorig=(xcurrent-xmin)/xstep;
+	jorig=(ycurrent-ymin)/ystep;
+	pathfound=true;
+      }
+      if (!pathfound){
+	++j;
+	if (j>nystep){
+	j=0;
+	  ++i;
+	  if (i>nxstep)
+	    break;
+	  if (debug_infolevel)
+	    cout << "// Implicitplot row " << i << endl;
+	}
+	xx=xmin+i*xstep;
+	yy=ymin+j*ystep;
 	// If cell has been visited -> done
 	if ( visited[i][j] || ( 
 			       ( (j && visited[i][j-1]) || visited[i][j+1]) && 
@@ -10130,7 +10271,6 @@ namespace giac {
 	  continue;
 	// now look for annulation from below or left
 	tmp=j?fxy[i][j-1]*fxy[i][j]:1;
-	pathfound=false;
 	if (tmp<0) {
 	  pathfound=true;
 	  // find an horizontal solution
@@ -10161,177 +10301,237 @@ namespace giac {
 	if (!pathfound)
 	  continue;
 	// Annulation found, let's add a path
-	int jorig=int((ycurrent-ymin)/ystep);
-	int iorig=int((xcurrent-xmin)/xstep);
+	jorig=int((ycurrent-ymin)/ystep);
+	iorig=int((xcurrent-xmin)/xstep);
 	if (visited[iorig][jorig] || (
 				      ( (jorig?visited[iorig][jorig-1]:false) || visited[iorig][jorig+1])  && 
 				      ( (iorig?visited[iorig-1][jorig]:false) ||visited[iorig+1][jorig] ) 
 				      )
 	    )
 	  continue;
-	vecteur chemin(1,gen(xcurrent,ycurrent));
-	bool chemin_ok=true;
-	visited[iorig][jorig]=true;
-	int icur,jcur,oldi=iorig,oldj=jorig;
-	xorig[iorig][jorig]=xcurrent;
-	yorig[iorig][jorig]=ycurrent;
-	gtmp=subst(dfx,xy,makevecteur(xcurrent,ycurrent),false,contextptr).evalf2double(eval_level(contextptr),contextptr);
-	if (gtmp.type==_DOUBLE_)
-	  dfxorig[iorig][jorig]=gtmp._DOUBLE_val;
-	else
-	  dfxorig[iorig][jorig]=oldi?(fxy[oldi][oldj]-fxy[oldi-1][oldj])/xstep:(fxy[oldi+1][oldj]-fxy[oldi][oldj])/xstep;
-	gtmp=subst(dfy,xy,makevecteur(xcurrent,ycurrent),false,contextptr).evalf2double(eval_level(contextptr),contextptr);
-	if (gtmp.type==_DOUBLE_)
-	  dfyorig[iorig][jorig]=gtmp._DOUBLE_val;
-	else
-	  dfyorig[iorig][jorig]=oldj?(fxy[oldi][oldj]-fxy[oldi][oldj-1])/ystep:(fxy[oldi][oldj+1]-fxy[oldi][oldj])/ystep;
-	dfxyorig_abs[iorig][jorig]=l2norm(dfxorig[iorig][jorig],dfyorig[iorig][jorig]);
-	int sign;
+      } // end if (!pathfound)
+      chemin.push_back(gen(xcurrent,ycurrent));
+      visited[iorig][jorig]=true;
+      int icur,jcur,oldi=iorig,oldj=jorig;
+      xorig[iorig][jorig]=xcurrent;
+      yorig[iorig][jorig]=ycurrent;
+      gtmp=subst(dfx,xy,makevecteur(xcurrent,ycurrent),false,contextptr).evalf2double(eval_level(contextptr),contextptr);
+      if (gtmp.type==_DOUBLE_)
+	dfxorig[iorig][jorig]=gtmp._DOUBLE_val;
+      else
+	dfxorig[iorig][jorig]=oldi?(fxy[oldi][oldj]-fxy[oldi-1][oldj])/xstep:(fxy[oldi+1][oldj]-fxy[oldi][oldj])/xstep;
+      gtmp=subst(dfy,xy,makevecteur(xcurrent,ycurrent),false,contextptr).evalf2double(eval_level(contextptr),contextptr);
+      if (gtmp.type==_DOUBLE_)
+	dfyorig[iorig][jorig]=gtmp._DOUBLE_val;
+      else
+	dfyorig[iorig][jorig]=oldj?(fxy[oldi][oldj]-fxy[oldi][oldj-1])/ystep:(fxy[oldi][oldj+1]-fxy[oldi][oldj])/ystep;
+      dfxyorig_abs[iorig][jorig]=l2norm(dfxorig[iorig][jorig],dfyorig[iorig][jorig]);
+      int sign=1; // + for increasing y, - for decreasing y
+      if (chemin.size()==2){
+	gen tmp=chemin[1]-chemin[0],direction(dfyorig[iorig][jorig],-dfxorig[iorig][jorig]);
+	if (is_greater(abs(arg(tmp/direction,contextptr),contextptr),cst_pi_over_2,contextptr))
+	  sign=-1;
+      }
+      else {
 	if ( (dfyorig[iorig][jorig]<-100*eps*dfxyorig_abs[iorig][jorig]) ||
 	     ((dfyorig[iorig][jorig]<100*eps*dfxyorig_abs[iorig][jorig])&&
 	      (dfxorig[iorig][jorig]>0)) )
 	  sign=-1;
-	else
-	  sign=1;
-	gen last_direction=0;
-	bool change_sign=false;
-	for (int count=0;count<nxstep*nystep;){
-	  vecteur xycurrent(makevecteur(xcurrent,ycurrent));
-	  double dfxcurrent,dfycurrent;
-	  gtmp=subst(dfx,xy,xycurrent,false,contextptr).evalf2double(eval_level(contextptr),contextptr);
-	  bool use_newton=is_regular;
-	  // bool use_newton=false; // FIXME?? Newton does not seem to work
-	  if (gtmp.type==_DOUBLE_)
-	    dfxcurrent=gtmp._DOUBLE_val;
-	  else {
-	    use_newton=false;
-	    dfxcurrent=oldi?(fxy[oldi][oldj]-fxy[oldi-1][oldj])/xstep:(fxy[oldi+1][oldj]-fxy[oldi][oldj])/xstep;
-	  }
-	  gtmp=subst(dfy,xy,xycurrent,false,contextptr).evalf2double(eval_level(contextptr),contextptr);
-	  if (gtmp.type==_DOUBLE_)
-	    dfycurrent=gtmp._DOUBLE_val;
-	  else {
-	    dfycurrent=oldj?(fxy[oldi][oldj]-fxy[oldi][oldj-1])/ystep:(fxy[oldi][oldj+1]-fxy[oldi][oldj])/ystep;
-	    use_newton=false;
-	  }
-	  if (sign==-1){
-	    dfxcurrent=-dfxcurrent;
-	    dfycurrent=-dfycurrent;
-	  }
-	  // (dfxcurrent,dfycurrent) is normal to the path
-	  // If it's near 0 we are near a singular point,
-	  // that we try to cross by using the same direction
-	  // Otherwise go to the next cell, and end if at original i,j
-	  // or at the border
-	  gen direction(dfycurrent,-dfxcurrent);
-	  double dfxycurrent_abs=l2norm(dfxcurrent,dfycurrent);
-	  if (dfxycurrent_abs<0.1){
-	    if (is_zero(last_direction))
-	      break;
-	    direction=last_direction;
-	    change_sign=true;
-	  }
-	  else {
-	    if (change_sign){
-	      sign=-sign;
-	      direction=-direction;
-	      change_sign=false;
-	    }
-	    direction=direction/dfxycurrent_abs;
-	    last_direction=direction;
-	  }
-	  double deltax=evalf_double(re(direction,contextptr),eval_level(contextptr),contextptr)._DOUBLE_val,deltay=evalf_double(im(direction,contextptr),eval_level(contextptr),contextptr)._DOUBLE_val;
-	  double thestep=ystep/2;
-	  if (xstep<ystep)
-	    thestep=xstep/2;
-	  xcurrent += thestep*deltax;
-	  ycurrent += thestep*deltay;
-	  gen sol;
-	  // Test for mostly horizontal tangeant
-	  if (fabs(deltay)<fabs(deltax)){
-	    gen fy=subst(f_orig,x,xcurrent,false,contextptr);
-	    if (is_positive(subst(fy,y,ycurrent-ystep,false,contextptr)*subst(fy,y,ycurrent+ystep,false,contextptr),contextptr) || use_newton){
-	      sol=_fsolve(gen(makevecteur(fy,y,ycurrent,_NEWTON_SOLVER),_SEQ__VECT),contextptr);
-	    }
-	    else {
-	      sol=_fsolve(gen(makevecteur(fy,y,makevecteur(ycurrent-ystep,ycurrent+ystep),_BISECTION_SOLVER,100*eps),_SEQ__VECT),contextptr);
-	      get_sol(sol,contextptr);
-	    }
-	    if (sol.type==_DOUBLE_){
-	      if (fabs(ycurrent-sol._DOUBLE_val)>2*ystep){
-		chemin_ok=false;
-		break;
-	      }
-	      else
-		ycurrent=sol._DOUBLE_val;
-	    }
-	    else {
-	      *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fy << endl;
-	      break;
-	    }
-	  }
-	  else {
-	    // recompute solution
-	    gen fx=subst(f_orig,y,ycurrent,false,contextptr);
-	    if (is_positive(subst(fx,x,xcurrent-xstep,false,contextptr)*subst(fx,x,xcurrent+xstep,false,contextptr),contextptr) || use_newton){
-	      sol=_fsolve(gen(makevecteur(fx,x,xcurrent,_NEWTON_SOLVER),_SEQ__VECT),contextptr);
-	    }
-	    else {
-	      sol=_fsolve(gen(makevecteur(fx,x,makevecteur(xcurrent-xstep,xcurrent+xstep),_BISECTION_SOLVER,100*eps),_SEQ__VECT),contextptr);
-	      get_sol(sol,contextptr);
-	    }
-	    if (sol.type==_DOUBLE_){
-	      if (fabs(xcurrent-sol._DOUBLE_val)>2*xstep){
-		chemin_ok=false;
-		break;
-	      }
-	      else
-		xcurrent=sol._DOUBLE_val;
-	    }
-	    else {
-	      *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fx << endl;
-	      break;
-	    }	    
-	  }
-	  chemin.push_back(gen(xcurrent,ycurrent));
-	  // check cell
-	  icur=int((xcurrent-xmin)/xstep);
-	  jcur=int((ycurrent-ymin)/ystep);
-	  if (icur<0 || icur>nxstep || jcur<0 || jcur>nystep )
-	    break;
-	  if ( (icur==oldi) && (jcur==oldj) ){
-	    ++count;
-	    continue;
-	  }
-	  if (visited[icur][jcur]){  
-	    if (0.1*dfxyorig_abs[icur][jcur]*dfxycurrent_abs>fabs(dfxcurrent*dfyorig[icur][jcur]-dfycurrent*dfxorig[icur][jcur])){
-	      if (count<2)
-		chemin_ok=false;
-	      else
-		// join to this point
-		chemin.push_back(gen(xorig[icur][jcur],yorig[icur][jcur]));
-	      break;
-	    }
-	  }
-	  else {
-	    visited[icur][jcur]=true;
-	    dfxorig[icur][jcur]=dfxcurrent;
-	    dfyorig[icur][jcur]=dfycurrent;
-	    xorig[icur][jcur]=xcurrent;
-	    yorig[icur][jcur]=ycurrent;
-	    if (debug_infolevel)
-	      *logptr(contextptr)	<< icur << " " << jcur << " " << xcurrent << " " << ycurrent <<endl;	  
-	    dfxyorig_abs[icur][jcur]=dfxycurrent_abs;
-	  }
-	  if (debug_infolevel)
-	    *logptr(contextptr) << "Implicitplot " << icur << " " << jcur << endl;	  
-	  oldi=icur;
-	  oldj=jcur;
-	}
-	if (chemin_ok)
-	  res.push_back(symb_pnt(gen(chemin,_GROUP__VECT),attribut,contextptr));
       }
-    }
+      gen last_direction=0;
+      bool change_sign=false;
+      for (int count=0;count<nxstep*nystep;){
+	vecteur xycurrent(makevecteur(xcurrent,ycurrent));
+	double dfxcurrent,dfycurrent;
+	gtmp=subst(dfx,xy,xycurrent,false,contextptr).evalf2double(eval_level(contextptr),contextptr);
+	bool use_newton=is_regular;
+	// bool use_newton=false; // FIXME?? Newton does not seem to work
+	if (gtmp.type==_DOUBLE_)
+	  dfxcurrent=gtmp._DOUBLE_val;
+	else {
+	  use_newton=false;
+	  dfxcurrent=oldi?(fxy[oldi][oldj]-fxy[oldi-1][oldj])/xstep:(fxy[oldi+1][oldj]-fxy[oldi][oldj])/xstep;
+	}
+	gtmp=subst(dfy,xy,xycurrent,false,contextptr).evalf2double(eval_level(contextptr),contextptr);
+	if (gtmp.type==_DOUBLE_)
+	  dfycurrent=gtmp._DOUBLE_val;
+	else {
+	  dfycurrent=oldj?(fxy[oldi][oldj]-fxy[oldi][oldj-1])/ystep:(fxy[oldi][oldj+1]-fxy[oldi][oldj])/ystep;
+	  use_newton=false;
+	}
+	if (sign==-1){
+	  dfxcurrent=-dfxcurrent;
+	  dfycurrent=-dfycurrent;
+	}
+	// (dfxcurrent,dfycurrent) is normal to the path
+	// If it's near 0 we are near a singular point,
+	// that we try to cross by using the same direction
+	// Otherwise go to the next cell, and end if at original i,j
+	// or at the border
+	gen direction(dfycurrent,-dfxcurrent);
+	double dfxycurrent_abs=l2norm(dfxcurrent,dfycurrent);
+	if (dfxycurrent_abs<0.1 && !is_zero(last_direction)){
+	  // perhaps near a singular point
+	  // compare precedent direction with singular_points_directions
+	  gen sp=undef;
+	  int k=0;
+	  for (;k<singular_points.size();k++){
+	    sp=singular_points[k];
+	    if (sp.type==_VECT && sp._VECTptr->size()==2 && is_greater(xstep,abs(sp[0]-xycurrent[0],contextptr),contextptr) && is_greater(ystep,abs(sp[1]-xycurrent[1],contextptr),contextptr))
+	      break;
+	  }
+	  if (k<singular_points.size()){
+	    chemin.push_back(sp[0]+cst_i*sp[1]);
+	    int pos=-1; 
+	    gen theta=7;
+	    // remove incoming direction from singular_points_direction
+	    for (k=0;k<singular_points_directions.size();++k){
+	      gen tmp=singular_points_directions[k];
+	      if (chemin.back()!=tmp[2])
+		continue;
+	      // compare directions
+	      gen cur=abs(arg((tmp[3]-tmp[2])/last_direction,contextptr),contextptr);
+	      if (is_greater(theta,cur,contextptr)){
+		pos=k;
+		theta=cur;
+	      }
+	    }
+	    if (pos>=sing)
+	      singular_points_directions.erase(singular_points_directions.begin()+pos);
+	    else
+	      *logptr(contextptr) << "Bad branch, questionnable accuracy" << endl;
+	    break; // singular points were already done
+	  }
+	  else { 
+	    // FIXME: find a numerical singular point near this point 
+	    // Find all branches by solving the equation on a circle of small radius
+	    // centerd at the numerical singular point
+	    // Add them to singular_points_directions
+	  }
+	  // otherwise continue in the same direction
+	  direction=last_direction;
+	  change_sign=true;
+	}
+	else {
+	  if (change_sign){
+	    sign=-sign;
+	    direction=-direction;
+	    change_sign=false;
+	  }
+	  direction=direction/dfxycurrent_abs;
+	  last_direction=direction;
+	}
+	double deltax=evalf_double(re(direction,contextptr),eval_level(contextptr),contextptr)._DOUBLE_val,deltay=evalf_double(im(direction,contextptr),eval_level(contextptr),contextptr)._DOUBLE_val;
+	double thestep=ystep/2;
+	if (xstep<ystep)
+	  thestep=xstep/2;
+	xcurrent += thestep*deltax;
+	ycurrent += thestep*deltay;
+	gen sol;
+	// Test for mostly horizontal tangeant
+	if (fabs(deltay)<fabs(deltax)){
+	  gen fy=subst(f_orig,x,xcurrent,false,contextptr);
+	  if (is_positive(subst(fy,y,ycurrent-ystep,false,contextptr)*subst(fy,y,ycurrent+ystep,false,contextptr),contextptr) || use_newton){
+	    sol=_fsolve(gen(makevecteur(fy,y,ycurrent,_NEWTON_SOLVER),_SEQ__VECT),contextptr);
+	  }
+	  else {
+	    sol=_fsolve(gen(makevecteur(fy,y,makevecteur(ycurrent-ystep,ycurrent+ystep),_BISECTION_SOLVER,100*eps),_SEQ__VECT),contextptr);
+	    get_sol(sol,contextptr);
+	  }
+	  if (sol.type==_DOUBLE_){
+	    if (fabs(ycurrent-sol._DOUBLE_val)>2*ystep){
+	      chemin_ok=false;
+	      break;
+	    }
+	    else
+	      ycurrent=sol._DOUBLE_val;
+	  }
+	  else {
+	    *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fy << endl;
+	    break;
+	  }
+	}
+	else {
+	  // recompute solution
+	  gen fx=subst(f_orig,y,ycurrent,false,contextptr);
+	  if (is_positive(subst(fx,x,xcurrent-xstep,false,contextptr)*subst(fx,x,xcurrent+xstep,false,contextptr),contextptr) || use_newton){
+	    sol=_fsolve(gen(makevecteur(fx,x,xcurrent,_NEWTON_SOLVER),_SEQ__VECT),contextptr);
+	  }
+	  else {
+	    sol=_fsolve(gen(makevecteur(fx,x,makevecteur(xcurrent-xstep,xcurrent+xstep),_BISECTION_SOLVER,100*eps),_SEQ__VECT),contextptr);
+	    get_sol(sol,contextptr);
+	  }
+	  if (sol.type==_DOUBLE_){
+	    if (fabs(xcurrent-sol._DOUBLE_val)>2*xstep){
+	      chemin_ok=false;
+	      break;
+	    }
+	    else
+	      xcurrent=sol._DOUBLE_val;
+	  }
+	  else {
+	    *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fx << endl;
+	    break;
+	  }	    
+	}
+	chemin.push_back(gen(xcurrent,ycurrent));
+	// check cell
+	icur=int((xcurrent-xmin)/xstep);
+	jcur=int((ycurrent-ymin)/ystep);
+	if (icur<0 || icur>nxstep || jcur<0 || jcur>nystep ){
+	  // try to reverse chemin
+	  if (chemin.empty() || orig_sing)
+	    break;
+	  gen orig=chemin.front();
+	  double x_orig=evalf_double(re(orig,contextptr),1,contextptr)._DOUBLE_val;
+	  double y_orig=evalf_double(im(orig,contextptr),1,contextptr)._DOUBLE_val;
+	  int i_orig=int((x_orig-xmin)/xstep);
+	  int j_orig=int((y_orig-ymin)/ystep);
+	  if (i_orig<0 || i_orig>nxstep || j_orig<0 || j_orig>nystep)
+	    break;
+	  // revert chemin and restart in reverse direction
+	  reverse(chemin.begin(),chemin.end());
+	  xcurrent=x_orig;
+	  ycurrent=y_orig;
+	  sign=-sign;
+	  continue;
+	}
+	if ( (icur==oldi) && (jcur==oldj) ){
+	  ++count;
+	  continue;
+	}
+	if (visited[icur][jcur]){  
+	  if (0.1*dfxyorig_abs[icur][jcur]*dfxycurrent_abs>fabs(dfxcurrent*dfyorig[icur][jcur]-dfycurrent*dfxorig[icur][jcur])){
+	    if (count<2)
+	      chemin_ok=false;
+	    else {
+	      // join to this point
+	      if (is_greater(xstep,abs(re(chemin.front()-xycurrent,contextptr),contextptr),contextptr) && is_greater(ystep,abs(im(chemin.front()-xycurrent,contextptr),contextptr),contextptr) )
+		chemin.push_back(chemin.front());
+	      else
+		chemin.push_back(gen(xorig[icur][jcur],yorig[icur][jcur]));
+	    }
+	    break;
+	  }
+	}
+	else {
+	  visited[icur][jcur]=true;
+	  dfxorig[icur][jcur]=dfxcurrent;
+	  dfyorig[icur][jcur]=dfycurrent;
+	  xorig[icur][jcur]=xcurrent;
+	  yorig[icur][jcur]=ycurrent;
+	  if (debug_infolevel)
+	    *logptr(contextptr)	<< icur << " " << jcur << " " << xcurrent << " " << ycurrent <<endl;	  
+	  dfxyorig_abs[icur][jcur]=dfxycurrent_abs;
+	}
+	if (debug_infolevel)
+	  *logptr(contextptr) << "Implicitplot " << icur << " " << jcur << endl;	  
+	oldi=icur;
+	oldj=jcur;
+      }
+      if (chemin_ok)
+	res.push_back(symb_pnt(gen(chemin,_GROUP__VECT),attribut,contextptr));
+    } // end for(;;)
 #ifndef WIN32
 #ifdef WITH_GNUPLOT
     if (child_id) plot_instructions.push_back(res);
@@ -10361,7 +10561,7 @@ namespace giac {
   gen _plotimplicit(const gen & args,const context * contextptr){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type!=_VECT)
-      return plotimplicit(remove_equal(args),vx_var,y__IDNT_e,gnuplot_xmin,gnuplot_xmax,gnuplot_ymin,gnuplot_ymax,gnuplot_pixels_per_eval,0,epsilon(contextptr),vecteur(1,default_color(contextptr)),false,contextptr);
+      return plotimplicit(remove_equal(args),vx_var,y__IDNT_e,gnuplot_xmin,gnuplot_xmax,gnuplot_ymin,gnuplot_ymax,20*gnuplot_pixels_per_eval,0,epsilon(contextptr),vecteur(1,default_color(contextptr)),false,contextptr);
     // vecteur v(plotpreprocess(args));
     vecteur v(*args._VECTptr);
     if (v.size()<2)
@@ -10381,7 +10581,7 @@ namespace giac {
 	return _plotimplicit(v,contextptr);
       }
     }
-    int nstep=gnuplot_pixels_per_eval,jstep=0,kstep=0;
+    int nstep=20*gnuplot_pixels_per_eval,jstep=0,kstep=0;
     double xmin,xmax,ymin,ymax,zmin,zmax;
     vecteur attributs(1,default_color(contextptr));
     gen x,y,z;
@@ -11344,6 +11544,242 @@ namespace giac {
   static define_unary_function_eval2 (__DrwCtour,&_plotcontour,_DrwCtour_s,&printastifunction);
   define_unary_function_ptr5( at_DrwCtour ,alias_at_DrwCtour,&__DrwCtour,0,T_RETURN);
 
+  // should be print_string?
+  std::string gen2string(const gen & g){
+    if (g.type==_STRNG)
+      return *g._STRNGptr;
+    else
+      return g.print(context0);
+  }
+
+#ifdef RTOS_THREADX
+  logo_turtle vecteur2turtle(const vecteur & v){
+    return logo_turtle();
+  }
+
+  static int turtle_status(const logo_turtle & turtle){
+    return 0;
+  }
+
+  bool set_turtle_state(const vecteur & v,GIAC_CONTEXT){
+    return false;
+  }
+
+  gen turtle2gen(const logo_turtle & turtle){
+    return undef;
+  }
+
+  vecteur turtlevect2vecteur(const std::vector<logo_turtle> & v){
+    return 0;
+  }
+
+  std::vector<logo_turtle> vecteur2turtlevect(const vecteur & v){
+    return 0;
+  }
+
+  gen turtle_state(GIAC_CONTEXT){
+    return undef;
+  }
+
+  static gen update_turtle_state(bool clrstring,GIAC_CONTEXT){
+    return undef;
+  }
+
+  gen _avance(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _avance_s []="avance";
+  static define_unary_function_eval2 (__avance,&_avance,_avance_s,&printastifunction);
+  define_unary_function_ptr5( at_avance ,alias_at_avance,&__avance,0,T_LOGO);
+
+  gen _recule(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _recule_s []="recule";
+  static define_unary_function_eval2 (__recule,&_recule,_recule_s,&printastifunction);
+  define_unary_function_ptr5( at_recule ,alias_at_recule,&__recule,0,T_LOGO);
+
+  gen _position(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _position_s []="position";
+  static define_unary_function_eval2 (__position,&_position,_position_s,&printastifunction);
+  define_unary_function_ptr5( at_position ,alias_at_position,&__position,0,T_LOGO);
+
+  gen _cap(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _cap_s []="cap";
+  static define_unary_function_eval2 (__cap,&_cap,_cap_s,&printastifunction);
+  define_unary_function_ptr5( at_cap ,alias_at_cap,&__cap,0,T_LOGO);
+
+  gen _tourne_droite(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _tourne_droite_s []="tourne_droite";
+  static define_unary_function_eval2 (__tourne_droite,&_tourne_droite,_tourne_droite_s,&printastifunction);
+  define_unary_function_ptr5( at_tourne_droite ,alias_at_tourne_droite,&__tourne_droite,0,T_LOGO);
+
+  gen _tourne_gauche(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _tourne_gauche_s []="tourne_gauche";
+  static define_unary_function_eval2 (__tourne_gauche,&_tourne_gauche,_tourne_gauche_s,&printastifunction);
+  define_unary_function_ptr5( at_tourne_gauche ,alias_at_tourne_gauche,&__tourne_gauche,0,T_LOGO);
+
+  gen _leve_crayon(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _leve_crayon_s []="leve_crayon";
+  static define_unary_function_eval2 (__leve_crayon,&_leve_crayon,_leve_crayon_s,&printastifunction);
+  define_unary_function_ptr5( at_leve_crayon ,alias_at_leve_crayon,&__leve_crayon,0,T_LOGO);
+
+  gen _baisse_crayon(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _baisse_crayon_s []="baisse_crayon";
+  static define_unary_function_eval2 (__baisse_crayon,&_baisse_crayon,_baisse_crayon_s,&printastifunction);
+  define_unary_function_ptr5( at_baisse_crayon ,alias_at_baisse_crayon,&__baisse_crayon,0,T_LOGO);
+
+  gen _ecris(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _ecris_s []="ecris";
+  static define_unary_function_eval2 (__ecris,&_ecris,_ecris_s,&printastifunction);
+  define_unary_function_ptr5( at_ecris ,alias_at_ecris,&__ecris,0,T_LOGO);
+  gen _signe(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _signe_s []="signe";
+  static define_unary_function_eval2 (__signe,&_signe,_signe_s,&printastifunction);
+  define_unary_function_ptr5( at_signe ,alias_at_signe,&__signe,0,T_LOGO);
+
+  gen _saute(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _saute_s []="saute";
+  static define_unary_function_eval2 (__saute,&_saute,_saute_s,&printastifunction);
+  define_unary_function_ptr5( at_saute ,alias_at_saute,&__saute,0,T_LOGO);
+
+  gen _pas_de_cote(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _pas_de_cote_s []="pas_de_cote";
+  static define_unary_function_eval2 (__pas_de_cote,&_pas_de_cote,_pas_de_cote_s,&printastifunction);
+  define_unary_function_ptr5( at_pas_de_cote ,alias_at_pas_de_cote,&__pas_de_cote,0,T_LOGO);
+  gen _cache_tortue(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _cache_tortue_s []="cache_tortue";
+  static define_unary_function_eval2 (__cache_tortue,&_cache_tortue,_cache_tortue_s,&printastifunction);
+  define_unary_function_ptr5( at_cache_tortue ,alias_at_cache_tortue,&__cache_tortue,0,T_LOGO);
+
+  gen _montre_tortue(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _montre_tortue_s []="montre_tortue";
+  static define_unary_function_eval2 (__montre_tortue,&_montre_tortue,_montre_tortue_s,&printastifunction);
+  define_unary_function_ptr5( at_montre_tortue ,alias_at_montre_tortue,&__montre_tortue,0,T_LOGO);
+
+  gen _debut_enregistrement(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _debut_enregistrement_s []="debut_enregistrement";
+  static define_unary_function_eval2 (__debut_enregistrement,&_debut_enregistrement,_debut_enregistrement_s,&printastifunction);
+  define_unary_function_ptr5( at_debut_enregistrement ,alias_at_debut_enregistrement,&__debut_enregistrement,0,T_LOGO);
+
+  gen _fin_enregistrement(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _fin_enregistrement_s []="fin_enregistrement";
+  static define_unary_function_eval2 (__fin_enregistrement,&_fin_enregistrement,_fin_enregistrement_s,&printastifunction);
+  define_unary_function_ptr5( at_fin_enregistrement ,alias_at_fin_enregistrement,&__fin_enregistrement,0,T_LOGO);
+
+  gen _repete(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _repete_s []="repete";
+  static define_unary_function_eval2 (__repete,&_repete,_repete_s,&printastifunction);
+  define_unary_function_ptr5( at_repete ,alias_at_repete,&__repete,0,T_LOGO);
+
+  gen _crayon(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _crayon_s []="crayon";
+  static define_unary_function_eval2 (__crayon,&_crayon,_crayon_s,&printastifunction);
+  define_unary_function_ptr5( at_crayon ,alias_at_crayon,&__crayon,0,T_LOGO);
+
+  gen _efface(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _efface_s []="efface";
+  static define_unary_function_eval2 (__efface,&_efface,_efface_s,&printastifunction);
+  define_unary_function_ptr5( at_efface ,alias_at_efface,&__efface,0,T_LOGO);
+
+  gen _vers(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _vers_s []="vers";
+  static define_unary_function_eval2 (__vers,&_vers,_vers_s,&printastifunction);
+  define_unary_function_ptr5( at_vers ,alias_at_vers,&__vers,0,T_LOGO);
+
+  static int find_radius(const gen & g,int & r,int & theta2,bool & direct){
+    return 0;
+  }
+
+  static void turtle_move(int r,int theta2,GIAC_CONTEXT){
+  }
+
+  gen _disque(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _disque_s []="disque";
+  static define_unary_function_eval2 (__disque,&_disque,_disque_s,&printastifunction);
+  define_unary_function_ptr5( at_disque ,alias_at_disque,&__disque,0,T_LOGO);
+
+  gen _disque_centre(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _disque_centre_s []="disque_centre";
+  static define_unary_function_eval2 (__disque_centre,&_disque_centre,_disque_centre_s,&printastifunction);
+  define_unary_function_ptr5( at_disque_centre ,alias_at_disque_centre,&__disque_centre,0,T_LOGO);
+
+  gen _rond(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _rond_s []="rond";
+  static define_unary_function_eval2 (__rond,&_rond,_rond_s,&printastifunction);
+  define_unary_function_ptr5( at_rond ,alias_at_rond,&__rond,0,T_LOGO);
+
+  gen _polygone_rempli(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _polygone_rempli_s []="polygone_rempli";
+  static define_unary_function_eval2 (__polygone_rempli,&_polygone_rempli,_polygone_rempli_s,&printastifunction);
+  define_unary_function_ptr5( at_polygone_rempli ,alias_at_polygone_rempli,&__polygone_rempli,0,T_LOGO);
+
+  gen _rectangle_plein(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _rectangle_plein_s []="rectangle_plein";
+  static define_unary_function_eval2 (__rectangle_plein,&_rectangle_plein,_rectangle_plein_s,&printastifunction);
+  define_unary_function_ptr5( at_rectangle_plein ,alias_at_rectangle_plein,&__rectangle_plein,0,T_LOGO);
+
+  gen _triangle_plein(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _triangle_plein_s []="triangle_plein";
+  static define_unary_function_eval2 (__triangle_plein,&_triangle_plein,_triangle_plein_s,&printastifunction);
+  define_unary_function_ptr5( at_triangle_plein ,alias_at_triangle_plein,&__triangle_plein,0,T_LOGO);
+
+  gen _dessine_tortue(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _dessine_tortue_s []="dessine_tortue";
+  static define_unary_function_eval2 (__dessine_tortue,&_dessine_tortue,_dessine_tortue_s,&printastifunction);
+  define_unary_function_ptr5( at_dessine_tortue ,alias_at_dessine_tortue,&__dessine_tortue,0,T_LOGO);
+
+#else
   logo_turtle vecteur2turtle(const vecteur & v){
     int s=v.size();
     if (s>=5 && v[0].type==_DOUBLE_ && v[1].type==_DOUBLE_ && v[2].type==_DOUBLE_ && v[3].type==_INT_ && v[4].type==_INT_ ){
@@ -11472,13 +11908,6 @@ namespace giac {
   static define_unary_function_eval2 (__avance,&_avance,_avance_s,&printastifunction);
   define_unary_function_ptr5( at_avance ,alias_at_avance,&__avance,0,T_LOGO);
 
-  // should be print_string?
-  std::string gen2string(const gen & g){
-    if (g.type==_STRNG)
-      return *g._STRNGptr;
-    else
-      return g.print(context0);
-  }
   gen _recule(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     // logo instruction
@@ -11624,14 +12053,6 @@ namespace giac {
   static const char _signe_s []="signe";
   static define_unary_function_eval2 (__signe,&_signe,_signe_s,&printastifunction);
   define_unary_function_ptr5( at_signe ,alias_at_signe,&__signe,0,T_LOGO);
-
-  static const char _ramene_s []="ramene";
-  static define_unary_function_eval2 (__ramene,&_read,_ramene_s,&printastifunction);
-  define_unary_function_ptr5( at_ramene ,alias_at_ramene,&__ramene,0,T_LOGO);
-
-  static const char _sauve_s []="sauve";
-  static define_unary_function_eval2_quoted (__sauve,&_write,_sauve_s,&printastifunction);
-  define_unary_function_ptr5( at_sauve ,alias_at_sauve,&__sauve,_QUOTE_ARGUMENTS,T_LOGO);
 
   gen _saute(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
@@ -11798,7 +12219,6 @@ namespace giac {
   static const char _vers_s []="vers";
   static define_unary_function_eval2 (__vers,&_vers,_vers_s,&printastifunction);
   define_unary_function_ptr5( at_vers ,alias_at_vers,&__vers,0,T_LOGO);
-
 
   static int find_radius(const gen & g,int & r,int & theta2,bool & direct){
     int radius;
@@ -12021,6 +12441,17 @@ namespace giac {
   static define_unary_function_eval2 (__dessine_tortue,&_dessine_tortue,_dessine_tortue_s,&printastifunction);
   define_unary_function_ptr5( at_dessine_tortue ,alias_at_dessine_tortue,&__dessine_tortue,0,T_LOGO);
 
+#endif
+
+  static const char _ramene_s []="ramene";
+  static define_unary_function_eval2 (__ramene,&_read,_ramene_s,&printastifunction);
+  define_unary_function_ptr5( at_ramene ,alias_at_ramene,&__ramene,0,T_LOGO);
+
+  static const char _sauve_s []="sauve";
+  static define_unary_function_eval2_quoted (__sauve,&_write,_sauve_s,&printastifunction);
+  define_unary_function_ptr5( at_sauve ,alias_at_sauve,&__sauve,_QUOTE_ARGUMENTS,T_LOGO);
+
+
   static const char _hasard_s []="hasard";
   static define_unary_function_eval2 (__hasard,&_rand,_hasard_s,&printastifunction);
   define_unary_function_ptr5( at_hasard ,alias_at_hasard,&__hasard,0,T_LOGO);
@@ -12028,8 +12459,6 @@ namespace giac {
   /* A FAIRE:
      traduction latex
   */
-
-
   gen _arc(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type!=_VECT)

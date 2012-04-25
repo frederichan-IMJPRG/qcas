@@ -55,8 +55,8 @@ private:
     OutputWidget* formula2Widget(const QString &mathml);
     OutputWidget* graph2Widget(const giac::gen&);
     void drawOnScene(QGraphicsScene &,const giac::gen &);
-    QString displayType(int c);
-    QString displaySubType(int c);
+    QString displayType(int c) const;
+    QString displaySubType(int c) const;
 
  };
 

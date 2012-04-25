@@ -1618,88 +1618,11 @@ namespace giac {
   static define_unary_function_eval_quoted (__solve,&_solve,_solve_s);
   define_unary_function_ptr5( at_solve ,alias_at_solve,&__solve,_QUOTE_ARGUMENTS,true);
 
-  // also sets iszero to -2 if endpoints have same sign, -1 if err or undef
-  // 1 if zero found, 2 if sign reversal (no undef),
-  vecteur bisection_solver(const gen & equation,const gen & var,const gen & a0,const gen &b0,int & iszero,GIAC_CONTEXT){
-    iszero=0;
-    gen a(evalf_double(a0,1,contextptr)),b(evalf_double(b0,1,contextptr));
-    gen fa,fb;
-#ifndef NO_STDEXCEPT
-    try {
-#endif
-      fa=subst(equation,var,a,false,contextptr);
-      fb=subst(equation,var,b,false,contextptr);
-#ifndef NO_STDEXCEPT
-    } catch (std::runtime_error & ){
-      iszero=-1;
-      return vecteur(0);
-    }
-#endif
-    int ntries=40;
-    gen ab=(b-a)/ntries;
-    if (fb.type!=_DOUBLE_){      
-      for (int i=0;i<ntries;++i){
-	b -= ab;
-	fb=subst(equation,var,b,false,contextptr);
-	if (fb.type==_DOUBLE_)
-	  break;
-      }
-    }
-    ab=(b-a)/ntries;
-    if (fb.type==_DOUBLE_ && fa.type!=_DOUBLE_){
-      for (int i=0;i<ntries;++i){
-	a += ab;
-	fa=subst(equation,var,a,false,contextptr);
-	if (fa.type==_DOUBLE_)
-	  break;
-      }
-    }
-    if (fa.type!=_DOUBLE_ || fb.type!=_DOUBLE_){
-      iszero=-1;
-      return vecteur(0);
-    }
-    double faorig=fa._DOUBLE_val,fborig=fb._DOUBLE_val;
-    if (fa._DOUBLE_val*fb._DOUBLE_val>0){
-      bool test1=fa._DOUBLE_val>0;
-      bool found=false;
-      gen b0=b;
-      // discretization of [a,b] searching a sign reversal
-      for (int i=1;i<=6;i++){
-	int ntest=1 << (i-1);
-	gen decal=(b0-a)/gen(1 << i);
-	b=a+decal;
-	double bd=b._DOUBLE_val;
-	decal=2*decal;
-	for (int j=0;j<ntest;j++,b+=decal){
-#ifndef NO_STDEXCEPT
-	  try {
-#endif
-	    fb=subst(equation,var,b,false,contextptr);
-#ifndef NO_STDEXCEPT
-	  } catch (std::runtime_error & ){
-	    iszero=-1;
-	    return vecteur(0);
-	  }
-#endif
-	  if (fb.type!=_DOUBLE_){
-	    iszero=-1;
-	    return vecteur(0);
-	  }
-	  double fbd=fb._DOUBLE_val;
-	  bool test2=fbd>0;
-	  if (test1 ^ test2){
-	    found=true;
-	    break;
-	  }
-	}
-	if (found)
-	  break;
-      }
-      if (!found){
-	iszero=-2;
-	return vecteur(0);
-      }
-    }
+  // bisection solver on a0,b0 with a sign reversal inside
+  static vecteur bisection_solver_sr(const gen & equation,const gen & var,const gen & a0,const gen &b0,int & iszero,double faorig,double fborig,GIAC_CONTEXT){
+    gen a=a0,b=b0;
+    gen fa=subst(equation,var,a,false,contextptr);
+    gen fb=subst(equation,var,b,false,contextptr);
     if (is_exactly_zero(fa)){
       iszero=1;
       return vecteur(1,a);
@@ -1753,6 +1676,147 @@ namespace giac {
     if (fa.type==_DOUBLE_ && fb.type==_DOUBLE_ && fabs(fa._DOUBLE_val*fb._DOUBLE_val/faorig/fborig)<1e-10)
       iszero=1;
     return vecteur(1,(a+b)/2);
+  }
+
+  // also sets iszero to -2 if endpoints have same sign, -1 if err or undef
+  // 1 if zero found, 2 if sign reversal (no undef),
+  // set iszero to 0 on entry if only one root
+  // set to -1 or positive if you want many sign reversals 
+  // -1 means no step specified, positive means nstep specified
+  vecteur bisection_solver(const gen & equation,const gen & var,const gen & a0,const gen &b0,int & iszero,GIAC_CONTEXT){
+    bool onlyone=iszero==0;
+    int nstep=iszero>0?iszero:gnuplot_pixels_per_eval;
+    iszero=0;
+    gen a(evalf_double(a0,1,contextptr)),b(evalf_double(b0,1,contextptr));
+    if (is_strictly_greater(a,b,contextptr))
+      swapgen(a,b);
+    gen fa,fb,decal=(b-a)/nstep;
+    if (is_zero(decal))
+      return vecteur(0);
+    while (a+decal==a || b-decal==b){
+      decal=2*decal;
+    }
+    vecteur res;
+#ifndef NO_STDEXCEPT
+    try {
+#endif
+      for (;is_strictly_greater(b,a,contextptr);){
+	fa=subst(equation,var,a,false,contextptr);
+	if (!is_zero(fa))
+	  break;
+	if (onlyone)
+	  return vecteur(1,a);
+	res.push_back(a);
+	a +=decal;
+      }
+      for (;is_strictly_greater(b,a,contextptr);){
+	fb=subst(equation,var,b,false,contextptr);
+	if (!is_zero(fb))
+	  break;
+	if (onlyone)
+	  return vecteur(1,b);
+	res.push_back(b);
+	b -=decal;
+      }
+#ifndef NO_STDEXCEPT
+    } catch (std::runtime_error & ){
+      iszero=-1;
+      return vecteur(0);
+    }
+#endif
+    int ntries=40;
+    gen ab=(b-a)/ntries;
+    if (fb.type!=_DOUBLE_){      
+      for (int i=0;i<ntries;++i){
+	b -= ab;
+	fb=subst(equation,var,b,false,contextptr);
+	if (fb.type==_DOUBLE_)
+	  break;
+      }
+    }
+    ab=(b-a)/ntries;
+    if (fb.type==_DOUBLE_ && fa.type!=_DOUBLE_){
+      for (int i=0;i<ntries;++i){
+	a += ab;
+	fa=subst(equation,var,a,false,contextptr);
+	if (fa.type==_DOUBLE_)
+	  break;
+      }
+    }
+    if (fa.type!=_DOUBLE_ || fb.type!=_DOUBLE_){
+      iszero=-1;
+      return vecteur(0);
+    }
+    double faorig=fa._DOUBLE_val,fborig=fb._DOUBLE_val;
+    if (onlyone){
+      if (fa._DOUBLE_val*fb._DOUBLE_val>0){
+	bool test1=fa._DOUBLE_val>0;
+	bool found=false;
+	gen b0=b;
+	// discretization of [a,b] searching a sign reversal
+	for (int i=1;i<=6;i++){
+	  int ntest=1 << (i-1);
+	  gen decal=(b0-a)/gen(1 << i);
+	  b=a+decal;
+	  double bd=b._DOUBLE_val;
+	  decal=2*decal;
+	  for (int j=0;j<ntest;j++,b+=decal){
+#ifndef NO_STDEXCEPT
+	    try {
+#endif
+	      fb=subst(equation,var,b,false,contextptr);
+#ifndef NO_STDEXCEPT
+	    } catch (std::runtime_error & ){
+	      iszero=-1;
+	      return vecteur(0);
+	    }
+#endif
+	    if (fb.type!=_DOUBLE_){
+	      iszero=-1;
+	      return vecteur(0);
+	    }
+	    double fbd=fb._DOUBLE_val;
+	    bool test2=fbd>0;
+	    if (test1 ^ test2){
+	      found=true;
+	      break;
+	    }
+	  }
+	  if (found)
+	    break;
+	}
+	if (!found){
+	  iszero=-2;
+	  return vecteur(0);
+	}
+      }
+      return bisection_solver_sr(equation,var,a,b,iszero,faorig,fborig,contextptr);
+    }
+    // we are searching many zeros in this interval, cutting it in small intervals
+    // and searching a sign reversal in each
+    decal=(b-a)/nstep;
+    b=a+decal;
+    for (int i=0;i<nstep;++i, a=b, fa=fb,b+=decal){
+#ifndef NO_STDEXCEPT
+      try {
+#endif
+	fb=subst(equation,var,b,false,contextptr);
+#ifndef NO_STDEXCEPT
+      } catch (std::runtime_error & ){
+	continue;
+      }
+#endif
+      if (fb.type!=_DOUBLE_)
+	continue;
+      if (fb._DOUBLE_val==0){
+	res.push_back(fb);
+	continue;
+      }
+      if (fa._DOUBLE_val*fb._DOUBLE_val>0)
+	continue;
+      res=mergevecteur(res,bisection_solver_sr(equation,var,a,b,iszero,faorig,fborig,contextptr));
+    }
+    return res;
   }
 
   static void set_nearest_first(const gen & guess,vecteur & res,GIAC_CONTEXT){
@@ -1895,7 +1959,7 @@ namespace giac {
     }
     if (type==0){ // Find zero
       if (interval){
-	int iszero;
+	int iszero=0;
 	res=bisection_solver(eq0,*variable._IDNTptr,a,b,iszero,contextptr);
 	if (iszero<=0)
 	  res.clear();
@@ -1940,7 +2004,7 @@ namespace giac {
       type=1;
     if (type==1 && !is_undef(eq)){ // Find extremum
       if (interval){
-	int iszero;
+	int iszero=0;
 	res=bisection_solver(eq,variable,a,b,iszero,contextptr);
 	if (iszero<=0)
 	  res.clear();
@@ -2298,6 +2362,25 @@ namespace giac {
       gguess=v[2];
     if (gguess.is_symb_of_sommet(at_equal))
       return gensizeerr(contextptr);
+    if (gguess.is_symb_of_sommet(at_interval) && (s<4 || v[3].subtype!=_INT_PLOT)){
+      int iszero=-1;
+      gen a=gguess._SYMBptr->feuille[0],b=gguess._SYMBptr->feuille[1];
+      if (s>=4){
+	if (is_integer(v[3]))
+	  iszero=v[3].val;
+	if (v[3].is_symb_of_sommet(at_equal)){
+	  gen v30=v[3]._SYMBptr->feuille[0];
+	  gen v31=v[3]._SYMBptr->feuille[1];
+	  if (v30.subtype==_INT_PLOT && v30==_NSTEP)
+	    v30=v31;
+	  if (v30.subtype==_INT_PLOT && (v30==_XSTEP || v30==_TSTEP))
+	    v30=_floor((b-a)/v31,contextptr);
+	  if (v30.type==_INT_ && v30.val>0)
+	    iszero=v30.val;
+	}
+      }
+      return bisection_solver(v0,v[1],a,b,iszero,contextptr);
+    }
     // check method
     int method=_NEWTON_SOLVER;
     //int method=0;
@@ -2332,7 +2415,7 @@ namespace giac {
     }
 #ifndef HAVE_LIBGSL
     if (v[1].type!=_VECT && gguess.type==_VECT && gguess._VECTptr->size()==2){
-      int iszero;
+      int iszero=0;
       vecteur res= bisection_solver(v0,v[1],gguess[0],gguess[1],iszero,contextptr);
       if (!res.empty() && iszero!=1)
 	*logptr(contextptr) << (iszero==-1?"Warning: undefined":"Warning: sign reversal") << endl;
@@ -3540,7 +3623,62 @@ namespace giac {
   static const char _greduce_s []="greduce";
   static define_unary_function_eval (__greduce,&_greduce,_greduce_s);
   define_unary_function_ptr5( at_greduce ,alias_at_greduce,&__greduce,0,true);
-  
+
+  // eliminate(eqs,vars)
+  gen _eliminate(const gen & args,GIAC_CONTEXT){
+    if (args.type!=_VECT || args._VECTptr->size()!=2)
+      return gensizeerr(contextptr);
+    vecteur eqs=gen2vecteur(remove_equal(args._VECTptr->front()));
+    vecteur elim=gen2vecteur(args._VECTptr->back()),l(elim);
+    lvar(eqs,l); // add other vars after vars to eliminate
+    vecteur gb=gen2vecteur(_gbasis(gen(makevecteur(eqs,l),_SEQ__VECT),contextptr)),res;
+    // keep in gb values that do not depend on elim
+    for (int i=0;i<gb.size();++i){
+      vecteur v=lidnt(gb[i]);
+      if (is_zero(derive(v,elim,contextptr)))
+	res.push_back(gb[i]);
+    }
+    return res;
+  }
+  static const char _eliminate_s []="eliminate";
+  static define_unary_function_eval (__eliminate,&_eliminate,_eliminate_s);
+  define_unary_function_ptr5( at_eliminate ,alias_at_eliminate,&__eliminate,0,true);
+
+  // algsubs(eqs,vars)
+  gen _algsubs(const gen & args,GIAC_CONTEXT){
+    if (args.type!=_VECT || args._VECTptr->size()!=2)
+      return gensizeerr(contextptr);
+    gen eq=args._VECTptr->front();
+    vecteur term=gen2vecteur(_fxnd(args._VECTptr->back(),contextptr));
+    if (term.size()!=2 || !eq.is_symb_of_sommet(at_equal))
+      return gensizeerr();
+    gen idnt(identificateur(" algsubs"));
+    gen ee=term[0]-term[1]*idnt;
+    gen lhs=eq._SYMBptr->feuille[0],rhs=eq._SYMBptr->feuille[1];
+    term=gen2vecteur(_fxnd(lhs,contextptr));
+    if (term.size()!=2) return gensizeerr(contextptr);
+    gen eq1=term[0]-term[1]*rhs;
+    vecteur ids(lidnt(eq));
+    vecteur sol;
+    for (;!ids.empty();){
+      sol=gen2vecteur(_eliminate(makevecteur(makevecteur(eq1,ee),ids),contextptr));
+      if (!sol.empty())
+	break;
+      ids.pop_back();
+    }
+    gen solu=_solve(gen(makevecteur(sol,vecteur(1,idnt)),_SEQ__VECT),contextptr);
+    if (solu.type!=_VECT)
+      return gensizeerr(contextptr);
+    if (solu._VECTptr->empty())
+      return args._VECTptr->back();
+    if (solu._VECTptr->size()>1)
+      *logptr(contextptr) << "Warning: algsubs selected one branch" << endl;
+    return normal(solu[0][0],contextptr);
+  }
+  static const char _algsubs_s []="algsubs";
+  static define_unary_function_eval (__algsubs,&_algsubs,_algsubs_s);
+  define_unary_function_ptr5( at_algsubs ,alias_at_algsubs,&__algsubs,0,true);
+
   // in_ideal([Pi],[gb],[vars]) -> true/false
   gen _in_ideal(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;

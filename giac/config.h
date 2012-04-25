@@ -440,7 +440,13 @@
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
+#ifdef __x86_64__
+#define SIZEOF_LONG 8
+#define GIAC_GENERIC_CONSTANTS
+#define SMARTPTR64
+#else
 #define SIZEOF_LONG 4
+#endif
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8

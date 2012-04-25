@@ -98,6 +98,7 @@ namespace giac {
   void zint2simpldoublpos(const gen & e,gen & simpl,gen & doubl,bool & pos,GIAC_CONTEXT);
   gen sqrt_noabs(const gen & e,GIAC_CONTEXT);
   gen sqrt(const gen & e,GIAC_CONTEXT);
+  gen sqrt_mod(const gen & a,const gen & b,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_sqrt ;
 
   gen _sq(const gen & e);
@@ -415,7 +416,9 @@ namespace giac {
 
   symbolic symb_pow(const gen & a,const gen & b);
   std::string cprintaspow(const gen & feuille,const char * sommetstr_orig,GIAC_CONTEXT);
+#ifndef GIAC_HAS_STO_38
   extern unary_function_eval __pow;
+#endif
   gen _pow(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_pow ;
   extern const char _pow_s[];
@@ -460,6 +463,8 @@ namespace giac {
   
   gen Gamma(const gen & x,GIAC_CONTEXT);
   gen _Gamma(const gen & args,GIAC_CONTEXT);
+  double lngamma(double x);
+  gen lngamma(const gen & x,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_Gamma;
   extern const unary_function_ptr * const  at_lnGamma_minus;
   extern const unary_function_ptr * const  at_erfs;

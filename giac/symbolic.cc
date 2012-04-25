@@ -26,7 +26,6 @@ using namespace std;
 #include "plot.h"
 #include "giacintl.h"
 #include "global.h"
-#include "prog.h"
 
 // NB: the operator in the symbolic (sommet) can not be replace by a pointer
 // to a unary_function_ptr in the current code. Indeed, symbolic are created
@@ -325,6 +324,7 @@ namespace giac {
       return add_print(s,g.feuille,contextptr);
     gen pui=g.feuille._VECTptr->back();
     gen arg=g.feuille._VECTptr->front();
+#ifndef GIAC_HAS_STO_38
     if (__pow.printsommet==&cprintaspow){
       s+="pow(";
       add_print(s,arg,contextptr);
@@ -332,6 +332,7 @@ namespace giac {
       add_print(s,pui,contextptr);
       return s+=')';
     }
+#endif
     if (calc_mode(contextptr)==38){
       bool need=need_parenthesis(arg);
       if (pui==plus_one_half){
@@ -528,7 +529,7 @@ namespace giac {
       e._SYMBptr->feuille.subtype=_PNT__VECT;
     }
     else
-      e=new ref_symbolic(symbolic(at_pnt,gen(makevecteur(e._SYMBptr->feuille._VECTptr->front(),e._SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
+      e=new_ref_symbolic(symbolic(at_pnt,gen(makevecteur(e._SYMBptr->feuille._VECTptr->front(),e._SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
     e.subtype=gnuplot_show_pnt(*e._SYMBptr,contextptr);
   }
 
@@ -545,10 +546,10 @@ namespace giac {
 	if (legende.type==_IDNT && abs_calc_mode(contextptr)==38){
 	  // HP: if legende is an IDNT, keep it as legende
 	  // this save alloc (2 alloc instead of 3 alloc + 1 print
-	  *it=new ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),legende),_PNT__VECT)));
+	  *it=new_ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),legende),_PNT__VECT)));
 	}
 	else {
-	  *it=new ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),string2gen(legende.print(contextptr),false)),_PNT__VECT)));
+	  *it=new_ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),string2gen(legende.print(contextptr),false)),_PNT__VECT)));
 	}
 	it->subtype=gnuplot_show_pnt(*it->_SYMBptr,contextptr);
       }
@@ -608,27 +609,33 @@ namespace giac {
     nr_eval_if_cond=25,
     nr_eval_if_true=26,
     nr_eval_if_false=27,
-    nr_eval_for=28,
-    nr_eval_goto=29,
+    nr_eval_for_init=28,
+    nr_eval_for_cond=29,
+    nr_eval_for_loop=30,
+    nr_eval_for_incr=31,
+    nr_eval_for_in=32,
+    nr_eval_catch=34,
   };
 
 #define NR_INIT_STACK_SIZE 200
 
   struct nr_pointers_t{
-    gen * it;
-    unsigned endpos;
+    gen * itbeg;
+    unsigned curpos,endpos;
     unsigned arglpos;
     gen old;
     vecteur argl;
     signed char state;
-    nr_pointers_t(unsigned _arglpos,gen * _it,gen * _itend,gen _old,int argls,signed char _state):it(_it),endpos(_itend-_it),arglpos(_arglpos),old(_old),argl(argls),state(_state) {};
+    nr_pointers_t(unsigned _arglpos,gen * _itbeg,gen * _it,gen * _itend,gen _old,int argls,signed char _state):itbeg(_itbeg),curpos(_it-_itbeg),endpos(_itend-_itbeg),arglpos(_arglpos),old(_old),argl(argls),state(_state) {};
+    nr_pointers_t():itbeg(0),curpos(0),endpos(0),arglpos(0),old(0),argl(0),state(0){}
   };
 
-  inline void fromto_restore(unsigned & arglpos,gen * & it,gen * & itend,gen & old,vecteur & argl,signed char & state,vector<nr_pointers_t> & fromto_stack){
-    nr_pointers_t * ptr=&fromto_stack.back();
+  inline void fromto_restore(unsigned & arglpos,gen * & itbeg,gen * & it,gen * & itend,gen & old,vecteur & argl,signed char & state,vector<nr_pointers_t> & fromto_stack){
+    vector<nr_pointers_t>::iterator ptr=fromto_stack.end()-1;
     arglpos=ptr->arglpos;
-    it=ptr->it;
-    itend=ptr->it+ptr->endpos;
+    itbeg=ptr->itbeg;
+    it=ptr->itbeg+ptr->curpos;
+    itend=ptr->itbeg+ptr->endpos;
     old=ptr->old;
     argl.swap(ptr->argl);
     state=ptr->state;
@@ -641,14 +648,21 @@ namespace giac {
     bool save_sst_mode;
     int protect;
     nr_prog(context * _contextptr,const gen & _save_debug_info,const gen & _vars,bool _save_sst_mode,int _protect):contextptr(_contextptr),save_debug_info(_save_debug_info),vars(_vars),save_sst_mode(_save_sst_mode),protect(_protect) {};
+    nr_prog() : contextptr(0),save_debug_info(0),vars(0),save_sst_mode(false),protect(0) {}
   };
+
+  static void increment_instruction(const gen * it0,const gen * itend,GIAC_CONTEXT){
+    const gen * it=it0;
+    for (;it!=itend;++it)
+      increment_instruction(*it,contextptr);
+  }
 
   // nr_eval is slower than usual eval because it saves what is usually saved
   // on stack on the heap. It does not use stack for recursive calls
   // Should be used if we are near the bottom of the stack
   gen nr_eval(const gen & g,int level,const context * ct){
     context * contextptr=(context *) ct;
-    gen * it, *itend; // source, source end of evaluation
+    gen *itbeg, * it, *itend; // source, begin, current and end of evaluation
     gen * destination; // destination of evaluation result
     gen res; // the final answer
     gen tmp;
@@ -657,373 +671,593 @@ namespace giac {
     fromto_stack.reserve(NR_INIT_STACK_SIZE);
     signed char state=nr_eval_dispatch;
     gen old=0; // destination
-    gen progname=undef,label;
+    gen progname=undef,label=undef,forlast,lasterr;
     vecteur argl(1); // current evaled vecteur
     vector<nr_prog> nr_prog_stack;
+    vector<int> nr_eval_for_stack;
     nr_prog_stack.reserve(NR_INIT_STACK_SIZE);
     gen prog;
-    it=(gen *) &g; itend=it+1; destination=argl.begin();
+    itbeg=it=(gen *) &g; itend=it+1; destination=(gen *)&argl.front();
     while (1){
-      if (it!=itend){
-	if (state>=nr_eval_prog){
-	  if (destination->is_symb_of_sommet(at_return)){
-	    ++it; // do not eval anymore until end of function
-	    continue;
-	  }
-	  // break, continue
-	  // goto
-	  if (!is_undef(label)){
-	    
-	  }
+#ifndef NO_STDEXCEPT
+      try {
+#endif
+	if (lasterr.type==_STRNG || (destination->type==_STRNG && destination->subtype==-1)){
+	  // error!
+	  debug_ptr(contextptr)->current_instruction += itend-it;
+	  it=itend;
+	  if (lasterr.type!=_STRNG)
+	    lasterr=*destination;
 	}
-	switch (it->type){
-	case _VECT:
-	  if (it->subtype==_SPREAD__VECT){
-	    makespreadsheetmatrice(*it->_VECTptr,contextptr);
-	    spread_eval(*it->_VECTptr,contextptr);
-	    *destination=*it;
-	    ++it; 
-	    if (it!=itend && state<=nr_eval_op)
-	      ++destination;
-	    continue;
-	  }
-	  if (it->subtype==_FOLDER__VECT || it->subtype==_RGBA__VECT){
-	    ++it; 
-	    if (it!=itend && state<=nr_eval_op)
-	      ++destination;
-	    continue;
-	  }
-	  fromto_stack.push_back(nr_pointers_t(destination-argl.begin(),it,itend,old,1,state));
-	  argl.swap(fromto_stack.back().argl);
-	  // vecteur beginning by comment?
-	  tmp=*it;
-	  if (it->subtype==_SEQ__VECT && !it->_VECTptr->empty() && it->_VECTptr->front().type==_SYMB 
-	      && (it->_VECTptr->front()._SYMBptr->sommet==at_comment)
-	      && (it->_VECTptr->back().is_symb_of_sommet(at_return))
-	      ){
-	    itend=it->_VECTptr->end();
-	    it=it->_VECTptr->begin();
-	    for (;it!=itend;++it){
-	      if ( (it->type!=_SYMB) || (it->_SYMBptr->sommet!=at_comment) )
-		break;
+	if (it!=itend){
+	  if (state>=nr_eval_prog){
+	    if (destination->type==_SYMB && (destination->_SYMBptr->sommet==at_return || destination->_SYMBptr->sommet==at_break || (state!=nr_eval_for_incr && destination->_SYMBptr->sommet==at_continue) ) ){
+	      ++it; // do not eval anymore until end of function or loop
+	      ++debug_ptr(contextptr)->current_instruction;
+	      continue;
 	    }
-	    if (it+1==itend){
+	    // goto
+	    if (!is_undef(label)){
+	      if (it->is_symb_of_sommet(at_label) && label==it->_SYMBptr->feuille){
+		*destination=*it;
+		label=undef;
+	      }
+	      ++it;
+	      if (it==itend){
+		debug_ptr(contextptr)->current_instruction -= (itend-itbeg);
+		for (it=itbeg;it!=itend;++it){
+		  if (it->is_symb_of_sommet(at_label) && label==it->_SYMBptr->feuille){
+		    *destination=*it;
+		    label=undef;
+		    break;
+		  }
+		  ++debug_ptr(contextptr)->current_instruction;
+		}
+	      }
+	      else
+		++debug_ptr(contextptr)->current_instruction;
+	      continue;
+	    }
+	    if (state!=nr_eval_if_cond && state!=nr_eval_for_init && state!=nr_eval_for_cond && state!=nr_eval_for_incr && state!=nr_eval_sto){
+	      if (state==nr_eval_for_loop && it==itbeg+3 && it->is_symb_of_sommet(at_bloc))
+		;
+	      else {
+		++debug_ptr(contextptr)->current_instruction;
+		if (debug_ptr(contextptr)->debug_mode){
+		  debug_loop(res,contextptr);
+		  if (is_undef(res)) return res;
+		}
+	      }
+	    }
+	  }
+	  switch (it->type){
+	  case _VECT:
+	    if (it->subtype==_SPREAD__VECT){
+	      makespreadsheetmatrice(*it->_VECTptr,contextptr);
+	      spread_eval(*it->_VECTptr,contextptr);
 	      *destination=*it;
-	      fromto_restore(arglpos,it,itend,old,argl,state,fromto_stack);
-	      destination=argl.begin()+arglpos;
 	      ++it; 
 	      if (it!=itend && state<=nr_eval_op)
 		++destination;
 	      continue;
 	    }
-	    if (it==itend){
-	      *destination=zero;
-	      fromto_restore(arglpos,it,itend,old,argl,state,fromto_stack);
-	      destination=argl.begin()+arglpos;
+	    if (it->subtype==_FOLDER__VECT || it->subtype==_RGBA__VECT){
 	      ++it; 
 	      if (it!=itend && state<=nr_eval_op)
 		++destination;
-	      continue; 
+	      continue;
 	    }
-	  }
-	  else {
-	    itend=it->_VECTptr->end();
-	    it=it->_VECTptr->begin();
-	  }
-	  old=tmp;
-	  // normal vector evaluation
-	  state=nr_eval_vect;
-	  argl.resize(itend-it);
-	  // vecteur_stack.push_back(argl);
-	  // argl=vecteur(itend-it);
-	  destination=argl.begin();
-	  continue;
-	case _SYMB: {
-	  // special cases
-	  unary_function_ptr & u =it->_SYMBptr->sommet;
-	  gen f=it->_SYMBptr->feuille;
-	  if (u==at_quote){
-	    *destination=quote(f,contextptr);
-	    ++it; 
-	    if (it!=itend && state<=nr_eval_op)
-	      ++destination;
-	    continue;
-	  }
-	  if (u==at_program) { 
-	    *destination=quote_program(it->_SYMBptr->feuille,contextptr);
-	    ++it; 
-	    if (it!=itend && state<=nr_eval_op)
-	      ++destination;
-	    continue;
-	  }
-	  int specop=0;
-	  if (u==at_ifte || u==at_when)
-	    specop=nr_eval_if_cond;
-	  if (u==at_for)
-	    specop=nr_eval_for;
-	  if (u==at_bloc)
-	    specop=nr_eval_bloc;
-	  if (u==at_local)
-	    specop=nr_eval_local;
-	  if (u==at_sto)
-	    specop=nr_eval_sto;
-	  if (u==at_of)
-	    specop=nr_eval_of;
-	  if (!specop && u.quoted()){ // FIXME check for unquote
-	    *destination=u(f,contextptr);
-	    ++it; 
-	    if (it!=itend && state<=nr_eval_op)
-	      ++destination;
-	    continue;
-	  }
-	  // save pointers and state, eval args
-	  fromto_stack.push_back(nr_pointers_t(destination-argl.begin(),it,itend,old,1,state));
-	  argl.swap(fromto_stack.back().argl);
-	  state=nr_eval_op;
-	  old=*it;
-	  destination=argl.begin();
-	  if (specop==nr_eval_sto && f.type==_VECT && f._VECTptr->size()==2){ // eval first arg, but not the second arg
-	    state=nr_eval_sto;
-	    it=&f._VECTptr->front();
-	    itend=it+1;
-	    continue;
-	  }
-	  if (specop==nr_eval_if_cond && f.type==_VECT && f._VECTptr->size()>=3){ // eval first arg, but not the second third arg
-	    state=nr_eval_if_cond;
-	    it=&f._VECTptr->front();
-	    itend=it+1;
-	    continue;
-	  }
-	  if (specop==nr_eval_of){
-	    state=nr_eval_of; // program name is in old, eval args normally
-	  }
-	  // normal symbolic
-	  if (f.type==_VECT && (f.subtype==_SEQ__VECT || specop==nr_eval_of)){
-	    itend=f._VECTptr->end();
-	    it=f._VECTptr->begin();
+	    fromto_stack.push_back(nr_pointers_t(destination-(gen *) &argl.front(),itbeg,it,itend,old,1,state));
+	    argl.swap(fromto_stack.back().argl);
+	    // vecteur beginning by comment?
+	    tmp=*it;
+	    if (it->subtype==_SEQ__VECT && !it->_VECTptr->empty() && it->_VECTptr->front().type==_SYMB 
+		&& (it->_VECTptr->front()._SYMBptr->sommet==at_comment)
+		&& (it->_VECTptr->back().is_symb_of_sommet(at_return))
+		){
+	      itend=(gen *) &it->_VECTptr->back()+1;
+	      it=(gen *) &it->_VECTptr->front();
+	      for (;it!=itend;++it){
+		if ( (it->type!=_SYMB) || (it->_SYMBptr->sommet!=at_comment) )
+		  break;
+	      }
+	      if (it+1==itend){
+		*destination=*it;
+		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+		destination=(gen *) &argl.front()+arglpos;
+		++it; 
+		if (it!=itend && state<=nr_eval_op)
+		  ++destination;
+		continue;
+	      }
+	      if (it==itend){
+		*destination=zero;
+		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+		destination=(gen *) &argl.front()+arglpos;
+		++it; 
+		if (it!=itend && state<=nr_eval_op)
+		  ++destination;
+		continue; 
+	      }
+	    }
+	    else {
+	      itend=(gen *)&it->_VECTptr->back()+1;
+	      it=(gen *)&it->_VECTptr->front();
+	    }
+	    itbeg=it;
+	    old=tmp;
+	    // normal vector evaluation
+	    state=nr_eval_vect;
 	    argl.resize(itend-it);
-	    destination=argl.begin();
+	    // vecteur_stack.push_back(argl);
+	    // argl=vecteur(itend-it);
+	    destination=(gen *)&argl.front();
+	    continue;
+	  case _SYMB: {
+	    // special cases
+	    unary_function_ptr & u =it->_SYMBptr->sommet;
+	    gen f=it->_SYMBptr->feuille;
+	    if (u==at_quote){
+	      *destination=quote(f,contextptr);
+	      ++it; 
+	      if (it!=itend && state<=nr_eval_op)
+		++destination;
+	      continue;
+	    }
+	    if (u==at_program) { 
+	      *destination=quote_program(it->_SYMBptr->feuille,contextptr);
+	      ++it; 
+	      if (it!=itend && state<=nr_eval_op)
+		++destination;
+	      continue;
+	    }
+	    int specop=0;
+	    if (u==at_goto)
+	      label=f;
+	    if (u==at_ifte || u==at_when)
+	      specop=nr_eval_if_cond;
+	    if (u==at_for){ 
+	      if (state==nr_eval_for_cond){ // for in for_cond is for the syntax for x in l
+		*destination=*it;
+		++it;
+		continue;
+	      }
+	      nr_eval_for_stack.push_back(0); // index for for var in list/string
+	      nr_eval_for_stack.push_back(debug_ptr(contextptr)->current_instruction);
+	      specop=nr_eval_for_init;
+	    }
+	    if (u==at_bloc)
+	      specop=nr_eval_bloc;
+	    if (u==at_local)
+	      specop=nr_eval_local;
+	    if (u==at_sto)
+	      specop=nr_eval_sto;
+	    if (u==at_of)
+	      specop=nr_eval_of;
+	    if (u==at_try_catch)
+	      specop=nr_eval_catch;
+	    if (!specop && u.quoted() && !f.is_symb_of_sommet(at_unquote)){ 
+	      // check for hash
+	      if (f.is_symb_of_sommet(at_hash) && f._SYMBptr->feuille.type==_STRNG)
+		f=gen(*f._SYMBptr->feuille._STRNGptr,contextptr);
+	      *destination=u(f,contextptr);
+	      ++it; 
+	      if (it!=itend && state<=nr_eval_op)
+		++destination;
+	      continue;
+	    }
+	    // save pointers and state, eval args
+	    fromto_stack.push_back(nr_pointers_t(destination-(gen *)&argl.front(),itbeg,it,itend,old,1,state));
+	    argl.swap(fromto_stack.back().argl);
+	    state=specop?specop:nr_eval_op;
+	    old=*it;
+	    destination=(gen *)&argl.front();
+	    if ( f.type==_VECT && 
+		 (
+		  (specop==nr_eval_sto && f._VECTptr->size()==2) ||
+		  (specop==nr_eval_if_cond && f._VECTptr->size()>=3) ||
+		  (specop==nr_eval_for_init && f._VECTptr->size()>=3) ||
+		  (specop==nr_eval_catch && f._VECTptr->size()>=3)
+		  ) ){ 
+	      // sto: eval first arg, but not the second arg
+	      // if: eval first arg, but not the second third arg
+	      // for: eval first arg [init]
+	      // try ... catch: eval first arg
+	      itbeg=it=&f._VECTptr->front();
+	      itend=it+1;
+	      continue;
+	    }
+	    if (specop==nr_eval_local){
+	      int protect=0;
+	      gen vars,values;
+	      context * save_contextptr=contextptr;
+	      // Bind local var
+	      prog=f;
+	      vars=prog._VECTptr->front();
+	      if (vars.type==_VECT && vars._VECTptr->size()==2 && vars._VECTptr->front().type!=_IDNT)
+		vars = vars._VECTptr->front();
+	      if (vars.type!=_VECT)
+		vars=makevecteur(vars);
+	      values=gen(vecteur(vars._VECTptr->size()));
+	      for (unsigned i=0;i<vars._VECTptr->size();++i){
+		tmp=(*vars._VECTptr)[i];
+		if (tmp.is_symb_of_sommet(at_sto) || tmp.is_symb_of_sommet(at_equal)){
+		  (*values._VECTptr)[i]=tmp._SYMBptr->feuille._VECTptr->back();
+		  (*vars._VECTptr)[i]=tmp._SYMBptr->feuille._VECTptr->front().eval(1,contextptr);
+		}
+	      }
+	      prog=prog._VECTptr->back();
+	      protect=bind(*values._VECTptr,*vars._VECTptr,contextptr);
+	      if (protect==-RAND_MAX){
+		gensizeerr(res,contextptr);
+		return res;
+	      }
+	      // save previous state
+	      nr_prog_stack.push_back(nr_prog(save_contextptr,0,vars,false,protect));
+	      if (prog.type==_VECT && prog.subtype==0){
+		itbeg=it=(gen *)&prog._VECTptr->front();
+		itend=(gen *)&prog._VECTptr->back()+1;
+	      }
+	      else {
+		itbeg=it=&prog;
+		itend=it+1;
+	      }
+	      continue;
+	    }
+	    // if (specop==nr_eval_of || specof==nr_eval_bloc){
+	    //  state=specop; // program name is in old, eval args normally
+	    // }
+	    // normal symbolic
+	    if (f.type==_VECT && (f.subtype==_SEQ__VECT || (specop==nr_eval_of || specop==nr_eval_bloc))){
+	      itend=(gen *)&f._VECTptr->back()+1;
+	      itbeg=it=(gen *)&f._VECTptr->front();
+	      argl.resize(itend-it);
+	      destination=(gen *)&argl.front();
+	    }
+	    else {
+	      itbeg=it=&it->_SYMBptr->feuille; // do not use &f here!
+	      itend=it+1;
+	    }
+	    continue;
+	  }
+	  case _IDNT:
+	    tmp=eval(*it,level,contextptr);
+	    if (tmp.type!=_VECT || tmp.subtype!=_SEQ__VECT || (state!=nr_eval_vect && !(state==nr_eval_op && old.type==_SYMB && old._SYMBptr->feuille.type==_VECT)))
+	      *destination=tmp;
+	    else { 
+	      // tmp is a sequence inside a vector, 
+	      // enlarge argl and copy tmp._VECTptr in argl
+	      int pos=destination-(gen *)&argl.front();
+	      for (unsigned i=1;i<tmp._VECTptr->size();++i)
+		argl.push_back(0);
+	      destination=(gen *)&argl.front()+pos;
+	      for (int i=0;;){
+		*destination=(*tmp._VECTptr)[i];
+		++i;
+		if (i==tmp._VECTptr->size())
+		  break;
+		++destination;
+	      }
+	    }
+	    ++it; 
+	    if (it!=itend && state<=nr_eval_op)
+	      ++destination;
+	    continue;
+	  default:
+	    *destination=*it;
+	    ++it; 
+	    if (it!=itend && state<=nr_eval_op)
+	      ++destination;
+	    continue;
+	  } // end switch on it->type
+	}
+	// it==itend
+	// end eval of current vector
+	signed char oldsubtype=old.type==_VECT?old.subtype:0;
+	if (fromto_stack.empty()){
+	  return argl.front(); // end evaluation
+	} 
+	// dispatch depending on current mode
+	switch (state){
+	case nr_eval_dispatch:
+	  continue;
+	case nr_eval_vect:
+	  // end eval of vecteur, store value in res
+	  if (oldsubtype==_SET__VECT && !argl.empty()){
+	    // remove multiple occurences
+	    sort(argl.begin(),argl.end(),islesscomplexthanf);
+	    vecteur tmp;
+	    tmp.reserve(argl.size());
+	    tmp.push_back(argl.front());
+	    for (iterateur jt=argl.begin()+1;jt!=argl.end();++jt){
+	      if (*jt!=tmp.back())
+		tmp.push_back(*jt);
+	    }
+	    tmp.swap(argl);
+	    res=gen(argl,oldsubtype);
 	  }
 	  else {
-	    it=&it->_SYMBptr->feuille; // do not use &f here!
-	    itend=it+1;
+	    // FIXME: make a faster == check (may returns false for large == vecteurs)
+	    if (old.type==_VECT && old._VECTptr->size()<17 && *old._VECTptr==argl)
+	      res=old;
+	    else
+	      res=gen(argl,oldsubtype);
 	  }
+	  // restore previous state, old, pointers and argl
+	  fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+	  destination=(gen *)&argl.front()+arglpos;
+	  *destination=res;
+	  ++it;
+	  if (it!=itend && state<=nr_eval_op)
+	    ++destination;
+	  continue; // end state==nr_eval_vect
+	case nr_eval_for_init:
+	  forlast=undef;
+	  ++itend;
+	  state=nr_eval_for_cond;
 	  continue;
-	}
-	case _IDNT:
-	  tmp=eval(*it,level,contextptr);
-	  if (tmp.type!=_VECT || tmp.subtype!=_SEQ__VECT || state!=nr_eval_vect)
-	    *destination=tmp;
-	  else { 
-	    // tmp is a sequence inside a vector, 
-	    // enlarge argl and copy tmp._VECTptr in argl
-	    int pos=destination-argl.begin();
-	    for (int i=1;i<tmp._VECTptr->size();++i)
-	      argl.push_back(0);
-	    destination=argl.begin()+pos;
-	    for (int i=0;;){
-	      *destination=(*tmp._VECTptr)[i];
-	      ++i;
-	      if (i==tmp._VECTptr->size())
-		break;
-	      ++destination;
+	case nr_eval_for_cond:
+	  res=*destination;
+	  if ( nr_eval_for_stack.size()>=2 && (res.is_symb_of_sommet(at_for) || res.is_symb_of_sommet(at_pour)) && res._SYMBptr->feuille.type==_VECT && res._SYMBptr->feuille._VECTptr->size()==2){ 
+	    // for var in list/string
+	    res=eval(res._SYMBptr->feuille._VECTptr->back(),1,contextptr);
+	    if (res.type==_VECT){
+	      if (res._VECTptr->size()>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
+		res=res[nr_eval_for_stack[nr_eval_for_stack.size()-2]];
+		sto(res,destination->_SYMBptr->feuille._VECTptr->front(),contextptr);
+		res=1;
+	      }
+	      else
+		res=0;
+	    }
+	    else {
+	      if (res.type==_STRNG){
+		if (res._STRNGptr->size()>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
+		  res=string2gen(string(1,(*res._STRNGptr)[nr_eval_for_stack[nr_eval_for_stack.size()-2]]),false);
+		  sto(res,destination->_SYMBptr->feuille._VECTptr->front(),contextptr);
+		  res=1;
+		}
+		else
+		  res=0;
+	      }
+	      else
+		res=0;
+	    }
+	    ++nr_eval_for_stack[nr_eval_for_stack.size()-2];
+	  }
+	  res=equaltosame(res).eval(eval_level(contextptr),contextptr);
+	  if (!is_integer(res)){
+	    res=res.evalf_double(eval_level(contextptr),contextptr);
+	    if ( res.type!=_DOUBLE_ && res.type!=_CPLX ){
+	      if (old._SYMBptr->sommet==at_for){
+		if (!nr_eval_for_stack.empty()) // pop back instruction and for in index
+		  nr_eval_for_stack.pop_back();
+		if (!nr_eval_for_stack.empty())
+		  nr_eval_for_stack.pop_back();
+		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+		destination=(gen *)&argl.front()+arglpos;
+		gensizeerr("For: Unable to check test",*destination); 
+		res=*destination;
+		it=itend;
+		continue;
+	      }
+	      else
+		res=old;
 	    }
 	  }
-	  ++it; 
+	  if (!is_zero(res)){ // TRUE
+	    it++; itend+=2;
+	    state=nr_eval_for_loop;
+	  }
+	  else {
+	    increment_instruction(it+1,it+3,contextptr);
+	    if (!nr_eval_for_stack.empty()) // pop back instruction and for in index
+	      nr_eval_for_stack.pop_back();
+	    if (!nr_eval_for_stack.empty())
+	      nr_eval_for_stack.pop_back();
+	    // restore state and pointers
+	    fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+	    destination=(gen *)&argl.front()+arglpos;
+	    *destination=forlast; 
+	    ++it;
+	    if (it!=itend && state<=nr_eval_op)
+	      ++destination;
+	  }
+	  continue;
+	case nr_eval_for_loop:
+	  if (destination->type==_SYMB && (destination->_SYMBptr->sommet==at_break || destination->_SYMBptr->sommet==at_return)){
+	    if (destination->_SYMBptr->sommet==at_break)
+	      *destination=undef;
+	    if (!nr_eval_for_stack.empty()) // pop back instruction and for in index
+	      nr_eval_for_stack.pop_back();
+	    if (!nr_eval_for_stack.empty())
+	      nr_eval_for_stack.pop_back();
+	    state=nr_eval_bloc;
+	  }
+	  else {
+	    it -= 2; --itend;
+	    state=nr_eval_for_incr;
+	    forlast=*destination;
+	  }
+	  continue;
+	case nr_eval_for_incr:
+	  if (!nr_eval_for_stack.empty())
+	    debug_ptr(contextptr)->current_instruction=nr_eval_for_stack.back();
+	  if (debug_ptr(contextptr)->debug_mode){
+	    debug_loop(res,contextptr);
+	    if (is_undef(res)) return res;
+	  }
+	  state=nr_eval_for_cond;
+	  it -= 2;
+	  itend -= 1;
+	  continue;
+	case nr_eval_catch:
+	  // catch lasterr, FIXME for debug
+	  state=nr_eval_if_false;
+	  if (lasterr.type==_STRNG){
+	    lasterr.subtype=0;
+	    sto(lasterr,*it,contextptr);
+	    ++it;
+	    itend += 2;
+	    lasterr=*destination=res=0;
+	    continue;
+	  }
+	  increment_instruction(*(it+1),contextptr);
+	  if (old._SYMBptr->feuille._VECTptr->size()==4){
+	    it += 2;
+	    itend += 3;
+	  }
+	  continue;
+	case nr_eval_if_cond:
+	  res=*destination;
+	  res=equaltosame(res).eval(eval_level(contextptr),contextptr);
+	  if (!is_integer(res)){
+	    res=res.evalf_double(eval_level(contextptr),contextptr);
+	    if ( res.type!=_DOUBLE_ && res.type!=_CPLX ){
+	      if (old._SYMBptr->sommet==at_ifte){
+		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+		destination=(gen *)&argl.front()+arglpos;
+		gensizeerr("Ifte: Unable to check test",*destination); 
+		res=*destination;
+		it=itend;
+		continue;
+	      }
+	      else
+		res=old;
+	    }
+	  }
+	  if (!is_zero(res)){ // TRUE
+	    state=nr_eval_if_true;
+	    ++itend;
+	  }
+	  else { //FALSE
+	    if (old._SYMBptr->sommet==at_ifte){
+	      increment_instruction(*it,contextptr);
+	    }
+	    state=nr_eval_if_false;
+	    ++it; itend+=2;
+	  }
+	  continue;
+	case nr_eval_of:
+	  if (argl.size()==2 && argl.front().is_symb_of_sommet(at_program)){
+	    debug_struct * dbgptr=debug_ptr(contextptr);
+	    int protect=0;
+	    bool save_sst_mode=dbgptr->sst_mode;
+	    gen vars,values;
+	    context * save_contextptr=contextptr;
+	    dbgptr->sst_at_stack.push_back(dbgptr->sst_at);
+	    dbgptr->sst_at.clear();
+	    progname=old._SYMBptr->feuille._VECTptr->front();
+	    if (progname.is_symb_of_sommet(at_program))
+	      progname=undef;
+	    if (progname.type==_IDNT)
+	      adjust_sst_at(progname,contextptr);
+	    dbgptr->current_instruction_stack.push_back(dbgptr->current_instruction);
+	    dbgptr->current_instruction=0;
+	    if (dbgptr->sst_in_mode){
+	      dbgptr->sst_in_mode=false;
+	      dbgptr->sst_mode=true;
+	    }
+	    else
+	      dbgptr->sst_mode=false;
+	    // Bind local var
+	    prog=argl.front()._SYMBptr->feuille;
+	    vars=prog._VECTptr->front();
+	    values=argl[1];
+	    prog=prog._VECTptr->back();
+	    if (vars.type!=_VECT)
+	      vars=gen(makevecteur(vars));
+	    if (values.type!=_VECT || values.subtype!=_SEQ__VECT || (vars._VECTptr->size()==1 && values._VECTptr->size()!=1))
+	      values=gen(makevecteur(values));
+	    // *logptr(contextptr) << vars << " " << values << endl;
+	    // removed sst test so that when a breakpoint is evaled
+	    // the correct info is displayed
+	    (*dbgptr->fast_debug_info_ptr)=prog;
+	    (*dbgptr->debug_info_ptr)=prog;
+	    if (!vars._VECTptr->empty())
+	      protect=bind(*values._VECTptr,*vars._VECTptr,contextptr);
+	    if (protect==-RAND_MAX){
+	      program_leave(*dbgptr->debug_info_ptr,save_sst_mode,dbgptr);
+	      gensizeerr(res,contextptr);
+	      return res;
+	    }
+	    // save previous state
+	    nr_prog_stack.push_back(nr_prog(save_contextptr,*dbgptr->debug_info_ptr,vars,save_sst_mode,protect));
+	    dbgptr->args_stack.push_back(gen(mergevecteur(vecteur(1,progname),*values._VECTptr)));
+	    if (prog.type==_VECT && prog.subtype==0){
+	      itbeg=it=(gen *)&prog._VECTptr->front();
+	      itend=(gen *)&prog._VECTptr->back()+1;
+	    }
+	    else {
+	      itbeg=it=&prog;
+	      itend=it+1;
+	    }
+	    state=nr_eval_prog;
+	  }
+	  else
+	    state=nr_eval_op; // like a goto nr_eval_op: below
+	  continue;
+	case nr_eval_if_true: 
+	  if (old._SYMBptr->sommet==at_ifte)
+	    increment_instruction(*it,contextptr);  // no break here
+	case nr_eval_if_false:
+	  res=*destination; // no break here
+	case nr_eval_op: case nr_eval_sto: 
+	  // eval operator
+	  if (state==nr_eval_sto)
+	    res=sto(*destination,old._SYMBptr->feuille._VECTptr->back(),contextptr);
+	  else {
+	    if (state==nr_eval_op){
+	      if (old._SYMBptr->feuille.type==_VECT && old._SYMBptr->feuille.subtype==_SEQ__VECT)
+		res=gen(argl,_SEQ__VECT);
+	      else
+		res=*destination;
+	      res=(*old._SYMBptr->sommet.ptr())(res,contextptr);
+	    }
+	  }
+	  // no break here -> restore
+	case nr_eval_bloc:
+	  // restore state and pointers
+	  if (state==nr_eval_bloc) 
+	    res=*destination;
+	  fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+	  destination=(gen *)&argl.front()+arglpos;
+	  *destination=res;
+	  ++it;
+	  if (it!=itend && state<=nr_eval_op)
+	    ++destination;
+	  continue;
+	case nr_eval_prog: case nr_eval_local:
+	  // end of program reached, restore context
+	  res=*destination;
+	  if (state==nr_eval_prog && res.is_symb_of_sommet(at_return))
+	    res=res._SYMBptr->feuille;
+	  if (!nr_prog_stack.back().vars._VECTptr->empty())
+	    leave(nr_prog_stack.back().protect,*nr_prog_stack.back().vars._VECTptr,contextptr);
+	  if (state==nr_eval_prog)
+	    program_leave(nr_prog_stack.back().save_debug_info,nr_prog_stack.back().save_sst_mode,debug_ptr(contextptr));
+	  contextptr=nr_prog_stack.back().contextptr;
+	  nr_prog_stack.pop_back();
+	  // restore state and pointers
+	  fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
+	  destination=(gen *)&argl.front()+arglpos;
+	  *destination=res;
+	  ++it;
 	  if (it!=itend && state<=nr_eval_op)
 	    ++destination;
 	  continue;
 	default:
-	  *destination=*it;
-	  ++it; 
-	  if (it!=itend && state<=nr_eval_op)
-	    ++destination;
-	  continue;
-	} // end switch on it->type
+	  gensizeerr("Bad state",res);
+	  return res;
+	} // end switch
+#ifndef NO_STDEXCEPT
       }
-      // it==itend)
-      // end eval of current vector
-      signed char oldsubtype=old.type==_VECT?old.subtype:0;
-      if (fromto_stack.empty()){
-	return argl.front(); // end evaluation
-      } 
-      // dispatch depending on current mode
-      switch (state){
-      case nr_eval_dispatch:
-	continue;
-      case nr_eval_vect:
-	// end eval of vecteur, store value in res
-	if (oldsubtype==_SET__VECT && !argl.empty()){
-	  // remove multiple occurences
-	  sort(argl.begin(),argl.end(),islesscomplexthanf);
-	  vecteur tmp;
-	  tmp.reserve(argl.size());
-	  tmp.push_back(argl.front());
-	  for (iterateur jt=argl.begin()+1;jt!=argl.end();++jt){
-	    if (*jt!=tmp.back())
-	      tmp.push_back(*jt);
-	  }
-	  tmp.swap(argl);
-	  res=gen(argl,oldsubtype);
-	}
-	else {
-	  // FIXME: make a faster == check (may returns false for large == vecteurs)
-	  if (old.type==_VECT && old._VECTptr->size()<17 && *old._VECTptr==argl)
-	    res=old;
-	  else
-	    res=gen(argl,oldsubtype);
-	}
-	// restore previous state, old, pointers and argl
-	fromto_restore(arglpos,it,itend,old,argl,state,fromto_stack);
-	destination=argl.begin()+arglpos;
+      catch (std::runtime_error & e) {
+	res=string2gen(e.what(),false);
+	res.subtype=-1;
 	*destination=res;
-	++it;
-	if (it!=itend && state<=nr_eval_op)
-	  ++destination;
-	continue; // end state==nr_eval_vect
-      case nr_eval_if_cond:
-	res=*destination;
-	res=equaltosame(res).eval(eval_level(contextptr),contextptr);
-	if (!is_integer(res)){
-	  res=res.evalf_double(eval_level(contextptr),contextptr);
-	  if ( res.type!=_DOUBLE_ && res.type!=_CPLX ){
-	    if (old._SYMBptr->sommet==at_ifte){
-	      gensizeerr("Ifte: Unable to check res",res); 
-	      return res;
-	    }
-	    else
-	      res=old;
-	  }
-	}
-	if (!is_zero(res)){ // TRUE
-	  if (old._SYMBptr->sommet==at_ifte){
-	    ++debug_ptr(contextptr)->current_instruction;
-	    if (debug_ptr(contextptr)->debug_mode){
-	      debug_loop(res,contextptr);
-	      if (is_undef(res)) return res;
-	    }
-	  }
-	  state=nr_eval_if_true;
-	  ++itend;
-	}
-	else { //FALSE
-	  if (old._SYMBptr->sommet==at_ifte){
-	    increment_instruction(*it,contextptr);
-	    // *logptr(contextptr) << "Else " << debug_ptr(contextptr)->current_instruction << endl ;
-	    ++debug_ptr(contextptr)->current_instruction;
-	    if (debug_ptr(contextptr)->debug_mode){
-	      debug_loop(res,contextptr);
-	      if (is_undef(res)) return res;
-	    }
-	  }
-	  state=nr_eval_if_false;
-	  ++it; itend+=2;
-	}
-	continue;
-      case nr_eval_of:
-	if (argl.size()==2 && argl.front().is_symb_of_sommet(at_program)){
-	  debug_struct * dbgptr=debug_ptr(contextptr);
-	  int protect=0;
-	  bool save_sst_mode=dbgptr->sst_mode;
-	  gen vars,values;
-	  context * save_contextptr=contextptr;
-	  dbgptr->sst_at_stack.push_back(dbgptr->sst_at);
-	  dbgptr->sst_at.clear();
-	  progname=old._SYMBptr->feuille._VECTptr->front();
-	  if (progname.is_symb_of_sommet(at_program))
-	    progname=undef;
-	  if (progname.type==_IDNT)
-	    adjust_sst_at(progname,contextptr);
-	  dbgptr->current_instruction_stack.push_back(dbgptr->current_instruction);
-	  dbgptr->current_instruction=0;
-	  if (dbgptr->sst_in_mode){
-	    dbgptr->sst_in_mode=false;
-	    dbgptr->sst_mode=true;
-	  }
-	  else
-	    dbgptr->sst_mode=false;
-	  // Bind local var
-	  prog=argl.front()._SYMBptr->feuille;
-	  vars=prog._VECTptr->front();
-	  values=argl[1];
-	  prog=prog._VECTptr->back();
-	  if (vars.type!=_VECT)
-	    vars=gen(makevecteur(vars));
-	  if (values.type!=_VECT || values.subtype!=_SEQ__VECT || (vars._VECTptr->size()==1 && values._VECTptr->size()!=1))
-	    values=gen(makevecteur(values));
-	  // *logptr(contextptr) << vars << " " << values << endl;
-	  // removed sst test so that when a breakpoint is evaled
-	  // the correct info is displayed
-	  (*dbgptr->fast_debug_info_ptr)=prog;
-	  (*dbgptr->debug_info_ptr)=prog;
-	  if (!vars._VECTptr->empty())
-	    protect=bind(*values._VECTptr,*vars._VECTptr,contextptr);
-	  if (protect==-RAND_MAX){
-	    program_leave(*dbgptr->debug_info_ptr,save_sst_mode,dbgptr);
-	    gensizeerr(res,contextptr);
-	    return res;
-	  }
-	  // save previous state
-	  nr_prog_stack.push_back(nr_prog(save_contextptr,*dbgptr->debug_info_ptr,vars,save_sst_mode,protect));
-	  dbgptr->args_stack.push_back(gen(mergevecteur(vecteur(1,progname),*values._VECTptr)));
-	  if (prog.type==_VECT && prog.subtype==_SEQ__VECT){
-	    it=prog._VECTptr->begin();
-	    itend=prog._VECTptr->end();
-	  }
-	  else {
-	    it=&prog;
-	    itend=it+1;
-	  }
-	  state=nr_eval_prog;
-	}
-	else
-	  state=nr_eval_op; // like a goto nr_eval_op: below
-	continue;
-      case nr_eval_if_true: 
-	if (old._SYMBptr->sommet==at_ifte)
-	  increment_instruction(*it,contextptr);  // no break here
-      case nr_eval_if_false:
-	res=*destination; // no break here
-      case nr_eval_op: case nr_eval_sto:
-	// eval operator
-	if (state==nr_eval_sto)
-	  res=sto(*destination,old._SYMBptr->feuille._VECTptr->back(),contextptr);
-	else {
-	  if (state==nr_eval_op){
-	    if (old._SYMBptr->feuille.type==_VECT && old._SYMBptr->feuille.subtype==_SEQ__VECT)
-	      res=gen(argl,_SEQ__VECT);
-	    else
-	      res=*destination;
-	    res=(*old._SYMBptr->sommet.ptr())(res,contextptr);
-	  }
-	}
-	// restore state and pointers
-	fromto_restore(arglpos,it,itend,old,argl,state,fromto_stack);
-	destination=argl.begin()+arglpos;
-	*destination=res;
-	++it;
-	if (it!=itend && state<=nr_eval_op)
-	  ++destination;
-	continue;
-      case nr_eval_prog: 
-	// end of program reached, restore context
-	if (!nr_prog_stack.back().vars._VECTptr->empty())
-	  leave(nr_prog_stack.back().protect,*nr_prog_stack.back().vars._VECTptr,contextptr);
-	program_leave(nr_prog_stack.back().save_debug_info,nr_prog_stack.back().save_sst_mode,debug_ptr(contextptr));
-	contextptr=nr_prog_stack.back().contextptr;
-	nr_prog_stack.pop_back();
-	// restore state and pointers
-	fromto_restore(arglpos,it,itend,old,argl,state,fromto_stack);
-	destination=argl.begin()+arglpos;
-	*destination=res;
-	++it;
-	if (it!=itend && state<=nr_eval_op)
-	  ++destination;
-	continue;
-      default:
-	gensizeerr("Bad state",res);
-	return res;
-      } // end switch
+      }
+#endif
     } // end while(1)
     return argl.front();
   }
@@ -1032,6 +1266,7 @@ namespace giac {
     if (level==0 || !sommet.ptr())
       return *this;
     gen ans;
+    // FIXME test should be removed later, it's here for tests. See global.cc DEFAULT_EVAL_LEVEL
     if (eval_level(contextptr)==26)
       return nr_eval(*this,level,contextptr);
     std::vector<const char *> & last =last_evaled_function_name(contextptr);
@@ -1100,15 +1335,15 @@ namespace giac {
       }
       ans=(*sommet.ptr())(feuille.in_eval(level,ans,contextptr)?ans:feuille,contextptr);
       /*
-      if (feuille.in_eval(level,ans,contextptr))
+	if (feuille.in_eval(level,ans,contextptr))
 	ans=(*sommet.ptr())(ans,contextptr);
-      else
+	else
 	ans=(*sommet.ptr())(feuille,contextptr);
       */
       if (!last.empty())
 	last.pop_back();
-	if (!lastarg.empty())
-	  lastarg.pop_back();
+      if (!lastarg.empty())
+	lastarg.pop_back();
       return ans;
     }
   }
@@ -1135,20 +1370,20 @@ namespace giac {
       if (!is_one(d))
 	den.insert(den.begin(),d);
       if (den.size()>1)
-	d=new ref_symbolic(symbolic(at_prod,den));
+	d=new_ref_symbolic(symbolic(at_prod,den));
       else
 	d=den.front();
       if (!num.empty()){
 	if (num.size()==1)
 	  n=num.front();
 	else 
-	  n=new ref_symbolic(symbolic(at_prod,num));
+	  n=new_ref_symbolic(symbolic(at_prod,num));
       }
       return true;
     }
     // Group scalar denominators (warning, do not use for matrices!)
     vecteur num,den;
-    prod2frac(new ref_symbolic(symbolic(at_prod,arg)),num,den);
+    prod2frac(new_ref_symbolic(symbolic(at_prod,arg)),num,den);
     if (!den.empty()){
       if (num.empty())
 	n=plus_one;
@@ -1156,7 +1391,7 @@ namespace giac {
 	if (num.size()==1)
 	  n=num.front();
 	else
-	  n=new ref_symbolic(symbolic(at_prod,num));
+	  n=new_ref_symbolic(symbolic(at_prod,num));
       }
       /* code that does not work with matrices
 	 if (den.size()==1)
@@ -1182,13 +1417,13 @@ namespace giac {
     if (sommet==at_sto){ // autoname function
       gen e=feuille._VECTptr->front().evalf(level,contextptr);
       if ((e.type==_SYMB) && (e._SYMBptr->sommet==at_pnt) && (e._SYMBptr->feuille.type==_VECT) && (e._SYMBptr->feuille._VECTptr->size()==2))
-	e=new ref_symbolic(symbolic(at_pnt,gen(makevecteur(e._SYMBptr->feuille._VECTptr->front(),e._SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
+	e=new_ref_symbolic(symbolic(at_pnt,gen(makevecteur(e._SYMBptr->feuille._VECTptr->front(),e._SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
       if ( (e.type==_VECT) && (e._VECTptr->size()) && (e._VECTptr->back().type==_SYMB) && (e._VECTptr->back()._SYMBptr->sommet==at_pnt)){
 	vecteur v=*e._VECTptr;
 	iterateur it=v.begin(),itend=v.end();
 	for (;it!=itend;++it){
 	  if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_pnt) && (it->_SYMBptr->feuille._VECTptr->size()==2))
-	    *it=new ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
+	    *it=new_ref_symbolic(symbolic(at_pnt,gen(makevecteur(it->_SYMBptr->feuille._VECTptr->front(),it->_SYMBptr->feuille._VECTptr->back(),string2gen(feuille._VECTptr->back().print(contextptr),false)),_PNT__VECT)));
 	}
 	e=v;
       }
@@ -1260,7 +1495,7 @@ namespace giac {
       if (sommet==at_and || (sommet!=at_cercle && equalposcomp(plot_sommets,sommet))){
 	// bool save_is_inevalf=is_inevalf;
 	// is_inevalf=true;
-	ans=new ref_symbolic(symbolic(sommet,feuille.evalf(1,contextptr)));
+	ans=new_ref_symbolic(symbolic(sommet,feuille.evalf(1,contextptr)));
 	// is_inevalf=save_is_inevalf;
 	if (!last.empty())
 	  last.pop_back();

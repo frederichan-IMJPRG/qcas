@@ -437,11 +437,19 @@ namespace giac {
     gen p=m[l][c];
     int l1=0,l2=ml-1;
     if (s==4 && v[3].type==_INT_){
-      l2=max(0,min(v[3].val-shift,ml-1));
-      l1=l2;
+      int lmin=v[3].val;
+      if (lmin<0){
+	l1 = -lmin;
+	l1 -= shift;
+      }
+      else {
+	lmin -= shift;
+	l2=max(0,min(lmin,ml-1));
+	l1=l2;
+      }
     }
     for (;l1<=l2;++l1){
-      if (l1!=l)
+      if (l1!=l && !is_zero(m[l1][c]))
 	linear_combination(p,*m[l1]._VECTptr,-m[l1][c],*m[l]._VECTptr,plus_one,*m[l1]._VECTptr,epsilon(contextptr));
     }
     return m;
@@ -1494,6 +1502,27 @@ namespace giac {
   }
 
   static bool writergb(const string & filename,const vecteur & v){
+    if (v.size()==2 && ckmatrix(v[1])){
+      int w,h;
+      mdims(*v[1]._VECTptr,h,w);
+      unsigned i=0,taille=w*h;    
+      unsigned char * screenbuf=new unsigned char[w*h];
+      unsigned rowbytes = w;
+      // fill screenbuf with data from v[] order 1,2,4,3
+      for (;i<taille;++i){
+	vecteur & wnv =*v[1]._VECTptr;
+	int nr=i/rowbytes;
+	vecteur & row =*wnv[nr]._VECTptr;
+	screenbuf[i]=row[i%w].val;
+      }
+      unsigned char *rows[h];
+      for (i = 0; int(i) < h; i++) {
+	rows[i] = &screenbuf[i*w]; // &screenbuf[(h - i - 1)*4*w];
+      }
+      int res=write_png(filename.c_str(), rows, w, h, PNG_COLOR_TYPE_GRAY, 8);
+      delete screenbuf;
+      return res+1;
+    }
     if (v.size()!=5 || !ckmatrix(v[1]) || !ckmatrix(v[2]) 
 	|| !ckmatrix(v[3]) || !ckmatrix(v[4]))
       return false;
@@ -1538,6 +1567,17 @@ namespace giac {
   gen _writergb(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     vecteur v(gen2vecteur(g));
+    if (ckmatrix(v[1])){
+      int l,c;
+      mdims(*v[1]._VECTptr,l,c);
+      vecteur w(1,makevecteur(v.size()==2?1:4,c,l));
+      for (int i=1;i<v.size();++i){
+	if (i==3 && v.size()==4)
+	  w.push_back(vecteur(l,vecteur(c,255)));
+	w.push_back(v[i]);
+      }
+      v=makevecteur(v[0],w);
+    }
     if (v.size()!=2 || v[0].type!=_STRNG || v[1].type!=_VECT)
       return gensizeerr();
     vecteur w=*v[1]._VECTptr;
@@ -1965,7 +2005,7 @@ namespace giac {
   }
 
   // example f : u(n+1)=2*u(n)+n, initcond [u(0)=1]
-  static gen rsolve(const gen & f0,const gen &u,const gen & n,vecteur & initcond0,GIAC_CONTEXT){
+  static gen crsolve(const gen & f0,const gen &u,const gen & n,vecteur & initcond0,GIAC_CONTEXT){
     if (f0.type==_VECT){
       if (u.type!=_VECT || f0._VECTptr->size()!=u._VECTptr->size())
 	return gendimerr();
@@ -1982,7 +2022,7 @@ namespace giac {
     if (n.type!=_IDNT){
       identificateur N(" rsolve_N");
       gen F=quotesubst(f,n,N,contextptr);
-      gen tmp=rsolve(F,u,N,initcond0,contextptr);
+      gen tmp=crsolve(F,u,N,initcond0,contextptr);
       return quotesubst(tmp,N,n,contextptr);
     }
     vecteur vof0(lop(f,at_of));
@@ -2137,6 +2177,16 @@ namespace giac {
       }
     }
     return gensizeerr(gettext("Not yet implemented"));
+  }
+  static gen rsolve(const gen & f0,const gen &u,const gen & n,vecteur & initcond0,GIAC_CONTEXT){
+    bool b=complex_mode(contextptr);
+    complex_mode(true,contextptr);
+    gen res=crsolve(f0,u,n,initcond0,contextptr);
+    if (!b){
+      complex_mode(b,contextptr);
+      // FIXME take real part for res
+    }
+    return res;
   }
   // example args=u(n+1)=2*u(n)+n,u(n),u(0)=1
   gen _rsolve(const gen & args,GIAC_CONTEXT){

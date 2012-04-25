@@ -49,6 +49,8 @@ inline void mpz_submul_ui(mpz_t & c,const mpz_t & a,unsigned int B){ mp_int ab; 
 inline int mpz_fdiv_r(mpz_t & c,const mpz_t & a,const mpz_t & b){ return mp_mod((mp_int *)&a,(mp_int *)&b,&c); }
 inline int mpz_tdiv_r(mpz_t & c,const mpz_t & a,const mpz_t & b){ return mp_mod((mp_int *)&a,(mp_int *)&b,&c); }
 inline void mpz_fdiv_r_ui(mpz_t & c,const mpz_t & a,unsigned b){ mp_int B; mp_init_set_int(&B,b); mp_mod((mp_int *)&a,&B,&c); mp_clear(&B); }
+inline void mpz_fdiv_q_ui(mpz_t & c,const mpz_t & a,unsigned b){ mp_int B,C; mp_init_set_int(&B,b); mp_init(&C); mp_div((mp_int *)&a,&B,&c,&C); mp_clear(&B); mp_clear(&C); }
+inline void mpz_fdiv_qr_ui(mpz_t & c,mpz_t& d,const mpz_t & a,unsigned b){ mp_int B; mp_init_set_int(&B,b); mp_div((mp_int *)&a,&B,&c,&d); mp_clear(&B); }
 inline void mpz_fdiv_q(mpz_t & c,const mpz_t & a,const mpz_t & b){ mp_int d; mp_init(&d); mp_div((mp_int *)&a,(mp_int *)&b,&c,&d); mp_clear(&d); }
 inline void mpz_tdiv_q(mpz_t & c,const mpz_t & a,const mpz_t & b){ mp_int d; mp_init(&d); mp_div((mp_int *)&a,(mp_int *)&b,&c,&d); mp_clear(&d); }
 inline int mpz_fdiv_qr(mpz_t & c,mpz_t & d,const mpz_t & a,const mpz_t & b){ return mp_div((mp_int *)&a,(mp_int *)&b,&c,&d); }
@@ -62,6 +64,15 @@ inline int mpz_cmp_ui(const mpz_t &  a,unsigned int B){ mp_int b; mp_init_set_in
 inline int mpz_cmp_si(const mpz_t &  a,int B){ mp_int b; int res; mp_init(&b); mpz_set_si(b,B); res=mp_cmp((mp_int *)&a,&b); mp_clear(&b); return res;}
 inline int mpz_sizeinbase(const mpz_t & a,int radix){ int size; mp_radix_size((mp_int *)&a,radix,&size); return size; }
 inline int mpz_get_si(const mpz_t & a){
+#if 1
+  if (a.sign!=MP_NEG)
+    return mp_get_int((mp_int *)&a);
+  mp_int * ptr=(mp_int *)&a;
+  mp_neg(ptr,ptr);
+  long u=mp_get_int(ptr);
+  mp_neg(ptr,ptr);
+  return -u;
+#else
   mp_int tmp,res;
   mp_init_set_int(&tmp,1<<16); mp_init(&res);
   mp_mul(&tmp,&tmp,&tmp);
@@ -80,8 +91,12 @@ inline int mpz_get_si(const mpz_t & a){
   mp_clear(&tmp);
   mp_clear(&res);
   return neg*strtol(s,0,10);
+#endif
 } // WARNING
 inline unsigned mpz_get_ui(const mpz_t & a){
+#if 1
+  return mp_get_int((mp_int *)&a);
+#else
   mp_int tmp,res;
   mp_init_set_int(&tmp,1<<16); mp_init(&res);
   mp_mul(&tmp,&tmp,&tmp);
@@ -93,12 +108,12 @@ inline unsigned mpz_get_ui(const mpz_t & a){
   mp_clear(&tmp);
   mp_clear(&res);
   return strtol(s,0,10);
+#endif
 } // WARNING
 inline int mpz_gcd_ui(mpz_t * c,const mpz_t & a,unsigned B){ 
   mpz_t b; mp_init_set_int(&b,B); 
   mp_mod((mp_int *)&a,&b,&b);
   int res=mpz_get_ui(b); 
-  if (c) mp_copy(c,(mp_int *)&b);
   mp_clear(&b);
   return gcdint(B,res);
 }
@@ -153,8 +168,6 @@ inline bool mpz_perfect_square_p(const mpz_t & a){
   return res!=0;
 }
 inline int mpz_popcount(const mpz_t & a){
-  if (&a)
-    return 1;
   return 0; // FIXME, should be numbers of bits set to 1
 }
 inline int mpz_hamdist(const mpz_t & a,const mpz_t & b){

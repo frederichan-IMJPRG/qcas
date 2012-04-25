@@ -10,7 +10,7 @@
 #include <QVBoxLayout>
 #include <QCheckBox>
 #include <QSlider>
-#include <QComboBox>;
+#include <QComboBox>
 #include <QColorDialog>
 #include <QPushButton>
 #include "gui/FormalLine.h"
@@ -34,10 +34,10 @@ FormulaWidget::FormulaWidget(QtMmlWidget *mml){
 }
 
 void FormulaWidget::toXML(QDomElement& d){
-    return QString("");
+
 }
 
-GraphWidget::GraphWidget(const gen & g, context * context){
+GraphWidget::GraphWidget(const giac::gen & g, giac::context * context){
 
         canvas=new Canvas2D(this,g,context);
 
@@ -74,7 +74,7 @@ GraphWidget::GraphWidget(const gen & g, context * context){
     return g;*/
 
  }
-GraphWidget::initGui(){
+void GraphWidget::initGui(){
     QHBoxLayout *hbox=new QHBoxLayout;
     propPanel=new PanelProperties(canvas);
     hbox->addWidget(canvas);
@@ -93,8 +93,8 @@ void GraphWidget::clearSelection(){
 }
 
 void Canvas2D::createScene(const giac::gen &g,giac::context* context){
-    if (g.type==_VECT){
-      vecteur & v =*g._VECTptr;
+    if (g.type==giac::_VECT){
+      giac::vecteur & v =*g._VECTptr;
       const_iterateur it=v.begin(),itend=v.end();
       for (;it!=itend;++it){
             createScene(*it,context);
@@ -133,7 +133,10 @@ void Canvas2D::createScene(const giac::gen &g,giac::context* context){
       hidden_name=true;
     }
     else
-      hidden_name=ensemble_attributs<0;
+      hidden_name=(ensemble_attributs<0);
+    if (hidden_name) ensemble_attributs=-std::abs(ensemble_attributs);
+    else ensemble_attributs=std::abs(ensemble_attributs);
+
     int width           =(ensemble_attributs & 0x00070000) >> 16; // 3 bits
     int epaisseur_point =(ensemble_attributs & 0x00380000) >> 19; // 3 bits
     int type_line       =(ensemble_attributs & 0x01c00000) >> 22; // 3 bits
@@ -354,7 +357,6 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           evalfdouble2reim(point,e,f0,f1,context);
 
           if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
-
               Point* pt=new Point(f0._DOUBLE_val,f1._DOUBLE_val,this);
                pt->setAttributes(ensemble_attributs);
                pt->setLegend(QString::fromStdString(the_legend));
@@ -517,7 +519,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
      if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2))
         ; // no legend for segment
       else {
-        if (!hidden_name);
+          if (!hidden_name){}
       //    draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
       }
 
@@ -547,16 +549,16 @@ double Canvas2D::getYmax() const{
     return ymax;
 }
 
-QVector<MyItem*>* Canvas2D::getPointItem() const{
+QVector<MyItem*>* Canvas2D::getPointItem() {
     return &pointItems;
 
 }
-QVector<MyItem*>* Canvas2D::getFilledItem() const{
+QVector<MyItem*>* Canvas2D::getFilledItem(){
     return &filledItems;
 
 }
 
-QVector<MyItem*>* Canvas2D::getLineItem() const{
+QVector<MyItem*>* Canvas2D::getLineItem(){
     return &lineItems;
 
 }
@@ -591,11 +593,11 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
        giac::autoscaleminmax(vy,ymin,ymax);
 
        setXYUnit();
-       if (ymin==ymax||xmin==xmax){
+       if (std::isnan(xunit)||std::isnan(yunit)|| (!std::isfinite(xunit)) || (!std::isfinite(yunit))){
         xmin=-5;ymin=-5;xmax=5;ymax=5;
          setXYUnit();
        }
-//       qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
+       qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
 
       createScene(g,context);
 
@@ -615,6 +617,11 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
  //   zoomOut->setShortcut(tr("Ctrl+-"));
     connect(zoomOut,SIGNAL(triggered()),this,SLOT(zoom_Out()));
 
+    orthoAction=new QAction(tr("Orthonormé"),this);
+    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
+
+
+
    QAction* title=new QAction(tr("Graphique"),this);
    QFont font;
    font.setWeight(QFont::Bold);
@@ -628,7 +635,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
     menuGeneral->addSeparator();
     menuGeneral->addAction(zoomIn);
     menuGeneral->addAction(zoomOut);
-
+    menuGeneral->addAction(orthoAction);
 
     updatePixmap(true);
 
@@ -677,7 +684,25 @@ void Canvas2D::zoom_In(){
     this->repaint();
 
 }
+void Canvas2D::make_ortho(){
 
+    if (xunit>yunit){
+        xunit=yunit;
+        double step=((width()-40)/xunit-(xmax-xmin))/2;
+        xmin-=step;
+        xmax+=step;
+    }
+    else if (xunit<yunit){
+        yunit=xunit;
+        double step=((height()-40)/yunit-(ymax-ymin))/2;
+        ymin-=step;
+        ymax+=step;
+
+    }
+    updatePixmap(true);
+    repaint();
+
+}
 void Canvas2D::zoom_Out(){
     selection=false;
     double xstep=(xmax-xmin)/8;
@@ -711,7 +736,7 @@ void Canvas2D::updatePixmap(bool compute){
 
 
 void Canvas2D::drawAxes(QPainter * painter){
-    if (xmin<0 & xmax>0){
+    if ((xmin<0)& (xmax>0)){
         double a,b;
 
         painter->setPen(QPen(Qt::black,1, Qt::SolidLine ,Qt::RoundCap));
@@ -733,7 +758,7 @@ void Canvas2D::drawAxes(QPainter * painter){
                 QString s=QString::number((grad));
                 if (i%2==0) {
                     //Problem of the origin
-                    if (ymin<0 & ymax>0){
+                    if ((ymin<0) & (ymax>0)){
                         //TODO
 
                     }
@@ -762,7 +787,7 @@ void Canvas2D::drawAxes(QPainter * painter){
 
 
     }
-    if (ymin<0 & ymax>0){
+    if ((ymin<0) & (ymax>0)){
         double a,b;
         painter->setPen(QPen(Qt::black,1, Qt::SolidLine ,Qt::RoundCap));
         double step=(xmax-xmin)/8;
@@ -956,8 +981,7 @@ void Canvas2D::paintEvent(QPaintEvent * ){
     }
 }
 void  Canvas2D::toXML(){
-    return QString("");
-}
+    }
 
 void Canvas2D::setFocusOwner(MyItem * item){
     item->setHighLighted(true);
@@ -1115,27 +1139,34 @@ DisplayProperties::DisplayProperties(Canvas2D *canvas){
     parent=canvas;
     initGui();
 }
-DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
+void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
+    setVisible(true);
     listItems=l;
-
     colorPanel->setColor(listItems->at(0)->getColor());
     legendPanel->setChecked(listItems->at(0)->legendVisible());
-    legendPanel->setLegend(listItems->at(0)->getLegend());
-    widthPanel->setWidth(listItems->at(0)->getPenWidth()+1);
-
-    if (!checkForOnlyPoints()) {
-        typePointPanel->hide();
-        typeLinePanel->setStyle(listItems->at(0)->getStyle());
-
-        typeLinePanel->show();
+    if (l->count()>1){
+        legendPanel->setLegend(false);
     }
     else {
+        legendPanel->setLegend(true,listItems->at(0)->getLegend());
+    }
+    bool b=checkForOnlyPoints();
+    widthPanel->setWidth(listItems->at(0)->getPenWidth()+1);
+
+    if (b){
         typeLinePanel->hide();
         typePointPanel->setStyle(dynamic_cast<Point*>(listItems->at(0))->getPointStyle()>>25);
         typePointPanel->setVisible(true);
     }
-
-    show();
+    else if (checkForOnlyLines()) {
+        typePointPanel->hide();
+        typeLinePanel->setStyle(listItems->at(0)->getStyle());
+        typeLinePanel->setVisible(true);
+    }
+    else{
+        typeLinePanel->hide();
+        typePointPanel->hide();
+    }
 
 }
 void DisplayProperties::initGui(){
@@ -1154,10 +1185,18 @@ void DisplayProperties::initGui(){
     setLayout(vLayout);
 }
 
-bool DisplayProperties::checkForOnlyPoints(){
+bool DisplayProperties::checkForOnlyPoints() const{
 
     for (int i=0;i<listItems->size();++i){
         if (!listItems->at(i)->isPoint()) return false;
+    }
+    return true;
+
+}
+bool DisplayProperties::checkForOnlyLines() const{
+
+    for (int i=0;i<listItems->size();++i){
+        if (listItems->at(i)->isPoint()) return false;
     }
     return true;
 
@@ -1212,16 +1251,15 @@ void ColorPanel::updateButton(){
     preview->setIcon(icon);
 
 }
-//QColor ColorPanel::getColor() const{
-//    return color;
-//}
+
 LegendPanel::LegendPanel(DisplayProperties * p):QWidget(p){
     parent=p;
     initGui();
 }
-void LegendPanel::setLegend(const QString & s){
+void LegendPanel::setLegend(const bool&b,const QString & s){
     legend=s;
     legendEdit->setText(legend);
+    legendPanel->setVisible(b);
 }
 void LegendPanel::setChecked(bool b){
     legendCheck->setChecked(b);

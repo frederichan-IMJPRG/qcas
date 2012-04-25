@@ -3736,6 +3736,14 @@ static define_unary_function_eval (__camembert,&_camembert,_camembert_s);
 static define_unary_function_eval (__convexhull,&_convexhull,_convexhull_s);
   define_unary_function_ptr5( at_convexhull ,alias_at_convexhull,&__convexhull,0,true);
 
+#ifdef RTOS_THREADX
+  gen _simplex_reduce(const gen & args,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _simplex_reduce_s []="simplex_reduce";
+static define_unary_function_eval (__simplex_reduce,&_simplex_reduce,_simplex_reduce_s);
+  define_unary_function_ptr5( at_simplex_reduce ,alias_at_simplex_reduce,&__simplex_reduce,0,true);
+#else
   // Simplex algorithm solving max c.x where constraints on x are in 
   // canonical form: A*x <= b with b>= 0
   // Variables are added to get [A|I] (x,x_slack) = b
@@ -3919,6 +3927,7 @@ static define_unary_function_eval (__convexhull,&_convexhull,_convexhull_s);
   static const char _simplex_reduce_s []="simplex_reduce";
 static define_unary_function_eval (__simplex_reduce,&_simplex_reduce,_simplex_reduce_s);
   define_unary_function_ptr5( at_simplex_reduce ,alias_at_simplex_reduce,&__simplex_reduce,0,true);
+#endif
 
   // natural_spline([x0,...,xn],[y0,...,yn],x,d)
   // -> spline of degree d, in C^{d-1}, with values yk at xk

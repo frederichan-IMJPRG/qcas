@@ -216,8 +216,15 @@ namespace giac {
       v.push_back(undef);
       ++s;
     }
-    if (s==2 || s==3)
-      return galois_field(args);
+    if (s==2){
+      v.push_back(makevecteur(g__IDNT_e,identificateur("G")));
+      *logptr(contextptr) << "Setting g as generator for Galois field G" << endl;
+      *logptr(contextptr) << "If you assign the answer to G and g is purged then" << endl;
+      *logptr(contextptr) << "for example G(g^200+1) will build an element of G" << endl;
+      ++s;
+    }
+    if (s==3)
+      return galois_field(gen(v,args.subtype));
     if (s!=4)
       return gensizeerr(gettext("galois_field has 1 or 4 arguments (charac p, irred poly P, var name x, value as a poly of x or as a vector)"));
     vecteur a,P,vmin;
@@ -273,7 +280,11 @@ namespace giac {
 	  else {
 	    p=p0;
 	    P=find_irreducible_primitive(p0,m0);
-	    x=g._VECTptr->size()>2?(*g._VECTptr)[2]:vx_var;
+	    if (g._VECTptr->size()>2)
+	      x=(*g._VECTptr)[2];
+	    else {
+	      x=vx_var;
+	    }
 	    a=undef;
 	  }
 	}
