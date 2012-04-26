@@ -21,6 +21,7 @@ public:
   virtual bool isCurve() const;
   virtual bool isCircle() const;
   virtual bool isPixel() const;
+  virtual bool isFillable() const;
 
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
@@ -30,6 +31,7 @@ public:
   void setColor(const QColor &) ;
   void setPointStyle(const int );
   void setStyle(const int);
+  void setFilled(const bool);
   int getStyle();
 
   virtual void setWidth(const int);
@@ -42,6 +44,7 @@ public:
   Qt::PenCapStyle getPenStyle();
   Qt::PenStyle getLineType();
   void setAttributes(const int &);
+  bool isFilled() const;
   QColor getColor() const;
   QColor getFltkColor(int &c) const;
   double getAngleLegend() const;
@@ -123,8 +126,6 @@ private:
 
 };
 
-
-
 class Curve:public MyItem{
 public:
     Curve(const QPainterPath & ,Canvas2D*);
@@ -139,6 +140,7 @@ public:
     bool isSegment() const;
     bool isVector() const;
     bool isPolygon() const;
+    virtual bool isFillable() const;
 
 private:
     bool vector;
@@ -147,8 +149,6 @@ private:
     QPainterPath pathScreen;
     QPainterPath path;
     QPainterPath envelop;
-//    mutable double xScreen,yScreen;
-
 };
 
 
@@ -160,7 +160,7 @@ public:
     virtual bool isCircle() const;
     virtual void draw(QPainter*) const;
     virtual QString getType() const;
-
+    virtual bool isFillable() const;
 
 private:
     QPointF center;

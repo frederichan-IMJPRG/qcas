@@ -27,6 +27,7 @@ class TypePointPanel;
 class TypeLinePanel;
 class ColorPanel;
 class LegendPanel;
+class AlphaFillPanel;
 class OutputWidget:public QWidget{
 public:
     OutputWidget(QWidget* widget=0);
@@ -173,10 +174,13 @@ private:
     WidthPanel* widthPanel;
     TypePointPanel* typePointPanel;
     TypeLinePanel* typeLinePanel;
+    AlphaFillPanel* alphaFillPanel;
 
     void initGui();
     bool checkForOnlyPoints() const;
     bool checkForOnlyLines() const;
+    bool checkForOnlyFillables() const;
+
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
@@ -214,20 +218,39 @@ private slots:
 
 };
 
-class WidthPanel:public QGroupBox{
+class SliderPanel:public QGroupBox{
     Q_OBJECT
 public:
-    WidthPanel(DisplayProperties* );
+    SliderPanel(DisplayProperties* ,const QString &);
     void setWidth(const int);
 private:
-    void initGui();
+    void initGui(const QString &);
+protected:
     DisplayProperties * parent;
     int width;
     QSlider *slider;
-private slots:
-    void updateCanvas();
+protected slots:
+    virtual void updateCanvas()=0;
 
 };
+class WidthPanel:public SliderPanel{
+    Q_OBJECT
+public:
+    WidthPanel(DisplayProperties* ,const QString &);
+protected slots:
+    virtual void updateCanvas();
+
+};
+class AlphaFillPanel:public SliderPanel{
+    Q_OBJECT
+public:
+    AlphaFillPanel(DisplayProperties* ,const QString & );
+protected slots:
+    virtual void updateCanvas();
+
+};
+
+
 
 class TypePointPanel:public QWidget{
     Q_OBJECT
@@ -248,7 +271,7 @@ class TypeLinePanel:public QWidget{
     Q_OBJECT
 public:
     TypeLinePanel(const int,DisplayProperties* );
-    void setStyle(int);
+    void setStyle(const int&);
 private:
     void initGui();
     DisplayProperties * parent;
@@ -258,6 +281,18 @@ private slots:
     void updateCanvas(int);
 
 };
+/*class AlphaFillPanel{
+public:
+    AlphaFillPanel(DisplayProperties* );
+    void setAlpha(const int&);
+private:
+    void initGui();
+    DisplayProperties* parent;
 
+    int alpha;
+private slots:
+    void updateCanvas(int );
+
+};*/
 
 #endif // OUTPUT_H

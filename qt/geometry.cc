@@ -9,8 +9,6 @@ MyItem::MyItem(Canvas2D *graph){
     highLighted=false;
     angleLegend=-1;
     treeItem=new QTreeWidgetItem;
-
-
 }
 
 void MyItem::setHighLighted(const bool &b){
@@ -38,7 +36,9 @@ bool MyItem::isCircle() const{
 }
 bool MyItem::isPixel() const{
         return false;
-
+}
+bool MyItem::isFillable() const{
+    return false;
 }
 void MyItem::setWidth(const int w){
      attributes=(attributes & 0xfff8ffff)+ (w<< 16);
@@ -75,6 +75,10 @@ void MyItem::setStyle(const int c) {
     attributes=(attributes& 0xfe3fffff)+(c<<22);
 
 }
+void MyItem::setFilled(const bool b){
+    if (b) attributes=(attributes& 0xbfffffff)+(1<<30);
+    else attributes=(attributes& 0xbfffffff);
+}
 double MyItem::getAngleLegend() const{
     if (angleLegend==-1){
         qDebug()<<    "quadrant"    <<1+((attributes & 0x30000000)>>28);
@@ -85,10 +89,12 @@ double MyItem::getAngleLegend() const{
 
 
 int MyItem::getStyle(){
-    qDebug()<<attributes;
     return (attributes & 0x01c00000)>>22;
 }
-
+bool MyItem::isFilled()const{
+    if (1==((attributes & 0x40000000)>>30)) return true;
+    return false;
+}
 
 Qt::PenCapStyle MyItem::getPenStyle(){
    int type_line=((attributes & 0x01c00000));
@@ -119,9 +125,13 @@ bool MyItem::legendVisible()const{
 }
 void MyItem::setAttributes(const int& c){
     attributes=c;
-}
-////////////////////////////////////////////////////////////////
+    if (isFilled()){
+        QColor c=getColor();
+        c.setAlpha(36*4);
+        setColor(c);
+    }
 
+}
 
 QColor MyItem::getFltkColor(int& c) const{
     if (c<16){
@@ -230,7 +240,7 @@ QColor MyItem::getFltkColor(int& c) const{
         int b=c/40;
         int r=(c%40)/5;
         int g=(c%40)%8;
-        qDebug()<<"couleurs composante"<<r<<g<<b;
+//        qDebug()<<"couleurs composante"<<r<<g<<b;
         return QColor(255*r/4,255*g/7,255*b/4);
 
     }
@@ -266,7 +276,7 @@ void MyItem::setColor(const QColor &c ){
     int r=c.red()/16;
     int g=c.green()/16;
     int b=c.blue()/16;
-    int alpha=c.alpha()/32;
+    int alpha=c.alpha()/36;
 
     attributes=(0xffff0000&attributes)+(1<<15)+(alpha<<12)+(r<<8)+(g<<4)+b;
 }
@@ -289,9 +299,8 @@ QColor MyItem::getColor() const{
     int r=((color& 0x0f00)>>8)*16;
     int g=((color&0x00f0)>>4)*16;
     int b=(color&0x000f)*16;
-    int alpha=((color& 0x7000)>>12)*32+31; //(color&0x000f)*16;
+    int alpha=((color& 0x7000)>>12)*36; //(color&0x000f)*16;
     return QColor(r,g,b,alpha);
-
 }
 Point::Point(const double a,const double b,Canvas2D* graph):MyItem(graph){
     x=a;
@@ -657,11 +666,19 @@ void Curve::draw(QPainter *painter) const{
         color.setAlpha(100);
         width=3;
     }
+    if (isFilled()&&isFillable()&&(!highLighted)){
+        QColor f(color);
+        f.setAlpha(255);
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->setPen(QPen(f,width,  Qt::SolidLine));
+        painter->drawPath(pathScreen);
+    }
+    else {
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->setPen(QPen(color,width,  Qt::SolidLine));
+        painter->drawPath(envelop);
+    }
 
-    painter->setBrush(QBrush(color,Qt::SolidPattern));
-    painter->setPen(QPen(color,width,  Qt::SolidLine));
-
-    painter->drawPath(envelop);
 }
 bool Curve::isCurve() const{
     return true;
@@ -730,6 +747,15 @@ QString Curve::getType() const{
 bool Curve::isPolygon() const{
     return polygon;
 }
+bool Curve::isFillable() const{
+    if (polygon){
+        /*=path.elementAt(0);
+        QPointF q=path.elementAt(path.elementCount()-1);
+        return (p.x()==q.x())&& (p.y()==q.y());*/
+        return (path.elementAt(0)-path.elementAt(path.elementCount()-1)).isNull();
+    }
+    else return false;
+}
 void Curve::setPolygon(const bool & b){
     polygon=b;
 }
@@ -778,11 +804,21 @@ void Circle::draw(QPainter* painter) const{
         color.setAlpha(100);
         width=3;
     }
-
-    painter->setPen(QPen(color,width,  Qt::SolidLine));
-    painter->setBrush(QBrush(color,Qt::SolidPattern));
-
-    painter->drawPath(envelop);
+    if (isFilled()&&(!highLighted)){
+        QColor f(color);
+        f.setAlpha(255);
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->setPen(QPen(f,width,  Qt::SolidLine));
+        painter->drawPath(p);
+    }
+    else{
+        painter->setPen(QPen(color,width,  Qt::SolidLine));
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->drawPath(envelop);
+    }
+}
+bool Circle::isFillable() const{
+    return true;
 }
 QString Circle::getType() const{
     return QObject::tr("Cercle");

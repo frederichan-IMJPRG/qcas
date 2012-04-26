@@ -1092,7 +1092,7 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
     }
 }
 void PanelProperties::updateTree(){
-
+disconnect(tree,SIGNAL(itemSelectionChanged()),this,0);
    QList<QTreeWidgetItem*> list=tree->selectedItems();
    if (list.isEmpty()) return;
    QList<MyItem*>* listItems=new QList<MyItem*>();
@@ -1113,6 +1113,8 @@ void PanelProperties::updateTree(){
    }
    parent->repaint();
    displayPanel->updateDisplayPanel(listItems);
+   connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
+
 }
 
 
@@ -1167,21 +1169,32 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         typeLinePanel->hide();
         typePointPanel->hide();
     }
+    if (checkForOnlyFillables()) {
+        if (listItems->at(0)->isFilled())
+        alphaFillPanel->setWidth(8-listItems->at(0)->getColor().alpha()/36);
+        else alphaFillPanel->setWidth(8);
+        alphaFillPanel->setVisible(true);
+
+    }
+    else alphaFillPanel->setVisible(false);
+
 
 }
 void DisplayProperties::initGui(){
     vLayout=new QVBoxLayout;
     colorPanel=new ColorPanel(this);
     legendPanel=new LegendPanel(this);
-    widthPanel=new WidthPanel(this);
+    widthPanel=new WidthPanel(this,tr("Épaisseur (1-8):"));
     typePointPanel=new TypePointPanel(2,this);
     typeLinePanel=new TypeLinePanel(2,this);
+    alphaFillPanel=new AlphaFillPanel(this,tr("Transparence (0%-100%):"));
 
     vLayout->addWidget(colorPanel);
     vLayout->addWidget(legendPanel);
     vLayout->addWidget(widthPanel);
     vLayout->addWidget(typePointPanel);
     vLayout->addWidget(typeLinePanel);
+    vLayout->addWidget(alphaFillPanel);
     setLayout(vLayout);
 }
 
@@ -1193,6 +1206,14 @@ bool DisplayProperties::checkForOnlyPoints() const{
     return true;
 
 }
+bool DisplayProperties::checkForOnlyFillables() const{
+    for (int i=0;i<listItems->size();++i){
+        if (!listItems->at(i)->isFillable()) return false;
+    }
+    return true;
+}
+
+
 bool DisplayProperties::checkForOnlyLines() const{
 
     for (int i=0;i<listItems->size();++i){
@@ -1238,7 +1259,9 @@ void ColorPanel::chooseColor(){
         color=newColor;
         updateButton();
         for (int i=0;i<parent->getListItems()->count();++i){
-            parent->getListItems()->at(i)->setColor(color);
+            QColor c(color);
+            c.setAlpha(parent->getListItems()->at(i)->getColor().alpha());
+            parent->getListItems()->at(i)->setColor(c);
         }
         parent->updateCanvas();
     }
@@ -1298,16 +1321,16 @@ void LegendPanel::updateCanvas(){
 
 }
 
-WidthPanel::WidthPanel(DisplayProperties *p):QGroupBox(p){
+SliderPanel::SliderPanel(DisplayProperties *p,const QString & s):QGroupBox(p){
     parent=p;
-    initGui();
+    initGui(s);
 }
-void WidthPanel::setWidth(const int w ){
+void SliderPanel::setWidth(const int w ){
     width=w;
     slider->setValue(width);
 }
-void WidthPanel::initGui(){
-    setTitle(tr("Épaisseur:"));
+void SliderPanel::initGui(const QString &s){
+    setTitle(s);
     QHBoxLayout*hbox=new QHBoxLayout;
     slider=new QSlider(Qt::Horizontal,this);
     slider->setMinimum(1);
@@ -1320,15 +1343,24 @@ void WidthPanel::initGui(){
     connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
 
 }
-
+WidthPanel::WidthPanel(DisplayProperties* p,const QString & d):SliderPanel(p,d){}
 void WidthPanel::updateCanvas(){
     for (int i=0;i<parent->getListItems()->count();++i){
         parent->getListItems()->at(i)->setWidth(slider->value()-1);
     }
     parent->updateCanvas();
-
 }
-
+AlphaFillPanel::AlphaFillPanel(DisplayProperties* p,const QString & d):SliderPanel(p,d){}
+void AlphaFillPanel::updateCanvas(){
+    for (int i=0;i<parent->getListItems()->count();++i){
+        QColor c=parent->getListItems()->at(i)->getColor();
+        int alpha=(8-slider->value())*36;
+        c.setAlpha(alpha);
+        if (alpha!=252) parent->getListItems()->at(i)->setFilled(true);
+        parent->getListItems()->at(i)->setColor(c);
+    }
+    parent->updateCanvas();
+}
 TypePointPanel::TypePointPanel(const int t, DisplayProperties * p):QWidget(p){
     type=t;
     parent=p;
@@ -1531,7 +1563,7 @@ void TypeLinePanel::updateCanvas(int c){
     parent->updateCanvas();
 
 }
-void TypeLinePanel::setStyle(int c){
+void TypeLinePanel::setStyle(const int &c){
     combo->setCurrentIndex(c);
 }
 
