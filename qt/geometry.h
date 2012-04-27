@@ -33,12 +33,12 @@ public:
   void setStyle(const int);
   void setFilled(const bool);
   int getStyle();
-
+  int getQuadrant() const;
   virtual void setWidth(const int);
   virtual int getPenWidth() const;
 
   void setHighLighted(const bool& );
-//  void setLabelPos(const int );
+ void setLegendPos(const int &);
 
 
   Qt::PenCapStyle getPenStyle();

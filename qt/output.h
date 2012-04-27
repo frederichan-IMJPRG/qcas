@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QDomElement>
 #include <QPixmap>
+#include <QScrollArea>
 #include <QHash>
 #include <QGroupBox>
 
@@ -21,6 +22,7 @@ class PanelProperties;
 class DisplayProperties;
 class QTreeWidget;
 class QSlider;
+class QSpinBox;
 class QtMmlWidget;
 class WidthPanel;
 class TypePointPanel;
@@ -157,7 +159,7 @@ private slots:
     void updateTree();
 
 };
-class DisplayProperties:public QWidget{
+class DisplayProperties:public QScrollArea{
     Q_OBJECT
 public:
     DisplayProperties(Canvas2D* canvas);
@@ -204,14 +206,17 @@ public:
     bool hasLegend() const;
     void setLegend(const bool &,const QString & s="");
     void setChecked(bool);
-//    QString getlegend() const;
+    void setLegendPosition(const int &);
+
 private:
     DisplayProperties * parent;
     QWidget* legendPanel;
+    QWidget* legendPosPanel;
     QCheckBox* legendCheck;
     QLineEdit *legendEdit;
     QString legend;
-
+    QComboBox* comboPos;
+    QSpinBox* spinAnglePos;
     void initGui();
 private slots:
     void updateCanvas();
@@ -222,12 +227,12 @@ class SliderPanel:public QGroupBox{
     Q_OBJECT
 public:
     SliderPanel(DisplayProperties* ,const QString &);
-    void setWidth(const int);
+    void setValue(const int);
 private:
     void initGui(const QString &);
 protected:
     DisplayProperties * parent;
-    int width;
+    int value;
     QSlider *slider;
 protected slots:
     virtual void updateCanvas()=0;

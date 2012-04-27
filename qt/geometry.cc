@@ -52,12 +52,10 @@ void MyItem::setLegend(const QString &s){
 
 void MyItem::setLegendVisible(const bool b){
     if (b) {
-
         attributes=std::abs(attributes);
     }
     else attributes=-std::abs(attributes);
 
-//    qDebug()<<attributes<< "après click";
 }
 
 void MyItem::setPointStyle(const int c){
@@ -79,14 +77,20 @@ void MyItem::setFilled(const bool b){
     if (b) attributes=(attributes& 0xbfffffff)+(1<<30);
     else attributes=(attributes& 0xbfffffff);
 }
+int MyItem::getQuadrant() const{
+    return ((attributes & 0x30000000)>>28);
+}
 double MyItem::getAngleLegend() const{
     if (angleLegend==-1){
-        qDebug()<<    "quadrant"    <<1+((attributes & 0x30000000)>>28);
-        return ((attributes & 0x30000000)>>28)*3.14159/2+3.14159/4;
+        return getQuadrant()*3.14159/2+3.14159/4;
     }
     else return angleLegend;
 }
+void MyItem::setLegendPos(const int & a){
+    attributes=(attributes & 0xcfffffff)+(a<<28);
+//    qDebug()<<"Attributs"<<legendVisible()<<getQuadrant();
 
+}
 
 int MyItem::getStyle(){
     return (attributes & 0x01c00000)>>22;

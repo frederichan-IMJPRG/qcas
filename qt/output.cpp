@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QCheckBox>
+#include <QSpinBox>
 #include <QSlider>
 #include <QComboBox>
 #include <QColorDialog>
@@ -1092,9 +1093,9 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
     }
 }
 void PanelProperties::updateTree(){
-disconnect(tree,SIGNAL(itemSelectionChanged()),this,0);
    QList<QTreeWidgetItem*> list=tree->selectedItems();
    if (list.isEmpty()) return;
+   disconnect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
    QList<MyItem*>* listItems=new QList<MyItem*>();
    for (int i=0;i<list.size();++i){
         // A category item has been selected
@@ -1113,7 +1114,7 @@ disconnect(tree,SIGNAL(itemSelectionChanged()),this,0);
    }
    parent->repaint();
    displayPanel->updateDisplayPanel(listItems);
-   connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
+  connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 
 }
 
@@ -1153,7 +1154,13 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         legendPanel->setLegend(true,listItems->at(0)->getLegend());
     }
     bool b=checkForOnlyPoints();
-    widthPanel->setWidth(listItems->at(0)->getPenWidth()+1);
+    if (listItems->at(0)->getAngleLegend()==-1){
+        legendPanel->setLegendPosition(listItems->at(0)->getQuadrant());
+
+    }
+//    else legendPanel->setLegendPosition(listItems->at(0)->getAngleLegend());
+
+    widthPanel->setValue(listItems->at(0)->getPenWidth()+1);
 
     if (b){
         typeLinePanel->hide();
@@ -1171,8 +1178,8 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     }
     if (checkForOnlyFillables()) {
         if (listItems->at(0)->isFilled())
-        alphaFillPanel->setWidth(8-listItems->at(0)->getColor().alpha()/36);
-        else alphaFillPanel->setWidth(8);
+        alphaFillPanel->setValue(8-listItems->at(0)->getColor().alpha()/36);
+        else alphaFillPanel->setValue(8);
         alphaFillPanel->setVisible(true);
 
     }
@@ -1288,8 +1295,14 @@ void LegendPanel::setChecked(bool b){
     legendCheck->setChecked(b);
     legendPanel->setEnabled(b);
 }
+
+void LegendPanel::setLegendPosition(const int & index){
+    comboPos->setCurrentIndex(index);
+
+}
 void LegendPanel::initGui(){
     QHBoxLayout * hbox=new QHBoxLayout;
+    QHBoxLayout * hboxPos=new QHBoxLayout;
     QVBoxLayout * vbox=new QVBoxLayout;
 
     legendCheck=new QCheckBox(tr("Afficher la légende"),this);
@@ -1298,36 +1311,54 @@ void LegendPanel::initGui(){
     legendEdit=new QLineEdit(this);
     hbox->addWidget(legendLabel);
     hbox->addWidget(legendEdit);
-
     legendPanel=new QWidget;
     legendPanel->setLayout(hbox);
 
+    QLabel * legendPosLabel=new QLabel(tr("Position:"),this);
+    spinAnglePos=new QSpinBox;
+    spinAnglePos->setRange(0,359);
+    spinAnglePos->setSingleStep(1);
+    comboPos=new QComboBox(this);
+    comboPos->addItem(tr("quadrant1"));
+    comboPos->addItem(tr("quadrant2"));
+    comboPos->addItem(tr("quadrant3"));
+    comboPos->addItem(tr("quadrant4"));
+    comboPos->addItem(tr("personnalisé"));
+
+    hboxPos->addWidget(legendPosLabel);
+    hboxPos->addWidget(comboPos);
+//    hboxPos->addWidget(spinAnglePos);
+    legendPosPanel=new QWidget;
+    legendPosPanel->setLayout(hboxPos);
+
     vbox->addWidget(legendCheck);
     vbox->addWidget(legendPanel);
+    vbox->addWidget(legendPosPanel);
     setLayout(vbox);
 
     connect(legendCheck,SIGNAL(toggled(bool)),legendPanel,SLOT(setEnabled(bool)));
     connect(legendCheck,SIGNAL(clicked()),this,SLOT(updateCanvas()));
     connect(legendEdit,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(comboPos,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
 }
 
 void LegendPanel::updateCanvas(){
+//    qDebug()<<legendCheck->isChecked()<<legendEdit->text()<<comboPos->currentIndex();
     for (int i=0;i<parent->getListItems()->count();++i){
         parent->getListItems()->at(i)->setLegendVisible(legendCheck->isChecked());
-
-        parent->getListItems()->at(i)->setLegend(legendEdit->text());
+        if (legendPanel->isVisible()) parent->getListItems()->at(i)->setLegend(legendEdit->text());
+        parent->getListItems()->at(i)->setLegendPos(comboPos->currentIndex());
     }
     parent->updateCanvas();
-
 }
 
 SliderPanel::SliderPanel(DisplayProperties *p,const QString & s):QGroupBox(p){
     parent=p;
     initGui(s);
 }
-void SliderPanel::setWidth(const int w ){
-    width=w;
-    slider->setValue(width);
+void SliderPanel::setValue(const int w ){
+    value=w;
+    slider->setValue(value);
 }
 void SliderPanel::initGui(const QString &s){
     setTitle(s);
