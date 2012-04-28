@@ -66,9 +66,7 @@ void MainTabWidget::closeTab(int id){
 void MainTabWidget::addG2dSheet(){
     this->insertTab(count()-1,new Interactive2d(mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
-    qDebug()<<"coucou";
     (qobject_cast<Interactive2d*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
-qDebug()<<"coucou2";
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));

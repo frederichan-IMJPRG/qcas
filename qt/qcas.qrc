@@ -27,6 +27,13 @@
         <file>images/spreadsheet.png</file>
         <file>images/stop.png</file>
         <file>images/point.png</file>
+        <file>images/midpoint.png</file>
+        <file>images/inter.png</file>
+        <file>images/line.png</file>
+        <file>images/segment.png</file>
+        <file>images/halfline.png</file>
+        <file>images/circle2pt.png</file>
+        <file>images/circle3pt.png</file>
         <file>aide_cas</file>
     </qresource>
 </RCC>

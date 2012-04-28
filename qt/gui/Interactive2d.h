@@ -5,6 +5,7 @@
 #include "gui/CentralTabWidget.h"
 class MainWindow;
 class QToolBar;
+class QPushButton;
 class QToolButton;
 class QAction;
 class MainWindow;
