@@ -52,10 +52,9 @@ void MyItem::setLegend(const QString &s){
 
 void MyItem::setLegendVisible(const bool b){
     if (b) {
-        attributes=std::abs(attributes);
+        attributes=(attributes & 0x7fffffff);
     }
-    else attributes=-std::abs(attributes);
-
+    else attributes=(attributes & 0x7fffffff)+(1<<31);
 }
 
 void MyItem::setPointStyle(const int c){
@@ -125,10 +124,11 @@ int MyItem::getPenWidth() const{
     return ((attributes & 0x00070000) >> 16);
 }
 bool MyItem::legendVisible()const{
-    return (attributes>=0);
+    if ((attributes>>31)==1) return false;
+    return true;
 }
 void MyItem::setAttributes(const int& c){
-    attributes=c;
+    attributes=(unsigned int)c;
     if (isFilled()){
         QColor c=getColor();
         c.setAlpha(36*4);
@@ -347,7 +347,7 @@ void Point::draw(QPainter * painter) const{
         width+=4;
         color.setAlpha(100);
     }
-
+//    qDebug()<<attributes <<legend;
     painter->setPen(QPen(color,width/2.0,Qt::SolidLine,Qt::RoundCap));
     switch(getPointStyle()){
     case giac::_POINT_LOSANGE:

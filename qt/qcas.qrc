@@ -26,6 +26,7 @@
         <file>images/programming.png</file>
         <file>images/spreadsheet.png</file>
         <file>images/stop.png</file>
+        <file>images/point.png</file>
         <file>aide_cas</file>
     </qresource>
 </RCC>

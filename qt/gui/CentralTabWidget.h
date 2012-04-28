@@ -8,7 +8,7 @@ class MainWindow;
 
 class MainSheet{
 public:
-    enum sheetType{FORMAL_TYPE=0,SPREADSHEET_TYPE=1,PROGRAMMING_TYPE=2};
+    enum sheetType{FORMAL_TYPE=0,SPREADSHEET_TYPE=1,PROGRAMMING_TYPE=2,G2D=3};
     MainSheet(sheetType);
     sheetType getType() const;
 protected:
@@ -25,11 +25,14 @@ private:
     QAction* formalAction;
     QAction* spreadsheetAction;
     QAction* programmingAction;
+    QAction* g2dAction;
+
     MainWindow *mainWindow;
 public slots:
     void addFormalSheet();
     void addSpreadSheet();
     void addProgrammingSheet();
+    void addG2dSheet();
     void closeTab(int);
 };
 

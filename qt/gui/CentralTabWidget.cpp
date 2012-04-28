@@ -6,6 +6,7 @@
 #include "MainWindow.h"
 #include "FormalSheet.h"
 #include "CentralTabWidget.h"
+#include "Interactive2d.h"
 
 MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     mainWindow=main;
@@ -15,23 +16,27 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     add=new QToolButton;
     add->setIcon(QIcon(":/images/add.png"));
     add->setPopupMode(QToolButton::InstantPopup);
+
     formalAction=new QAction(tr("Calcul formel"),add);
     formalAction->setIcon(QIcon(":/images/formal.png"));
-
     spreadsheetAction=new QAction(tr("Tableur"),add);
     spreadsheetAction->setIcon(QIcon(":/images/spreadsheet.png"));
     programmingAction=new QAction(tr("Editeur de programmes"),add);
     programmingAction->setIcon(QIcon(":/images/programming.png"));
+    g2dAction=new QAction(tr("Géométrie 2D"),add);
+
 
     menu=new QMenu;
     menu->addAction(formalAction);
     menu->addAction(spreadsheetAction);
     menu->addAction(programmingAction);
+    menu->addAction(g2dAction);
     add->setMenu(menu);
 
     connect(formalAction,SIGNAL(triggered()),this,SLOT(addFormalSheet()));
     connect(spreadsheetAction,SIGNAL(triggered()),this,SLOT(addSpreadSheet()));
     connect(programmingAction,SIGNAL(triggered()),this,SLOT(addProgrammingSheet()));
+    connect(g2dAction,SIGNAL(triggered()),this,SLOT(addG2dSheet()));
 
     addTab(new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°1"));
     addTab(new QLabel(""),"");
@@ -57,6 +62,13 @@ void MainTabWidget::closeTab(int id){
         tabBar()->setTabText(i,tr("Feuille n°")+QString::number(i+1));
     }
 
+}
+void MainTabWidget::addG2dSheet(){
+    this->insertTab(count()-1,new Interactive2d(mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
+    this->setCurrentIndex(count()-2);
+    qDebug()<<"coucou";
+    (qobject_cast<Interactive2d*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+qDebug()<<"coucou2";
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));

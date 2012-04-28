@@ -57,7 +57,7 @@ public:
 
 protected:
   Canvas2D* g2d;
-  int attributes;
+  unsigned int attributes;
   bool highLighted;
   double angleLegend;
   QString legend;
