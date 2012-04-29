@@ -662,6 +662,7 @@ Curve::Curve(const QPainterPath &p,Canvas2D *graph):MyItem(graph){
     vector=false;
     polygon=false;
     path=p;
+    fillable=false;
 }
 void Curve::draw(QPainter *painter) const{
     int width=1;
@@ -752,14 +753,12 @@ bool Curve::isPolygon() const{
     return polygon;
 }
 bool Curve::isFillable() const{
-    if (polygon){
-        /*=path.elementAt(0);
-        QPointF q=path.elementAt(path.elementCount()-1);
-        return (p.x()==q.x())&& (p.y()==q.y());*/
-        return (path.elementAt(0)-path.elementAt(path.elementCount()-1)).isNull();
-    }
-    else return false;
+    return (polygon&&fillable);
 }
+void Curve::setFillable(const bool & b){
+    fillable=b;
+}
+
 void Curve::setPolygon(const bool & b){
     polygon=b;
 }

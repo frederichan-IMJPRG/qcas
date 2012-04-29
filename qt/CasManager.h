@@ -38,6 +38,7 @@ public:
     CasManager(EvaluationThread* );
     void evaluate();
     void killThread();
+    giac::context* getContext() const;
     giac::gen getAnswer() const;
     EvaluationThread::warning initExpression(const QString *str);
     OutputWidget* createDisplay();

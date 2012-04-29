@@ -141,10 +141,12 @@ public:
     bool isVector() const;
     bool isPolygon() const;
     virtual bool isFillable() const;
+    void setFillable(const bool &);
 
 private:
     bool vector;
     bool polygon;
+    bool fillable;
     QPainterPathStroker stroke;
     QPainterPath pathScreen;
     QPainterPath path;

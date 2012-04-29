@@ -407,12 +407,11 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
            i0=f0._DOUBLE_val;
            j0=f1._DOUBLE_val;
        }
-
-
-//        Mon_image.findij(*jt,x_scale,y_scale,i0,j0,context);
-
-        /*   if (fill_polygon && *jt==*(jtend-1)){
-        const_iterateur jtsave=jt;
+        bool fillable=false;
+        // Cas d'un polygon fermé
+         if (fill_polygon && *jt==*(jtend-1)){
+             fillable=true;
+/*        const_iterateur jtsave=jt;
         gen e,f0,f1;
         // Compute matrix for complex drawing
         fl_push_matrix();
@@ -434,8 +433,8 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         }
         jt=jtsave;
         fl_line_style(type_line,width,0);
-        fl_color(epaisseur_point-2+(type_point<<3));
-      }*/
+        fl_color(epaisseur_point-2+(type_point<<3));*/
+      }
 
 //      i0save=i0;
 //      j0save=j0;
@@ -532,6 +531,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         }
       if (!isCurve&&path.elementCount()!=2){
           curve->setPolygon(true);
+          curve->setFillable(fillable);
       }
       lineItems.append(curve);
     } // end pnt subcase

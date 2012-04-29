@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 #include "EvaluationThread.h"
 #include <QMainWindow>
+#include "global.h"
 class QAction;
 class QListWidget;
 class QStackedWidget;
@@ -14,6 +15,7 @@ class QLabel;
 class QCompleter;
 class QToolButton;
 class QTime;
+class PrefDialog;
 struct TaskProperties{
     bool firstPrintMessage;
     int currentLine;
@@ -43,6 +45,8 @@ class MainWindow :public QMainWindow {
     CommandInfo* getCommandInfo() const;
     void evaluate(const QString & formula);
     QToolButton* getStopButton() const;
+    giac::context * getContext() const;
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -96,6 +100,8 @@ private:
 
     QListWidget *wizardList;
     QStackedWidget *wizardPages;
+
+    PrefDialog *prefDialog;
     MainTabWidget *tabPages;
     QPlainTextEdit* giacMessages;
     QToolBar* toolBar;

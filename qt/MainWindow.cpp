@@ -42,6 +42,7 @@
 #include "EvaluationThread.h"
 #include <QCompleter>
 #include <giac/giac.h>
+#include "gui/prefdialog.h"
 
 
 /** MainWindow constructor
@@ -457,6 +458,8 @@ void MainWindow::createGui(){
     warningFirstEvaluation->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     statusBar()->addWidget(warningFirstEvaluation,1);
     warningFirstEvaluation->show();
+    prefDialog=new PrefDialog(this);
+
     connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
 }
 void MainWindow::printHeader(){
@@ -529,6 +532,8 @@ void MainWindow::closeEvent(QCloseEvent *event){
 }
 
 void MainWindow::pref(){
+    prefDialog->initValue();
+    prefDialog->setVisible(true);
 
 }
 void MainWindow::readSettings(){
@@ -701,6 +706,10 @@ void MainWindow::sendText(const QString & s){
 bool MainWindow::isEvaluating(){
     return ev.isRunning();
 }
+giac::context* MainWindow::getContext() const{
+    return ev.getContext();
+}
+
 CommandInfo* MainWindow::getCommandInfo()const{
 return commandInfo;
 }

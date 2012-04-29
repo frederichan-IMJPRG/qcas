@@ -76,9 +76,8 @@ CasManager::CasManager(EvaluationThread *ev){
     this->ev=ev;
     signal(SIGINT,giac::ctrl_c_signal_handler);
     giac::child_id=1;
-
     context=new giac::context;
-   logptr(new MyStream(ev),context);
+    logptr(new MyStream(ev),context);
 }
 bool CasManager::testExpression(const giac::gen & exp){
 
@@ -122,7 +121,10 @@ void CasManager::killThread(){
         giac::kill_thread(true,context);
 }
 
+giac::context* CasManager::getContext() const{
+    return context;
 
+}
 QString CasManager::displayType(int c) const{
     switch(c){
     case 0:
@@ -237,6 +239,10 @@ void CasManager::info(giac::gen & gg,int decal) const{
         qDebug()<< s <<"//fin vect";
         decal=decal-5;
     }
+    else if(gg.type==giac::_DOUBLE_){
+        qDebug()<<"DOUBLE";
+        qDebug()<<QString::fromStdString(gg.print(context));
+    }
     else     {
         qDebug()<< s << "autres";
         qDebug()<< s << displayType(gg.type);
@@ -245,7 +251,7 @@ void CasManager::info(giac::gen & gg,int decal) const{
 
     }
 OutputWidget* CasManager::createDisplay(){
-    info(answer,0);
+//    info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

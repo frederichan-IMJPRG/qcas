@@ -10,12 +10,12 @@ QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 DEPENDPATH += . \
     qt \
     giac \
@@ -113,7 +113,7 @@ HEADERS += qt/output.h \
     libtommath/tommath_class.h \
     libtommath/tommath_superclass.h \
     qt/gui/Interactive2d.h \
-    qt/gui/iconsize.h
+    qt/gui/prefdialog.h
 SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/MainWindow.cpp \
     qt/main.cpp \
@@ -300,9 +300,44 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     libtommath/bn_s_mp_sub.c \
     libtommath/bncore.c \
     qt/gui/Interactive2d.cc \
-    qt/gui/iconsize.cc
+    qt/gui/prefdialog.cc
 LIBS += -ldl
 
 # -lgmp
-OTHER_FILES += 
+OTHER_FILES += \ 
+    qt/images/stop.png \
+    qt/images/spreadsheet.png \
+    qt/images/segment.png \
+    qt/images/programming.png \
+    qt/images/process-stop.png \
+    qt/images/previous.png \
+    qt/images/point.png \
+    qt/images/open.png \
+    qt/images/next.png \
+    qt/images/new.png \
+    qt/images/midpoint.png \
+    qt/images/matrix.png \
+    qt/images/line.png \
+    qt/images/inter.png \
+    qt/images/help.png \
+    qt/images/halfline.png \
+    qt/images/formal.png \
+    qt/images/f1.png \
+    qt/images/exit.png \
+    qt/images/evaluate.png \
+    qt/images/equation.png \
+    qt/images/edit-undo.png \
+    qt/images/edit-redo.png \
+    qt/images/edit-paste.png \
+    qt/images/edit-find.png \
+    qt/images/edit-cut.png \
+    qt/images/edit-copy.png \
+    qt/images/document-save-as.png \
+    qt/images/document-save.png \
+    qt/images/document-new.png \
+    qt/images/circle3pt.png \
+    qt/images/circle2pt.png \
+    qt/images/book.png \
+    qt/images/add.png \
+    qt/images/cas.png
 RESOURCES += qt/qcas.qrc

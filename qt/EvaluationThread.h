@@ -2,8 +2,10 @@
 #define EVALUATIONTHREAD_H
 #include <QThread>
 #include <QStringList>
+#include "global.h"
 class OutputWidget;
 class CasManager;
+
 class EvaluationThread:public QThread{
     Q_OBJECT
 public:
@@ -14,6 +16,8 @@ public:
     void appendPrintCache(const QChar& );
     QStringList& getGiacDisplay() ;
     void killThread();
+    giac::context* getContext()const;
+
 //    QString& getVariableName();
 //    QString& getVariableValue();
 protected:

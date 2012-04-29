@@ -1,6 +1,7 @@
 #include "CasManager.h"
 #include "EvaluationThread.h"
 #include <QDebug>
+#include "global.h"
 EvaluationThread::EvaluationThread(){
     cas=new CasManager(this);
 //    connect(this,SIGNAL(finished()),this,SLOT(closeTimer()));
@@ -53,7 +54,9 @@ void EvaluationThread::run(){
 
 
 }
-
+giac::context* EvaluationThread::getContext()const{
+    return cas->getContext();
+}
 OutputWidget*  EvaluationThread::displayResult(){
     return cas->createDisplay();
 }

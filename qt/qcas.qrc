@@ -34,6 +34,7 @@
         <file>images/halfline.png</file>
         <file>images/circle2pt.png</file>
         <file>images/circle3pt.png</file>
+        <file>images/cas.png</file>
         <file>aide_cas</file>
     </qresource>
 </RCC>
