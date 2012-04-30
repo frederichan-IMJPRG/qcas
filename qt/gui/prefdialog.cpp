@@ -176,6 +176,7 @@ void CasPanel::initGui(){
                                "utilisés par giac en fonction du niveau (0 = pas d’info).</p>"));
 
     editDebugInfo=new QLineEdit;
+    editDebugInfo->setValidator(new QIntValidator(editDebugInfo));
 
     QLabel* labelNewton=new QLabel(tr("Nombre maximal d’itérations pour la méthode de Newton"));
     labelNewton->setToolTip(tr("Nombre maximal d’itérations pour la méthode de Newton"));
@@ -267,15 +268,6 @@ void CasPanel::initValue(){
    //spinRecursProg->setValue(giac::MAX_RECURSION_LEVEL);
    // spinRecursProg->setValue(giac::);
 
-
-
-
-
-
-
-
-
-
 }
 void CasPanel::apply(){
     giac::context* c=mainWindow->getContext();
@@ -304,14 +296,12 @@ void CasPanel::apply(){
     double dd=editEpsilon->text().toDouble();
     giac::epsilon(dd,c);
     dd=editProbaEpsilon->text().toDouble();
-//    giac::proba_epsilon(dd,c);
-//    spinRecursEval->setValue(giac::eval_level(c));
-//    spinEvalInProg->setValue(giac::prog_eval_level_val(c));
+    c->globalptr->_proba_epsilon_=editProbaEpsilon->text().toDouble();
+    c->globalptr->_eval_level=spinRecursEval->value();
+    giac::prog_eval_level_val(spinEvalInProg->value(),c);
     giac::MAX_RECURSION_LEVEL=spinRecursProg->value();
-  //  editDebugInfo->setText(QString::number(giac::debug_infolevel));
- //   spinNewton->setValue(giac::NEWTON_DEFAULT_ITERATION
-
-
+    giac::debug_infolevel=editDebugInfo->text().toInt();
+    giac::NEWTON_DEFAULT_ITERATION=spinNewton->value();
 }
 PrefDialog::PrefDialog(MainWindow * parent){
     mainWindow=parent;

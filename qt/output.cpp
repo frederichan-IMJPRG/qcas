@@ -57,7 +57,7 @@ void FormulaWidget::toXML(QDomElement& d){
 
 GraphWidget::GraphWidget(const giac::gen & g, giac::context * context){
 
-        canvas=new Canvas2D(this,g,context);
+          canvas=new Canvas2D(this,g,context);
 
 
        initGui();
@@ -95,12 +95,12 @@ GraphWidget::GraphWidget(const giac::gen & g, giac::context * context){
 void GraphWidget::initGui(){
     QHBoxLayout *hbox=new QHBoxLayout;
     propPanel=new PanelProperties(canvas);
-    hbox->addWidget(canvas);
+    canvas->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    hbox->addWidget(canvas,0,Qt::AlignLeft|Qt::AlignTop);
+
     hbox->addWidget(propPanel);
+    hbox->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(hbox);
-
-
-
 }
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
@@ -1061,9 +1061,10 @@ void PanelProperties::initGui(){
     if (nodeHalfLine->childCount()!=0)  topLevel.append(nodeHalfLine);
 
     tree->addTopLevelItems(topLevel);
-    hbox->addWidget(tree);
-    hbox->addWidget(displayPanel);
-
+   hbox->addWidget(tree);//,0,Qt::AlignLeft|Qt::AlignTop);
+    tree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    hbox->addWidget(displayPanel,0,Qt::AlignLeft|Qt::AlignTop);
+    hbox->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(hbox);
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
@@ -1112,6 +1113,7 @@ void PanelProperties::fillTree(QVector<MyItem*>* v){
 void PanelProperties::updateTree(){
    QList<QTreeWidgetItem*> list=tree->selectedItems();
    if (list.isEmpty()) return;
+
    disconnect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
    QList<MyItem*>* listItems=new QList<MyItem*>();
    for (int i=0;i<list.size();++i){
@@ -1206,12 +1208,19 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 }
 void DisplayProperties::initGui(){
     vLayout=new QVBoxLayout;
+    vLayout->setSizeConstraint(QLayout::SetFixedSize);
     colorPanel=new ColorPanel(this);
+    colorPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     legendPanel=new LegendPanel(this);
+    legendPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     widthPanel=new WidthPanel(this,tr("Épaisseur (1-8):"));
+    widthPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     typePointPanel=new TypePointPanel(2,this);
+    typePointPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     typeLinePanel=new TypeLinePanel(2,this);
+    typeLinePanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     alphaFillPanel=new AlphaFillPanel(this,tr("Transparence (0%-100%):"));
+    alphaFillPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
 
     vLayout->addWidget(colorPanel);
     vLayout->addWidget(legendPanel);
@@ -1314,7 +1323,9 @@ void LegendPanel::setChecked(bool b){
 }
 
 void LegendPanel::setLegendPosition(const int & index){
+    disconnect(comboPos,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
     comboPos->setCurrentIndex(index);
+     connect(comboPos,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
 
 }
 void LegendPanel::initGui(){
@@ -1375,7 +1386,10 @@ SliderPanel::SliderPanel(DisplayProperties *p,const QString & s):QGroupBox(p){
 }
 void SliderPanel::setValue(const int w ){
     value=w;
+    disconnect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
     slider->setValue(value);
+    connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
+
 }
 void SliderPanel::initGui(const QString &s){
     setTitle(s);
@@ -1524,7 +1538,10 @@ void TypePointPanel::updateCanvas(int c){
 
 }
 void TypePointPanel::setStyle(int c){
+    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
     combo->setCurrentIndex(c);
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+
 }
 
 TypeLinePanel::TypeLinePanel(const int t, DisplayProperties * p):QWidget(p){
@@ -1612,6 +1629,9 @@ void TypeLinePanel::updateCanvas(int c){
 
 }
 void TypeLinePanel::setStyle(const int &c){
+    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
     combo->setCurrentIndex(c);
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+
 }
 

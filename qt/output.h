@@ -176,7 +176,7 @@ private slots:
     void updateTree();
 
 };
-class DisplayProperties:public QScrollArea{
+class DisplayProperties:public QWidget{
     Q_OBJECT
 public:
     DisplayProperties(Canvas2D* canvas);

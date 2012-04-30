@@ -693,7 +693,7 @@ void Curve::draw(QPainter *painter) const{
         QColor f(color);
         f.setAlpha(255);
         painter->setBrush(QBrush(color,Qt::SolidPattern));
-        painter->setPen(QPen(f,width,  Qt::SolidLine));
+        painter->setPen(QPen(f,getPenWidth(),  Qt::SolidLine));
         painter->drawPath(pathScreen);
     }
     else {
