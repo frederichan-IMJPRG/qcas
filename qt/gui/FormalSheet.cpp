@@ -239,11 +239,11 @@ void FormalWorkSheet::keyPressEvent(QKeyEvent *e){
     if (e->key()==Qt::Key_Shift)
         shift=true;
     else shift=false;
-    qDebug()<<"press"<<shift;
+//    qDebug()<<"press"<<shift;
 }
 void FormalWorkSheet::keyReleaseEvent(QKeyEvent *){
     shift=false;
-    qDebug()<<"release"<<shift;
+ //   qDebug()<<"release"<<shift;
 
 }
 MainWindow* FormalWorkSheet::getApp(){

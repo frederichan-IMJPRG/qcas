@@ -117,7 +117,6 @@ HEADERS += qt/output.h \
 SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/MainWindow.cpp \
     qt/main.cpp \
-    qt/geometry.cc \
     qt/EvaluationThread.cpp \
     qt/config.cpp \
     qt/CasManager.cpp \
@@ -299,8 +298,9 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     libtommath/bn_s_mp_sqr.c \
     libtommath/bn_s_mp_sub.c \
     libtommath/bncore.c \
-    qt/gui/Interactive2d.cc \
-    qt/gui/prefdialog.cc
+    qt/gui/Interactive2d.cpp \
+    qt/gui/prefdialog.cpp \
+    qt/geometry.cpp
 LIBS += -ldl
 
 # -lgmp

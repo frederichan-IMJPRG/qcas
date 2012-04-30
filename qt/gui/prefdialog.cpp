@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QLabel>
+#include <QSpinBox>
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include "../MainWindow.h"
@@ -17,6 +18,9 @@ CasPanel::CasPanel(MainWindow *parent):QWidget(parent){
     initGui();
 }
 void CasPanel::initGui(){
+
+   // Initialize main Panel //
+
     QGridLayout* grid=new QGridLayout;
 
     QLabel* labelProg=new QLabel(tr("Langage utilisé"));
@@ -51,6 +55,8 @@ void CasPanel::initGui(){
     comboBasis->addItem(tr("8"));
 
     QLabel* labelDigits=new QLabel(tr("Nombre de décimales"));
+    labelDigits->setToolTip(tr("<p><b>Nombre de chiffres significatifs à l'affichage</b></p>"
+                               "<tt>DIGITS:=3;evalf(pi);<br>3.14 </tt>"));
     editDigits=new QLineEdit(this);
     QIntValidator* validator=new QIntValidator;
     editDigits->setValidator(validator);
@@ -83,6 +89,7 @@ void CasPanel::initGui(){
     checkSqrt=new QCheckBox(tr("factorisation avec racines carrées"));
     buttonAdvanced=new QPushButton(tr("Avancé..."));
     buttonAdvanced->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    connect(buttonAdvanced,SIGNAL(clicked()),this,SLOT(switchPanel()));
 
     grid->addWidget(labelProg,0,0);
     grid->addWidget(comboProg,0,1);
@@ -101,15 +108,117 @@ void CasPanel::initGui(){
     grid->addWidget(checkSqrt,6,1);
     grid->addWidget(buttonAdvanced,7,1,Qt::AlignCenter);
 
+    mainPanel=new QWidget;
+ //   mainPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    mainPanel->setLayout(grid);
 
-    setLayout(grid);
+
+    // Initialize advanced panel //
+    advancedPanel=new QWidget;
+//    advancedPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
+    QGridLayout *grid2=new QGridLayout;
+
+    QLabel* labelEpsilon=new QLabel(tr("epsilon:"));
+    labelEpsilon->setToolTip(tr("<p>Les nombres dont la valeur absolue est inférieure à cette valeur peuvent être considérés comme nuls. (Par défaut: 1e-10)</p>"));
+    editEpsilon=new QLineEdit;
+    editEpsilon->setValidator(new QDoubleValidator);
+    QLabel* labelProbaEpsilon=new QLabel(tr("proba_epsilon:"));
+    labelProbaEpsilon->setToolTip(tr("<p>Si cette valeur est non nulle, Giac peut utiliser des algorithmes "
+                                "non déterministes et renvoyer une réponse qui a alors une probabilité d’être "
+                               "fausse inférieure à la valeur donnée. C’est par exemple le cas pour le calcul"
+                                " du déterminant d’une grande matrice à coefficients entiers. (Par défaut: 1e-15)</p>"));
+    editProbaEpsilon=new QLineEdit;
+    editProbaEpsilon->setValidator(new QDoubleValidator);
+
+    QLabel* labelProgRecurs=new QLabel(tr("Nombre maximal d'appels <br> récursifs dans un programme:"));
+    labelProgRecurs->setToolTip(tr("<p>Nombre maximum d’appels récursifs : par défaut c’est 50. Il n’y a pas de limite imposée; "
+                                     "par contre, si on met une borne trop élevée, c’est la pile du programme qui risque "
+                                   "de déborder en provoquant un segmentation fault. Le moment où cela se "
+                                   "produit dépend de la fonction, car la pile est aussi utilisée pour les appels "
+                                   "récursifs des fonctions C++ de giac.</p>"));
+    spinRecursProg=new QSpinBox;
+    spinRecursProg->setMinimum(0);
+    spinRecursProg->setMaximum(500);
+
+    QLabel* labelEvalRecurs=new QLabel(tr("Nombre maximal de substitutions récursives<br> de variables en mode interactif:"));
+    labelEvalRecurs->setToolTip(tr("<p>Nombre maximum d’évaluations récursives en mode interactif. Par"
+                                   "exemple, si on exécute dans l’ordre <tt> a:=b+1 </tt> et <tt>b:=5</tt> puis on évalue <tt>a</tt>, la"
+                                   "valeur renvoyée sera <tt>b+1</tt> si cette valeur vaut 1 et 6 si cette valeur est plus grande que 1. (Par défaut: 25)</p>"));
+    spinRecursEval=new QSpinBox;
+    spinRecursEval->setMinimum(0);
+
+    QLabel* labelEvalInProg=new QLabel(tr("Nombre maximal de substitutions récursives<br> de variables à l'exécution d'un programme:"));
+    labelEvalInProg->setToolTip(tr("<p>Comme ci-dessus, mais lorsqu’un programme est exécuté. On utilise "
+                                   "en principe le niveau 1 d’évaluation à l’intérieur d’un programme.</p>"));
+    spinEvalInProg=new QSpinBox;
+    spinEvalInProg->setMinimum(0);
+
+    QLabel* labelDebugInfo=new QLabel(tr("Niveau de verbosité de Giac:"));
+    labelDebugInfo->setToolTip(tr("<p>Affiche des informations intermédiaires (en bleu) sur les algorithmes"
+                               "utilisés par giac en fonction du niveau (0 = pas d’info).</p>"));
+
+    editDebugInfo=new QLineEdit;
+
+    QLabel* labelNewton=new QLabel(tr("Nombre maximal d’itérations pour la méthode de Newton"));
+    labelNewton->setToolTip(tr("Nombre maximal d’itérations pour la méthode de Newton"));
+    spinNewton=new QSpinBox;
+    spinNewton->setMinimum(0);
+
+    backButton=new QPushButton(tr("Basique..."));
+    connect(backButton,SIGNAL(clicked()),this,SLOT(switchPanel()));
+    grid2->setHorizontalSpacing(20);
+    grid2->addWidget(labelEpsilon,0,0);
+    grid2->addWidget(editEpsilon,0,1);
+    grid2->addWidget(labelProbaEpsilon,1,0);
+    grid2->addWidget(editProbaEpsilon,1,1);
+    grid2->addWidget(labelDebugInfo,2,0);
+    grid2->addWidget(editDebugInfo,2,1);
+    grid2->addWidget(labelNewton,3,0);
+    grid2->addWidget(spinNewton,3,1);
+    grid2->addWidget(labelProgRecurs,0,2);
+    grid2->addWidget(spinRecursProg,0,3);
+    grid2->addWidget(labelEvalRecurs,1,2);
+    grid2->addWidget(spinRecursEval,1,3);
+    grid2->addWidget(labelEvalInProg,2,2);
+    grid2->addWidget(spinEvalInProg,2,3);
+    grid2->addWidget(backButton,3,2);
+    advancedPanel->setVisible(false);
+    advancedPanel->setLayout(grid2);
+
+
+    // Lay out both panels //
+    QVBoxLayout *vbox=new QVBoxLayout;
+    vbox->addWidget(mainPanel);
+    vbox->addWidget(advancedPanel);
+    vbox->setSizeConstraint(QLayout::SetFixedSize);
+    setLayout(vbox);
+//    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
 }
+void CasPanel::switchPanel(){
+    if (mainPanel->isVisible()) {
+        mainPanel->hide();
+        advancedPanel->show();
+ //       adjustSize();
 
+    }
+    else{
+        mainPanel->show();
+        advancedPanel->hide();
+   //     adjustSize();
+
+    }
+}
 void CasPanel::initValue(){
     giac::context* c=mainWindow->getContext();
     comboProg->setCurrentIndex(giac::xcas_mode(c));
     comboFloat->setCurrentIndex(giac::scientific_format(c));
-    comboBasis->setCurrentIndex(giac::integer_format(c));
+    int basis=giac::integer_format(c);
+    if (basis==10) comboBasis->setCurrentIndex(0);
+    else if (basis==16) comboBasis->setCurrentIndex(1);
+    else if (basis==8) comboBasis->setCurrentIndex(2);
+
     editDigits->setText(QString::number(giac::decimal_digits(c)));
     if (giac::approx_mode(c)==0) checkSymbolic->setChecked(true);
     else checkSymbolic->setChecked(false);
@@ -126,13 +235,38 @@ void CasPanel::initValue(){
     if (giac::withsqrt(c)==1) checkSqrt->setChecked(true);
     else checkSqrt->setChecked(false);
 
+    editEpsilon->setText(QString::number(giac::epsilon(c)));
+    editProbaEpsilon->setText(QString::number(giac::proba_epsilon(c)));
+    spinRecursEval->setValue(giac::eval_level(c));
+    spinEvalInProg->setValue(giac::prog_eval_level_val(c));
+
+
+    spinRecursProg->setValue(giac::MAX_RECURSION_LEVEL);
+    editDebugInfo->setText(QString::number(giac::debug_infolevel));
+    spinNewton->setValue(giac::NEWTON_DEFAULT_ITERATION
+                         );
+//    spinNewton->setValue(giac::);
+
+   //spinRecursProg->setValue(giac::MAX_RECURSION_LEVEL);
+   // spinRecursProg->setValue(giac::);
+
+
+
+
+
+
+
+
+
+
 }
 void CasPanel::apply(){
     giac::context* c=mainWindow->getContext();
     giac::xcas_mode(comboProg->currentIndex(),c);
     giac::scientific_format(comboFloat->currentIndex(),c);
-    giac::integer_format(comboBasis->currentIndex(),c);
-    int d=editDigits->text().toInt();
+    int d=comboBasis->itemText(comboBasis->currentIndex()).toInt();
+    giac::integer_format(d,c);
+    d=editDigits->text().toInt();
     if (d<0) d=12;
      giac::decimal_digits(d,c);
     if (checkSymbolic->isChecked()) giac::approx_mode(0,c);
@@ -149,6 +283,18 @@ void CasPanel::apply(){
     else giac::all_trig_sol(0,c);
     if (checkSqrt->isChecked()) giac::withsqrt(1,c);
     else giac::withsqrt(0,c);
+
+    double dd=editEpsilon->text().toDouble();
+    giac::epsilon(dd,c);
+    dd=editProbaEpsilon->text().toDouble();
+//    giac::proba_epsilon(dd,c);
+//    spinRecursEval->setValue(giac::eval_level(c));
+//    spinEvalInProg->setValue(giac::prog_eval_level_val(c));
+    giac::MAX_RECURSION_LEVEL=spinRecursProg->value();
+  //  editDebugInfo->setText(QString::number(giac::debug_infolevel));
+ //   spinNewton->setValue(giac::NEWTON_DEFAULT_ITERATION
+
+
 }
 PrefDialog::PrefDialog(MainWindow * parent){
     mainWindow=parent;
@@ -204,6 +350,8 @@ void PrefDialog::initGui(){
     vbox->addWidget(listWidget);
     vbox->addWidget(stackWidget);
     vbox->addWidget(buttonsPanel);
+    vbox->setSizeConstraint(QLayout::SetFixedSize);
+
     setLayout(vbox);
     connect(listWidget,SIGNAL(currentRowChanged(int)),stackWidget,SLOT(setCurrentIndex(int)));
     connect(cancelButton,SIGNAL(clicked()),this,SLOT(close()));

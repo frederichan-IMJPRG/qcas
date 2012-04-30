@@ -9,6 +9,7 @@ class QComboBox;
 class QPushButton;
 class QLineEdit;
 class QCheckBox;
+class QSpinBox;
 class CasPanel:public QWidget{
     Q_OBJECT
 public:
@@ -19,6 +20,8 @@ public:
 
 private:
     MainWindow* mainWindow;
+    QWidget* mainPanel;
+    QWidget* advancedPanel;
     QComboBox * comboProg;
     QComboBox * comboFloat;
     QComboBox * comboBasis;
@@ -31,7 +34,23 @@ private:
     QCheckBox * checkAlltrig;
     QCheckBox * checkSqrt;
     QPushButton* buttonAdvanced;
+
+    QLineEdit*editEpsilon;
+    QLineEdit*editProbaEpsilon;
+    QSpinBox* spinRecursProg;
+    QSpinBox* spinRecursEval;
+    QSpinBox* spinEvalInProg;
+    QSpinBox* spinNewton;
+    QLineEdit* editDebugInfo;
+
+
+    QPushButton* backButton;
+
+
     void initGui();
+
+private slots:
+    void switchPanel();
 };
 class PrefDialog: public QDialog{
     Q_OBJECT
@@ -47,7 +66,6 @@ private:
     QWidget* interactive2dPanel;
     QPushButton* okButton;
     QPushButton* cancelButton;
-
     void initGui();
 private slots:
     void apply();

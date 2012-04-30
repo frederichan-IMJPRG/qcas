@@ -598,7 +598,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d,const  giac::gen &g, giac::context*context){
         xmin=-5;ymin=-5;xmax=5;ymax=5;
          setXYUnit();
        }
-       qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
+  //     qDebug()<<xmin<<xmax<<ymin<<ymax<<xunit<<yunit<<width()<<height();
 
       createScene(g,context);
 

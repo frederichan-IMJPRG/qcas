@@ -17,6 +17,7 @@ public:
     QStringList& getGiacDisplay() ;
     void killThread();
     giac::context* getContext()const;
+    void clearGiacDisplay();
 
 //    QString& getVariableName();
 //    QString& getVariableValue();

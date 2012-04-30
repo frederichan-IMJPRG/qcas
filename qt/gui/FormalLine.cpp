@@ -53,7 +53,7 @@ void Line::addStopButton(QToolButton *stop){
 void Line::removeStopButton(){
     mainLayout->removeWidget(workSheet->getApp()->getStopButton());
 
-    qDebug()<<workSheet->getApp()->getStopButton()->parentWidget();
+//    qDebug()<<workSheet->getApp()->getStopButton()->parentWidget();
     }
 int Line::getId()const{
     return id;

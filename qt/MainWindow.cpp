@@ -365,7 +365,7 @@ void MainWindow::updateRecentFileActions(){
             i.remove();
     }
     for (int j=0;j<MaxRecentFiles;++j){
-        if (j<recentFiles.count()){
+        if (j<recentFiles.size()){
             QString text=tr("&%1 %2").arg(j+1).arg(strippedName(recentFiles[j]));
             recentFileActions[j]->setText(text);
             recentFileActions[j]->setData(recentFiles[j]);
@@ -476,11 +476,12 @@ void MainWindow::printHeader(){
 void MainWindow::displayGiacMessages(){
     printHeader();
     QStringList list=ev.getGiacDisplay();
-    for (int  i=0;i<list.count();++i){
+    for (int  i=0;i<list.size();++i){
         giacMessages->appendHtml(list.at(i));
     }
     giacMessages->appendHtml(tr("<br><font color=\"gray\">Temps mis:")+QString::number(time->elapsed())+" ms</font><br>");
     giacMessages->verticalScrollBar()->setValue(giacMessages->verticalScrollBar()->maximum());
+    ev.clearGiacDisplay();
 }
 
 

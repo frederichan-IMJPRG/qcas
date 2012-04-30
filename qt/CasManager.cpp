@@ -69,7 +69,9 @@ void     mybuf::put_buffer(){
 }
 
 
-MyStream::MyStream(EvaluationThread *ev,int bsize):ostream(new mybuf(ev,bsize)) {}
+MyStream::MyStream(EvaluationThread *ev,int bsize):ostream(new mybuf(ev,bsize)) {
+
+}
 
 
 CasManager::CasManager(EvaluationThread *ev){
@@ -89,6 +91,9 @@ bool CasManager::testExpression(const giac::gen & exp){
 }
 EvaluationThread::warning CasManager::initExpression(const QString *str){
     expression=giac::gen(str->toStdString(),context);
+
+
+
     bool b=testExpression(expression);
     if (!b){
         return EvaluationThread::WARNING;
@@ -574,7 +579,7 @@ void CasManager::drawOnScene(QGraphicsScene &scene,const gen & g){
         }*/
       } // end point.type==_SYMB
       if (point.type!=_VECT){ // single point
-          qDebug()<<"coucou";
+
 /*        Mon_image.findij(point,x_scale,y_scale,i0,j0,context);
         if (i0>0 && i0<mxw && j0>0 && j0<myw)
           fltk_point(deltax,deltay,round(i0),round(j0),epaisseur_point,type_point);

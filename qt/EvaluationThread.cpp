@@ -13,12 +13,12 @@ void EvaluationThread::appendPrintCache(const QChar& c){
     else if(c=='>') printCache.append("&gt;");
     else if(c=='\n') {
         fullDisplay.append(printCache);
-
         printCache="";
     }
     else printCache.append(c);
-    qDebug()<<"appendPrintCache: fullldisplay:"<<fullDisplay<<printCache;
 
+//    qDebug()<<"fullldisplay:"<<fullDisplay.size()<<fullDisplay;
+//    qDebug()<<"printCache"<<printCache;
 }
 
 QStringList& EvaluationThread::getGiacDisplay(){
@@ -43,16 +43,13 @@ EvaluationThread::getVariableValue(){
 void EvaluationThread::run(){
 
     printCache="";
-    fullDisplay.clear();
-
     cas->evaluate();
 
     if (!printCache.isEmpty()) fullDisplay.append(printCache);
-    qDebug()<<"-----------------";
-    qDebug()<<"test  "<<fullDisplay;
-    qDebug()<<"-----------------";
 
-
+}
+void EvaluationThread::clearGiacDisplay(){
+    fullDisplay.clear();
 }
 giac::context* EvaluationThread::getContext()const{
     return cas->getContext();
