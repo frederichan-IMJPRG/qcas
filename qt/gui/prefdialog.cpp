@@ -1,3 +1,20 @@
+/*  Copyright (C) 2001 Le Coq Loïc
+*    This file is part of QCAS.
+*
+*    QCAS is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*    (at your option) any later version.
+*
+*    QCAS is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
+*/
+
 #include <QStackedWidget>
 #include <QListWidget>
 #include <QVBoxLayout>
@@ -122,14 +139,14 @@ void CasPanel::initGui(){
     QLabel* labelEpsilon=new QLabel(tr("epsilon:"));
     labelEpsilon->setToolTip(tr("<p>Les nombres dont la valeur absolue est inférieure à cette valeur peuvent être considérés comme nuls. (Par défaut: 1e-10)</p>"));
     editEpsilon=new QLineEdit;
-    editEpsilon->setValidator(new QDoubleValidator);
+    editEpsilon->setValidator(new QDoubleValidator(editEpsilon));
     QLabel* labelProbaEpsilon=new QLabel(tr("proba_epsilon:"));
     labelProbaEpsilon->setToolTip(tr("<p>Si cette valeur est non nulle, Giac peut utiliser des algorithmes "
                                 "non déterministes et renvoyer une réponse qui a alors une probabilité d’être "
                                "fausse inférieure à la valeur donnée. C’est par exemple le cas pour le calcul"
                                 " du déterminant d’une grande matrice à coefficients entiers. (Par défaut: 1e-15)</p>"));
     editProbaEpsilon=new QLineEdit;
-    editProbaEpsilon->setValidator(new QDoubleValidator);
+    editProbaEpsilon->setValidator(new QDoubleValidator(editProbaEpsilon));
 
     QLabel* labelProgRecurs=new QLabel(tr("Nombre maximal d'appels <br> récursifs dans un programme:"));
     labelProgRecurs->setToolTip(tr("<p>Nombre maximum d’appels récursifs : par défaut c’est 50. Il n’y a pas de limite imposée; "
