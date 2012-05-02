@@ -227,7 +227,7 @@ void CasManager::killThread(){
     qDebug()<<"Thread flingué"<<giac::is_context_busy(context);
 
 //    if (giac::is_context_busy(context))
-        giac::kill_thread(context);
+        giac::kill_thread(true,context);
 }
 
 giac::context* CasManager::getContext() const{
