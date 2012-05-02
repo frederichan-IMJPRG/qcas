@@ -22,3 +22,4 @@ Config::Config(){}
 bool Config::ortho=false;
 bool Config::autoscale=true;
 int Config::graph_width=400;
+Config::LANGUAGES Config::language=Config::FRENCH;

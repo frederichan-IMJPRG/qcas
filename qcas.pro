@@ -339,5 +339,8 @@ OTHER_FILES += \
     qt/images/circle2pt.png \
     qt/images/book.png \
     qt/images/add.png \
-    qt/images/cas.png
+    qt/images/cas.png \
+    qt/images/general.png \
+    qt/images/french.png \
+    qt/images/english.png
 RESOURCES += qt/qcas.qrc

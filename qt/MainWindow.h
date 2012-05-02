@@ -17,7 +17,7 @@
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-#include "EvaluationThread.h"
+//#include "EvaluationThread.h"
 #include <QMainWindow>
 #include "global.h"
 class QAction;
@@ -26,6 +26,7 @@ class QStackedWidget;
 class QMenu;
 class QListWidgetItem;
 class QToolBar;
+class CasManager;
 class MainTabWidget;
 class QPlainTextEdit;
 class QLabel;
@@ -123,7 +124,7 @@ private:
     QPlainTextEdit* giacMessages;
     QToolBar* toolBar;
     QLabel* warningFirstEvaluation;
-    EvaluationThread ev;
+    CasManager* cas;
     TaskProperties taskProperties;
     CommandInfo* commandInfo;
     QTime* time;

@@ -189,7 +189,7 @@
 /* #undef HAVE_LIBPNG */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-/* #define HAVE_LIBPTHREAD 1 */
+#define HAVE_LIBPTHREAD 1
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
 /* #undef HAVE_LIBREADLINE */

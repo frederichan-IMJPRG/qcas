@@ -21,7 +21,7 @@
 #include <QDebug>
 #include "global.h"
 EvaluationThread::EvaluationThread(){
-    cas=new CasManager(this);
+//    cas=new CasManager(this);
 //    connect(this,SIGNAL(finished()),this,SLOT(closeTimer()));
 }
 void EvaluationThread::appendPrintCache(const QChar& c){
@@ -43,13 +43,13 @@ QStringList& EvaluationThread::getGiacDisplay(){
     return fullDisplay;
 }
 void EvaluationThread::killThread(){
-        terminate();
+//        terminate();
         cas->killThread();
 }
 
 EvaluationThread::warning EvaluationThread::setCommand(const QString & command){
     this->command=command;
-    return cas->initExpression(&command);
+    return 1;//cas->initExpression(&command);
 }
 /*EvaluationThread::getVariableName(){
     return cas->getVariableName();

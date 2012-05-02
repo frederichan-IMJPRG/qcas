@@ -29,7 +29,16 @@
 #include "../MainWindow.h"
 #include "prefdialog.h"
 #include "global.h"
+#include "config.h"
 #include <QDebug>;
+
+
+
+/**
+   **********     PREFERENCES CAS PANEL    *************************
+
+  **/
+
 CasPanel::CasPanel(MainWindow *parent):QWidget(parent){
     mainWindow=parent;
     initGui();
@@ -96,7 +105,7 @@ void CasPanel::initGui(){
                                "<p><tt>complex_variables:=0</tt> (mode réel)</p>"));
 
     checkPolynomialDecrease=new QCheckBox(tr("Affichage des polynômes en puissances décroissantes"));
-    checkPolynomialDecrease->setToolTip(tr("<p></p>"));
+    checkPolynomialDecrease->setToolTip(tr("<p><center><tt>1+x+x^2+x^3+x^4+x^5</tt><br>au lieu de ... <br><tt>x^5+x^4+x^3+x^2+x+1</tt></center></p>"));
 
     checkAlltrig=new QCheckBox(tr("Solutions trigonométriques générales"));
     checkAlltrig->setToolTip(tr("<p><ul>"
@@ -303,6 +312,53 @@ void CasPanel::apply(){
     giac::debug_infolevel=editDebugInfo->text().toInt();
     giac::NEWTON_DEFAULT_ITERATION=spinNewton->value();
 }
+
+/**
+   **********     PREFERENCES GENERAL PANEL    *************************
+
+  **/
+
+GeneralPanel::GeneralPanel():QWidget(){
+    initGui();
+}
+void GeneralPanel::initGui(){
+    QGridLayout* grid=new QGridLayout;
+    QLabel* labelWidth=new QLabel(tr("Largeur (en pixel) des graphiques"));
+    editWidth=new QLineEdit;
+    editWidth->setValidator(new QIntValidator(editWidth));
+    editWidth->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    QLabel* labelLanguage=new QLabel(tr("Langue"));
+    comboLanguage=new QComboBox;
+    comboLanguage->addItem(QIcon(":/images/french.png"),tr("Français"));
+    comboLanguage->addItem(QIcon(":/images/english.png"),tr("Anglais"));
+
+    grid->addWidget(labelLanguage,0,0);
+    grid->addWidget(comboLanguage,0,1);
+    grid->addWidget(labelWidth,1,0);
+    grid->addWidget(editWidth,1,1);
+    setLayout(grid);
+}
+
+void GeneralPanel::initValue(){
+    editWidth->setText(QString::number(Config::graph_width));
+    comboLanguage->setCurrentIndex(Config::language);
+
+}
+void GeneralPanel::apply(){
+    int w=editWidth->text().toInt();
+    if ((w>100) && (w < 1000)) Config::graph_width=w;
+    else w=400;
+
+
+}
+
+
+/**
+   **********     PREFERENCES DIALOG BOX    *************************
+
+  **/
+
+
 PrefDialog::PrefDialog(MainWindow * parent){
     mainWindow=parent;
     setVisible(false);
@@ -310,11 +366,13 @@ PrefDialog::PrefDialog(MainWindow * parent){
 }
 
 void PrefDialog::initGui(){
+    generalPanel=new GeneralPanel;
     casPanel=new CasPanel(mainWindow);
     spreadSheetPanel=new QWidget(this);
     interactive2dPanel=new QWidget(this);
 
     stackWidget=new QStackedWidget;
+    stackWidget->addWidget(generalPanel);
     stackWidget->addWidget(casPanel);
     stackWidget->addWidget(spreadSheetPanel);
     stackWidget->addWidget(interactive2dPanel);
@@ -326,6 +384,10 @@ void PrefDialog::initGui(){
     listWidget->setFlow(QListView::LeftToRight);
     listWidget->setViewMode(QListView::IconMode);
 //    listWidget->setUniformItemSizes(true);
+    QListWidgetItem* generalItem=new QListWidgetItem(QIcon(":/images/general.png"),tr("Général"));
+  generalItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
+  generalItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+
     QListWidgetItem* casItem=new QListWidgetItem(QIcon(":/images/cas.png"),tr("CAS"));
   casItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
   casItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
@@ -336,6 +398,7 @@ void PrefDialog::initGui(){
     interactive2dItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
     interactive2dItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
+    listWidget->addItem(generalItem);
     listWidget->addItem(casItem);
     listWidget->addItem(spreadItem);
     listWidget->addItem(interactive2dItem);
@@ -366,6 +429,7 @@ void PrefDialog::initGui(){
 
 }
 void PrefDialog::apply(){
+    generalPanel->apply();
     casPanel->apply();
 
 //    giac::
@@ -375,5 +439,7 @@ void PrefDialog::apply(){
 }
 
 void PrefDialog::initValue(){
+    generalPanel->initValue();
     casPanel->initValue();
+
 }

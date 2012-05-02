@@ -1061,7 +1061,7 @@ void PanelProperties::initGui(){
     if (nodeHalfLine->childCount()!=0)  topLevel.append(nodeHalfLine);
 
     tree->addTopLevelItems(topLevel);
-   hbox->addWidget(tree);//,0,Qt::AlignLeft|Qt::AlignTop);
+    hbox->addWidget(tree);
     tree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     hbox->addWidget(displayPanel,0,Qt::AlignLeft|Qt::AlignTop);
     hbox->setSizeConstraint(QLayout::SetFixedSize);

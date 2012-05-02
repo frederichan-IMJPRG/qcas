@@ -19,10 +19,16 @@
 #define CONFIG_H
 
 class Config{
+
 public:
     Config();
     static bool ortho,autoscale;
     static int graph_width;
+    enum LANGUAGES{
+       FRENCH=0,
+       ENGLISH=1
+    };
+    static LANGUAGES language;
 };
 
 #endif // CONFIG_H

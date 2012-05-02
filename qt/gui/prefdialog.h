@@ -27,6 +27,10 @@ class QPushButton;
 class QLineEdit;
 class QCheckBox;
 class QSpinBox;
+
+
+
+
 class CasPanel:public QWidget{
     Q_OBJECT
 public:
@@ -69,6 +73,19 @@ private:
 private slots:
     void switchPanel();
 };
+
+class GeneralPanel:public QWidget{
+public:
+    GeneralPanel();
+    void initValue();
+    void apply();
+private:
+    QLineEdit* editWidth;
+    QComboBox* comboLanguage;
+    void initGui();
+
+
+};
 class PrefDialog: public QDialog{
     Q_OBJECT
 public:
@@ -79,6 +96,7 @@ private:
     QListWidget* listWidget;
     QStackedWidget* stackWidget;
     CasPanel* casPanel;
+    GeneralPanel* generalPanel;
     QWidget* spreadSheetPanel;
     QWidget* interactive2dPanel;
     QPushButton* okButton;

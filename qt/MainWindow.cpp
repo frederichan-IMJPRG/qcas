@@ -56,7 +56,7 @@
 
 
 
-#include "EvaluationThread.h"
+#include "CasManager.h"
 #include <QCompleter>
 #include <giac/giac.h>
 #include "gui/prefdialog.h"
@@ -477,10 +477,12 @@ void MainWindow::createGui(){
     warningFirstEvaluation->show();
     prefDialog=new PrefDialog(this);
 
-    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
+
+    cas=new CasManager(this);
+//    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
 }
 void MainWindow::printHeader(){
-    if (ev.getGiacDisplay().isEmpty()&&!displayTimeAfterProcess) return;
+    if (cas->getGiacDisplay().isEmpty()&&!displayTimeAfterProcess) return;
 
     if (taskProperties.firstPrintMessage) {
         QString title=tr("Feuille ")+QString::number(taskProperties.currentSheet+1)+tr(", ligne ")+QString::number(taskProperties.currentLine+1)+":";
@@ -492,13 +494,13 @@ void MainWindow::printHeader(){
 
 void MainWindow::displayGiacMessages(){
     printHeader();
-    QStringList list=ev.getGiacDisplay();
+    QStringList list=cas->getGiacDisplay();
     for (int  i=0;i<list.size();++i){
         giacMessages->appendHtml(list.at(i));
     }
     giacMessages->appendHtml(tr("<br><font color=\"gray\">Temps mis:")+QString::number(time->elapsed())+" ms</font><br>");
     giacMessages->verticalScrollBar()->setValue(giacMessages->verticalScrollBar()->maximum());
-    ev.clearGiacDisplay();
+    cas->clearGiacDisplay();
 }
 
 
@@ -629,7 +631,7 @@ void MainWindow::redo(){
 }
 void MainWindow::killThread(){
 
-    ev.killThread();
+    cas->killThread();
 }
 void MainWindow::evaluate(const QString &formula){
     if (warningFirstEvaluation!=NULL) {
@@ -647,8 +649,8 @@ void MainWindow::evaluate(const QString &formula){
         {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
             form->getCurrentLine()->addStopButton(stopButton);
             taskProperties.currentLine=form->getCurrentLine()->getId();
-            EvaluationThread::warning id=ev.setCommand(formula);
-            if (id==EvaluationThread::WARNING){
+            CasManager::warning id=cas->initExpression(&formula);
+            if (id==CasManager::WARNING){
                 QString s("<font color=\"red\"");
                 s.append(tr("Attention! <br> Pour affecter une valeur à une variable, vous devez utiliser le symbole :="));
                 s.append("<br><u>Exemple</u>: a:=2 ou f(x):=x^2");
@@ -657,8 +659,9 @@ void MainWindow::evaluate(const QString &formula){
                 giacMessages->appendHtml(s);
                 form->getCurrentLine()->getTextInput()->setFocus();
             }
-            ev.start();
+            cas->evaluate();
             time->start();
+
         }
         break;
     case MainSheet::SPREADSHEET_TYPE:
@@ -668,7 +671,7 @@ void MainWindow::evaluate(const QString &formula){
     }
 }
 void MainWindow::displayResult(){
-    displayGiacMessages();
+   displayGiacMessages();
     tabPages->setCurrentIndex(taskProperties.currentSheet);
     // Formal Sheet
     if (taskProperties.currentLine>-1){
@@ -678,7 +681,7 @@ void MainWindow::displayResult(){
         stopButton->setParent(this);
 
 //        return form->getLineAt(taskProperties.currentLine)->getOuputWidget();
-        form->displayResult(taskProperties.currentLine,ev.displayResult());
+        form->displayResult(taskProperties.currentLine,cas->createDisplay());
 
     }
 }
@@ -722,10 +725,10 @@ void MainWindow::sendText(const QString & s){
 }
 
 bool MainWindow::isEvaluating(){
-    return ev.isRunning();
+    return cas->isRunning();
 }
 giac::context* MainWindow::getContext() const{
-    return ev.getContext();
+    return cas->getContext();
 }
 
 CommandInfo* MainWindow::getCommandInfo()const{

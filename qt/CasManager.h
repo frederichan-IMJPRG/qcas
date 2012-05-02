@@ -17,12 +17,25 @@
 
 #ifndef CASMANAGER_H
 #define CASMANAGER_H
-
 #include <streambuf>
-#include "EvaluationThread.h"
+#include <QThread>
+#include <QStringList>
+//#include "global.h"
 #include "giac/gen.h"
-#include <QGraphicsScene>
+#include "MainWindow.h"
+
 class OutputWidget;
+class MonitorThread:public QThread{
+    Q_OBJECT
+public:
+    MonitorThread(giac::context * c);
+protected:
+    void run();
+private:
+    giac::context* contextptr;
+};
+
+
 /**
  the class mybuf is used to redirect the standard std::cout
  We can catch print("....") commands, and all comment for libgiac
@@ -32,19 +45,21 @@ class mybuf: public std::streambuf{
  private:
    void    put_buffer(void);
    void    put_char(int);
-   EvaluationThread *ev;
+   CasManager *cas;
 
    protected:
    int    overflow(int);
    int    sync();
    public:
-   mybuf(EvaluationThread *ev,int = 0);
+   mybuf(CasManager *,int = 0);
    // ~mybuf();
  };
 class MyStream: public std::ostream{
  public:
-   MyStream(EvaluationThread *ev,int = 0);
+   MyStream(CasManager*,int = 0);
  };
+
+void callback(const giac::gen & ,void * );
 
 /**
   The main class which handles with the libGiac
@@ -52,31 +67,46 @@ class MyStream: public std::ostream{
   **/
 class CasManager :QObject{
 public:
-    CasManager(EvaluationThread* );
+    enum warning{NO_WARNING=0,WARNING=1,ERROR=2};
+
+
+    CasManager(MainWindow *main );
     void evaluate();
+    bool isRunning() const;
     void killThread();
     giac::context* getContext() const;
     giac::gen getAnswer() const;
-    EvaluationThread::warning initExpression(const QString *str);
+   CasManager::warning initExpression(const QString *str);
     OutputWidget* createDisplay();
-    //    QString& getVariableName();
-//    QString& getVariableValue();
-
+    void appendPrintCache(const QChar& );
+    QStringList& getGiacDisplay() ;
+    void clearGiacDisplay();
 private:
+    static giac::gen answer;
+    MainWindow* mainWindow;
+    MonitorThread* monitor;
+    QString printCache;
+    QStringList fullDisplay;
+
+    static void callback(const giac::gen & ,void * );
     QString gen2mathml(const giac::gen &);
-    EvaluationThread *ev;
     bool testExpression(const giac::gen& );
     giac::gen expression;
-    giac::gen answer;
     giac::context *context;
     void info(giac::gen &, int decal ) const;
     OutputWidget* formula2Widget(const QString &mathml);
     OutputWidget* graph2Widget(const giac::gen&);
-    void drawOnScene(QGraphicsScene &,const giac::gen &);
     QString displayType(int c) const;
     QString displaySubType(int c) const;
 
+
+
+
+
  };
+
+
+
 
 
 #endif // CASMANAGER_H
