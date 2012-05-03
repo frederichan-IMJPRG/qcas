@@ -206,31 +206,24 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       if (point.type==_SYMB) {
         if (point._SYMBptr->sommet==at_hyperplan || point._SYMBptr->sommet==at_hypersphere)
           return;
+
+        /*
+        *    Circle figures (arc, circle ...)
+        *
+        */
         if (point._SYMBptr->sommet==at_cercle){
           vecteur v=*point._SYMBptr->feuille._VECTptr;
 
           gen diametre=remove_at_pnt(v[0]);
           gen e1=diametre._VECTptr->front().evalf_double(1,context);
           gen e2=diametre._VECTptr->back().evalf_double(1,context);
-
-
-
           gen centre=rdiv(e1+e2,2.0);
           gen e12=e2-e1;
           double ex=evalf_double(re(e12,context),1,context)._DOUBLE_val,ey=evalf_double(im(e12,context),1,context)._DOUBLE_val;
           gen diam=std::sqrt(ex*ex+ey*ey);
           gen angle=std::atan2(ey,ex);
-
           gen a1=v[1].evalf_double(1,context),a2=v[2].evalf_double(1,context);
-
-
-
-
-
-
           if ( (diam.type==_DOUBLE_) && (a1.type==_DOUBLE_) && (a2.type==_DOUBLE_) ){
-//            i1=diam._DOUBLE_val*x_scale/2.0;
-//            j1=diam._DOUBLE_val*y_scale/2.0;
             double a1d=a1._DOUBLE_val,a2d=a2._DOUBLE_val,angled=angle._DOUBLE_val;
             bool changer_sens=a1d>a2d;
             if (changer_sens){
@@ -270,6 +263,10 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           }
 
         } // end circle
+        /*
+        *    Pixon
+        *
+        */
 
         else if (point._SYMBptr->sommet==at_pixon){
         //    pixon (i,j,color)
@@ -350,23 +347,25 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           */
         } // end bitmap
 
+        /*
+        *    legend
+        *    eg: legend([30,100],"Hello");
+        */
+
         else if (point._SYMBptr->sommet==at_legende){
-           /*
-          gen & f=point._SYMBptr->feuille;
-          if (f.type==_VECT && f._VECTptr->size()==3){
-            vecteur & fv=*f._VECTptr;
-            if (fv[0].type==_VECT && fv[0]._VECTptr->size()>=2 && fv[1].type==_STRNG && fv[2].type==_INT_){
-              vecteur & fvv=*fv[0]._VECTptr;
-              if (fvv[0].type==_INT_ && fvv[1].type==_INT_){
-                fl_font(FL_HELVETICA,Mon_image.labelsize());
-                xcas_color(fv[2].val);
-                int dx=0,dy=0;
-                string legendes(*fv[1]._STRNGptr);
-                find_dxdy(legendes,labelpos,Mon_image.labelsize(),dx,dy);
-                fl_draw(legendes.c_str(),deltax+fvv[0].val+dx,deltay+fvv[1].val+dy);
+            gen & f=point._SYMBptr->feuille;
+            if (f.type==_VECT && f._VECTptr->size()==3){
+              vecteur & fv=*f._VECTptr;
+              if (fv[0].type==_VECT && fv[0]._VECTptr->size()>=2 && fv[1].type==_STRNG && fv[2].type==_INT_){
+                vecteur & fvv=*fv[0]._VECTptr;
+                if (fvv[0].type==_INT_ && fvv[1].type==_INT_){
+                    LegendItem* item=new LegendItem(QPoint(fvv[0].val,fvv[1].val),QString::fromStdString(*fv[1]._STRNGptr),this);
+                    item->setAttributes(ensemble_attributs);
+                    pointItems.append(item);
+                }
               }
             }
-          }*/
+
         }
       } // end point.type==_SYMB
       if (point.type!=_VECT){ // single point

@@ -55,6 +55,9 @@ bool MyItem::isCircle() const{
 bool MyItem::isPixel() const{
         return false;
 }
+bool MyItem::isLegendItem()const{
+    return false;
+}
 bool MyItem::isFillable() const{
     return false;
 }
@@ -331,12 +334,12 @@ Point::Point(const double a,const double b,Canvas2D* graph):MyItem(graph){
 int Point::getPenWidth() const{
     return ((attributes& 0x00380000) >> 19);
 }
-double Point::getX() {
+/*double Point::getX() {
     return x;
 }
 double Point::getY() {
     return y;
-}
+}*/
 bool Point::isUnderMouse(const QRectF& p) const{
     return recSel.intersects(p);
 }
@@ -367,6 +370,7 @@ void Point::draw(QPainter * painter) const{
     }
 //    qDebug()<<attributes <<legend;
     painter->setPen(QPen(color,width/2.0,Qt::SolidLine,Qt::RoundCap));
+
     switch(getPointStyle()){
     case giac::_POINT_LOSANGE:
     {
@@ -879,4 +883,51 @@ void Pixel::draw(QPainter * p) const{
     p->setPen(getColor());
     p->drawPoint((int)pixelScreen.x(),(int)pixelScreen.y());
 
+}
+
+LegendItem::LegendItem(const QPoint & p,const QString & l, Canvas2D *parent):MyItem(parent){
+    legend=l;
+    pos=p;
+}
+
+bool LegendItem::isUnderMouse(const QRectF& p) const{
+    return false;
+}
+void LegendItem::updateScreenCoords(const bool){}
+
+void LegendItem::draw(QPainter* painter) const{
+    QColor color=getColor();
+
+    painter->setPen(QPen(color,2.0,Qt::SolidLine,Qt::RoundCap));
+
+
+
+    if (legend.trimmed().isEmpty()) return;
+    int h=painter->fontMetrics().ascent();
+    int w=painter->fontMetrics().width(legend);
+    double angle=getAngleLegend();
+
+    QPointF p(pos.x()+10*std::cos(angle),pos.y()-10*sin(angle));
+    if ((0<angle)&&(angle<3.14159/2)){
+        painter->drawText(p.x(),p.y(),legend);
+    }
+    else if ((3.14159/2<=angle)&&(angle<3.14159)){
+        painter->drawText(p.x()-w,p.y(),legend);
+
+    }
+    else if ((3.14159<=angle)&&(angle<3*3.14159/2)){
+        painter->drawText(p.x()-w,p.y()+h,legend);
+
+    }
+    else{
+        painter->drawText(p.x(),p.y()+h,legend);
+
+    }
+
+}
+bool LegendItem::isLegendItem() const{
+    return true;
+}
+QString LegendItem::getType() const{
+    return QObject::tr("Légende");
 }

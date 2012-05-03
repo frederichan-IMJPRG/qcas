@@ -39,6 +39,7 @@ public:
   virtual bool isCircle() const;
   virtual bool isPixel() const;
   virtual bool isFillable() const;
+  virtual bool isLegendItem() const;
 
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
@@ -85,9 +86,7 @@ protected:
 };
 class Point:public MyItem{
 public:
-    Point(const double x,const double y,Canvas2D*);
-    double getX();
-    double getY();
+    Point(const double x,const double y,Canvas2D* );
     virtual bool isPoint() const;
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool);
@@ -203,7 +202,16 @@ private:
     QPointF pixel;
     QPointF pixelScreen;
 };
+class LegendItem:public MyItem{
+public:
+    LegendItem(const QPoint & ,const QString &, Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual bool isLegendItem() const;
+    virtual QString getType() const;
 
-
-
+private:
+    QPointF pos;
+};
 #endif // GEOMETRY_H

@@ -64,6 +64,8 @@ class MainWindow :public QMainWindow {
     void evaluate(const QString & formula);
     QToolButton* getStopButton() const;
     giac::context * getContext() const;
+    void displayStopWarning();
+
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -124,12 +126,17 @@ private:
     QPlainTextEdit* giacMessages;
     QToolBar* toolBar;
     QLabel* warningFirstEvaluation;
+    QLabel* warningStop;
     CasManager* cas;
     TaskProperties taskProperties;
     CommandInfo* commandInfo;
     QTime* time;
     bool displayTimeAfterProcess;
     void printHeader();
+
+public slots:
+    void displayCrashWarning();
+    void removeStopWarning();
 
 private slots:
     void newFile();
@@ -148,5 +155,7 @@ private slots:
     void changeWizard(QListWidgetItem*,QListWidgetItem*);
     void displayResult();
     void killThread();
+signals:
+    void hideCrashWarning();
 };
 #endif // MAINWINDOW_H

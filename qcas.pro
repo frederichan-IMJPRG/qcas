@@ -30,7 +30,6 @@ HEADERS += qt/output.h \
     qt/MainWindow.h \
     qt/CasManager.h \
     qt/geometry.h \
-    qt/EvaluationThread.h \
     qt/config.h \
     qt/gui/WizardMatrix.h \
     qt/gui/WizardEquation.h \
@@ -117,7 +116,6 @@ HEADERS += qt/output.h \
 SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/MainWindow.cpp \
     qt/main.cpp \
-    qt/EvaluationThread.cpp \
     qt/config.cpp \
     qt/CasManager.cpp \
     qt/gui/WizardMatrix.cpp \

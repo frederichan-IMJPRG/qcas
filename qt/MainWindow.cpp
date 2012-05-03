@@ -475,9 +475,16 @@ void MainWindow::createGui(){
     warningFirstEvaluation->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     statusBar()->addWidget(warningFirstEvaluation,1);
     warningFirstEvaluation->show();
+
+
+    warningStop=new QLabel(tr("<b><font color=\"red\">Tentative d'interruption...</font></b>"));
+    warningStop->setAlignment(Qt::AlignRight);
+    warningStop->setIndent(20);
+    warningStop->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    warningStop->setParent(0);
+
+
     prefDialog=new PrefDialog(this);
-
-
     cas=new CasManager(this);
 //    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
 }
@@ -734,6 +741,21 @@ giac::context* MainWindow::getContext() const{
 CommandInfo* MainWindow::getCommandInfo()const{
 return commandInfo;
 }
+void MainWindow::displayStopWarning(){
+   statusBar()->addWidget(warningStop,1);
+   warningStop->show();
+}
+void MainWindow::removeStopWarning(){
+    if (warningStop->parent()!=0){
+       statusBar()->removeWidget(warningStop);
+        warningStop->setParent(0);
+    }
+}
+void MainWindow::displayCrashWarning(){
+    QMessageBox::warning(this,tr("Avertissement!"),tr("Risque de crash important lors de l'interruption requise."),QMessageBox::Ok,QMessageBox::NoButton);
+    emit(hideCrashWarning());
+}
+
 CommandInfo::CommandInfo(){
     listAllCommands();
     completer=new QCompleter(commandList);

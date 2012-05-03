@@ -28,11 +28,27 @@ class OutputWidget;
 class MonitorThread:public QThread{
     Q_OBJECT
 public:
-    MonitorThread(giac::context * c);
+    MonitorThread(const giac::context * c);
 protected:
     void run();
 private:
     giac::context* contextptr;
+
+};
+class StopThread:public QThread{
+    Q_OBJECT
+public:
+    StopThread(const giac::context *);
+protected:
+    void run();
+private:
+    bool go;
+    giac::context* contextptr;
+
+public slots:
+    void setContinueTrue();
+signals:
+    void startDirtyInterrupt();
 };
 
 
@@ -85,6 +101,7 @@ private:
     static giac::gen answer;
     MainWindow* mainWindow;
     MonitorThread* monitor;
+    StopThread* stopThread;
     QString printCache;
     QStringList fullDisplay;
 

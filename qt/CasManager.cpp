@@ -28,30 +28,44 @@
 #include "output.h"
 #include "config.h"
 #include "CasManager.h"
+#include <QMessageBox>
 using namespace std;
 using namespace giac;
 
 giac::gen CasManager::answer=giac::gen("",context0);
 
 
-MonitorThread::MonitorThread(giac::context * c){
+MonitorThread::MonitorThread(const giac::context * c){
     contextptr=c;
 }
 void MonitorThread::run(){
-  //    int id=0;
     while(true){
-
-//        id+=check_thread(contextptr);
-
-//       qDebug()<<id;
-
-
-
         if (check_thread(contextptr)==1)  QThread::msleep(50);
         else break;
     }
 }
-
+StopThread::StopThread(const giac::context * c){
+    contextptr=c;
+}
+void StopThread::run(){
+    // First try with ctrl_c=true;
+    giac::ctrl_c=true;
+    sleep(2);
+    // Finally, try to kill thread  (dirty...), be carefull with crash!!
+    if (check_thread(contextptr)==1) {
+        qDebug()<<"Dirty try to interrupt thread!!!";
+        go=false;
+        emit(startDirtyInterrupt());
+        while(!go){
+            msleep(20);
+        }
+        kill_thread(true,contextptr);
+    }
+    else qDebug()<<"Clean interruption";
+}
+void StopThread::setContinueTrue(){
+    go=true;
+}
 
 mybuf::mybuf(CasManager * c,int bsize): streambuf(){
     cas=c;
@@ -124,6 +138,10 @@ CasManager::CasManager(MainWindow* main){
 
     context=new giac::context;
     monitor=new MonitorThread(context);
+    stopThread=new StopThread(context);
+    connect(stopThread,SIGNAL(startDirtyInterrupt()),mainWindow,SLOT(displayCrashWarning()));
+    connect(mainWindow,SIGNAL(hideCrashWarning()),stopThread,SLOT(setContinueTrue()));
+    connect(monitor,SIGNAL(finished()),mainWindow,SLOT(removeStopWarning()));
     logptr(new MyStream(this),context);
 }
 bool CasManager::testExpression(const giac::gen & exp){
@@ -190,13 +208,11 @@ void callback(const gen & g,void * newcontextptr){
 
 
 void CasManager::evaluate(){
-    giac::ctrl_c=true;
+    if (stopThread->isRunning()){
+        stopThread->wait(2000);
+    }
+
     printCache="";
-/*    void (CasManager::*ptr_callback)(const giac::gen & g,void *);
-    ptr_callback=&callback;
-    ptr_callback=(giac_callback)(ptr_callback);
-*/
-  //  answer=protecteval(expression,25,context);
 
    if (giac::make_thread(expression,1,CasManager::callback,(void*)context,context))
     {
@@ -224,10 +240,11 @@ QString CasManager::gen2mathml(const giac::gen &result){
     return QString(giac::gen2mathml(result,context).c_str());
 }
 void CasManager::killThread(){
-    qDebug()<<"Thread flingué"<<giac::is_context_busy(context);
 
-//    if (giac::is_context_busy(context))
-        giac::kill_thread(true,context);
+    if (!stopThread->isRunning()) {
+        mainWindow->displayStopWarning();
+        stopThread->start();
+    }
 }
 
 giac::context* CasManager::getContext() const{
