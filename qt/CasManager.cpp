@@ -382,21 +382,21 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-//    info(answer,0);
+   info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();
       }
       else {
-        return new GraphWidget(answer,context);
+        return new GraphWidget(answer,context,false);
     }
   }
-    else if(answer.is_symb_of_sommet(at_pnt)){
+  else if(answer.is_symb_of_sommet(at_pnt)){
         if (is3d(answer)){
 
         }
         else {
-            return new GraphWidget(answer,context);
+            return new GraphWidget(answer,context,false);
         }
     }
 /*    if (evaled_g.is_symb_of_sommet(at_pnt) || anim){
@@ -442,32 +442,47 @@ OutputWidget* CasManager::createDisplay(){
 */
 //    if (graph) return graph2Widget(answer);
   //  else
+
+//    qDebug()<<gen2mathml(answer);
+/*
+return formula2Widget("<mrow>"
+                      "<mi>A</mi>"
+                      "<mo>=</mo>"
+                      "<mfenced open=\"[\" close=\"]\">"
+        "<mtable>"
+                          "<mtr>"
+                             "<mtd><mi>x</mi></mtd>"
+                             "<mtd><mi>y</mi></mtd>"
+                          "</mtr>"
+                          "<mtr>"
+                             "<mtd><mi>z</mi></mtd>"
+                             "<mtd><mi>w</mi></mtd>"
+                          "</mtr>"
+                        "</mtable>"
+                      "</mfenced>"
+                    "</mrow>");
+*/
+/*    return formula2Widget(
+    "<mrow>"
+    "<apply>"
+     " <eq/>"
+      "<ci>A</ci>"
+      "<matrix>"
+       " <matrixrow>"
+        "  <ci>x</ci>"
+         " <ci>y</ci>"
+        "</matrixrow>"
+        "<matrixrow>"
+         " <ci>z</ci>"
+          "<ci>w</ci>"
+        "</matrixrow>"
+      "</matrix>"
+    "</apply>"
+    "</mrow>");*/
     return formula2Widget(gen2mathml(answer));
 }
 OutputWidget* CasManager::formula2Widget(const QString &mathml){
-    QString m("<math mode=\"display\">\n");
-    m.append(mathml);
-    m.append("\n</math>");
-
-
-//    qDebug()<<"----------------------";
-//    qDebug()<<m;
-//    qDebug()<<"----------------------";
-
-    QtMmlWidget *mmlWidget=new QtMmlWidget;
-
-    QString errorMsg;
-      int errorLine;
-      int errorColumn;
-      bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
-      if (!ok) {
-        qWarning("MathML error: %s, Line: %d, Column: %d",
-                 errorMsg.constData(), errorLine, errorColumn);
-      }
-      QPalette p=mmlWidget->palette();
-      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
-      mmlWidget->setPalette(p);
-      return new FormulaWidget(mmlWidget);
+      return new FormulaWidget(mathml);
 }
 
 

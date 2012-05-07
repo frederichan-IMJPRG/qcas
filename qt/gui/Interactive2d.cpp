@@ -26,19 +26,8 @@
 #include <QHBoxLayout>
 #include <QDebug>
 #include <QFile>
-IconSize::IconSize(QWindowsStyle *parent) : QWindowsStyle()
-   {
-   Q_UNUSED (parent);
-   }
+#include "MainWindow.h"
 
-   int IconSize::pixelMetric(PixelMetric metric, const QStyleOption * option, const QWidget * widget)const
-   {
-   int s = QWindowsStyle::pixelMetric(metric, option, widget);
-   if (metric == QStyle::PM_SmallIconSize) {
-   s = 32;
-   }
-   return s;
-   }
 Interactive2d::Interactive2d(MainWindow *parent):MainSheet(MainSheet::G2D){
     mainWindow=parent;
     initGui();
@@ -89,7 +78,8 @@ void Interactive2d::initGui(){
     menuCircle->setStyle(new IconSize);
 
     toolBar=new QToolBar(this);
-    buttonPt=new QToolButton;
+    buttonPt=new QPushButton;
+    buttonPt->setIconSize(QSize(48,48));
     QString s("QToolButton{margin: 8px;}"
 //              "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,"
 //              "stop: 0 #f6f7fa, stop: 1 #dadbde);}"
@@ -106,14 +96,14 @@ void Interactive2d::initGui(){
 
     //buttonPt->setStyleSheet( s);
     buttonPt->setCheckable(true);
-    buttonPt->setPopupMode(QToolButton::MenuButtonPopup);
+    //buttonPt->setPopupMode(QToolButton::MenuButtonPopup);
     buttonPt->setMenu(menuPt);
    buttonPt->setIcon(QIcon(":/images/point.png"));
 
     QString t(
             "QToolButton{margin:10px;}"
 //            "QToolButton:checked{border: 2px solid blue; }"
-            "QToolButton::menu-indicator{subcontrol-origin: margin;subcontrol-position: bottom right;}"
+              "QToolButton::menu-indicator{subcontrol-origin: margin;subcontrol-position: bottom right;}"
                 "QToolButton::menu-button {"
 "}");
 
@@ -134,11 +124,12 @@ void Interactive2d::initGui(){
     buttonLine->setIconSize(QSize(48,48));
     buttonLine->setPopupMode(QToolButton::MenuButtonPopup);
     buttonLine->setCheckable(true);
-    buttonLine->setStyleSheet(t);
+//    buttonLine->setStyleSheet(t);
     buttonLine->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     buttonLine->setMenu(menuLine);
     buttonLine->setIcon(QIcon(":/images/line.png"));
     buttonCircle=new QToolButton;
+    buttonCircle->setIconSize(QSize(48,48));
     buttonCircle->setPopupMode(QToolButton::MenuButtonPopup);
     buttonCircle->setMenu(menuCircle);
     buttonCircle->setIcon(QIcon(":/images/circle2pt.png"));
@@ -163,10 +154,13 @@ void Interactive2d::initGui(){
     toolPanel->setLayout(hbox);
 
     QVBoxLayout* vbox=new QVBoxLayout;
-    canvas=new QWidget;
+    canvas=new GraphWidget(mainWindow->getContext(),true);
 
 
     vbox->addWidget(toolPanel,Qt::AlignLeft);
     vbox->addWidget(canvas);
     setLayout(vbox);
+
+
+
 }

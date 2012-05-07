@@ -50,14 +50,17 @@ public:
   void setPointStyle(const int );
   void setStyle(const int);
   void setFilled(const bool);
+  bool isVisible()const;
+  void setVisible(const bool);
   int getStyle();
   int getQuadrant() const;
   virtual void setWidth(const int);
   virtual int getPenWidth() const;
 
   void setHighLighted(const bool& );
- void setLegendPos(const int &);
-
+  void setLegendPos(const int &);
+     void setValue(const QString & ) ;
+     QString  getValue() const;
 
   Qt::PenCapStyle getPenStyle();
   Qt::PenStyle getLineType();
@@ -76,9 +79,11 @@ public:
 protected:
   Canvas2D* g2d;
   unsigned int attributes;
+  QString value;
   bool highLighted;
   double angleLegend;
   QString legend;
+  bool visible;
 
   private:
 

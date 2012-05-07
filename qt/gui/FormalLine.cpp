@@ -103,7 +103,7 @@ void Line::displayResult(OutputWidget* uuu){
     getWorkSheet()->goToNextLine();
 
 }
-OutputWidget* Line::gen2Widget(const QString &mathml){
+/*OutputWidget* Line::gen2Widget(const QString &mathml){
     QString m("<math mode=\"display\">\n");
     m.append(mathml);
     m.append("\n</math>");
@@ -127,4 +127,4 @@ OutputWidget* Line::gen2Widget(const QString &mathml){
       p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
       mmlWidget->setPalette(p);
       return new FormulaWidget(mmlWidget);
-}
+}*/

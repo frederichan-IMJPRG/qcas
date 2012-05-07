@@ -24,6 +24,7 @@
 #include <QDebug>
 MyItem::MyItem(Canvas2D *graph){
     g2d=graph;
+    visible=true;
     highLighted=false;
     angleLegend=-1;
     treeItem=new QTreeWidgetItem;
@@ -32,7 +33,13 @@ MyItem::MyItem(Canvas2D *graph){
 void MyItem::setHighLighted(const bool &b){
     highLighted=b;
 }
+QString  MyItem::getValue() const{
+    return value;
 
+}
+void MyItem::setValue(const QString & s){
+    value=s;
+}
 
 bool MyItem::isPoint() const{
     return false;
@@ -70,7 +77,12 @@ QString MyItem::getLegend() const{
 void MyItem::setLegend(const QString &s){
     legend=s;
 }
-
+bool MyItem::isVisible() const{
+    return visible;
+}
+void MyItem::setVisible(const bool b){
+    visible=b;
+}
 void MyItem::setLegendVisible(const bool b){
     if (b) {
         attributes=(attributes & 0x7fffffff);
@@ -361,6 +373,7 @@ void Point::updateScreenCoords(const bool compute){
 }
 
 void Point::draw(QPainter * painter) const{
+    if (!isVisible()) return;
     int width=getPenWidth()+3;
     QColor color=getColor();
 
@@ -559,6 +572,8 @@ QString LineItem::getType() const{
     return QObject::tr("Droite");
 }
 void LineItem::draw(QPainter* painter) const{
+    if (!isVisible()) return;
+
     QColor color=getColor();
     int width=1;
     if (highLighted){
@@ -662,6 +677,8 @@ bool HalfLineItem::isUnderMouse(const QRectF &r) const{
 }
 
 void HalfLineItem::draw(QPainter* painter) const{
+    if (!isVisible()) return;
+
     QColor color=getColor();
     int width=1;
     if (highLighted){
@@ -687,6 +704,8 @@ Curve::Curve(const QPainterPath &p,Canvas2D *graph):MyItem(graph){
     fillable=false;
 }
 void Curve::draw(QPainter *painter) const{
+    if (!isVisible()) return;
+
     int width=1;
     QColor color=getColor();
     if (highLighted){
@@ -896,6 +915,8 @@ bool LegendItem::isUnderMouse(const QRectF& p) const{
 void LegendItem::updateScreenCoords(const bool){}
 
 void LegendItem::draw(QPainter* painter) const{
+    if (!isVisible()) return;
+
     QColor color=getColor();
 
     painter->setPen(QPen(color,2.0,Qt::SolidLine,Qt::RoundCap));

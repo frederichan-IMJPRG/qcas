@@ -26,17 +26,22 @@
 #include <QScrollArea>
 #include <QHash>
 #include <QGroupBox>
-
+#include <QWindowsStyle>
+#include <QTabWidget>
 class QMenu;
-class QHBoxLayout;
+class QBoxLayout;
 class Line;
 class QComboBox;
 class QVBoxLayout;
 class QPushButton;
 class QCheckBox;
+
+class QToolButton;
 class QLineEdit;
 class PanelProperties;
 class DisplayProperties;
+class DisplayObjectPanel;
+class GenValuePanel;
 class QTreeWidget;
 class QSlider;
 class QSpinBox;
@@ -47,6 +52,22 @@ class TypeLinePanel;
 class ColorPanel;
 class LegendPanel;
 class AlphaFillPanel;
+
+
+
+class IconSize : public QWindowsStyle
+ {
+   Q_OBJECT
+public:
+    explicit IconSize(QWindowsStyle *parent = 0);
+    int pixelMetric(PixelMetric metric, const QStyleOption * option = 0, const QWidget * widget = 0 ) const;
+signals:
+public slots:
+};
+
+
+
+
 class OutputWidget:public QWidget{
 public:
     OutputWidget(QWidget* widget=0);
@@ -58,26 +79,50 @@ private:
 };
 class FormulaWidget :public OutputWidget{
 public:
-    FormulaWidget(QtMmlWidget*);
+    FormulaWidget(const QString &);
     virtual void toXML(QDomElement&);
 
 };
 
-// This widget is used for rendering 2D graphics
+/** This widget is used for 2D graphics rendering.
+ *  It supports two modes:  normal or interactive
+**/
 
 class GraphWidget:public OutputWidget{
     Q_OBJECT
 
   public:
-    GraphWidget(const  giac::gen &, giac::context*);
+    GraphWidget( giac::context*,bool );
+    GraphWidget(const  giac::gen &, giac::context*,bool );
     QList<MyItem*> getTreeSelectedItems();
     void clearSelection();
+    bool isInteractive() const;
 
  private:
+    bool isInteractiveWidget;
     Canvas2D* canvas;
     PanelProperties * propPanel;
 
+    QWidget* toolPanel;
+    // The menu tool bar in interactive mode
+    QToolButton* buttonPt;
+    QToolButton* buttonLine;
+    QToolButton* buttonCircle;
+    QAction* singlept;
+    QAction * inter;
+    QAction* midpoint;
+    QAction* line;
+    QAction* halfline;
+    QAction* segment;
+    QAction* circle2pt;
+    QAction* circle3pt;
+
+
     void initGui();
+    void createToolBar();
+
+ private slots:
+    void selectButtonIcon(QAction *);
 };
 
 
@@ -88,10 +133,13 @@ class GraphWidget:public OutputWidget{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    Canvas2D(GraphWidget* g2d,const  giac::gen &, giac::context*);
+    enum action{SINGLEPT,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE3PT};
+
+    Canvas2D(GraphWidget* g2d, giac::context*);
+    void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
-    virtual void toXML();
+    void toXML();
     QSize sizeHint() const;
     double getXmin() const;
     double getXmax() const ;
@@ -102,7 +150,8 @@ public:
     QVector<MyItem*>* getFilledItem();
     void setFocusOwner(MyItem*);
     void updatePixmap(bool compute);
-
+    bool isInteractive() const;
+    void setActionTool(action);
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -111,7 +160,9 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
 
 private:
+    giac::context*context;
 
+    // Item which could be highlighted
     MyItem* focusOwner;
     // x,y range and units
     double xmin,xmax,ymin,ymax,xunit,yunit;
@@ -119,6 +170,11 @@ private:
     QVector<MyItem*> lineItems;
     QVector<MyItem*> pointItems;
     QVector<MyItem*> filledItems;
+
+    // A command for each line
+    QStringList commands;
+    // action selected
+    action actionTool;
 
     QMenu * menuGeneral;
     QAction* zoomIn;
@@ -135,12 +191,13 @@ private:
 
 
     void setXYUnit();
-    void createScene(const giac::gen &,giac::context*);
+    void addToScene(const giac::gen &);
     double find_tick(double);
     void drawAxes(QPainter*);
     void drawGrid(QPainter*);
     void drawElements(QVector<MyItem*> &, QPainter*, bool compute);
     bool checkUnderMouse(QVector<MyItem*>* v, const QPointF &);
+
 
 private slots:
     void zoom_In();
@@ -155,6 +212,7 @@ public:
     PanelProperties(Canvas2D *);
     QList<MyItem*> getTreeSelectedItems();
     void clearSelection();
+    void populate();
 private:
     Canvas2D* parent;
     QTreeWidget* tree;
@@ -168,7 +226,7 @@ private:
     QTreeWidgetItem* nodeCircle;
 
     QHash<QTreeWidgetItem*,MyItem*> nodeLinks;
-    QHBoxLayout*  hbox;
+    QBoxLayout*  hbox;
     DisplayProperties* displayPanel;
     void fillTree(QVector<MyItem*>* );
     void initGui();
@@ -176,11 +234,13 @@ private slots:
     void updateTree();
 
 };
-class DisplayProperties:public QWidget{
+class DisplayProperties:public QTabWidget{
     Q_OBJECT
 public:
     DisplayProperties(Canvas2D* canvas);
-    QVBoxLayout *vLayout;
+    QVBoxLayout *vLayoutGeneral;
+    QVBoxLayout *vLayoutAttributes;
+
     void updateCanvas();
     QList<MyItem*>* getListItems() const;
     void updateDisplayPanel(QList<MyItem*>*);
@@ -188,6 +248,8 @@ public:
 private:
     Canvas2D* parent;
     QList<MyItem*>* listItems;
+    GenValuePanel* valuePanel;
+    DisplayObjectPanel* displayObjectPanel;
     ColorPanel *colorPanel;
     LegendPanel*legendPanel;
     WidthPanel* widthPanel;
@@ -273,6 +335,20 @@ protected slots:
 };
 
 
+class DisplayObjectPanel:public QWidget{
+    Q_OBJECT
+public:
+    DisplayObjectPanel(DisplayProperties*);
+    void setChecked(const bool);
+protected slots:
+    virtual void updateCanvas();
+private:
+     DisplayProperties * parent;
+    void initGui();
+    QCheckBox * displayObject;
+
+
+};
 
 class TypePointPanel:public QWidget{
     Q_OBJECT
@@ -303,18 +379,20 @@ private slots:
     void updateCanvas(int);
 
 };
-/*class AlphaFillPanel{
+class GenValuePanel:public QWidget{
 public:
-    AlphaFillPanel(DisplayProperties* );
-    void setAlpha(const int&);
+    GenValuePanel(DisplayProperties* );
+    void setValue(const QString &);
 private:
+    QtMmlWidget *mmlWidget;
+    QBoxLayout * layout;
+    QString value;
     void initGui();
     DisplayProperties* parent;
 
-    int alpha;
-private slots:
-    void updateCanvas(int );
+//private slots:
+  //  void updateCanvas(int );
 
-};*/
+};
 
 #endif // OUTPUT_H

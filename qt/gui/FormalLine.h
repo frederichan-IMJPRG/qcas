@@ -37,7 +37,7 @@ public:
     OutputWidget* getOuputWidget();
     void evaluate(const QString&);
     void displayResult(OutputWidget*);
-    OutputWidget* gen2Widget(const QString &);
+  //  OutputWidget* gen2Widget(const QString &);
     void addStopButton(QToolButton* stop);
     void removeStopButton();
 private:

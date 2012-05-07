@@ -24,7 +24,7 @@
 #include "MainWindow.h"
 #include "FormalSheet.h"
 #include "CentralTabWidget.h"
-#include "Interactive2d.h"
+#include "output.h"
 
 MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     mainWindow=main;
@@ -82,9 +82,9 @@ void MainTabWidget::closeTab(int id){
 
 }
 void MainTabWidget::addG2dSheet(){
-    this->insertTab(count()-1,new Interactive2d(mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
+    this->insertTab(count()-1,new GraphWidget(mainWindow->getContext(),true),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
-    (qobject_cast<Interactive2d*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+    (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
