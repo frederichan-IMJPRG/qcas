@@ -940,7 +940,7 @@ namespace giac {
     }
     return res;
   }
-  gen sqrt_mod(const gen & a,const gen & b,GIAC_CONTEXT){
+  gen sqrt_mod(const gen & a,const gen & b,bool isprime,GIAC_CONTEXT){
     if (!is_integer(b))
       return gensizeerr(contextptr);
     if (is_one(a) || is_zero(a))
@@ -950,6 +950,12 @@ namespace giac {
 #if 1
       if (A<0) A+=p;
       if (A==0) return A;
+      if (isprime && p>1024 && (p+1)%4==0){
+	A=powmod(A,(unsigned long)((p+1)/4),p);
+	if (A>p-A)
+	  A=p-A;
+	return A;
+      }
       int sq=0,add=1;
       for (;add<=p;add+=2){
 	sq+=add;
@@ -1026,7 +1032,7 @@ namespace giac {
     if (e.type==_MOD){
       a=*e._MODptr;
       b=*(e._MODptr+1);
-      a=sqrt_mod(a,b,contextptr);
+      a=sqrt_mod(a,b,false,contextptr);
       if (is_undef(a))
 	return a;
       if (is_positive(-a,contextptr))

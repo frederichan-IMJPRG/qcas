@@ -1126,7 +1126,7 @@ namespace giac {
 	return yn(n,d);
       }
     }
-    gen gn=gen(makevecteur(n,g),_SEQ__VECT);
+    gen gn=gen(makevecteur(n,x),_SEQ__VECT);
     switch (kind){
     case 0:
       return symbolic(at_BesselI,gn);

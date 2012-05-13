@@ -1,8 +1,12 @@
 // -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c ifactor.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "giacPCH.h"
-#define GIAC_MPQS // define if you want to use giac for sieving
-#define GIAC_ADDITIONAL_PRIMES // if defined, additional primes are used in sieve
-#define GIAC_RECIPROQUES // if defined % is done with multiplication
+#define GIAC_MPQS // define if you want to use giac for sieving (currently only 1 poly, maybe more later)
+#ifdef USE_GMP_REPLACEMENTS
+#define GIAC_ADDITIONAL_PRIMES 16// if defined, additional primes are used in sieve
+#else
+#define GIAC_ADDITIONAL_PRIMES 32// if defined, additional primes are used in sieve
+#endif
+// #define GIAC_RECIPROQUES // if defined % is done with multiplication
 #define MP_RADIX 4294967296.0
 
 #include "path.h"
@@ -26,6 +30,11 @@
  */
 
 using namespace std;
+#ifdef GIAC_HAS_STO_38
+#undef clock
+#undef clock_t
+#include "../../../native/AspenPCH.h"
+#else
 #include <fstream>
 //#include <unistd.h> // For reading arguments from file
 #include "ifactor.h"
@@ -36,6 +45,7 @@ using namespace std;
 #include "prog.h"
 #include "misc.h"
 #include "giacintl.h"
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -144,11 +154,15 @@ namespace giac {
   static const int giac_last_prime=giac_primes[sizeof(giac_primes)/sizeof(short)-1];
 
 #ifdef GIAC_HAS_STO_38
+#ifdef RTOS_THREADX
+  const unsigned QS_B_BOUND=512; // even smaller max size of B on Aspen
+#else
   const unsigned QS_B_BOUND=1360; // max size of B allowed so that matrix<256K
+#endif
 #else
   const unsigned QS_B_BOUND=3400; // max size of B allowed (this is also used for memory)
 #endif
-  const unsigned QS_SIZE=64000; // number of slicetype in a sieve slice
+  const unsigned QS_SIZE=65536; // number of slicetype in a sieve slice
   typedef unsigned char slicetype; // define to unsigned char if not enough
   const unsigned char BITSHIFT=40; // shift so that we can safely use unsigned char for slicetype
 
@@ -175,8 +189,15 @@ namespace giac {
     }
   }
 
-  void rref(vector< vector<unsigned> > & m){
-    int i,l=0,c=0,L=m.size(),C32=m.front().size(),C=C32*32;
+  template <class T>
+  inline void swap(T * & ptr1, T * & ptr2){
+    T * tmp=ptr1;
+    ptr1=ptr2;
+    ptr2=tmp;
+  }
+
+  void rref(vector< unsigned * > & m,int C32){
+    int i,l=0,c=0,L=m.size(),C=C32*32;
     for (;l<L && c<C;){
       // printbool(cerr,m);
       int c1=c/32,c2=c%32;
@@ -195,7 +216,7 @@ namespace giac {
 	if (i==l || ( (m[i][c1] >> c2) & 1)!=1) 
 	  continue;
 	// line combination l and i
-	vector<unsigned>::iterator pivptr = m[l].begin(),pivend = pivptr+C32,curptr=m[i].begin();
+	unsigned * pivptr = m[l], * pivend = pivptr+C32, * curptr=m[i];
 	for (;pivptr!=pivend;){
 	  // small optimization (loop unroll), assumes mult of 4(*32) columns
 	  *curptr ^= *pivptr;
@@ -213,76 +234,76 @@ namespace giac {
     }
   }
 
+  template <class T>
+  void release_memory(vector<T> & slice){
+    // release memory from slice
+    vector<T> tmp;
+    swap(slice,tmp);
+  }
+
+#ifdef USE_GMP_REPLACEMENTS
+  int modulo(const mpz_t & a,unsigned b){
+    mp_digit C; 
+    mp_mod_d((mp_int *)&a,b,&C);
+    return C;
+  }
+#else
+  inline int modulo(const mpz_t & a,unsigned b){
+    return mpz_fdiv_ui(a,b);
+  }
+#endif
+
+  struct axbinv {
+    unsigned short int aindex;
+    unsigned short int bindex;
+    int shiftpos;
+    axbinv(unsigned short int a_,int shiftpos_,unsigned short int b_):aindex(a_),shiftpos(shiftpos_),bindex(b_) {};
+    axbinv() {};
+  };
+
+#if GIAC_ADDITIONAL_PRIMES==16
+  typedef unsigned short additional_t;
+#else
+  typedef int additional_t;
+#endif
+
   // sieve in [sqrtN+shift,sqrtN+shift+slice.size()-1]
-  void sieve(const vector<unsigned short> & basis,vector<unsigned short> & additional_primes,vector<bool> & additional_primes_twice,const vector<short int> & sqrt_mod,const vector<unsigned> & reciproques,const vector<unsigned char> & corrections,const gen & N,const gen & isqrtN,const vector<short int> & isqrtNmodp,vector<slicetype> & slice,int shift,vector< vector<unsigned short> > & puissances,vector<int> & shiftvalues,GIAC_CONTEXT){
+  bool msieve(const vecteur & avals,const vecteur & invsqrtamodnvals,const vector<unsigned short> & invamodp,
+	      const vecteur &bvals,const mpz_t& c,const vector<unsigned short> & basis,
+	      vector<additional_t> & additional_primes,vector<bool> & additional_primes_twice,
+	      const vector<unsigned short int> & root_mod1,const vector<unsigned short int> & root_mod2,
+	      const gen & N,const gen & isqrtN,
+	      slicetype * slice,int shift,
+	      vector< pair<unsigned short*,unsigned short*> > & puissances,
+	      unsigned short* & puissancesptr,unsigned short * puissancesend,    
+	      vector<unsigned short> & curpuissances,vector<unsigned short> &recheck,
+	      vector<axbinv> & axbmodn,
+	      mpz_t & z1,mpz_t & z2,mpz_t & z3,mpz_t & alloc1,mpz_t & alloc2,mpz_t & alloc3,mpz_t & alloc4,mpz_t & alloc5,vector<unsigned short int> & tmpv,
+	      GIAC_CONTEXT){
     // first fill slice with expected number of bits of 
     // (isqrtN+shift)^2-N = 2*shift*isqrtN + negl.
     // -> log(2*isqrtN)+log(shift)
-    mpz_t z1,z2,z3;
-    mpz_init(z1);  mpz_init(z2);  mpz_init(z3);
-    int nbits=int(0.5+std::log(2*evalf_double(isqrtN,1,context0)._DOUBLE_val)/std::log(2.));
+    int ss=QS_SIZE; // slice.size();
+    int shiftss=absint(shift+ss),absshift=absint(shift);
+    int nbits=int(0.5+std::log(evalf_double(isqrtN,1,context0)._DOUBLE_val/2.*(absshift>shiftss?absshift:shiftss))/std::log(2.));
     int curbits=0;
-    for (int k=absint(shift);k;++curbits){
-      k >>= 1;
-    }
-    int next=1 << (curbits-(shift<0));
-    nbits += curbits+BITSHIFT;
     int bs=basis.size();
-    unsigned char logB=(unsigned char) int(1.5*std::log(double(basis.back()))/std::log(2.0)+.5)+BITSHIFT;
-    int ss=slice.size();
+    unsigned char logB=(unsigned char) (nbits-int(1.5*std::log(double(basis.back()))/std::log(2.0)+.5));
     if (debug_infolevel>6)
-      *logptr(contextptr) << "reset " << clock() << " shift " << shift << " nbits " << nbits-BITSHIFT << endl;
-    vector<slicetype>::iterator st=slice.begin(),stend=slice.end();
-#if 1 // assumes slice type is size 1 byte and multiple of 32
+      *logptr(contextptr) << "reset " << clock() << endl;
+    slicetype * st=slice, * stend=slice+QS_SIZE;
+    // assumes slice type is size 1 byte and multiple of 32
     unsigned * ptr=(unsigned *) &slice[0];
     unsigned * ptrend=ptr+(stend-st)/4;
-    unsigned nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
-    if (shift>=0){
-      for (int j=shift;ptr!=ptrend;j+=4,++ptr){
-	*ptr=nbits8;
-	if (j<next)
-	  continue;
-	++nbits;
-	nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
-	next *= 2;
-      }
+    for (;ptr!=ptrend;++ptr){
+      *ptr=0;
     }
-    else {
-      for (int j=-shift;ptr!=ptrend;j-=4,++ptr){
-	*ptr=nbits8;
-	if (j>next)
-	  continue;
-	--nbits;
-	nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
-	next /= 2;
-      }
-    }
-#else
-    if (shift>=0){
-      for (int j=shift;st!=stend;++j,++st){
-	*st=nbits;
-	if (j!=next)
-	  continue;
-	++nbits;
-	next *= 2;
-      }
-    }
-    else {
-      for (int j=-shift;st!=stend;--j,++st){
-	*st=nbits;
-	if (j!=next)
-	  continue;
-	--nbits;
-	next /= 2;
-      }
-    }
-#endif
     if (debug_infolevel>6)
       *logptr(contextptr) << "end reset " << clock() << " nbits " << nbits << endl;
     // now for all primes p in basis move in slice from p to p
     // decrease slice[] by number of bits in p
     nbits=4;
-    next=16;
+    int next=16;
     unsigned bstart;
     for (bstart=0;bstart<basis.size();++bstart){
       if (basis[bstart]>8)
@@ -294,47 +315,50 @@ namespace giac {
 	++nbits;
 	next *=2;
       }
-      int pos=(int(sqrt_mod[i])-shift-isqrtNmodp[i])%p; 
-      // pos+shift+isqrtN = sqrt_mod[i] mod p
+      if (invamodp[i]==0)
+	continue;
+      // first root is (-b-sqrtn)/a mod p except if a=0 mod p
+      // pos+shift = (-b-sqrtn)/a mod p
+      int pos=(root_mod1[i]-shift)%p; 
       if (pos<0)
 	pos+=p;
-      st=slice.begin()+pos; stend=slice.begin()+ss;
+      st=slice+pos; stend=slice+ss;
       for (;st<stend;){
-	*st -= nbits;
+	*st += nbits;
 	st += p;
       }
-      // if (p%2==0) continue; // only one sqrt
-      pos=(-int(sqrt_mod[i])-shift-isqrtNmodp[i])%p;
+      pos=(root_mod2[i]-shift)%p; 
       if (pos<0)
 	pos+=p;
-      st=slice.begin()+pos;
+      st=slice+pos;
       for (;st<stend;){
-	*st -= nbits;
+	*st += nbits;
 	st += p;
       }
     }
     if (debug_infolevel>6)
       *logptr(contextptr) << clock() << "relations " << endl;
     // now find relations
-    vector<unsigned short> curpuissances;
-    st=slice.begin(); stend=slice.end();
+    st=slice; stend=slice+ss;
     for (int pos=0;st!=stend;++pos,++st){
       // compare slice[pos] to boundary
-      if (*st>logB)
+      if (*st<logB)
 	continue;
       // factor (isqrtN+shift+pos)^2-N on basis
-      curpuissances.clear();
+      curpuissances.clear(); recheck.clear();
       int shiftpos=shift+pos;
 #if 0
-      gen tmp=isqrtN+shift+pos;
-      tmp=tmp*tmp-N; tmp.uncoerce(); mpz_set(z1,*tmp._ZINTptr);
+      gen tmp=shiftpos;
+      tmp=(avals.back()*tmp+2*bvals.back())*tmp+c;
+      tmp.uncoerce(); mpz_set(z1,*tmp._ZINTptr);
       *logptr(contextptr) << tmp << endl;
-#else
-      if (shiftpos>0)
-	mpz_add_ui(z2,*isqrtN._ZINTptr,shiftpos); // gen tmp=isqrtN+shift+pos;
-      else
-	mpz_sub_ui(z2,*isqrtN._ZINTptr,-shiftpos);
-      mpz_mul(z3,z2,z2); mpz_sub(z1,z3,*N._ZINTptr); // tmp=tmp*tmp-N; tmp.uncoerce(); mpz_set(z1,*tmp._ZINTptr);
+#else 
+      mpz_set_si(z1,shiftpos);
+      mpz_mul(z2,z1,*avals.back()._ZINTptr);
+      mpz_mul_2exp(z3,*bvals.back()._ZINTptr,1);
+      mpz_add(z2,z2,z3);
+      mpz_mul(z3,z1,z2);
+      mpz_add(z1,z3,c);
 #endif
       if (mpz_cmp_si(z1,0)<0){ // if (is_positive(-tmp,context0))
 	curpuissances.push_back(0xffff);
@@ -342,72 +366,116 @@ namespace giac {
       }
       bool done=false;
       int debut=0;
-#if 0 // #ifndef USE_GMP_REPLACEMENTS
-      if (basis.front()==2){
-	++debut;
-	int j=0;
-	for (;mpz_even_p(z1);++j){
-	  mpz_tdiv_q_2exp(z1,z1,1);
-	}
-	for (;j>=256;j-=256)
-	  curpuissances.push_back(2<<8);
-	if (j)
-	  curpuissances.push_back( (2 << 8) | j);
-      }
-#endif
       for (int i=debut;i<bs;++i){
-	if (mpz_cmp_si(z1,1)==0){
-	  break;
-	}
-	int j=0;
 	int bi=basis[i];
-	// check that shiftpos+isqrtNmodp[i] is +/-sqrt_mod[i] % bi before doing division
-#ifdef GIAC_RECIPROQUES
-	int offset = shiftpos+isqrtNmodp[i];
-	int check;
-	if (bi>256 && bi< (1<<14)){
-	  if (offset>0){
-	    check = (unsigned) (((ulonglong)( offset+ corrections[i]) * 
-				 (ulonglong)reciproques[i]) >> 40);
-	    check = offset - check * bi;
-	  }
-	  else {
-	    check = (unsigned) (((ulonglong)( corrections[i]-offset) * 
-				 (ulonglong)reciproques[i]) >> 40);
-	    check = offset + check * bi;
-	    if (check<0)
-	      check += bi;
-	  }
-	}
-	else { 
-	  check=offset%bi;
-	  if (check<0)
-	    check+=bi;
-	}
-	int root=sqrt_mod[i];
-	if (check!=root && check!=bi-root)
-	  continue;
-#else
-	int offset = shiftpos+isqrtNmodp[i];
-	int check=offset%bi;
+	// check that shiftpos is a root 
+	int check=shiftpos %bi;
 	if (check<0)
 	  check+=bi;
-	int root=sqrt_mod[i];
-	if (check!=root && check!=bi-root)
-	  continue;
-#endif
-#ifdef USE_GMP_REPLACEMENTS
-	mpz_fdiv_qr_ui(z2,z3,z1,bi);
-	mpz_set(z1,z2);
+	if (invamodp[i]==0){ // is 2*b*check+c==0 mod p?
+	  mpz_set_ui(z2,2*check);
+ 	  mpz_mul(z3,z2,*bvals.back()._ZINTptr);
+	  mpz_add(z2,z3,c);
+#if 1 // USE_GMP_REPLACEMENTS
+	  if (modulo(z2,bi))
+	    continue;
 #else
-	mpz_fdiv_q_ui(z1,z1,bi);
+	  mpz_fdiv_r_ui(z3,z2,bi);
+	  if (mpz_cmp_ui(z3,0)!=0)
+	    continue;
 #endif
+	  // if (!is_zero(smod(2*check*2*b+c,bi))) continue;
+	}
+	else {
+	  if ((check!=root_mod1[i] && check!=root_mod2[i]))
+	    continue;
+	}
+	recheck.push_back(bi);
+      } // end for on primes
+      // now divide first by product of elements of recheck
+      double prod=1,nextprod=1;
+      for (int k=0;k<recheck.size();++k){
+	nextprod=prod*recheck[k];
+	if (nextprod< 2147483648. )
+	  prod=nextprod;
+	else {
+	  // mpz_fdiv_q_ui(z1,z1,prod);
+	  mpz_set_si(z2,int(prod));
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,z1.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = z1.used +2 ;
+	  mpz_set(alloc2,z1);
+	  mpz_set(alloc3,z2);
+	  alloc_mp_div(&z1,&z2,&z1,&z3,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_fdiv_qr(z1,z3,z1,z2);
+#endif
+	  prod=recheck[k];
+	}
+      }
+      if (prod!=1){
+	// mpz_fdiv_q_ui(z1,z1,prod);
+	mpz_set_si(z2,int(prod));
+#ifdef USE_GMP_REPLACEMENTS
+	mp_grow(&alloc1,z1.used+2);
+	mpz_set_ui(alloc1,0);
+	alloc1.used = z1.used +2 ;
+	mpz_set(alloc2,z1);
+	mpz_set(alloc3,z2);
+	alloc_mp_div(&z1,&z2,&z1,&z3,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	mpz_fdiv_qr(z1,z3,z1,z2);
+#endif
+      }
+      // then set curpuissances
+      bool small_=false;
+      div_t qr;
+      int Z1=0;
+      unsigned maxadditional=unsigned(basis.back()*std::log(double(basis.back()))/std::log(10.));
+      for (int k=0;k<recheck.size();++k){
+	int j=0;
+	int bi=recheck[k];
+#ifdef USE_GMP_REPLACEMENTS
+	if (!small_){
+	  small_=mpz_sizeinbase(z1,2)<32;
+	  if (small_)
+	    Z1=mpz_get_si(z1);
+	}
+	if (small_){
+	  for (++j;;++j){
+	    qr=div(Z1,bi);
+	    if (qr.rem)
+	      break;
+	    Z1=qr.quot;
+	  }
+	}
+	else {
+	  for (++j;;++j){
+#if 1
+	    mpz_set_ui(z2,bi);
+	    mp_grow(&alloc1,z1.used+2);
+	    mpz_set_ui(alloc1,0);
+	    alloc1.used = z1.used +2 ;
+	    mpz_set(alloc2,z1);
+	    mpz_set(alloc3,z2);
+	    alloc_mp_div(&z1,&z2,&z2,&z3,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	    mpz_fdiv_qr_ui(z2,z3,z1,bi);
+#endif
+	    if (mpz_cmp_si(z3,0))
+	      break;
+	    mpz_set(z1,z2);
+	  }
+	}
+#else
 	for (++j;;++j){
 	  mpz_fdiv_qr_ui(z2,z3,z1,bi);
 	  if (mpz_cmp_si(z3,0))
 	    break;
 	  mpz_set(z1,z2);
 	}
+#endif
 	/*
 	  while (is_zero(smod(tmp,bi))){
 	  tmp=tmp/bi;
@@ -429,19 +497,33 @@ namespace giac {
 	    curpuissances.push_back( (bi << 8) | j);
 	}
       }
+      if (small_) 
+	mpz_set_si(z1,Z1);
       if (mpz_cmp_si(z1,1)==0){ // is_one(tmp)){
 	// *logptr(contextptr) << curpuissances << endl;
-	shiftvalues.push_back(shift+pos);
-	puissances.push_back(curpuissances);
+	axbmodn.push_back(axbinv(avals.size()-1,shiftpos,bvals.size()-1));	
+	// puissances.push_back(curpuissances);
+	puissances.push_back(pair<unsigned short *,unsigned short *>(puissancesptr,puissancesptr+curpuissances.size()));
+	for (int i=0;i<curpuissances.size();++puissancesptr,++i){
+	  if (puissancesptr>=puissancesend)
+	    return false;
+	  *puissancesptr=curpuissances[i];
+	}
       }
       else {
-	if (mpz_cmp_ui(z1,0xffff)==1){
+	if (mpz_cmp_ui(z1,
+#if GIAC_ADDITIONAL_PRIMES==16
+		       0xffff
+#else
+		       maxadditional
+#endif
+		       )==1){
 	  if (debug_infolevel>6)
-	    *logptr(contextptr) << "Sieve large remainder:" << gen(z1) << endl;
+	    *logptr(contextptr) << gen(z1) << " Sieve large remainder:" << endl;
 	}
 	else {
 #ifdef GIAC_ADDITIONAL_PRIMES
-	  unsigned short P=mpz_get_ui(z1);
+	  additional_t P=mpz_get_ui(z1);
 	  // if (int(P)>2*int(basis.back())) continue;
 	  // if (debug_infolevel>5)
 	  if (debug_infolevel>6)
@@ -454,53 +536,157 @@ namespace giac {
 	    additional_primes_twice[Ppos]=true;
 	  } else {
 	    // add a prime in additional_primes if <=QS_B_BOUND
-	    if (bs+additional_primes.size()>QS_B_BOUND)
+	    if (additional_primes.size()>=bs 
+#ifdef RTOS_THREADX
+		|| bs+additional_primes.size()>QS_B_BOUND
+#endif
+		)
 	      continue;
 	    additional_primes.push_back(P);
 	    additional_primes_twice.push_back(false);
 	    Ppos=additional_primes.size()-1;
 	  }
 	  // add relation
-	  if (!done)
-	    curpuissances.push_back(0);
+	  curpuissances.push_back(1); // marker
+#if GIAC_ADDITIONAL_PRIMES==32
+	  curpuissances.push_back(P >> 16);
+#endif
 	  curpuissances.push_back(P);
-	  shiftvalues.push_back(shift+pos);
-	  puissances.push_back(curpuissances);
+	  axbmodn.push_back(axbinv(avals.size()-1,shiftpos,bvals.size()-1));
+	  // puissances.push_back(curpuissances);
+	  puissances.push_back(pair<unsigned short *,unsigned short *>(puissancesptr,puissancesptr+curpuissances.size()));
+	  for (int i=0;i<curpuissances.size();++puissancesptr,++i){
+	    if (puissancesptr>=puissancesend)
+	      return false;
+	    *puissancesptr=curpuissances[i];
+	  }
 #endif
 	}
       }
     } // end for loop on slice array
-    mpz_clear(z1);  mpz_clear(z2);  mpz_clear(z3);  
     if (debug_infolevel>6)
       *logptr(contextptr) << clock() << " end relations " << endl;
+    return true;
   }
 
-  void release_memory(vector<slicetype> & slice){
-    // release memory from slice
-    vector<slicetype> tmp;
-    swap(slice,tmp);
+  int invmodnoerr(int a,int b){
+    if (a==1 || a==-1 || a==1-b)
+      return a;
+    int aa(1),ab(0),ar(0);
+    div_t qr;
+    while (b){
+      qr=div(a,b);
+      ar=aa-qr.quot*ab;
+      a=b;
+      b=qr.rem;
+      aa=ab;
+      ab=ar;
+    }
+    if (a==1)
+      return aa;
+    if (a!=-1)
+      return 0;
+    return -aa;
   }
 
-  // find relations around floor(sqrt(n)), quadratic sieve
-  bool sieve(const gen & n,gen & pn,GIAC_CONTEXT){
+#if 1
+  inline gen find_multiplier(const gen & n,GIAC_CONTEXT){
+    return n;
+  }
+#else
+  static gen find_multiplier(const gen & n,GIAC_CONTEXT){
     if (n.type!=_ZINT)
+      return n;
+    static const unsigned char mult[] =
+      { 1, 3, 5, 7, 11, 13, 15, 17, 19, 
+	21, 23, 29, 31, 33, 35, 37, 39, 41, 43, 47}; // only odd values for multiplier
+    unsigned nmult=sizeof(mult)/sizeof(unsigned char);
+    double scores[nmult];
+    int nmodp=modulo(*n._ZINTptr,8),knmodp;
+    // init scores and set value for 2
+    for (int i=0;i<nmult;++i){
+      knmodp=(mult[i]*nmodp)%8;
+      scores[i]=std::log(double(mult[i]));
+      switch(knmodp){
+      case 1:
+	scores[i] -= 2*M_LN2;
+	break;
+      case 5:
+	scores[i] -= M_LN2;
+	break;
+      case 3: case 7:
+	scores[i] -= 0.5 * M_LN2;
+	break;
+      }
+    }
+    // now compute contribution for giac_primes[1..50]
+    for (int i=1;i<=50;++i){
+      unsigned short p=giac_primes[i];
+      double contrib=std::log(double(p))/(p-1);
+      nmodp=modulo(*n._ZINTptr,p);
+      for (int j=0;j<nmult;++j){
+	knmodp=(nmodp*mult[j])%p;
+	if (knmodp==0)
+	  scores[j] -= contrib;
+	else {
+	  if (!is_undef(sqrt_mod(knmodp,p,true,context0)))
+	    scores[j] -= 2*contrib;
+	}
+      }
+    }
+    // select the smallest scores
+    int pos=0; 
+    double minscore=scores[0];
+    for (int i=1;i<nmult;++i){
+      if (scores[i]<minscore){
+	minscore=scores[i];
+	pos=i;
+      }
+    }
+    if (pos)
+      *logptr(contextptr) << "Using multiplier " << int(mult[pos]) << endl;
+    return mult[pos]*n;
+  }
+#endif
+
+  // find relations using (a*x+b)^2=a*(a*x^2+b*x+c) mod n where
+  // we sieve on [-M,M] for as many polynomials as required
+  // a is a square, approx sqrt(2*n)/M, and n is a square modulo all primes dividing a
+  // b satisifies b^2=n mod a (b in [0,a[)
+  // c=(n-b^2)/a
+  bool msieve(const gen & n_orig,gen & pn,GIAC_CONTEXT){
+    if (n_orig.type!=_ZINT)
       return false;
-    gen N(n);
-    /*
-    // make Q(x)=x^2-N divisible by 8 if it is even
-    gen r=smod(N,8);
-    if (r==3) N=5*N;
-    if (r==-3) N=3*N;
-    if (r==-1) N=7*N;
-    */
-    double Nd=evalf_double(N,1,context0)._DOUBLE_val;
-    double B=std::exp(std::sqrt(2.0)/4*std::sqrt(std::log(Nd)*std::log(std::log(Nd))));
-    *logptr(contextptr) << clock() << " QSieve number of primes " << B << endl;
-    // double B=std::exp(std::sqrt(std::log(Nd)*std::log(std::log(Nd)))/2);
-    if (B>QS_B_BOUND) 
+    // find multiplier
+    gen N(find_multiplier(n_orig,contextptr));
+    double Nd=evalf_double(N,1,contextptr)._DOUBLE_val;
+#ifdef RTOS_THREADX
+    if (Nd>1e39) return false;
+#else
+    if (Nd>1e66) return false;
+#endif
+    int Ndl=int(std::log10(Nd)+.5);
+    if (Ndl<16 || Ndl>66)
       return false;
-    double M=B*B*B;
-    // sieve between sqrt(N)-M and sqrt(N)+M
+    double B=300;
+    int pos1=200,pos2=200,afact=2; // pos position in the basis, afact number of factors
+    if (Ndl>=33){
+      Ndl-=33;
+      short int Btab[]={ 
+	// 33
+	400,440,470,500,560,630,700,
+	// 40
+	800,900,1000,1100,1200,1300,1400,1500,1600,1700,
+	// 50
+	1800,1900,2000,2100,2200,2300,2400,2500,2650,2800,
+	// 60
+	3000,3200,3400
+      };
+      B=Btab[Ndl];
+    }
+    else
+      B=std::exp(std::sqrt(2.0)/4*std::sqrt(std::log(Nd)*std::log(std::log(Nd))))*2/3;
+    *logptr(contextptr) << "" << clock() << "Msieve on " << N << endl << " MSieve number of primes " << B << endl;
     // first compute the prime basis and sqrt(N) mod p, p in basis
     vector<unsigned short> basis;
     vector<short> sqrtmod;
@@ -508,16 +694,35 @@ namespace giac {
     basis.push_back(2);
     sqrtmod.reserve(basis.capacity());
     sqrtmod.push_back(1); // I assume that N is odd... hence has sqrt 1 mod 2
+    N.uncoerce();
+    vector<unsigned short> N256;
     int i;
+    mpz_t zx,zy,zq,zr;
+    mpz_init(zx); mpz_init(zy); mpz_init(zq); mpz_init(zr);
+    // fastsmod_prepare(N,zx,zy,zr,N256);
     for (i=1;i<sizeof(giac_primes)/sizeof(short);++i){
       if (ctrl_c)
-	return false;
+	break;
       unsigned short j=giac_primes[i];
       if (i%500==99)
-	*logptr(contextptr) << clock() << " QSieve current basis size " << basis.size() << endl;
-      if (legendre(N,j)==1){
+	*logptr(contextptr) << clock() << " MSieve current basis size " << basis.size() << endl;
+#if 1 // def USE_GMP_REPLACEMENTS
+      // int n=fastsmod_compute(N256,j);
+      int n=modulo(*N._ZINTptr,j);
+#else
+      int n=smod(N,j).val;
+#endif
+      if (n<0)
+	n+=j;
+      if (n==0){
 	basis.push_back(j);
-	sqrtmod.push_back(sqrt_mod(N,j,context0).val);
+	sqrtmod.push_back(0);
+      }
+      else {
+	if (powmod(n,(unsigned long)((j-1)/2),(int)j)==1){
+	  basis.push_back(j);
+	  sqrtmod.push_back(sqrt_mod(n,j,true,contextptr).val);
+	}
       }
       if (basis.size()>B)
 	break;
@@ -525,94 +730,292 @@ namespace giac {
     int jp=nextprime(basis.back()+1).val;
     for (;basis.size()<B;++i){
       if (ctrl_c)
-	return false;
+	break; 
       if (jp>65535)
 	break;
       if (i%500==99)
-	*logptr(contextptr) << clock() << " QSieve current basis size " << basis.size() << endl;
-      if (legendre(N,jp)==1){
+	*logptr(contextptr) << clock() << " MSieve current basis size " << basis.size() << endl;
+#if 1 // def USE_GMP_REPLACEMENTS
+      // int n=fastsmod_compute(N256,jp);
+      int n=modulo(*N._ZINTptr,jp);
+#else
+      int n=smod(N,jp).val;
+#endif
+      if (n<0)
+	n+=jp;
+      if (powmod(n,(unsigned long)((jp-1)/2),jp)==1){
 	basis.push_back(jp);
-	sqrtmod.push_back(sqrt_mod(N,jp,context0).val);
+	sqrtmod.push_back(sqrt_mod(n,jp,true,contextptr).val);
       }
       jp=nextprime(jp+1).val;
     }
-    *logptr(contextptr) << clock() << " QSieve basis OK, size " << basis.size() << endl;
+    if (ctrl_c){
+      mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
+      return false;
+    }
+    *logptr(contextptr) << clock() << " MSieve basis OK, size " << basis.size() << endl;
     int bs=basis.size();
-    // 2^32/primes 
-    vector<unsigned> reciproques(bs);
-    vector<unsigned char> corrections(bs);
-    for (int i=0;i<bs;++i){
-      int prime=basis[i];
-      reciproques[i]=((ulonglong)1 << 40) / (ulonglong)prime;
-      if (floor(256*MP_RADIX / (double)prime + 0.5) == (double) reciproques[i]){
-	corrections[i] = 1;
+    gen isqrtN=isqrt(N);
+    isqrtN.uncoerce(); 
+    // now compare isqrtN/1e6 to a^2 for a in the basis
+    double seuil=std::sqrt(std::sqrt(evalf_double(isqrtN,1,contextptr)._DOUBLE_val/1.8e5));
+    pos2=pos1=3*bs/4;
+    if (seuil>20000){
+      seuil=seuil*seuil;
+      afact=int(std::ceil(std::log(seuil)/std::log(double(basis[pos1]))));
+      seuil=std::pow(seuil,1./afact);
+      for (int i=10;i<3*bs/4;++i){
+	if (seuil<basis[i]){
+	  pos2=pos1=i;
+	  break;
+	}
+      }
+    }
+    else {
+      if (seuil<70){
+	seuil=seuil*seuil;
+	afact=1;
+	for (int i=10;i<3*bs/4;++i){
+	  if (seuil<basis[i]){
+	    pos2=pos1=i;
+	    break;
+	  }
+	}
       }
       else {
-	corrections[i] = 0;
-	++reciproques[i];
+	for (int i=10;i<3*bs/4;++i){
+	  if (seuil<basis[i]){
+	    pos2=pos1=i;
+	    afact=2;
+	    break;
+	  }
+	}
       }
     }
-    gen isqrtN=isqrt(N);
+    vector<unsigned short> isqrtN256;
+    // fastsmod_prepare(isqrtN,zx,zy,zr,isqrtN256);
     vector<short int> isqrtNmodp(bs);
     for (int i=0;i<bs;++i){
+#if 1
+      // isqrtNmodp[i]=fastsmod_compute(isqrtN256,basis[i]);
+      isqrtNmodp[i]=modulo(*isqrtN._ZINTptr,basis[i]);
+#else
       isqrtNmodp[i]=smod(isqrtN,basis[i]).val;
+#endif
     }
-    isqrtN.uncoerce(); N.uncoerce();
-    int shift;
-    vector<slicetype> slice(QS_SIZE);
+    unsigned puissancestablength=bs*32;
+    unsigned short * puissancestab=new unsigned short[puissancestablength];
+    unsigned short * puissancesptr=puissancestab;
+    unsigned short * puissancesend=puissancestab+puissancestablength;
+    slicetype * slice=0;
+    if (puissancestab)
+      slice=new slicetype[QS_SIZE];
+    if (!slice){
+      mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
+      return false;
+    }
     // relations will be written in column
-    vector<int> shiftvalues;
-    vector<unsigned short> additional_primes;
+    vector<axbinv> axbmodn; // will contain (a,x,b,invmod(sqrt(a),N))
+    vector<additional_t> additional_primes;
     vector<bool> additional_primes_twice;
-    vector< vector<unsigned short> > puissances;
+    vector< pair<unsigned short *,unsigned short *> > puissances;
+    vector<unsigned short> invamodp(bs),root_mod1(bs),root_mod2(bs);
+    vecteur avals,bvals,invsqrtamodnvals;
 #ifdef GIAC_ADDITIONAL_PRIMES
-    shiftvalues.reserve(2*bs);
+    axbmodn.reserve(2*bs);
     additional_primes.reserve(bs);
     additional_primes_twice.reserve(bs);
     puissances.reserve(2*bs);
+    avals.reserve(100);
+    bvals.reserve(200);
+    invsqrtamodnvals.reserve(100);
 #else
-    shiftvalues.reserve(bs+1);
+    axbmodn.reserve(bs+1);
     puissances.reserve(bs+1);
 #endif
+    // now sieve
     unsigned todo_rel;
-    for (i=0;i<M/QS_SIZE;++i){
-      if (ctrl_c)
+    mpz_t alloc1,alloc2,alloc3,alloc4,alloc5;
+    mpz_init(alloc1); mpz_init(alloc2); mpz_init(alloc3); mpz_init(alloc4); mpz_init(alloc5);
+    vector<unsigned short> a256,b256,tmpv,curpuissances,recheck;   
+    for (;;++pos2){
+      if (pos2>=bs-afact || pos2>2*pos1 || basis[pos2+1]>45000){
+	pos1++;
+	pos2=pos1;
+      }
+      if (pos1>=bs-afact){
+	mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
+	mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+	delete [] puissancestab;
 	return false;
-      // pass 1, positive
-      shift=i*QS_SIZE;
-      sieve(basis,additional_primes,additional_primes_twice,sqrtmod,reciproques,corrections,N,isqrtN,isqrtNmodp,slice,shift,puissances,shiftvalues,contextptr);
-      todo_rel=bs+15+additional_primes.size();
-      if (debug_infolevel)
-	*logptr(contextptr) << clock()<< " sieve : " << shiftvalues.size() << " relations of " << todo_rel << endl;
-      if (shiftvalues.size()>=todo_rel)
+      }
+      // finished?
+      if (ctrl_c)
 	break;
-      // pass 2, negative
-      shift=-(i+1)*QS_SIZE;
-      sieve(basis,additional_primes,additional_primes_twice,sqrtmod,reciproques,corrections,N,isqrtN,isqrtNmodp,slice,shift,puissances,shiftvalues,contextptr);
       todo_rel=bs+15+additional_primes.size();
-      if (debug_infolevel)
-	*logptr(contextptr) << clock()<< " sieve : " << shiftvalues.size() << " relations of " << todo_rel << endl;
-      if (shiftvalues.size()>=todo_rel)
+      if (axbmodn.size()>=todo_rel)
 	break;
+      // Not finished yet, construct a new value of a around ad=sqrt(2*n)/M 
+      // using a product of afact square of primes that are in the basis
+      // and construct a vector of 2^(afact-1) corresponding values of b
+      // and compute the values of inverses of a mod p
+      gen sqrta(basis[pos1]);
+      for (int i=1;i<afact;++i)
+	sqrta=basis[pos2+i]*sqrta;
+      gen invsqrtamodn(invmod(sqrta,N));
+      invsqrtamodnvals.push_back(invsqrtamodn);
+      invsqrtamodn.uncoerce();
+      gen a=sqrta*sqrta; // a should be about sqrt(Nd/2)/M
+      a.uncoerce();
+      avals.push_back(a);
+      int M=int(std::floor(std::sqrt(Nd*2)/evalf_double(a,1,contextptr)._DOUBLE_val));
+      if (debug_infolevel>6)
+	*logptr(contextptr) << clock() << " initial value for M= " << M << endl;
+      M=(M/QS_SIZE+1)*QS_SIZE;
+      vecteur bvalues;
+      gen curprod=1;
+      for (int i=0;;){
+	int s=sqrtmod[i?pos2+i:pos1]; 
+	int p=basis[i?pos2+i:pos1];
+	int p2=p*p;
+	// Hensel lift s to be a sqrt of n mod p^2: (s+p*r)^2=s^2+2p*r*s=n => r=(n-s^2)/p*inv(2*s mod p)
+	int r=(modulo(*N._ZINTptr,p2)-s*s)/p;
+	r=(r*invmod(2*s,p))%p;
+	s += p*r;
+	if (bvalues.empty())
+	  bvalues.push_back(s);
+	else {
+	  int js=bvalues.size();
+	  for (int j=0;j<js;++j){
+	    bvalues.push_back(ichinrem(bvalues[j],-s,curprod,p2));
+	    bvalues[j]=ichinrem(bvalues[j],s,curprod,p2);
+	  }
+	}
+	++i;
+	if (i==afact)
+	  break;
+	curprod = p2*curprod;
+      } // end for
+      // compute inverse of a modulo p (will set to 0 if not invertible)
+      // fastsmod_prepare(a,zx,zy,zr,a256);
+      for (int i=0;i<bs;++i){
+	// int j=invmodnoerr(smod(a,basis[i]).val,int(basis[i]));
+	// int j=invmodnoerr(fastsmod_compute(a256,basis[i]),int(basis[i]));
+	int j=invmodnoerr(modulo(*a._ZINTptr,basis[i]),int(basis[i]));
+	if (j<0)
+	  j+=basis[i];
+	invamodp[i]=j;
+      }
+      for (int i=0;i<bvalues.size();++i){
+	if (ctrl_c)
+	  break;
+	todo_rel=bs+15+additional_primes.size();
+	if (axbmodn.size()>=todo_rel)
+	  break;
+	gen b=bvalues[i];
+	b.uncoerce();
+	mpz_mul(zx,*b._ZINTptr,*b._ZINTptr);
+	mpz_sub(zy,zx,*N._ZINTptr);
+#ifdef USE_GMP_REPLACEMENTS
+	mp_grow(&alloc1,zy.used+2);
+	mpz_set_ui(alloc1,0);
+	alloc1.used = zy.used +2 ;
+	mpz_set(alloc2,zy);
+	mpz_set(alloc3,*a._ZINTptr);
+	alloc_mp_div(&zy,a._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	mpz_fdiv_qr(zq,zr,zy,*a._ZINTptr);
+#endif
+	// gen c=zq; // gen c=(b*b-N)/a;
+	// c.uncoerce();
+	bool bneg=mpz_cmp_ui(*b._ZINTptr,0)<0;
+	if (bneg)
+	  mpz_neg(*b._ZINTptr,*b._ZINTptr);
+	bvals.push_back(b);
+	// fastsmod_prepare(b,zx,zy,zr,b256);
+	for (int j=0;j<bs;++j){
+	  int p=basis[j],q;
+	  // int bmodp=-smod(b,p).val; 
+	  // int bmodp=-fastsmod_compute(b256,p);
+	  int bmodp=-modulo(*b._ZINTptr,p); 
+	  q=(longlong(bmodp-sqrtmod[j])*invamodp[j]) % p;
+	  if (q<0) 
+	    q+=p;
+	  root_mod1[j]=q;
+	  q=(longlong(bmodp+sqrtmod[j])*invamodp[j]) % p;
+	  if (q<0) 
+	    q+=p;	  
+	  root_mod2[j]=q;
+	}
+	// we can now sieve in [-M,M[ by slice of size QS_SIZE
+	if (debug_infolevel>5)
+	  *logptr(contextptr) << clock() << "Polynomial a,b,M=" << a << "," << b << "," << M << "(" << pos1 << "," << pos2 << ")" << endl;
+	for (int l=0;l<2*M/QS_SIZE;l++){
+	  if (ctrl_c)
+	    break;
+	  todo_rel=bs+15+additional_primes.size();
+	  if (axbmodn.size()>=todo_rel)
+	    break;
+	  int shift=-M+l*QS_SIZE;
+	  if (!msieve(avals,invsqrtamodnvals,invamodp,
+		      bvals,zq,basis,
+		      additional_primes,additional_primes_twice,
+		      root_mod1,root_mod2,
+		      N,isqrtN,
+		      slice,shift,puissances,puissancesptr,puissancesend,curpuissances,recheck,
+		      axbmodn,
+		      zx,zy,zr,alloc1,alloc2,alloc3,alloc4,alloc5,tmpv,contextptr))
+	    break;
+	  todo_rel=bs+15+additional_primes.size();
+	}
+	// if (axbmodn.empty() || axbmodn.back().bindex<bvals.size()-1) bvals.pop_back();
+	if (debug_infolevel)
+	  *logptr(contextptr) << clock()<< " sieved : " << axbmodn.size() << " relations of " << todo_rel << endl;
+      }
+      // if (axbmodn.empty() || axbmodn.back().aindex<avals.size()-1) avals.pop_back();
+    } // end sieve loop
+    delete [] slice;
+    if (ctrl_c || puissancesptr==puissancesend){
+      mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
+      mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+      delete [] puissancestab;
+      return false;
     }
-    release_memory(slice);
+    // We have enough relations, make matrix, reduce it then find x^2=y^2 mod n congruences
+    *logptr(contextptr) << clock() << " sieve done: used " << (puissancesptr-puissancestab)*0.002 << " K for storing relations (of " << puissancestablength*0.002 << ")" << endl;
+    release_memory(isqrtNmodp);
+    release_memory(sqrtmod);
 #ifdef GIAC_ADDITIONAL_PRIMES
     *logptr(contextptr) << clock() << " removing additional primes" << endl;
     // remove relations with additional primes which are used only once
     int lastp=puissances.size()-1,lasta=additional_primes.size()-1;
     for (unsigned i=0;i<=lastp;++i){
-      vector<unsigned short> & cur=puissances[i];
-      if (cur.empty())
+      unsigned short * curbeg=puissances[i].first, * curend=puissances[i].second;
+      for (;curbeg!=curend;++curbeg){
+	if (*curbeg==1)
+	  break;
+      }
+      if (curbeg==curend)
 	continue;
-      unsigned short u=cur.back();
+      ++curbeg;
+      additional_t u=*curbeg;
+#if GIAC_ADDITIONAL_PRIMES==32
+      u <<=16 ;
+      ++curbeg;
+      u += *curbeg;
+#endif
       int pos=equalposcomp(additional_primes,u);
       if (!pos)
 	continue;
+      if (pos>lasta){
+	// *logptr(contextptr) << cur << endl;
+	continue;
+      }
       --pos;
       if (additional_primes_twice[pos])
 	continue;
-      swap(cur,puissances[lastp]);
-      shiftvalues[i]=shiftvalues[lastp];
+      swap(puissances[i],puissances[lastp]);
+      axbmodn[i]=axbmodn[lastp];
       --lastp;
       additional_primes[pos]=additional_primes[lasta];
       additional_primes_twice[pos]=additional_primes_twice[lasta];
@@ -620,20 +1023,36 @@ namespace giac {
       --i; // recheck at current index
     }
     puissances.resize(lastp+1);
-    shiftvalues.resize(lastp+1);
+    axbmodn.resize(lastp+1);
     additional_primes.resize(lasta+1);
     *logptr(contextptr) << clock() << " end removing additional primes" << endl;
 #endif
     // Make relations matrix (currently dense, -> improve to sparse and Lanczos algorithm)
-    vector< vector<unsigned> > relations(puissances.size(),vector<unsigned>(int(std::ceil(puissances.size()/128.))*4));
+    int C32=int(std::ceil(puissances.size()/128.))*4;
+    unsigned * tab=new unsigned[puissances.size()*C32],*tabend=tab+puissances.size()*C32;
+    if (!tab){
+      mpz_clear(zx); mpz_clear(zy); mpz_clear(zq); mpz_clear(zr);
+      mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+      delete [] puissancestab;
+      return false;
+    }
+    // init tab
+    for (unsigned * ptr=tab;ptr!=tabend;++ptr)
+      *ptr=0;
+    int l32=C32*32;
+    vector< unsigned* > relations(puissances.size());
+    for (int i=0;i<puissances.size();++i){
+      relations[i]=tab+i*C32;
+    }
     // sort(additional_primes.begin(),additional_primes.end());
     for (unsigned j=0;j<puissances.size();j++){
-      vector<unsigned short> & curpui=puissances[j];
+      unsigned short * curpui=puissances[j].first, * curpuiend=puissances[j].second;
+      int curpuisize=curpuiend-curpui;
       bool done=false;
       int i=0; // position in basis
       unsigned k=0; // position in curpui
-      unsigned short p=0; // prime
-      for (;k<curpui.size();++k){
+      additional_t p=0; // prime
+      for (;k<curpuisize;++k){
 	p=curpui[k];
 	if (p==0xffff){
 	  relations[0][j/32] |= (1 << (j%32));
@@ -643,6 +1062,19 @@ namespace giac {
 	  done=true;
 	  continue;
 	}
+	if (p==1){
+	  p=curpui[k+1];
+#if GIAC_ADDITIONAL_PRIMES==32
+	  p <<= 16;
+	  p += curpui[k+2];
+#endif
+	  // k must be == curpui.size()-1
+	  // find p in additional_primes and position
+	  int Ppos=equalposcomp(additional_primes,p);
+	  // *logptr(contextptr) << p << " " << Ppos+bs << " " << relations.size() << endl;
+	  relations[bs+Ppos][j/32] |= (1 << (j %32));	  
+	  break;
+	}
 	if (!done){
 	  if (p%2==0) // even exponent?
 	    continue;
@@ -650,7 +1082,7 @@ namespace giac {
 	}
 	else {
 	  int c=1;
-	  for (;k+1<curpui.size();c++){
+	  for (;k+1<curpuisize;c++){
 	    if (curpui[k+1]==p)
 	      ++k;
 	    else
@@ -669,24 +1101,18 @@ namespace giac {
 	  relations[i][j/32] |= (1 << (j %32));
 	}
 	else {
-	  // k must be == curpui.size()-1
-	  // find p in additional_primes and position
-	  int Ppos=equalposcomp(additional_primes,p);
-	  // *logptr(contextptr) << p << " " << Ppos+bs << " " << relations.size() << endl;
-	  relations[bs+Ppos][j/32] |= (1 << (j %32));	  
+	  // ERROR
 	}
       } // end loop on k in curpui
     } // end loop on j in puissances
-    // FIXME remove lines with only one 1 in relations and basis or additional_primes
     // now reduce relations
     // printbool(*logptr(contextptr),relations);
-    *logptr(contextptr) << clock() << " begin rref size " << relations.size() << "x" << relations.front().size()*32 << " K " << 0.004*relations.size()*relations.front().size() << endl;
-    rref(relations);
+    *logptr(contextptr) << clock() << " begin rref size " << relations.size() << "x" << l32 << " K " << 0.004*relations.size()*C32 << endl;
+    rref(relations,C32);
     *logptr(contextptr) << clock() << " end rref" << endl;
     // printbool(*logptr(contextptr),relations);
     // move pivots on the diagonal by inserting 0 lines
-    int l=relations.front().size(),l32=l*32;
-    vector< vector<unsigned> > relations2(l32);
+    vector< unsigned * > relations2(l32);
     i=0;
     int j=0,rs=relations.size();
     for (;i<rs && j<l32;++j){
@@ -697,26 +1123,59 @@ namespace giac {
     }
     // printbool(*logptr(contextptr),relations2);
     // for each element of the kernel compute x and y / x^2=y^2[N] 
-    // then gcd(x-y,N)
+    // then gcd(x-y,n_orig)
     for (i=0;i<l32;++i){
-      if (!relations2[i].empty() && (relations2[i][i/32] & (1<<i%32)))
+      if (relations2[i] && (relations2[i][i/32] & (1<<i%32)))
 	continue;
       // using column i of relations2 which is in the kernel, build x and y
-      // for x, we can compute the product of the isqrtN+shiftvalues mod N
-      // for y, compute the product (isqrtN+shiftvalues)^2-N
+      // for x, we can compute the product of the isqrtN+axbmodn mod N
+      // for y, compute the product (isqrtN+axbmodn)^2-N
       // then the isqrt
       gen x=1,y=1,cur;
+      mpz_set_ui(zx,1);
       vector<short int> p(bs),add_p(additional_primes.size());
       for (unsigned j=0;int(j)<l32;++j){
-	if (j<shiftvalues.size() && (i==j || (!relations2[j].empty() && (relations2[j][i/32] & (1<<(i%32)))))){
-	  cur=isqrtN+shiftvalues[j];
-	  x=smod(x*cur,N);
+	if (j<axbmodn.size() && (i==j || (relations2[j] && (relations2[j][i/32] & (1<<(i%32)))))){
+	  // x=x*(a*shiftpos+b)*invsqrta;
+	  mpz_set_si(alloc1,axbmodn[j].shiftpos);
+	  mpz_mul(alloc2,alloc1,*avals[axbmodn[j].aindex]._ZINTptr);
+	  mpz_add(alloc1,alloc2,*bvals[axbmodn[j].bindex]._ZINTptr);
+	  mpz_mul(alloc2,alloc1,*invsqrtamodnvals[axbmodn[j].aindex]._ZINTptr);
+	  mpz_mul(zr,zx,alloc2);
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,zr.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = zr.used +2 ;
+	  mpz_set(alloc2,zr);
+	  mpz_set(alloc3,*N._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&zr,N._ZINTptr,&zq,&zx,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_tdiv_r(zx,zr,*N._ZINTptr);
+#endif	 
 	  bool done=false;
 	  unsigned bi=0;
-	  vector<unsigned short>::const_iterator it=puissances[j].begin(),itend=puissances[j].end();
+	  unsigned short * it=puissances[j].first,* itend=puissances[j].second;
 	  for (;it!=itend;++it){
 	    if (*it==0xffff)
 	      continue;
+	    if (*it==1){
+	      ++it;
+	      additional_t p=*it;
+#if GIAC_ADDITIONAL_PRIMES==32
+	      p <<= 16;
+	      ++it;
+	      p += *it;
+#endif
+	      int pos=equalposcomp(additional_primes,p);
+	      if (pos) 
+		++add_p[pos-1];
+	      else {
+		// otherwise ERROR!!!
+	      }
+	      break;
+	    }
 	    if (!*it){
 	      done=true;
 	      continue;
@@ -727,9 +1186,7 @@ namespace giac {
 	      if (bi<basis.size())
 		p[bi]++;
 	      else {
-		int pos=equalposcomp(additional_primes,*it);
-		if (pos) // otherwise ERROR!!!
-		  ++add_p[pos-1];
+		// ERROR
 	      }
 	    }
 	    else {
@@ -739,53 +1196,107 @@ namespace giac {
 	    }
 	  }
 	}
-      }
+      } // end for unsigned j=0; j<l32
+      mpz_set_ui(zy,1);
       for (int i=0;i<bs;++i){
 	if (p[i] % 2)
 	  *logptr(contextptr) << "error, odd exponent for prime " << basis[i] << endl;
-	if (p[i])
-	  y=smod(y*pow(gen(basis[i]),int(p[i]/2)),N);
+	if (p[i]){
+#if 1
+	  mpz_set_ui(alloc1,basis[i]);
+	  for (int j=0;j<p[i]/2;++j)
+	    mpz_mul(zy,zy,alloc1);
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,zy.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = zy.used +2 ;
+	  mpz_set(alloc2,zy);
+	  mpz_set(alloc3,*N._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&zy,N._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_tdiv_r(zr,zy,*N._ZINTptr);
+#endif
+	  mpz_set(zy,zr);
+#else
+	  y=y*pow(gen(basis[i]),int(p[i]/2));
+	  y=smod(y,N);
+#endif
+	}
       }
       for (unsigned i=0;i<additional_primes.size();++i){
 	if (add_p[i] % 2)
 	  *logptr(contextptr) << "error" << i << endl;
-	if (add_p[i])
-	  y=smod(y*pow(gen(additional_primes[i]),int(add_p[i]/2)),N);
+	if (add_p[i]){
+#if 1
+	  mpz_set_ui(alloc1,additional_primes[i]);
+	  for (int j=0;j<add_p[i]/2;++j)
+	    mpz_mul(zy,zy,alloc1);
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,zy.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = zy.used +2 ;
+	  mpz_set(alloc2,zy);
+	  mpz_set(alloc3,*N._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&zy,N._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_tdiv_r(zr,zy,*N._ZINTptr);
+#endif
+	  mpz_set(zy,zr);
+#else
+	  y=y*pow(gen(additional_primes[i]),int(add_p[i]/2));
+	  y=smod(y,N);
+#endif
+	}
       }
-      cur=gcd(x-y,N);
+#if 1
+      y=zy;
+      x=zx;
+#endif
+      cur=gcd(x-y,n_orig);
       if (debug_infolevel>6)
 	*logptr(contextptr) << clock() << "checking gcd" << cur << " " << N << endl;
       if ( (cur.type==_INT_ && cur.val>7) || 
-	   (cur.type==_ZINT && is_strictly_greater(n,cur,context0))){
-	if (n==N)
-	  pn=cur;
-	else
-	  pn=cur/gcd(3*5*7,cur);
+	   (cur.type==_ZINT && is_strictly_greater(n_orig,cur,contextptr))){
+	pn=cur;
+	mpz_clear(zx); mpz_clear(zy); mpz_clear(zq); mpz_clear(zr);
+	mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+	delete [] puissancestab;
+	delete [] tab;
 	return true;
       }
     }
+    mpz_clear(zx); mpz_clear(zy); mpz_clear(zq); mpz_clear(zr);
+    mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+    delete [] puissancestab;
+    delete [] tab;
     return false;
   }
 
+  // Pollard-rho algorithm
   const int POLLARD_GCD=64;
 #ifdef GIAC_MPQS 
 #ifdef USE_GMP_REPLACEMENTS
-  const int POLLARD_MAXITER=20000;
+  const unsigned POLLARD_MAXITER=3000;
 #else
-  const int POLLARD_MAXITER=10000;
+  const unsigned POLLARD_MAXITER=3000;
 #endif
 #else
-  const int POLLARD_MAXITER=1000000;
+  const unsigned POLLARD_MAXITER=100000;
 #endif  
 
   static gen pollard(gen n, gen k,GIAC_CONTEXT){
     k.uncoerce();
     n.uncoerce();
+    unsigned maxiter=POLLARD_MAXITER;
     int m,m1,a,a1,j;
     m1=m=2;
     a1=a=1;
     int c=0;
-    mpz_t g,x,x1,x2,x2k,y,y1,p,q,tmpq;
+    mpz_t g,x,x1,x2,x2k,y,y1,p,q,tmpq,alloc1,alloc2,alloc3,alloc4,alloc5;
     mpz_init_set_si(g,1); // ? mp_init_size to specify size
     mpz_init_set_si(x,2);
     mpz_init_set_si(x1,2);
@@ -796,24 +1307,57 @@ namespace giac {
     mpz_init_set_si(p,1);
     mpz_init(q);
     mpz_init(tmpq);
+    mpz_init(alloc1);
+    mpz_init(alloc2);
+    mpz_init(alloc3);
+    mpz_init(alloc4);
+    mpz_init(alloc5);
     while (!ctrl_c && mpz_cmp_si(g,1)==0) {
       a=2*a+1;//a=2^(e+1)-1=2*l(m)-1 
       while (!ctrl_c && mpz_cmp_si(g,1)==0 && a>m) { // ok
 	// x=f(x,k,n,q);
 #ifdef USE_GMP_REPLACEMENTS
 	mp_sqr(&x,&x2);
+	mpz_add(x2k,x2,*k._ZINTptr);
+	if (mpz_cmp(x2k,*n._ZINTptr)>0){
+	  mp_grow(&alloc1,x2k.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = x2k.used +2 ;
+	  mpz_set(alloc2,x2k);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&x2k,n._ZINTptr,&tmpq,&x,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	}
+	else
+	  mpz_set(x,x2k);
 #else 
 	mpz_mul(x2,x,x);
-#endif
 	mpz_add(x2k,x2,*k._ZINTptr);
-	mpz_tdiv_qr(tmpq,x,x2k,*n._ZINTptr);
+	mpz_tdiv_r(x,x2k,*n._ZINTptr);
+#endif
 	m += 1;
-	if (m > POLLARD_MAXITER )
+	if (m > maxiter )
 	  return -1;
 	// p=irem(p*(x1-x),n,q);
 	mpz_sub(q,x1,x);
 	mpz_mul(x2,p,q);
-	mpz_tdiv_qr(tmpq,p,x2,*n._ZINTptr);
+#ifdef USE_GMP_REPLACEMENTS
+	if (mpz_cmp(x2,*n._ZINTptr)>0){
+	  mp_grow(&alloc1,x2.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = x2.used +2 ;
+	  mpz_set(alloc2,x2);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&x2,n._ZINTptr,&tmpq,&p,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	}
+	else 
+	  mpz_set(p,x2);
+#else
+	mpz_tdiv_r(p,x2,*n._ZINTptr);
+#endif
 	c += 1;
 	if (c==POLLARD_GCD) {
 	  // g=gcd(abs(p,context0),n); 
@@ -836,7 +1380,22 @@ namespace giac {
 	  // x=f(x,k,n,q);
 	  mpz_mul(x2,x,x);
 	  mpz_add(x2k,x2,*k._ZINTptr);
-	  mpz_tdiv_qr(tmpq,x,x2k,*n._ZINTptr);
+#ifdef USE_GMP_REPLACEMENTS
+	  if (mpz_cmp(x2k,*n._ZINTptr)>0){
+	    mp_grow(&alloc1,x2k.used+2);
+	    mpz_set_ui(alloc1,0);
+	    alloc1.used = x2k.used +2 ;
+	    mpz_set(alloc2,x2k);
+	    mpz_set(alloc3,*n._ZINTptr);
+	    // mpz_set_si(alloc4,0);
+	    // mpz_set_si(alloc5,0);
+	    alloc_mp_div(&x2k,n._ZINTptr,&tmpq,&x,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	  }
+	  else 
+	    mpz_set(x,x2);
+#else
+	  mpz_tdiv_r(x,x2k,*n._ZINTptr);
+#endif
 	}
 	m=j;
       }
@@ -855,13 +1414,41 @@ namespace giac {
 	// x=f(x,k,n,q);
 	mpz_mul(x2,x,x);
 	mpz_add(x2k,x2,*k._ZINTptr);
-	mpz_tdiv_qr(tmpq,x,x2k,*n._ZINTptr);
+#ifdef USE_GMP_REPLACEMENTS
+	if (mpz_cmp(x2k,*n._ZINTptr)>0){
+	  mp_grow(&alloc1,x2k.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = x2k.used +2 ;
+	  mpz_set(alloc2,x2k);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  alloc_mp_div(&x2k,n._ZINTptr,&tmpq,&x,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	}
+	else
+	  mpz_set(x,x2k);	  
+#else
+	mpz_tdiv_r(x,x2k,*n._ZINTptr);
+#endif
 	m += 1;
-	if (m > POLLARD_MAXITER )
+	if (m > maxiter )
 	  return -1;
 	// p=irem(x1-x,n,q);
 	mpz_sub(q,x1,x);
-	mpz_tdiv_qr(tmpq,p,q,*n._ZINTptr);
+#ifdef USE_GMP_REPLACEMENTS
+	if (mpz_cmp(q,*n._ZINTptr)>0){
+	  mp_grow(&alloc1,q.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = q.used +2 ;
+	  mpz_set(alloc2,q);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&q,n._ZINTptr,&tmpq,&p,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	}
+	else 
+	  mpz_set(p,q);
+#else
+	mpz_tdiv_r(p,q,*n._ZINTptr);
+#endif
 	// g=gcd(abs(p,context0),n);  // ok
 	mpz_abs(q,p);
 	mpz_gcd(g,q,*n._ZINTptr);
@@ -878,6 +1465,11 @@ namespace giac {
 	m=j;
       }
     }
+    mpz_clear(alloc5);
+    mpz_clear(alloc4);
+    mpz_clear(alloc3);
+    mpz_clear(alloc2);
+    mpz_clear(alloc1);
     mpz_clear(tmpq);
     mpz_clear(x);
     mpz_clear(x1);
@@ -968,27 +1560,37 @@ namespace giac {
       return u;
     if (n.type==_ZINT){
       ref_mpz_t * cur = new ref_mpz_t;
-      mpz_t div,q,r;
+      mpz_t div,q,r,alloc1,alloc2,alloc3,alloc4,alloc5;
       mpz_set(cur->z,*n._ZINTptr);
       mpz_init_set(q,*n._ZINTptr);
       mpz_init(r);
       mpz_init(div);
+      mpz_init(alloc1);
+      mpz_init(alloc2);
+      mpz_init(alloc3);
+      mpz_init(alloc4);
+      mpz_init(alloc5);
       for (i=0;i<sizeof(giac_primes)/sizeof(short int);++i){
 	if (mpz_cmp_si(cur->z,1)==0) 
 	  break;
 	prime=giac_primes[i];
+	mpz_set_ui(div,prime);
 #ifdef USE_GMP_REPLACEMENTS
 	mp_digit c;
-	mp_mod_d(&cur->z, prime, &c);
-	if (c==0){
-	  mpz_set_ui(div,prime);
-	  for (p=0;;p++){
-	    mpz_tdiv_qr(q,r,cur->z,div);
-	    if (mpz_cmp_si(r,0))
-	      break;
-	    mp_exch(&cur->z,&q);
-	  }
-	  // *logptr(contextptr) << "Factor " << prime << " " << p << endl;
+	for (p=0;;p++){
+	  mp_grow(&alloc1,cur->z.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = cur->z.used +2 ;
+	  mpz_set(alloc2,cur->z);
+	  mpz_set(alloc3,div);
+	  alloc_mp_div(&cur->z,&div,&q,&r,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+	  // mpz_tdiv_qr(q,r,cur->z,div);
+	  if (mpz_cmp_si(r,0))
+	    break;
+	  mp_exch(&cur->z,&q);
+	}
+	// *logptr(contextptr) << "Factor " << prime << " " << p << endl;
+	if (p){
 	  u.push_back(prime);
 	  u.push_back(p);
 	}
@@ -1007,6 +1609,11 @@ namespace giac {
 	}
 #endif
       } // end for on smal primes
+      mpz_clear(alloc5);
+      mpz_clear(alloc4);
+      mpz_clear(alloc3);
+      mpz_clear(alloc2);
+      mpz_clear(alloc1);
       mpz_clear(div); mpz_clear(r); mpz_clear(q);
       n=cur;
     }
@@ -1039,71 +1646,108 @@ namespace giac {
   }
 
 #ifdef USE_GMP_REPLACEMENTS
-  static gen inpollardsieve(const gen &a,gen k,GIAC_CONTEXT){
-    gen b=pollard(a,k,contextptr);
+  static gen inpollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
+    gen b=do_pollard?pollard(a,k,contextptr):-1;
 #ifdef GIAC_MPQS
     if (b==-1){ 
-      if (sieve(a,b,contextptr)) return b; else return -1; }
+      do_pollard=false;
+      if (msieve(a,b,contextptr)) return b; else return -1; }
 #endif
     return b;
   }
-  static gen pollardsieve(const gen &a,gen k,GIAC_CONTEXT){
+  static gen pollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
     int debug_infolevel_=debug_infolevel;
-    debug_infolevel=6;
-    gen res=inpollardsieve(a,k,contextptr);
+    debug_infolevel=1;
+    if (do_pollard)
+      *logptr(contextptr) << "Pollard-rho on " << a << endl; 
+    gen res=inpollardsieve(a,k,do_pollard,contextptr);
     debug_infolevel=debug_infolevel_;
+#ifdef GIAC_HAS_STO_38
+    Calc->Terminal.MakeUnvisible();
+#endif
     return res;
   }
 #else // USE_GMP_REPLACEMENTS
-  static gen pollardsieve(const gen &a,gen k,GIAC_CONTEXT){
-    gen b=pollard(a,k,contextptr);
+  static gen pollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
+    gen b=do_pollard?pollard(a,k,contextptr):-1;
 #ifdef GIAC_MPQS
     if (b==-1){ 
-      if (sieve(a,b,contextptr)) return b; else return -1; }
+      do_pollard=false;
+      if (msieve(a,b,contextptr)) return b; else return -1; }
 #endif
     return b;
   }
 #endif // USE_GMP_REPLACEMENTS
 
+  static gen ifactor2(const gen & n,vecteur & v,bool & do_pollard,GIAC_CONTEXT){
+    if (is_greater(giac_last_prime*giac_last_prime,n,contextptr) || is_probab_prime_p(n) ){
+      v.push_back(n);
+      return 1;
+    }
+    // Check for power of integer: arg must be > 1e4, n*ln(arg)=d => n<d/ln(1e4)
+    double d=evalf_double(n,1,contextptr)._DOUBLE_val;
+    int maxpow=int(std::ceil(std::log(d)/std::log(1e4)));
+    for (int i=2;i<=maxpow;++i){
+      if ( (i>2 && i%2==0) ||
+	   (i>3 && i%3==0) ||
+	   (i>5 && i%5==0) ||
+	   (i>7 && i%7==0) )
+	continue;
+      gen u;
+      if (i==2)
+	u=isqrt(n);
+      else {
+	double x=std::pow(d,1./i);
+	u=longlong(x);
+      }
+      if (pow(u,i,contextptr)==n){
+	vecteur w;
+	do_pollard=true;
+	ifactor2(u,w,do_pollard,contextptr);
+	for (int j=0;j<i;j++)
+	  v=mergevecteur(v,w);
+	return v;
+      }
+    }
+    gen a=pollardsieve(n,1,do_pollard,contextptr);
+    gen ba=n/a;
+    a=ifactor2(a,v,do_pollard,contextptr);
+    if (is_greater(a,1,contextptr))
+      a=ifactor2(ba,v,do_pollard,contextptr);
+    return a;
+  }
 
   static vecteur facprem(gen & n,GIAC_CONTEXT){
-    gen a,b,q;
-    int p;
-    vecteur v(2);    
-    if (n==1) {return vecteur(0);}
+    vecteur v;    
+    if (n==1) { return v; }
     if ( (n.type==_INT_ && n.val<giac_last_prime*giac_last_prime) || is_probab_prime_p(n)) {
-      v[0]=n;v[1]=1;
+      v.push_back(n);
       n=1;
       return v;
     }
-    b=n;
     if (debug_infolevel>5)
       cerr << "Pollard begin " << clock() << endl;
-    a=pollardsieve(b,1,contextptr);
+    bool do_pollard=true;
+    gen a=ifactor2(n,v,do_pollard,contextptr);
     if (a==-1)
       return makevecteur(gensizeerr(gettext("Quadratic sieve failure, perhaps number too large")));
     if (is_zero(a))
       return makevecteur(gensizeerr(gettext("Stopped by user interruption")));
-    p=0;
-    while ( a!=b && is_greater(a,giac_last_prime*giac_last_prime,context0) && is_probab_prime_p(a)==0 ) {
-      b=a;
-      a=pollardsieve(b,1,contextptr);
-      if (a==-1)
-	return makevecteur(gensizeerr(gettext("Quadratic sieve failure, perhaps number too large")));
-      if (is_zero(a))
-	return makevecteur(gensizeerr(gettext("Stopped by user interruption")));
-    }
-    if (debug_infolevel>5)
-      cerr << "Pollard end " << clock() << endl;
-    //n=iquo(n,a);
-    
-    while (irem(n,a,q)==0){
-      n=iquo(n,a); // n=q does not work because irem assumes n and q does not point to the same _ZINT
-      p=p+1;
-    }
-    v[0]=a;
-    if (a==b){v[1]=-p;} else {v[1]=p;}
+    n=1;
     return v;
+  }
+
+  void mergeifactors(const vecteur & f,const vecteur &g,vecteur & h){
+    h=f;
+    for (int i=0;i<g.size();i+=2){
+      int j=equalposcomp(f,g[i]);
+      if (j)
+	h[j+1] += g[i+1];
+      else {
+	h.push_back(g[i]);
+	h.push_back(g[i+1]);
+      }
+    }
   }
 
   vecteur ifactors(const gen & n0,GIAC_CONTEXT){
@@ -1129,16 +1773,83 @@ namespace giac {
     vecteur f;
     vecteur g;
     vecteur u;
+    // First find if |n-k^d|<=1 for d = 2, 3, 5 or 7
+    double nd=evalf_double(n,1,contextptr)._DOUBLE_val;
+    double nd2=std::floor(std::sqrt(nd)+.5);
+    if (std::abs(1-nd2*nd2/nd)<1e-10){
+      gen n2=isqrt(n+1);
+      if (n==n2*n2){
+	f=ifactors(n2,contextptr);
+	iterateur it=f.begin(),itend=f.end();
+	for (;it!=itend;++it){
+	  ++it;
+	  *it = 2 * *it;
+	}
+	return f;
+      }
+      if (n==n2*n2-1){
+	f=ifactors(n2-1,contextptr);
+	g=ifactors(n2+1,contextptr);
+	mergeifactors(f,g,u);
+	return u;
+      }
+    }
+    for (int k=3;;){
+      nd2=std::floor(std::pow(nd,1./k)+.5);
+      if (std::abs(1-std::pow(nd2,k)/nd)<1e-10){
+	gen n2=_floor(nd2,contextptr),nf=n2*n2;
+	for (int j=2;j<k;j++)
+	  nf=nf*n2;
+	if (n==nf){
+	  f=ifactors(n2,contextptr);
+	  iterateur it=f.begin(),itend=f.end();
+	  for (;it!=itend;++it){
+	    ++it;
+	    *it = k * *it;
+	  }
+	  return f;
+	}
+	if (n==nf-1){ // n2^k-1
+	  f=ifactors(n2-1,contextptr);
+	  g=ifactors(n/(n2-1),contextptr);
+	  mergeifactors(f,g,u);
+	  return u;
+	}
+	if (n==nf+1){ // n2^k+1
+	  f=ifactors(n2+1,contextptr);
+	  g=ifactors(n/(n2+1),contextptr);
+	  mergeifactors(f,g,u);
+	  return u;
+	}
+      }
+      if (k==11) break;
+      if (k==7) break; // k=11;
+      if (k==5) k=7;
+      if (k==3) k=5;
+    }
     f=pfacprem(n,false,contextptr);
     //cout<<n<<" "<<f<<endl;
     while (n!=1) {
       g=facprem(n,contextptr);
       if (is_undef(g))
 	return g;
-      //cout<<n<<" "<<g<<endl;
-      u=mergevecteur(u,g);
-    }
-    
+      sort(g.begin(),g.end(),islesscomplexthanf);
+      gen last=0; int p=0;
+      for (int i=0;i<g.size();++i){
+	if (g[i]==last)
+	  ++p;
+	else {
+	  if (last!=0){
+	    u.push_back(last);
+	    u.push_back(p);
+	  }
+	  last=g[i];
+	  p=1;
+	}
+      }
+      u.push_back(last);
+      u.push_back(p);
+    }   
     g=mergevecteur(f,u);
     return g;
 #endif // LIBPARI
@@ -1849,8 +2560,758 @@ namespace giac {
       return (g);
   }
 
+
+  // prepare an array for fast evaluation of smod(N,int)
+  void fastsmod_prepare(const mpz_t & Nz,mpz_t & tmp1,mpz_t & tmp2,mpz_t & tmp3,vector<unsigned short int> & N256){
+    unsigned Nl=mpz_sizeinbase(Nz,2)/15+1;
+    mpz_set(tmp1,Nz);
+    N256.clear();
+    N256.reserve(Nl);
+    int i;
+    for (i=0;i<Nl;++i){
+#ifdef USE_GMP_REPLACEMENTS
+      mp_div_2d(&tmp1,15,&tmp3,&tmp2);
+      mpz_set(tmp1,tmp3);
+      N256.push_back(mpz_get_si(tmp2));
+#else
+      mpz_tdiv_r_2exp(tmp2,tmp1,15);
+      N256.push_back(mpz_get_si(tmp2));
+      mpz_tdiv_q_2exp(tmp2,tmp1,15);
+      mpz_set(tmp1,tmp2);
+#endif
+    }
+  }
+ 
+  void fastsmod_prepare(const gen & N,mpz_t & tmp1,mpz_t & tmp2,mpz_t & tmp3,vector<unsigned short int> & N256){
+    return fastsmod_prepare(*N._ZINTptr,tmp1,tmp2,tmp3,N256);
+  }
+
+  int fastsmod_compute(const vector<unsigned short> & N256,int j){
+    int n=0;
+    for (int k=N256.size()-1;k>=0;k--){
+      n=((n<<15)+N256[k])%j;
+    }
+    return n;
+  }
+
 #endif
  
+#ifdef GIAC_QS
+  // sieve in [sqrtN+shift,sqrtN+shift+slice.size()-1]
+  void sieve(const vector<unsigned short> & basis,vector<unsigned short> & additional_primes,vector<bool> & additional_primes_twice,const vector<short int> & sqrt_mod,const vector<unsigned> & reciproques,const vector<unsigned char> & corrections,const gen & N,const gen & isqrtN,const vector<short int> & isqrtNmodp,vector<slicetype> & slice,int shift,vector< vector<unsigned short> > & puissances,vector<int> & shiftvalues,GIAC_CONTEXT){
+    // first fill slice with expected number of bits of 
+    // (isqrtN+shift)^2-N = 2*shift*isqrtN + negl.
+    // -> log(2*isqrtN)+log(shift)
+    mpz_t z1,z2,z3;
+    mpz_init(z1);  mpz_init(z2);  mpz_init(z3);
+    int nbits=int(0.5+std::log(2*evalf_double(isqrtN,1,context0)._DOUBLE_val)/std::log(2.));
+    int curbits=0;
+    for (int k=absint(shift);k;++curbits){
+      k >>= 1;
+    }
+    int next=1 << (curbits-(shift<0));
+    nbits += curbits+BITSHIFT;
+    int bs=basis.size();
+    unsigned char logB=(unsigned char) int(1.5*std::log(double(basis.back()))/std::log(2.0)+.5)+BITSHIFT;
+    int ss=slice.size();
+    if (debug_infolevel>6)
+      *logptr(contextptr) << "reset " << clock() << " shift " << shift << " nbits " << nbits-BITSHIFT << endl;
+    vector<slicetype>::iterator st=slice.begin(),stend=slice.end();
+#if 1 // assumes slice type is size 1 byte and multiple of 32
+    unsigned * ptr=(unsigned *) &slice[0];
+    unsigned * ptrend=ptr+(stend-st)/4;
+    unsigned nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
+    if (shift>=0){
+      for (int j=shift;ptr!=ptrend;j+=4,++ptr){
+	*ptr=nbits8;
+	if (j<next)
+	  continue;
+	++nbits;
+	nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
+	next *= 2;
+      }
+    }
+    else {
+      for (int j=-shift;ptr!=ptrend;j-=4,++ptr){
+	*ptr=nbits8;
+	if (j>next)
+	  continue;
+	--nbits;
+	nbits8=(nbits<<24)|(nbits<<16)|(nbits<<8)|nbits;
+	next /= 2;
+      }
+    }
+#else
+    if (shift>=0){
+      for (int j=shift;st!=stend;++j,++st){
+	*st=nbits;
+	if (j!=next)
+	  continue;
+	++nbits;
+	next *= 2;
+      }
+    }
+    else {
+      for (int j=-shift;st!=stend;--j,++st){
+	*st=nbits;
+	if (j!=next)
+	  continue;
+	--nbits;
+	next /= 2;
+      }
+    }
+#endif
+    if (debug_infolevel>6)
+      *logptr(contextptr) << "end reset " << clock() << " nbits " << nbits << endl;
+    // now for all primes p in basis move in slice from p to p
+    // decrease slice[] by number of bits in p
+    nbits=4;
+    next=16;
+    unsigned bstart;
+    for (bstart=0;bstart<basis.size();++bstart){
+      if (basis[bstart]>8)
+	break;
+    }
+    for (unsigned i=bstart;i<basis.size();++i){
+      int p=basis[i];
+      if (p>next){
+	++nbits;
+	next *=2;
+      }
+      int pos=(int(sqrt_mod[i])-shift-isqrtNmodp[i])%p; 
+      // pos+shift+isqrtN = sqrt_mod[i] mod p
+      if (pos<0)
+	pos+=p;
+      st=slice.begin()+pos; stend=slice.begin()+ss;
+      for (;st<stend;){
+	*st -= nbits;
+	st += p;
+      }
+      // if (p%2==0) continue; // only one sqrt
+      pos=(-int(sqrt_mod[i])-shift-isqrtNmodp[i])%p;
+      if (pos<0)
+	pos+=p;
+      st=slice.begin()+pos;
+      for (;st<stend;){
+	*st -= nbits;
+	st += p;
+      }
+    }
+    if (debug_infolevel>6)
+      *logptr(contextptr) << clock() << "relations " << endl;
+    // now find relations
+    vector<unsigned short> curpuissances,recheck;
+    st=slice.begin(); stend=slice.end();
+    for (int pos=0;st!=stend;++pos,++st){
+      // compare slice[pos] to boundary
+      if (*st>logB)
+	continue;
+      // factor (isqrtN+shift+pos)^2-N on basis
+      curpuissances.clear(); recheck.clear();
+      int shiftpos=shift+pos;
+#if 0
+      gen tmp=isqrtN+shift+pos;
+      tmp=tmp*tmp-N; tmp.uncoerce(); mpz_set(z1,*tmp._ZINTptr);
+      *logptr(contextptr) << tmp << endl;
+#else
+      if (shiftpos>0)
+	mpz_add_ui(z2,*isqrtN._ZINTptr,shiftpos); // gen tmp=isqrtN+shift+pos;
+      else
+	mpz_sub_ui(z2,*isqrtN._ZINTptr,-shiftpos);
+      mpz_mul(z3,z2,z2); mpz_sub(z1,z3,*N._ZINTptr); // tmp=tmp*tmp-N; tmp.uncoerce(); mpz_set(z1,*tmp._ZINTptr);
+#endif
+      if (mpz_cmp_si(z1,0)<0){ // if (is_positive(-tmp,context0))
+	curpuissances.push_back(0xffff);
+	mpz_neg(z1,z1); // tmp=-tmp;
+      }
+      bool done=false;
+      int debut=0;
+#if 0 // #ifndef USE_GMP_REPLACEMENTS
+      if (basis.front()==2){
+	++debut;
+	int j=0;
+	for (;mpz_even_p(z1);++j){
+	  mpz_tdiv_q_2exp(z1,z1,1);
+	}
+	for (;j>=256;j-=256)
+	  curpuissances.push_back(2<<8);
+	if (j)
+	  curpuissances.push_back( (2 << 8) | j);
+      }
+#endif
+      for (int i=debut;i<bs;++i){
+	int bi=basis[i];
+	// check that shiftpos+isqrtNmodp[i] is +/-sqrt_mod[i] % bi 
+#ifdef GIAC_RECIPROQUES
+	int offset = shiftpos+isqrtNmodp[i];
+	int check;
+	if (bi>256 && bi< (1<<14)){
+	  if (offset>0){
+	    check = (unsigned) (((ulonglong)( offset+ corrections[i]) * 
+				 (ulonglong)reciproques[i]) >> 40);
+	    check = offset - check * bi;
+	  }
+	  else {
+	    check = (unsigned) (((ulonglong)( corrections[i]-offset) * 
+				 (ulonglong)reciproques[i]) >> 40);
+	    check = offset + check * bi;
+	    if (check<0)
+	      check += bi;
+	  }
+	}
+	else { 
+	  check=offset%bi;
+	  if (check<0)
+	    check+=bi;
+	}
+	int root=sqrt_mod[i];
+	if (check!=root && check!=bi-root)
+	  continue;
+#else
+	int offset = shiftpos+isqrtNmodp[i];
+	int check=offset%bi;
+	if (check<0)
+	  check+=bi;
+	int root=sqrt_mod[i];
+	if (check!=root && check!=bi-root)
+	  continue;
+#endif
+	recheck.push_back(bi);
+      } // end for on primes
+      // now divide first by product of elements of recheck
+      double prod=1,nextprod=1;
+      for (int k=0;k<recheck.size();++k){
+	nextprod=prod*recheck[k];
+	if (nextprod< 2147483648. )
+	  prod=nextprod;
+	else {
+	  mpz_set_si(z2,int(prod));
+	  mpz_fdiv_qr(z1,z3,z1,z2);
+	  prod=recheck[k];
+	}
+      }
+      if (prod!=1){
+	mpz_set_si(z2,int(prod));
+	mpz_fdiv_qr(z1,z3,z1,z2);
+      }
+      // then set curpuissances
+      bool small_=false;
+      div_t qr;
+      int Z1=0;
+      for (int k=0;k<recheck.size();++k){
+	int j=0;
+	int bi=recheck[k];
+#ifdef USE_GMP_REPLACEMENTS
+	if (!small_){
+	  small_=mpz_sizeinbase(z1,2)<32;
+	  if (small_)
+	    Z1=mpz_get_si(z1);
+	}
+	if (small_){
+	  for (++j;;++j){
+	    qr=div(Z1,bi);
+	    if (qr.rem)
+	      break;
+	    Z1=qr.quot;
+	  }
+	}
+	else {
+	  for (++j;;++j){
+	    mpz_fdiv_qr_ui(z2,z3,z1,bi);
+	    if (mpz_cmp_si(z3,0))
+	      break;
+	    mpz_set(z1,z2);
+	  }
+	}
+#else
+	for (++j;;++j){
+	  mpz_fdiv_qr_ui(z2,z3,z1,bi);
+	  if (mpz_cmp_si(z3,0))
+	    break;
+	  mpz_set(z1,z2);
+	}
+#endif
+	/*
+	  while (is_zero(smod(tmp,bi))){
+	  tmp=tmp/bi;
+	  ++j;
+	  }
+	*/
+	if (!done && bi>255){
+	  curpuissances.push_back(0);
+	  done=true;
+	}
+	if (done){
+	  for (;j;--j)
+	    curpuissances.push_back(bi);
+	}
+	else {
+	  for (;j>=256;j-=256)
+	    curpuissances.push_back(bi<<8);
+	  if (j)
+	    curpuissances.push_back( (bi << 8) | j);
+	}
+      }
+      if (small_) 
+	mpz_set_si(z1,Z1);
+      if (mpz_cmp_si(z1,1)==0){ // is_one(tmp)){
+	// *logptr(contextptr) << curpuissances << endl;
+	shiftvalues.push_back(shift+pos);
+	puissances.push_back(curpuissances);
+      }
+      else {
+	if (mpz_cmp_ui(z1,0xffff)==1){
+	  if (debug_infolevel>6)
+	    *logptr(contextptr) << "Sieve large remainder:" << gen(z1) << endl;
+	}
+	else {
+#ifdef GIAC_ADDITIONAL_PRIMES
+	  unsigned short P=mpz_get_ui(z1);
+	  // if (int(P)>2*int(basis.back())) continue;
+	  // if (debug_infolevel>5)
+	  if (debug_infolevel>6)
+	    *logptr(contextptr) << P << " remain " << endl;
+	  int Ppos=equalposcomp(additional_primes,P); // this is in O(additional^2)=o(B^3)
+	  if (Ppos){
+	    if (debug_infolevel>6)
+	      *logptr(contextptr) << P << " already additional" << endl;
+	    --Ppos;
+	    additional_primes_twice[Ppos]=true;
+	  } else {
+	    // add a prime in additional_primes if <=QS_B_BOUND
+	    if (additional_primes.size()>=bs || bs+additional_primes.size()>QS_B_BOUND)
+	      continue;
+	    additional_primes.push_back(P);
+	    additional_primes_twice.push_back(false);
+	    Ppos=additional_primes.size()-1;
+	  }
+	  // add relation
+	  if (!done)
+	    curpuissances.push_back(0);
+	  curpuissances.push_back(P);
+	  shiftvalues.push_back(shift+pos);
+	  puissances.push_back(curpuissances);
+#endif
+	}
+      }
+    } // end for loop on slice array
+    mpz_clear(z1);  mpz_clear(z2);  mpz_clear(z3);  
+    if (debug_infolevel>6)
+      *logptr(contextptr) << clock() << " end relations " << endl;
+  }
+
+  // find relations around floor(sqrt(n)), quadratic sieve
+  bool sieve(const gen & n,gen & pn,GIAC_CONTEXT){
+    if (n.type!=_ZINT)
+      return false;
+    gen N(n);
+    /*
+    // make Q(x)=x^2-N divisible by 8 if it is even
+    gen r=smod(N,8);
+    if (r==3) N=5*N;
+    if (r==-3) N=3*N;
+    if (r==-1) N=7*N;
+    */
+    double Nd=evalf_double(N,1,context0)._DOUBLE_val;
+    double B=std::exp(std::sqrt(2.0)/4*std::sqrt(std::log(Nd)*std::log(std::log(Nd))));
+    *logptr(contextptr) << "" << clock() << " QSieve number of primes " << B << endl;
+    // double B=std::exp(std::sqrt(std::log(Nd)*std::log(std::log(Nd)))/2);
+    if (B>QS_B_BOUND) 
+      return false;
+    double M=B*B*B;
+    // sieve between sqrt(N)-M and sqrt(N)+M
+    // first compute the prime basis and sqrt(N) mod p, p in basis
+    vector<unsigned short> basis;
+    vector<short> sqrtmod;
+    basis.reserve(unsigned(B));
+    basis.push_back(2);
+    sqrtmod.reserve(basis.capacity());
+    sqrtmod.push_back(1); // I assume that N is odd... hence has sqrt 1 mod 2
+    N.uncoerce();
+    vector<unsigned short> N256;
+    unsigned Nl=mpz_sizeinbase(*N._ZINTptr,2)/15+1;
+    N256.reserve(Nl);
+    int i;
+    mpz_t tmp1,tmp2;
+    mpz_init_set(tmp1,*N._ZINTptr); mpz_init(tmp2);
+    for (i=0;i<Nl;++i){
+      mpz_tdiv_r_2exp(tmp2,tmp1,15);
+      N256.push_back(mpz_get_si(tmp2));
+      mpz_tdiv_q_2exp(tmp2,tmp1,15);
+      mpz_set(tmp1,tmp2);
+    }
+    for (i=1;i<sizeof(giac_primes)/sizeof(short);++i){
+      if (ctrl_c)
+	break;
+      unsigned short j=giac_primes[i];
+      if (i%500==99)
+	*logptr(contextptr) << clock() << " QSieve current basis size " << basis.size() << endl;
+#if 1
+#if 1 // def USE_GMP_REPLACEMENTS
+      int n=0;
+      for (int k=Nl-1;k>=0;k--){
+	n=((n<<15)+N256[k])%j;
+      }
+#else
+      int n=smod(N,j).val;
+      if (n<0)
+	n+=j;
+#endif
+      if (powmod(n,(unsigned long)((j-1)/2),(int)j)==1){
+	basis.push_back(j);
+	sqrtmod.push_back(sqrt_mod(n,j,true,contextptr).val);
+      }
+#else
+      if (legendre(N,j)==1){
+	basis.push_back(j);
+	sqrtmod.push_back(sqrt_mod(N,j,true,contextptr).val);
+      }
+#endif
+      if (basis.size()>B)
+	break;
+    }
+    int jp=nextprime(basis.back()+1).val;
+    for (;basis.size()<B;++i){
+      if (ctrl_c)
+	break; 
+      if (jp>65535)
+	break;
+      if (i%500==99)
+	*logptr(contextptr) << clock() << " QSieve current basis size " << basis.size() << endl;
+#if 1
+#if 1 // def USE_GMP_REPLACEMENTS
+      int n=0;
+      for (int k=Nl-1;k>=0;k--){
+	n=((n<<15)+N256[k])%jp;
+      }
+#else
+      int n=smod(N,jp).val;
+      if (n<0)
+	n+=jp;
+#endif
+      if (powmod(n,(unsigned long)((jp-1)/2),jp)==1){
+	basis.push_back(jp);
+	sqrtmod.push_back(sqrt_mod(n,jp,true,contextptr).val);
+      }
+#else
+      if (legendre(N,jp)==1){
+	basis.push_back(jp);
+	sqrtmod.push_back(sqrt_mod(N,jp,true,contextptr).val);
+      }
+#endif
+      jp=nextprime(jp+1).val;
+    }
+    if (ctrl_c){
+      mpz_clear(tmp1); mpz_clear(tmp2); 
+      return false;
+    }
+    *logptr(contextptr) << clock() << " QSieve basis OK, size " << basis.size() << endl;
+    int bs=basis.size();
+    // 2^32/primes 
+    vector<unsigned> reciproques(bs);
+    vector<unsigned char> corrections(bs);
+    for (int i=0;i<bs;++i){
+      int prime=basis[i];
+      reciproques[i]=((ulonglong)1 << 40) / (ulonglong)prime;
+      if (floor(256*MP_RADIX / (double)prime + 0.5) == (double) reciproques[i]){
+	corrections[i] = 1;
+      }
+      else {
+	corrections[i] = 0;
+	++reciproques[i];
+      }
+    }
+    gen isqrtN=isqrt(N);
+    isqrtN.uncoerce(); 
+    vector<unsigned short> isqrtN256;
+    unsigned isqrtNl=mpz_sizeinbase(*isqrtN._ZINTptr,2)/15+1;
+    isqrtN256.reserve(Nl);
+    mpz_set(tmp1,*isqrtN._ZINTptr);
+    for (i=0;i<isqrtNl;++i){
+      mpz_tdiv_r_2exp(tmp2,tmp1,15);
+      isqrtN256.push_back(mpz_get_si(tmp2));
+      mpz_tdiv_q_2exp(tmp2,tmp1,15);
+      mpz_set(tmp1,tmp2);
+    }
+    mpz_clear(tmp1); mpz_clear(tmp2); 
+    vector<short int> isqrtNmodp(bs);
+    for (int i=0;i<bs;++i){
+#if 1
+      int n=0,bi=basis[i];
+      for (int k=isqrtNl-1;k>=0;k--){
+	n=((n<<15)+isqrtN256[k])%bi;
+      }
+      isqrtNmodp[i]=n;
+#else
+      isqrtNmodp[i]=smod(isqrtN,basis[i]).val;
+#endif
+    }
+    int shift;
+    vector<slicetype> slice(QS_SIZE);
+    // relations will be written in column
+    vector<int> shiftvalues;
+    vector<unsigned short> additional_primes;
+    vector<bool> additional_primes_twice;
+    vector< vector<unsigned short> > puissances;
+#ifdef GIAC_ADDITIONAL_PRIMES
+    shiftvalues.reserve(2*bs);
+    additional_primes.reserve(bs);
+    additional_primes_twice.reserve(bs);
+    puissances.reserve(2*bs);
+#else
+    shiftvalues.reserve(bs+1);
+    puissances.reserve(bs+1);
+#endif
+    unsigned todo_rel;
+    for (i=0;i<M/QS_SIZE;++i){
+      if (ctrl_c)
+	return false;
+      // pass 1, positive
+      shift=i*QS_SIZE;
+      sieve(basis,additional_primes,additional_primes_twice,sqrtmod,reciproques,corrections,N,isqrtN,isqrtNmodp,slice,shift,puissances,shiftvalues,contextptr);
+      todo_rel=bs+15+additional_primes.size();
+      if (debug_infolevel)
+	*logptr(contextptr) << clock()<< " sieve : " << shiftvalues.size() << " relations of " << todo_rel << endl;
+      if (shiftvalues.size()>=todo_rel)
+	break;
+      // pass 2, negative
+      shift=-(i+1)*QS_SIZE;
+      sieve(basis,additional_primes,additional_primes_twice,sqrtmod,reciproques,corrections,N,isqrtN,isqrtNmodp,slice,shift,puissances,shiftvalues,contextptr);
+      todo_rel=bs+15+additional_primes.size();
+      if (debug_infolevel)
+	*logptr(contextptr) << clock()<< " sieve : " << shiftvalues.size() << " relations of " << todo_rel << endl;
+      if (shiftvalues.size()>=todo_rel)
+	break;
+    }
+    *logptr(contextptr) << clock() << " sieve done" << endl;
+    release_memory(slice);
+    release_memory(isqrtNmodp);
+    release_memory(reciproques);
+    release_memory(corrections);
+    release_memory(sqrtmod);
+#ifdef GIAC_ADDITIONAL_PRIMES
+    *logptr(contextptr) << clock() << " removing additional primes" << endl;
+    // remove relations with additional primes which are used only once
+    int lastp=puissances.size()-1,lasta=additional_primes.size()-1;
+    for (unsigned i=0;i<=lastp;++i){
+      vector<unsigned short> & cur=puissances[i];
+      if (cur.empty())
+	continue;
+      unsigned short u=cur.back();
+      int pos=equalposcomp(additional_primes,u);
+      if (!pos)
+	continue;
+      --pos;
+      if (additional_primes_twice[pos])
+	continue;
+      swap(cur,puissances[lastp]);
+      shiftvalues[i]=shiftvalues[lastp];
+      --lastp;
+      additional_primes[pos]=additional_primes[lasta];
+      additional_primes_twice[pos]=additional_primes_twice[lasta];
+      --lasta;
+      --i; // recheck at current index
+    }
+    puissances.resize(lastp+1);
+    shiftvalues.resize(lastp+1);
+    additional_primes.resize(lasta+1);
+    *logptr(contextptr) << clock() << " end removing additional primes" << endl;
+#endif
+    // Make relations matrix (currently dense, -> improve to sparse and Lanczos algorithm)
+    vector< vector<unsigned> > relations(puissances.size(),vector<unsigned>(int(std::ceil(puissances.size()/128.))*4));
+    // sort(additional_primes.begin(),additional_primes.end());
+    for (unsigned j=0;j<puissances.size();j++){
+      vector<unsigned short> & curpui=puissances[j];
+      bool done=false;
+      int i=0; // position in basis
+      unsigned k=0; // position in curpui
+      unsigned short p=0; // prime
+      for (;k<curpui.size();++k){
+	p=curpui[k];
+	if (p==0xffff){
+	  relations[0][j/32] |= (1 << (j%32));
+	  continue;
+	}
+	if (p==0){
+	  done=true;
+	  continue;
+	}
+	if (!done){
+	  if (p%2==0) // even exponent?
+	    continue;
+	  p >>= 8;
+	}
+	else {
+	  int c=1;
+	  for (;k+1<curpui.size();c++){
+	    if (curpui[k+1]==p)
+	      ++k;
+	    else
+	      break;
+	  }
+	  if (c%2==0)
+	    continue;
+	}
+	// advance to next i in basis
+	for (;i<bs;++i){
+	  if (basis[i]==p)
+	    break;
+	}
+	if (i<bs){
+	  ++i;
+	  relations[i][j/32] |= (1 << (j %32));
+	}
+	else {
+	  // k must be == curpui.size()-1
+	  // find p in additional_primes and position
+	  int Ppos=equalposcomp(additional_primes,p);
+	  // *logptr(contextptr) << p << " " << Ppos+bs << " " << relations.size() << endl;
+	  relations[bs+Ppos][j/32] |= (1 << (j %32));	  
+	}
+      } // end loop on k in curpui
+    } // end loop on j in puissances
+    // FIXME remove lines with only one 1 in relations and basis or additional_primes
+    // now reduce relations
+    // printbool(*logptr(contextptr),relations);
+    *logptr(contextptr) << clock() << " begin rref size " << relations.size() << "x" << relations.front().size()*32 << " K " << 0.004*relations.size()*relations.front().size() << endl;
+    rref(relations);
+    *logptr(contextptr) << clock() << " end rref" << endl;
+    // printbool(*logptr(contextptr),relations);
+    // move pivots on the diagonal by inserting 0 lines
+    int l=relations.front().size(),l32=l*32;
+    vector< vector<unsigned> > relations2(l32);
+    i=0;
+    int j=0,rs=relations.size();
+    for (;i<rs && j<l32;++j){
+      if (relations[i][j/32] & (1 << j%32)){
+	swap(relations2[j],relations[i]);
+	++i;
+      }
+    }
+    // printbool(*logptr(contextptr),relations2);
+    // for each element of the kernel compute x and y / x^2=y^2[N] 
+    // then gcd(x-y,N)
+    for (i=0;i<l32;++i){
+      if (!relations2[i].empty() && (relations2[i][i/32] & (1<<i%32)))
+	continue;
+      // using column i of relations2 which is in the kernel, build x and y
+      // for x, we can compute the product of the isqrtN+shiftvalues mod N
+      // for y, compute the product (isqrtN+shiftvalues)^2-N
+      // then the isqrt
+      gen x=1,y=1,cur;
+      vector<short int> p(bs),add_p(additional_primes.size());
+      for (unsigned j=0;int(j)<l32;++j){
+	if (j<shiftvalues.size() && (i==j || (!relations2[j].empty() && (relations2[j][i/32] & (1<<(i%32)))))){
+	  cur=isqrtN+shiftvalues[j];
+	  x=smod(x*cur,N);
+	  bool done=false;
+	  unsigned bi=0;
+	  vector<unsigned short>::const_iterator it=puissances[j].begin(),itend=puissances[j].end();
+	  for (;it!=itend;++it){
+	    if (*it==0xffff)
+	      continue;
+	    if (!*it){
+	      done=true;
+	      continue;
+	    }
+	    if (done){
+	      while (bi<basis.size() && basis[bi]!=*it)
+		++bi;
+	      if (bi<basis.size())
+		p[bi]++;
+	      else {
+		int pos=equalposcomp(additional_primes,*it);
+		if (pos) // otherwise ERROR!!!
+		  ++add_p[pos-1];
+	      }
+	    }
+	    else {
+	      while (basis[bi]!=(*it>>8))
+		++bi;
+	      p[bi]+=(*it&0xff);
+	    }
+	  }
+	}
+      }
+      mpz_t zy,zq,zr,alloc1,alloc2,alloc3,alloc4,alloc5;
+      mpz_init_set_ui(zy,1); mpz_init(zq); mpz_init(zr);
+      mpz_init(alloc1); mpz_init(alloc2); mpz_init(alloc3); mpz_init(alloc4); mpz_init(alloc5);
+      for (int i=0;i<bs;++i){
+	if (p[i] % 2)
+	  *logptr(contextptr) << "error, odd exponent for prime " << basis[i] << endl;
+	if (p[i]){
+#if 1
+	  mpz_set_ui(alloc1,basis[i]);
+	  for (int j=0;j<p[i]/2;++j)
+	    mpz_mul(zy,zy,alloc1);
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,zy.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = zy.used +2 ;
+	  mpz_set(alloc2,zy);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&zy,n._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_tdiv_r(zr,zy,*N._ZINTptr);
+#endif
+	  mpz_set(zy,zr);
+#else
+	  y=y*pow(gen(basis[i]),int(p[i]/2));
+	  y=smod(y,N);
+#endif
+	}
+      }
+      for (unsigned i=0;i<additional_primes.size();++i){
+	if (add_p[i] % 2)
+	  *logptr(contextptr) << "error" << i << endl;
+	if (add_p[i]){
+#if 1
+	  mpz_set_ui(alloc1,additional_primes[i]);
+	  for (int j=0;j<add_p[i]/2;++j)
+	    mpz_mul(zy,zy,alloc1);
+#ifdef USE_GMP_REPLACEMENTS
+	  mp_grow(&alloc1,zy.used+2);
+	  mpz_set_ui(alloc1,0);
+	  alloc1.used = zy.used +2 ;
+	  mpz_set(alloc2,zy);
+	  mpz_set(alloc3,*n._ZINTptr);
+	  // mpz_set_si(alloc4,0);
+	  // mpz_set_si(alloc5,0);
+	  alloc_mp_div(&zy,n._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
+#else
+	  mpz_tdiv_r(zr,zy,*N._ZINTptr);
+#endif
+	  mpz_set(zy,zr);
+#else
+	  y=y*pow(gen(additional_primes[i]),int(add_p[i]/2));
+	  y=smod(y,N);
+#endif
+	}
+      }
+#if 1
+      y=zy;
+#endif
+      mpz_clear(zy); mpz_clear(zq); mpz_clear(zr);
+      mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
+      cur=gcd(x-y,N);
+      if (debug_infolevel>6)
+	*logptr(contextptr) << clock() << "checking gcd" << cur << " " << N << endl;
+      if ( (cur.type==_INT_ && cur.val>7) || 
+	   (cur.type==_ZINT && is_strictly_greater(n,cur,context0))){
+	if (n==N)
+	  pn=cur;
+	else
+	  pn=cur/gcd(3*5*7,cur);
+	return true;
+      }
+    }
+    return false;
+  }
+
+#endif // GIAC_QS
+
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac
 #endif // ndef NO_NAMESPACE_GIAC

@@ -98,7 +98,7 @@ namespace giac {
   void zint2simpldoublpos(const gen & e,gen & simpl,gen & doubl,bool & pos,GIAC_CONTEXT);
   gen sqrt_noabs(const gen & e,GIAC_CONTEXT);
   gen sqrt(const gen & e,GIAC_CONTEXT);
-  gen sqrt_mod(const gen & a,const gen & b,GIAC_CONTEXT);
+  gen sqrt_mod(const gen & a,const gen & b,bool isprime,GIAC_CONTEXT); // set isprime to true if b is prime
   extern const unary_function_ptr * const  at_sqrt ;
 
   gen _sq(const gen & e);

@@ -21,7 +21,7 @@
 #include <QGraphicsView>
 #include "CasManager.h"
 #include "giac/giac.h"
-//#include "global.h"
+#include "global.h"
 //#include "EvaluationThread.h"
 #include "gui/FormalLineWidgets.h"
 #include "gui/src/qtmmlwidget.h"
@@ -137,6 +137,8 @@ CasManager::CasManager(MainWindow* main){
     signal(SIGINT,giac::ctrl_c_signal_handler);
 
     context=new giac::context;
+//    giac::language(0,context);
+
     monitor=new MonitorThread(context);
     stopThread=new StopThread(context);
     connect(stopThread,SIGNAL(startDirtyInterrupt()),mainWindow,SLOT(displayCrashWarning()));
@@ -154,7 +156,6 @@ bool CasManager::testExpression(const giac::gen & exp){
 }
 CasManager::warning CasManager::initExpression(const QString *str){
     expression=giac::gen(str->toStdString(),context);
-
 
 
     bool b=testExpression(expression);
@@ -208,6 +209,11 @@ void callback(const gen & g,void * newcontextptr){
 
 
 void CasManager::evaluate(){
+/*    gen var("A",context);
+    gen rep(eval(var,1,context));
+            qDebug()<<"test..."<<QString::fromStdString(rep.print());
+
+*/
     if (stopThread->isRunning()){
         stopThread->wait(2000);
     }
@@ -382,7 +388,7 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-   info(answer,0);
+  // info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

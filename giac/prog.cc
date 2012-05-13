@@ -756,8 +756,9 @@ namespace giac {
        if (c.type==_SYMB && c._SYMBptr->sommet!=at_local && c._SYMBptr->sommet!=at_bloc ){
 	 vecteur lofc=lop(c,at_of);
 	 vecteur lofc_no_d;
+	 vecteur av=gen2vecteur(a);
 	 for (unsigned i=0;i<lofc.size();++i){
-	   if (lofc[i][1]!=d)
+	   if (lofc[i][1]!=d && !equalposcomp(av,lofc[i][1]))
 	     lofc_no_d.push_back(lofc[i]);
 	 }
 	 if (!lofc_no_d.empty()){

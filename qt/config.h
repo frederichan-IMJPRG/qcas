@@ -22,7 +22,7 @@ class Config{
 
 public:
     Config();
-    static bool ortho,autoscale;
+//    static bool ortho,autoscale;
     static int graph_width;
     enum LANGUAGES{
        FRENCH=0,

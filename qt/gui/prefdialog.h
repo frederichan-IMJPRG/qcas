@@ -82,6 +82,16 @@ public:
 private:
     QLineEdit* editWidth;
     QComboBox* comboLanguage;
+    QLineEdit* editXMin;
+    QLineEdit* editXMax;
+    QLineEdit* editYMin;
+    QLineEdit* editYMax;
+    QLineEdit* editZMin;
+    QLineEdit* editZMax;
+    QLineEdit* editTMin;
+    QLineEdit* editTMax;
+    QCheckBox* checkAutoScale;
+
     void initGui();
 
 

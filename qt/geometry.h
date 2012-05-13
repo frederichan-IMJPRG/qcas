@@ -40,7 +40,6 @@ public:
   virtual bool isPixel() const;
   virtual bool isFillable() const;
   virtual bool isLegendItem() const;
-
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
   virtual QString getType()const =0 ;
@@ -73,7 +72,8 @@ public:
   void setLegendVisible(const bool);
   void setLegend(const QString &) ;
   QString getLegend() const;
-
+  int getLevel() const;
+  void setLevel(const int&);
 
 
 protected:
@@ -84,6 +84,7 @@ protected:
   double angleLegend;
   QString legend;
   bool visible;
+  int level;
 
   private:
 

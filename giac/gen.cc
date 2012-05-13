@@ -7926,6 +7926,8 @@ namespace giac {
       return n;
     if ((n.type==_POLY) && (d.type==_POLY)){
       polynome np(*n._POLYptr),dp(*d._POLYptr);
+      if (np.dim && dp.dim && np.dim!=dp.dim)
+	return gensizeerr("simplify: Polynomials do not have the same dimension");
       polynome g(np.dim);
       g=simplify(np,dp);
       n=np;
@@ -8580,6 +8582,11 @@ namespace giac {
   // hence a + A*amod = b + B*bmod
   // or A*amod -B*bmod = b - a
   gen ichinrem(const gen & a,const gen &b,const gen & amod, const gen & bmod){
+    if (a.type==_INT_ && b.type==_INT_ && amod.type==_INT_ && bmod.type==_INT_){
+      int amodinv=invmod(amod.val,bmod.val);
+      longlong res=a.val+((longlong(amodinv)*(b.val-a.val))%bmod.val)*amod.val;
+      return res;
+    }
     gen A,B,d,q;
     egcd(amod,bmod,A,B,d);
     if (is_one(d))
@@ -8641,6 +8648,15 @@ namespace giac {
     }
     if (a.type==_INT_ && a.val<2)
       return false;
+    if (a.type==_INT_ && a.val<(1<<20)){
+      for (int i=0;;++i){
+	int p=giac_primes[i];
+	if (p*p>a.val)
+	  return true;
+	if (a.val%p==0)
+	  return false;
+      }
+    }
     ref_mpz_t *aptr;
     if (a.type!=_INT_)
 #ifdef SMARTPTR64
@@ -9618,7 +9634,10 @@ namespace giac {
       s= "rgba[";
       break;
     case _LIST__VECT:
-      s=abs_calc_mode(contextptr)==38?"{":"list[";
+      if (tex)
+	s="\\{";
+      else
+	s=abs_calc_mode(contextptr)==38?"{":"list[";
       break;
     default:
       s="[";
@@ -9634,7 +9653,7 @@ namespace giac {
     case _SET__VECT:
       if (xcas_mode(contextptr)>0){
 	if (tex)
-	return "\\}";
+	  return "\\}";
 	else
 	  return "}";
       }
@@ -9645,7 +9664,10 @@ namespace giac {
     case _RPN_FUNC__VECT:
       return " >>";
     case _LIST__VECT:
-      return abs_calc_mode(contextptr)==38?"}":"]";
+      if (tex)
+	return "\\}";
+      else
+	return abs_calc_mode(contextptr)==38?"}":"]";
     default:
       return "]";
     }    

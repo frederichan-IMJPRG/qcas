@@ -3490,6 +3490,8 @@ namespace giac {
     if (s==5)
       return seqprod(gen(v,_SEQ__VECT),2,contextptr);
     if (s==4) {
+      if (v[1]==cst_i)
+	return gensizeerr("i=sqrt(-1), please use a valid identifier name");
       is_integral(v[2]);
       is_integral(v[3]);
       if (is_zero(v[2]-v[3]-1))

@@ -5694,8 +5694,18 @@ namespace giac {
 	  gen x(identificateur("x")),y(identificateur("y")),z(identificateur("z"));
 	  gen lieu_eq(undef),geoobj,lieu_geo;
 	  if (is_zero(Nz)){
+#if 1
 	    lieu_eq=_resultant(makevecteur(x-Nx,y-Ny,gen_t),contextptr);
 	    lieu_eq=_factor(lieu_eq,contextptr);
+#else
+	    gen tmp,numx,denx,numy,deny;
+	    tmp=_fxnd(Nx,contextptr);
+	    numx=tmp[0]; denx=tmp[1];
+	    tmp=_fxnd(Ny,contextptr);
+	    numy=tmp[0]; deny=tmp[1];
+	    lieu_eq=_resultant(makevecteur(x*denx-numx,y*deny-numy,gen_t),contextptr);
+	    lieu_eq=_factor(lieu_eq,contextptr);
+#endif
 #ifndef GIAC_HAS_STO_38
 	    *logptr(contextptr) << "Equation 0 = " << lieu_eq << endl;
 #endif
@@ -10022,6 +10032,9 @@ namespace giac {
     return sol.type==_DOUBLE_;
   }
   static gen in_plotimplicit(const gen& f_orig,const gen&x,const gen & y,double xmin,double xmax,double ymin,double ymax,int nxstep,int nystep,double eps,const vecteur & attributs,const context * contextptr){
+#ifdef RTOS_THREADX
+    return undef;
+#else
     if (f_orig.type==_VECT){
       vecteur & v = *f_orig._VECTptr,w;
       int vs=v.size();
@@ -10540,6 +10553,7 @@ namespace giac {
 #endif // WIN32
     return res; // gen(res,_SEQ__VECT);
     return zero;
+#endif // RTOS_THREADX
   }
 
   gen plotimplicit(const gen& f_orig,const gen&x,const gen & y,double xmin,double xmax,double ymin,double ymax,int nxstep,int nystep,double eps,const vecteur & attributs,bool unfactored,const context * contextptr){

@@ -26,9 +26,11 @@
 #include <QSpinBox>
 #include <QHBoxLayout>
 #include <QLineEdit>
+#include <QGroupBox>
 #include "../MainWindow.h"
 #include "prefdialog.h"
 #include "global.h"
+#include "plot.h"
 #include "config.h"
 #include <QDebug>;
 
@@ -280,6 +282,8 @@ void CasPanel::initValue(){
 }
 void CasPanel::apply(){
     giac::context* c=mainWindow->getContext();
+
+
     giac::xcas_mode(comboProg->currentIndex(),c);
     giac::scientific_format(comboFloat->currentIndex(),c);
     int d=comboBasis->itemText(comboBasis->currentIndex()).toInt();
@@ -322,37 +326,148 @@ GeneralPanel::GeneralPanel():QWidget(){
     initGui();
 }
 void GeneralPanel::initGui(){
-    QGridLayout* grid=new QGridLayout;
-    QLabel* labelWidth=new QLabel(tr("Largeur (en pixel) des graphiques"));
-    editWidth=new QLineEdit;
+    QVBoxLayout* mainLayout=new QVBoxLayout(this);
+
+    QGroupBox* graphicGroup=new QGroupBox(tr("Options graphiques"),this);
+   /* graphicGroup->setStyleSheet("QGroupBox { "
+                                "border: 2px solid gray; "
+                               " border-radius: 3px;} ");*/
+    QGridLayout* graphicGrid=new QGridLayout(graphicGroup);
+
+    QLabel* labelWidth=new QLabel(tr("Largeur (en pixel) des graphiques"),this);
+    editWidth=new QLineEdit(this);
     editWidth->setValidator(new QIntValidator(editWidth));
     editWidth->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
-    QLabel* labelLanguage=new QLabel(tr("Langue"));
-    comboLanguage=new QComboBox;
+    QLabel* labelXMin=new QLabel(tr("xmin:"),this);
+    editXMin=new QLineEdit(this);
+    editXMin->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    editXMin->setValidator(new QDoubleValidator(editXMin));
+    QLabel* labelXMax=new QLabel(tr("xmax:"),this);
+    editXMax=new QLineEdit(this);
+    editXMax->setValidator(new QDoubleValidator(editXMax));
+    QLabel* labelYMin=new QLabel(tr("ymin:"),this);
+    editYMin=new QLineEdit(this);
+    editYMin->setValidator(new QDoubleValidator(editYMin));
+    QLabel* labelYMax=new QLabel(tr("ymax:"),this);
+    editYMax=new QLineEdit(this);
+    editYMax->setValidator(new QDoubleValidator(editYMax));
+    QLabel* labelZMin=new QLabel(tr("zmin:"),this);
+    editZMin=new QLineEdit(this);
+    editZMin->setValidator(new QDoubleValidator(editZMin));
+    QLabel* labelZMax=new QLabel(tr("zmax:"),this);
+    editZMax=new QLineEdit(this);
+    editZMax->setValidator(new QDoubleValidator(editZMax));
+    QLabel* labelTMin=new QLabel(tr("tmin:"),this);
+    editTMin=new QLineEdit(this);
+    editTMin->setValidator(new QDoubleValidator(editTMin));
+    QLabel* labelTMax=new QLabel(tr("tmax:"),this);
+    editTMax=new QLineEdit(this);
+    editTMax->setValidator(new QDoubleValidator(editTMax));
+    checkAutoScale=new QCheckBox(tr("autoscale"));
+
+    graphicGrid->addWidget(labelWidth,0,0,1,3);
+    graphicGrid->addWidget(editWidth,0,3);
+    graphicGrid->addWidget(checkAutoScale,0,6,1,2);
+    graphicGrid->addWidget(labelXMin,1,0);
+    graphicGrid->addWidget(editXMin,1,1);
+    graphicGrid->addWidget(labelXMax,1,2);
+    graphicGrid->addWidget(editXMax,1,3);
+    graphicGrid->addWidget(labelYMin,1,4);
+    graphicGrid->addWidget(editYMin,1,5);
+    graphicGrid->addWidget(labelYMax,1,6);
+    graphicGrid->addWidget(editYMax,1,7);
+    graphicGrid->addWidget(labelZMin,2,0);
+    graphicGrid->addWidget(editZMin,2,1);
+    graphicGrid->addWidget(labelZMax,2,2);
+    graphicGrid->addWidget(editZMax,2,3);
+    graphicGrid->addWidget(labelTMin,2,4);
+    graphicGrid->addWidget(editTMin,2,5);
+    graphicGrid->addWidget(labelTMax,2,6);
+    graphicGrid->addWidget(editTMax,2,7);
+    graphicGrid->setSizeConstraint(QLayout::SetFixedSize);
+
+    QLabel* labelLanguage=new QLabel(tr("Langue"),this);
+    comboLanguage=new QComboBox(this);
     comboLanguage->addItem(QIcon(":/images/french.png"),tr("Français"));
     comboLanguage->addItem(QIcon(":/images/english.png"),tr("Anglais"));
 
-    grid->addWidget(labelLanguage,0,0);
-    grid->addWidget(comboLanguage,0,1);
-    grid->addWidget(labelWidth,1,0);
-    grid->addWidget(editWidth,1,1);
-    setLayout(grid);
+    QWidget* langPanel=new QWidget(this);
+    QHBoxLayout* hLayout=new QHBoxLayout(langPanel);
+    hLayout->addWidget(labelLanguage,Qt::AlignLeft);
+    hLayout->addWidget(comboLanguage,Qt::AlignLeft);
+    hLayout->setSizeConstraint(QLayout::SetFixedSize);
+    langPanel->setLayout(hLayout);
+
+    mainLayout->setSizeConstraint(QLayout::SetFixedSize);
+    mainLayout->addWidget(langPanel);
+    mainLayout->addWidget(graphicGroup);
+    graphicGroup->setLayout(graphicGrid);
+    setLayout(mainLayout);
 }
 
 void GeneralPanel::initValue(){
     editWidth->setText(QString::number(Config::graph_width));
     comboLanguage->setCurrentIndex(Config::language);
+    editXMin->setText(QString::number(giac::gnuplot_xmin));
+    editXMax->setText(QString::number(giac::gnuplot_xmax));
+    editYMin->setText(QString::number(giac::gnuplot_ymin));
+    editYMax->setText(QString::number(giac::gnuplot_ymax));
+    editZMin->setText(QString::number(giac::gnuplot_zmin));
+    editZMax->setText(QString::number(giac::gnuplot_zmax));
+    editTMin->setText(QString::number(giac::gnuplot_tmin));
+    editTMax->setText(QString::number(giac::gnuplot_tmax));
+    checkAutoScale->setChecked(giac::autoscale);
+
 
 }
 void GeneralPanel::apply(){
     int w=editWidth->text().toInt();
     if ((w>100) && (w < 1000)) Config::graph_width=w;
     else w=400;
+    double min=editXMin->text().toDouble();
+    double max=editXMax->text().toDouble();
+    if (max>min) {
 
+        giac::gnuplot_xmin=min;
+        giac::gnuplot_xmax=max;
+    }
+    else {
+        giac::gnuplot_xmin=-5;
+        giac::gnuplot_xmax=5;
+    }
+    min=editYMin->text().toDouble();
+    max=editYMax->text().toDouble();
+    if (max>min) {
+        giac::gnuplot_ymin=min;
+        giac::gnuplot_ymax=max;
+    }
+    else {
+        giac::gnuplot_ymin=-5;
+        giac::gnuplot_ymax=5;
+    }
+    min=editZMin->text().toDouble();
+    max=editZMax->text().toDouble();
+    if (max>min) {
+        giac::gnuplot_zmin=min;
+        giac::gnuplot_zmax=max;
+    }
+    else {
+        giac::gnuplot_zmin=-5;
+        giac::gnuplot_zmax=5;
+    }
+    min=editTMin->text().toDouble();
+    max=editTMax->text().toDouble();
+    if (max>min) {
+        giac::gnuplot_tmin=min;
+        giac::gnuplot_tmax=max;
+    }
+    else {
+        giac::gnuplot_tmin=-6;
+        giac::gnuplot_tmax=6;
+    }
+    giac::autoscale=checkAutoScale->isChecked();
 
 }
-
-
 /**
    **********     PREFERENCES DIALOG BOX    *************************
 

@@ -985,7 +985,7 @@ namespace giac {
       bool ortho=false;
       const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
       for (;it!=itend;++it)
-	ortho = ortho || autoscaleg(*it,vx,vy,vz,contextptr);
+    ortho = ortho | autoscaleg(*it,vx,vy,vz,contextptr);
       return ortho;
     }
     if (g.is_symb_of_sommet(at_pnt)){
@@ -1064,7 +1064,7 @@ namespace giac {
 	  return opstring+gen2tex(feu,contextptr) ;
 	return opstring+string("\\left(") + gen2tex(feu,contextptr) +string("\\right)");
       }
-      if (mys.sommet==at_inv && feu.is_symb_of_sommet(at_prod) ){
+      if (mys.sommet==at_inv && (feu.is_symb_of_sommet(at_prod) || is_integer(feu)) ){
 	return string("\\frac{1}{") + gen2tex(feu,contextptr) +string("}");
       }
       return opstring + "\\left(" + gen2tex(feu,contextptr) +"\\right)" ;

@@ -1001,6 +1001,8 @@ namespace giac {
     switch (g.type){
     case _DOUBLE_:
       return float2rational(g._DOUBLE_val,epsilon(contextptr),contextptr);
+    case _REAL:
+      return float2rational(evalf_double(g,1,contextptr)._DOUBLE_val,epsilon(contextptr),contextptr);
     case _CPLX:
       return _float2rational(re(g,contextptr),contextptr)+cst_i*_float2rational(im(g,contextptr),contextptr);
     case _SYMB:
@@ -1299,7 +1301,11 @@ namespace giac {
 
   gen _eigenvals(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-    return gen(*_diag(_egvl(g,contextptr),contextptr)._VECTptr,_SEQ__VECT);
+    bool b=complex_mode(contextptr);
+    complex_mode(true,contextptr);
+    gen res=gen(*_diag(_egvl(g,contextptr),contextptr)._VECTptr,_SEQ__VECT);
+    complex_mode(b,contextptr);
+    return res;
   }
   static const char _eigenvals_s []="eigenvals";
   static define_unary_function_eval (__eigenvals,&_eigenvals,_eigenvals_s);
@@ -1309,12 +1315,20 @@ namespace giac {
   static define_unary_function_eval (__giackernel,&_ker,_giackernel_s);
   define_unary_function_ptr5( at_kernel ,alias_at_kernel,&__giackernel,0,true);
 
+  gen _eigenvects(const gen & g,GIAC_CONTEXT){
+    if ( g.type==_STRNG && g.subtype==-1) return  g;
+    bool b=complex_mode(contextptr);
+    complex_mode(true,contextptr);
+    gen res=_egv(g,contextptr);
+    complex_mode(b,contextptr);
+    return res;
+  }
   static const char _eigenvects_s []="eigenvects";
-  static define_unary_function_eval (__eigenvects,&_egv,_eigenvects_s);
+  static define_unary_function_eval (__eigenvects,&_eigenvects,_eigenvects_s);
   define_unary_function_ptr5( at_eigenvects ,alias_at_eigenvects,&__eigenvects,0,true);
 
   static const char _eigenvalues_s []="eigenvalues";
-  static define_unary_function_eval (__eigenvalues,&_egvl,_eigenvalues_s);
+  static define_unary_function_eval (__eigenvalues,&_eigenvals,_eigenvalues_s);
   define_unary_function_ptr5( at_eigenvalues ,alias_at_eigenvalues,&__eigenvalues,0,true);
 
   static const char _charpoly_s []="charpoly";
@@ -1322,7 +1336,7 @@ namespace giac {
   define_unary_function_ptr5( at_charpoly ,alias_at_charpoly,&__charpoly,0,true);
 
   static const char _eigenvectors_s []="eigenvectors";
-  static define_unary_function_eval (__eigenvectors,&_egv,_eigenvectors_s);
+  static define_unary_function_eval (__eigenvectors,&_eigenvects,_eigenvectors_s);
   define_unary_function_ptr5( at_eigenvectors ,alias_at_eigenvectors,&__eigenvectors,0,true);
 
   static const char _rowdim_s []="rowdim";

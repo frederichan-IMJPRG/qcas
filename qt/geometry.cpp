@@ -28,6 +28,8 @@ MyItem::MyItem(Canvas2D *graph){
     highLighted=false;
     angleLegend=-1;
     treeItem=new QTreeWidgetItem;
+    value="";
+    level=-1;
 }
 
 void MyItem::setHighLighted(const bool &b){
@@ -77,6 +79,13 @@ QString MyItem::getLegend() const{
 void MyItem::setLegend(const QString &s){
     legend=s;
 }
+void MyItem::setLevel(const int & i){
+    level=i;
+}
+int MyItem::getLevel() const{
+    return level;
+}
+
 bool MyItem::isVisible() const{
     return visible;
 }
@@ -842,6 +851,7 @@ void Circle::updateScreenCoords(const bool compute){
 
 
 void Circle::draw(QPainter* painter) const{
+    if (!isVisible()) return;
     QColor color=getColor();
     int width=1;
     if (highLighted){
@@ -899,6 +909,7 @@ void Pixel::updateScreenCoords(const bool compute){
 }
 
 void Pixel::draw(QPainter * p) const{
+    if (!isVisible()) return;
     p->setPen(getColor());
     p->drawPoint((int)pixelScreen.x(),(int)pixelScreen.y());
 

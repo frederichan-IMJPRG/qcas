@@ -29,7 +29,8 @@
 #include <QSpinBox>
 #include <QToolButton>
 #include <QButtonGroup>
-
+#include <QToolTip>
+#include <QListWidget>
 #include <QSlider>
 #include <QComboBox>
 #include <QColorDialog>
@@ -103,13 +104,14 @@ void FormulaWidget::toXML(QDomElement& d){
 GraphWidget::GraphWidget(giac::context * context,bool b){
         isInteractiveWidget=b;
         canvas=new Canvas2D(this,context);
+        canvas->updatePixmap(true);
+        canvas->repaint();
         initGui();
 }
 
 GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b):GraphWidget(context,b){
     canvas->createScene(g);
-    propPanel->populate();
-
+    propPanel->updateAllCategories();
        /*   QPalette p=palette();
        p.setColor(QPalette::Window,Qt::white);
        setPalette(p);
@@ -141,15 +143,17 @@ GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b):Gr
  }
 void GraphWidget::initGui(){
     propPanel=new PanelProperties(canvas);
-    canvas->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     QWidget* canvasWidget=new QWidget;
     QVBoxLayout* vbox=new QVBoxLayout;
     if (isInteractiveWidget){
         createToolBar();
-        vbox->addWidget(toolPanel,Qt::AlignLeft|Qt::AlignTop);
+        vbox->addWidget(toolPanel);//,Qt::AlignLeft|Qt::AlignTop);
     }
-    vbox->addWidget(canvas,0,Qt::AlignLeft|Qt::AlignTop);
+    vbox->addWidget(canvas);//,1,Qt::AlignLeft|Qt::AlignTop);
+    vbox->setSizeConstraint(QLayout::SetMinimumSize);
     canvasWidget->setLayout(vbox);
+    canvasWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
     QHBoxLayout *hbox=new QHBoxLayout;
     hbox->addWidget(canvasWidget);
@@ -206,7 +210,10 @@ void GraphWidget::createToolBar(){
     circle3pt->setData(canvas->CIRCLE3PT);
     circle3pt->setParent(buttonCircle);
 
-
+    // Set default actions
+    buttonPt->setProperty("myAction",canvas->SINGLEPT);
+     buttonLine->setProperty("myAction",canvas->LINE);
+    buttonCircle->setProperty("myAction",canvas->CIRCLE2PT);
 
     // Menu creation
     QMenu* menuPt=new QMenu(buttonPt);
@@ -304,8 +311,23 @@ void GraphWidget::createToolBar(){
     connect(menuPt,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuLine,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuCircle,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
+    connect(buttonPt,SIGNAL(clicked()),this,SLOT(selectAction()));
+    connect(buttonLine,SIGNAL(clicked()),this,SLOT(selectAction()));
+    connect(buttonCircle,SIGNAL(clicked()),this,SLOT(selectAction()));
+
 
 }
+/** When the user select a button, it propagates action to the canvas
+  *
+  */
+void GraphWidget::selectAction(){
+
+    QToolButton* b=qobject_cast<QToolButton*>(sender());
+    b->setChecked(true);
+
+    canvas->setActionTool(b->property("myAction").toInt());
+}
+
 
 /** Depending on the action selected by the user, changes the button icon and
   * propagates action to the canvas
@@ -313,10 +335,13 @@ void GraphWidget::createToolBar(){
 
 void GraphWidget::selectButtonIcon(QAction * ac){
    QToolButton* b=qobject_cast<QToolButton*>(ac->parent());
-    b->setChecked(true);
-    b->setIcon(ac->icon());
-    canvas->setActionTool(ac->data().toInt());
+   b->setChecked(true);
+   b->setIcon(ac->icon());
+   b->setProperty("myAction",ac->data().toInt());
+   canvas->setActionTool(ac->data().toInt());
 }
+
+
 
  /**
   * Returns true if this Widget is used for interactive geometry
@@ -324,6 +349,18 @@ void GraphWidget::selectButtonIcon(QAction * ac){
 bool GraphWidget::isInteractive() const{
     return isInteractiveWidget;
 }
+/**
+  * Adds an entry in the tree objects for the  geometry object "item"
+  */
+
+void GraphWidget::addToTree(MyItem * item){
+    propPanel->addToTree(item);
+}
+
+void GraphWidget::updateAllCategories(){
+    propPanel->updateAllCategories();
+}
+
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
 }
@@ -334,8 +371,65 @@ void GraphWidget::clearSelection(){
     propPanel->clearSelection();
 }
 void Canvas2D::setActionTool(action a){
-    actionTool=a;
+    currentActionTool=a;
+
+
+    switch(currentActionTool){
+        case SINGLEPT:
+
+        break;
+
+
+    }
 }
+void Canvas2D::setBounds(const double & xMin, const double &xMax, const double & yMin, const double & yMax){
+    xmin=xMin;
+    xmax=xMax;
+    ymin=yMin;
+    ymax=yMax;
+}
+void Canvas2D::setXAxisLegend(const QString &s){
+    xAxisLegend=s;
+}
+void Canvas2D::setYAxisLegend(const QString &s){
+    yAxisLegend=s;
+}
+void Canvas2D::setXUnitSuffix(const QString &s){
+    xUnitSuffix=s;
+}
+void Canvas2D::setYUnitSuffix(const QString &s){
+    yUnitSuffix=s;
+}
+void Canvas2D::setXAxisTick(const double &d){
+    xAxisTick=d;
+}
+void Canvas2D::setYAxisTick(const double &d){
+    yAxisTick=d;
+}
+QString Canvas2D::getXAxisLegend() const{
+    return xAxisLegend;
+}
+QString Canvas2D::getYAxisLegend() const{
+    return yAxisLegend;
+}
+QString Canvas2D::getXUnitSuffix() const{
+    return xUnitSuffix;
+}
+QString Canvas2D::getYUnitSuffix() const{
+    return yUnitSuffix;
+}
+
+double Canvas2D::getXAxisTick() const{
+    return xAxisTick;
+}
+double Canvas2D::getYAxisTick() const{
+    return yAxisTick;
+}
+giac::context* Canvas2D::getContext() const{
+    return context;
+}
+
+
 void Canvas2D::addToScene(const giac::gen &g){
     if (g.type==giac::_VECT){
       giac::vecteur & v =*g._VECTptr;
@@ -461,6 +555,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
             QPointF c(evalf_double(re(centre,context),1,context)._DOUBLE_val, evalf_double(im(centre,context),1,context)._DOUBLE_val);
 
             Circle* circle=new Circle(c,diam._DOUBLE_val,angled+a1d,angled+a2d,this);
+            circle->setLevel(evaluationLevel);
              circle->setAttributes(ensemble_attributs);
             circle->setLegend(QString::fromStdString(the_legend));
             if (a2d-a1d>3.14){
@@ -469,6 +564,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                 mml.append("</math>");
                 circle->setValue(mml);
             }
+            parent->addToTree(circle);
             lineItems.append(circle);
             return;
 /*            if (fill_polygon)
@@ -509,6 +605,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               double delta_i=v[0]._DOUBLE_val,delta_j=v[1]._DOUBLE_val;
               Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
               pix->setAttributes(v[2].val);
+              pix->setLevel(evaluationLevel);
               filledItems.append(pix);
 
           }
@@ -516,6 +613,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               int delta_i=v[0].val,delta_j=v[1].val;
               Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
               pix->setAttributes(v[2].val);
+              pix->setLevel(evaluationLevel);
               filledItems.append(pix);
 
           }
@@ -591,6 +689,8 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                 if (fvv[0].type==_INT_ && fvv[1].type==_INT_){
                     LegendItem* item=new LegendItem(QPoint(fvv[0].val,fvv[1].val),QString::fromStdString(*fv[1]._STRNGptr),this);
                     item->setAttributes(ensemble_attributs);
+                    item->setLevel(evaluationLevel);
+                    parent->addToTree(item);
                     pointItems.append(item);
                 }
               }
@@ -614,7 +714,9 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               mml.append("\n</math>");
               pt->setValue(mml);
               pt->setAttributes(ensemble_attributs);
-               pt->setLegend(QString::fromStdString(the_legend));           
+               pt->setLegend(QString::fromStdString(the_legend));
+               pt->setLevel(evaluationLevel);
+               parent->addToTree(pt);
                pointItems.append(pt);
            }
 
@@ -700,6 +802,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
             Point* pt=new Point(i0,j0,this);
             pt->setAttributes(ensemble_attributs);
             pt->setLegend(QString::fromStdString(the_legend));
+            pt->setLevel(evaluationLevel);
             QString mml("<math mode=\"display\">\n");
             mml.append("<mfenced open=\"(\" close=\")\"><row>");
             mml.append(QString::fromStdString(gen2mathml(reSave,context)));
@@ -708,7 +811,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
             mml.append("</row></mfenced>\n");
             mml.append("\n</math>");
             pt->setValue(mml);
-
+            parent->addToTree(pt);
             pointItems.append(pt);
  //       if (!hidden_name)
 //          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
@@ -736,12 +839,15 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               line->setValue(mml);
               line->setAttributes(ensemble_attributs);
               line->setLegend(QString::fromStdString(the_legend));
+              line->setLevel(evaluationLevel);
+              parent->addToTree(line);
               lineItems.append(line);
           }
           else {
               HalfLineItem* line=new HalfLineItem(startPoint,endPoint,this);
               line->setAttributes(ensemble_attributs);
               line->setLegend(QString::fromStdString(the_legend));
+              line->setLevel(evaluationLevel);
               QString mml("<math mode=\"display\">\n<mfenced open=\"{\" close=\"\">\n<mtable>\n<mtr><mtd>");
               mml.append(QString::fromStdString(gen2mathml(_equation(g,context),context)));
               mml.append("</mtd></mtr>\n<mtr><mtd>\n <mrow>");
@@ -768,6 +874,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               }
               mml.append("</mtd></mtr></mtable></mfenced>\n</math>");
               line->setValue(mml);
+              parent->addToTree(line);
               lineItems.append(line);
 
           }
@@ -822,6 +929,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       Curve *curve=new Curve(path,this);
       curve->setAttributes(ensemble_attributs);
       curve->setLegend(QString::fromStdString(the_legend));
+      curve->setLevel(evaluationLevel);
       if (point.subtype==_VECTOR__VECT){
               curve->setVector(true);
         }
@@ -845,6 +953,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       //    qDebug()<<mml;
           curve->setValue(mml);
       }
+      parent->addToTree(curve);
       lineItems.append(curve);
     } // end pnt subcase
 //*/
@@ -860,6 +969,9 @@ double Canvas2D::getYmin() const{
 }
 double Canvas2D::getYmax() const{
     return ymax;
+}
+QStringList& Canvas2D::getCommands(){
+    return commands;
 }
 
 QVector<MyItem*>* Canvas2D::getPointItem() {
@@ -892,27 +1004,58 @@ QSize Canvas2D::sizeHint() const{
 }
 
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
+    parent=g2d;
     context=c;
+    ortho=false;
     selection=false;
     focusOwner=0;
-    parent=g2d;
+    currentActionTool=-1;
+    varPt="A";
+    varLine="a";
+    evaluationLevel=-1;
+
 
     setMouseTracking(true);
     setBackgroundRole(QPalette::Light);
     setAutoFillBackground(true);
 
 
+    xmin=giac::gnuplot_xmin;
+    xmax=giac::gnuplot_xmax;
+    ymin=giac::gnuplot_ymin;
+    ymax=giac::gnuplot_ymax;
+
+    giac::global_window_xmin=xmin;
+    giac::global_window_xmax=xmax;
+    giac::global_window_ymin=ymin;
+    giac::global_window_ymax=ymax;
+
+    setXYUnit();
+
+    createMenuAction();
+    setContextMenuPolicy(Qt::NoContextMenu);
+}
+void Canvas2D::createMenuAction(){
     zoomIn=new QAction(tr("Zoom avant"),this);
+
 //   zoomIn->setShortcut(tr("Ctrl++"));
-   //newAction->setIcon(QIcon(":/images/document-new.png"));
+   zoomIn->setIcon(QIcon(":/images/zoom-in.png"));
    connect(zoomIn,SIGNAL(triggered()),this,SLOT(zoom_In()));
 
-
-   zoomOut=new QAction(tr("Zoom arrière"),this);
- //   zoomOut->setShortcut(tr("Ctrl+-"));
+    zoomOut=new QAction(tr("Zoom arrière"),this);
+    zoomOut->setIcon(QIcon(":/images/zoom-out.png"));
     connect(zoomOut,SIGNAL(triggered()),this,SLOT(zoom_Out()));
 
     orthoAction=new QAction(tr("Orthonormé"),this);
+    orthoAction->setIcon(QIcon(":/images/ortho.png"));
+    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
+
+    if (isInteractive()) {
+        sourceAction=new QAction(tr("Code de la figure"),this);
+        sourceAction->setIcon(QIcon(":/images/source.png"));
+        connect(sourceAction,SIGNAL(triggered()),this,SLOT(displaySource()));
+    }
+    orthoAction->setIcon(QIcon(":/images/ortho.png"));
     connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
 
    QAction* title=new QAction(tr("Graphique"),this);
@@ -928,28 +1071,49 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     menuGeneral->addAction(zoomIn);
     menuGeneral->addAction(zoomOut);
     menuGeneral->addAction(orthoAction);
-    setContextMenuPolicy(Qt::NoContextMenu);
+    if (isInteractive()){
+        menuGeneral->addSeparator();
+        menuGeneral->addAction(sourceAction);
+    }
 
 }
+
+
 
 void Canvas2D::createScene(const giac::gen & g){
     setFixedSize(Config::graph_width,Config::graph_width*3/4);
 
     // Find the largest and lowest x/y/z in objects (except lines/plans)
     std::vector<double> vx,vy,vz;
+
     bool ortho=giac::autoscaleg(g,vx,vy,vz,context);
+
+
+
     giac::autoscaleminmax(vx,xmin,xmax);
+
     giac::autoscaleminmax(vy,ymin,ymax);
+//    qDebug()<<xmin<<xmax<<ymin<<ymax;
+//    autoscaleminmax(vz,zmin,zmax);
+
 
     setXYUnit();
-    if (std::isnan(xunit)||std::isnan(yunit)|| (!std::isfinite(xunit)) || (!std::isfinite(yunit))){
+    if (ortho) {
+        make_ortho();
+        ortho=true;
+    }
+
+/*    if (std::isnan(xunit)||std::isnan(yunit)|| (!std::isfinite(xunit)) || (!std::isfinite(yunit))){
       xmin=-5;ymin=-5;xmax=5;ymax=5;
        setXYUnit();
-    }
+    }*/
      addToScene(g);
      updatePixmap(true);
 }
 
+/*****************          **************
+  ******            SLOTS       **********
+  ****************          **************/
 
 void Canvas2D::zoom_In(){
 
@@ -1023,22 +1187,28 @@ void Canvas2D::zoom_Out(){
     this->repaint();
 
 }
+void Canvas2D::displaySource(){
+    SourceDialog* sourceDialog=new SourceDialog(this);
+    sourceDialog->exec();
+    delete(sourceDialog);
+}
+
 //void GraphWidget::zoom_Factor(const int &){}
 
 
 //void Canvas2D::displayContextMenu(const QPoint &pos){
 //
 //}
-void Canvas2D::updatePixmap(bool compute){
+void Canvas2D::updatePixmap(const bool &compute,const int &level){
     pixmap=QPixmap(size());
     pixmap.fill(this,0,0);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing,true);
     drawGrid(&painter);
-    drawElements(filledItems,&painter,compute);
-    drawAxes(&painter);
-    drawElements(lineItems,&painter,compute);
-    drawElements(pointItems,&painter,compute);
+    drawElements(filledItems,&painter,compute,level);
+    if (show_axes(context)) drawAxes(&painter);
+    drawElements(lineItems,&painter,compute,level);
+    drawElements(pointItems,&painter,compute,level);
 }
 
 
@@ -1137,13 +1307,14 @@ void Canvas2D::drawGrid(QPainter * painter){
 
 
 }
-void Canvas2D::drawElements(QVector<MyItem*> & v,QPainter* painter,const bool compute){
+void Canvas2D::drawElements(QVector<MyItem*> & v,QPainter* painter,const bool &compute,const int &level){
 //    painter->setClipping(true);
 //    painter->setClipRect(20,20,width()-20,height()-20);
     if (v.isEmpty()) return;
     for(int i=0;i<v.size();++i){
-        v.at(i)->updateScreenCoords(compute);
+        if (v.at(i)->getLevel()==level) v.at(i)->updateScreenCoords(compute);
         v.at(i)->draw(painter);
+
     }
 
 
@@ -1198,9 +1369,10 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
     }
     selection=false;
 
-    QPointF pos=e->posF();
+    QPointF mousePos(e->posF());
+
     // Detects objects under mouse
-    bool objectUnderMouse=checkUnderMouse(&pointItems,pos) || checkUnderMouse(&lineItems,pos) ||   checkUnderMouse(&filledItems,pos);
+    bool objectUnderMouse=checkUnderMouse(&pointItems,mousePos) || checkUnderMouse(&lineItems,mousePos) ||   checkUnderMouse(&filledItems,mousePos);
     // Case: No object
     if (!objectUnderMouse){
         if (focusOwner!=0){
@@ -1209,6 +1381,9 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
         }
     }
     else repaint();
+
+    repaint();
+
 }
 
 
@@ -1225,20 +1400,87 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
 
                 selection=false;
     }
+    // Left Button
     else if (b==Qt::LeftButton){
+
+        // An object is already highlighted
         if (focusOwner!=0){
-            focusOwner->getTreeItem()->treeWidget()->collapseAll();
-            focusOwner->getTreeItem()->treeWidget()->clearSelection();
-            focusOwner->getTreeItem()->setSelected(true);
-            focusOwner->getTreeItem()->parent()->setExpanded(true);
-
-
+                focusOwner->getTreeItem()->treeWidget()->collapseAll();
+                focusOwner->getTreeItem()->treeWidget()->clearSelection();
+                focusOwner->getTreeItem()->setSelected(true);
+                focusOwner->getTreeItem()->parent()->setExpanded(true);
         }
         else {
-            parent->clearSelection();
+            if (parent->isInteractive()){
+                if (currentActionTool==SINGLEPT){
+                    findFreeVar(varPt);
+                    QPointF pos(e->posF());
+                    double a,b;
+                    toXY(pos.x(),pos.y(),a,b);
+
+                    QString newCommand(varPt);
+                    incrementVariable(varPt);
+                    newCommand.append(":=point(");
+                    newCommand.append(QString::number(a));
+                    newCommand.append(",");
+                    newCommand.append(QString::number(b));
+                    newCommand.append(");");
+                    gen g(newCommand.toStdString(),context);
+                    commands.append(newCommand);
+                    evaluationLevel=commands.size()-1;
+
+                    addToScene(protecteval(g,1,context));
+                    parent->updateAllCategories();
+                    updatePixmap(true,evaluationLevel);
+                    repaint();
+
+                    //qDebug()<<newCommand;
+
+
+
+                }
+            }
+            else  parent->clearSelection();
         }
     }
 }
+
+/**
+  * In interactive mode: Points are labeled consecutively as follow:
+  *     A,B,...,Z,A1,....,Z1, A2 .....
+  *
+  * Same model for lines but in lower case
+  **/
+void Canvas2D::findFreeVar(QString & var){
+    gen g(var.toStdString(),context);
+    while (eval(g,1,context)!=g){
+        incrementVariable(var);
+        g=gen(var.toStdString(),context);
+    }
+}
+/**
+  * Increments the label for points or lines
+  *   eg: D4 becomes D5
+  *       z becomes a1
+  */
+
+void Canvas2D::incrementVariable(QString & var){
+    QChar c=var.at(0);
+    if (c=='Z'){
+        QString s="A";
+        s.append(QString::number(QString(var.right(var.length()-1)).toInt()+1));
+        var=s;
+    }
+    else if (c=='z'){
+        QString s="a";
+        s.append(QString::number(QString(var.right(var.length()-1)).toInt()+1));
+        var=s;
+    }
+    else var[0]=QChar(c.toAscii()+1);
+}
+
+
+
 void Canvas2D::mousePressEvent(QMouseEvent *e){
     Qt::MouseButton b=e->button();
     if (b==Qt::RightButton){
@@ -1251,6 +1493,21 @@ void Canvas2D::mousePressEvent(QMouseEvent *e){
 
 
 }
+bool Canvas2D::event(QEvent * ev){
+    if (ev->type() == QEvent::ToolTip){
+        QHelpEvent* helpEvent = static_cast<QHelpEvent*>(ev);
+        QPointF p=helpEvent->pos();
+        // Display real coords near mouse position
+        double a,b;
+        toXY(p.x(),p.y(),a,b);
+        QString s(QString("(").append(QString::number(a,'g',4)).append(";").append(QString::number(b,'g',4)).append(QString(")")));
+        QToolTip::showText(helpEvent->globalPos(),s);
+        return true;
+    }
+    else return QWidget::event(ev);
+
+}
+
 void Canvas2D::paintEvent(QPaintEvent * ){
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing,true);
@@ -1277,7 +1534,6 @@ void Canvas2D::paintEvent(QPaintEvent * ){
         focusOwner->setHighLighted(true);
         focusOwner->draw(&painter);
         focusOwner->setHighLighted(false);
-
     }
 }
 void  Canvas2D::toXML(){
@@ -1302,7 +1558,11 @@ PanelProperties::PanelProperties(Canvas2D* c){
 }
 void PanelProperties::initGui(){
     displayPanel=new DisplayProperties(parent);
+    axisGridPanel=new AxisGridPanel(parent);
+
     displayPanel->hide();
+    axisGridPanel->hide();
+
     tree=new QTreeWidget;
     tree->setColumnCount(1);
     tree->headerItem()->setTextAlignment(0,Qt::AlignCenter);
@@ -1310,15 +1570,17 @@ void PanelProperties::initGui(){
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->clearSelection();
 
-    nodePoint=new QTreeWidgetItem();
-    nodeCurve=new QTreeWidgetItem();
-    nodeVector=new QTreeWidgetItem();
-    nodeLine=new QTreeWidgetItem();
-    nodeSegment=new QTreeWidgetItem();
-    nodeHalfLine=new QTreeWidgetItem();
-    nodeCircle=new QTreeWidgetItem();
-    nodePolygon=new QTreeWidgetItem();
+    nodeAxis=new QTreeWidgetItem;
+    nodePoint=new QTreeWidgetItem;
+    nodeCurve=new QTreeWidgetItem;
+    nodeVector=new QTreeWidgetItem;
+    nodeLine=new QTreeWidgetItem;
+    nodeSegment=new QTreeWidgetItem;
+    nodeHalfLine=new QTreeWidgetItem;
+    nodeCircle=new QTreeWidgetItem;
+    nodePolygon=new QTreeWidgetItem;
 
+    nodeAxis->setText(0,tr("Axes/grille"));
     nodePoint->setText(0,tr("Point"));
     nodeCurve->setText(0,tr("Courbe"));
     nodeVector->setText(0,tr("Vecteur"));
@@ -1329,7 +1591,7 @@ void PanelProperties::initGui(){
     nodeCircle->setText(0,tr("Cercle"));
 
 
-
+    tree->addTopLevelItem(nodeAxis);
     tree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     if (!parent->isInteractive()){
@@ -1340,58 +1602,55 @@ void PanelProperties::initGui(){
     }
     hbox->addWidget(tree);
     hbox->addWidget(displayPanel,0,Qt::AlignLeft|Qt::AlignTop);
+    hbox->addWidget(axisGridPanel,0,Qt::AlignLeft|Qt::AlignTop);
     hbox->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(hbox);
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
-void PanelProperties::fillTree(QVector<MyItem*>* v){
+void PanelProperties::addToTree( MyItem * item){
+    if (item->isPixel()) return;
 
-    for (int i=0;i<v->size();++i){
-        MyItem* item=v->at(i);
-        if (item->isPixel()) continue;
-
-        if (item->isPoint()){
-           nodePoint->addChild(item->getTreeItem());
-
-        }
-        else if(item->isLine()){
-            nodeLine->addChild(item->getTreeItem());
-
-        }
-        else if(item->isHalfLine()){
-            nodeHalfLine->addChild(item->getTreeItem());
-        }
-        else if(item->isCurve()){
-            Curve* c= dynamic_cast<Curve*>(item);
-            if (c->isVector())
-                nodeVector->addChild(item->getTreeItem());
-            else if (c->isSegment())
-                nodeSegment->addChild(item->getTreeItem());
-            else if (c->isPolygon())
-                nodePolygon->addChild(item->getTreeItem());
-            else
-                nodeCurve->addChild(item->getTreeItem());
-        }
-        else if(item->isCircle()){
-            nodeCircle->addChild(item->getTreeItem());
-
-        }
-        nodeLinks.insert(item->getTreeItem(),item);
-        QString legend=item->getLegend();
-        if (legend.trimmed().isEmpty()){
-            item->getTreeItem()->setText(0,item->getType().append(" ").append(QString::number(item->getTreeItem()->parent()->childCount())));
-
-        }
-        else item->getTreeItem()->setText(0,legend);
+    if (item->isPoint()){
+       nodePoint->addChild(item->getTreeItem());
 
     }
+    else if(item->isLine()){
+        nodeLine->addChild(item->getTreeItem());
+    }
+    else if(item->isHalfLine()){
+        nodeHalfLine->addChild(item->getTreeItem());
+    }
+    else if(item->isCurve()){
+        Curve* c= dynamic_cast<Curve*>(item);
+        if (c->isVector())
+            nodeVector->addChild(item->getTreeItem());
+        else if (c->isSegment())
+            nodeSegment->addChild(item->getTreeItem());
+        else if (c->isPolygon())
+            nodePolygon->addChild(item->getTreeItem());
+        else
+            nodeCurve->addChild(item->getTreeItem());
+    }
+    else if(item->isCircle()){
+        nodeCircle->addChild(item->getTreeItem());
+
+    }
+    nodeLinks.insert(item->getTreeItem(),item);
+    QString legend=item->getLegend();
+    if (legend.trimmed().isEmpty()){
+        item->getTreeItem()->setText(0,item->getType().append(" ").append(QString::number(item->getTreeItem()->parent()->childCount())));
+    }
+    else item->getTreeItem()->setText(0,legend);
 }
+
+
 void PanelProperties::updateTree(){
    QList<QTreeWidgetItem*> list=tree->selectedItems();
    if (list.isEmpty()) return;
 
    disconnect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
-   QList<MyItem*>* listItems=new QList<MyItem*>();
+
+   QList<MyItem*>* listItems=new QList<MyItem*>;
    for (int i=0;i<list.size();++i){
         // A category item has been selected
        if (list.at(i)->parent()==0){
@@ -1408,7 +1667,16 @@ void PanelProperties::updateTree(){
        }
    }
    parent->repaint();
-   displayPanel->updateDisplayPanel(listItems);
+   if (listItems->size()!=0){
+       displayPanel->updateDisplayPanel(listItems);
+       axisGridPanel->setVisible(false);
+
+   } // Category Grid/axis has been selected
+   else {
+    displayPanel->setVisible(false);
+    axisGridPanel->initValue();
+    axisGridPanel->setVisible(true);
+   }
   connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 
 }
@@ -1426,27 +1694,32 @@ QList<MyItem*> PanelProperties::getTreeSelectedItems(){
     return listItems;
 
 }
-void PanelProperties::populate(){
-    QList<QTreeWidgetItem*> topLevel;
+bool PanelProperties::updateCategory(const QTreeWidgetItem* node,const int & id){
+    if (tree->indexOfTopLevelItem(node)!=-1){
+        if (node->childCount()>0) return true;
+        else {
+            tree->removeItemWidget(node,0);
+            return false;
+        }
+    }
+    else {
+        if (node->childCount()>0) tree->insertTopLevelItem(id,node);
+        return true;
 
-    // Fill the treeWidget
-    fillTree(parent->getPointItem());
-    fillTree(parent->getLineItem());
-    fillTree(parent->getFilledItem());
+    }
+    return false;
+}
 
-    if (nodePoint->childCount()!=0) topLevel.append(nodePoint);
-    if (nodeLine->childCount()!=0)  topLevel.append(nodeLine);
-    if (nodeSegment->childCount()!=0)  topLevel.append(nodeSegment);
-    if (nodeCircle->childCount()!=0)  topLevel.append(nodeCircle);
-    if (nodeCurve->childCount()!=0) topLevel.append(nodeCurve);
-    if (nodePolygon->childCount()!=0) topLevel.append(nodePolygon);
-    if (nodeVector->childCount()!=0) topLevel.append(nodeVector);
-    if (nodeHalfLine->childCount()!=0)  topLevel.append(nodeHalfLine);
-
-    tree->addTopLevelItems(topLevel);
-
-
-
+void PanelProperties::updateAllCategories(){
+    int id=0;
+    if (updateCategory(nodePoint,id)) id++;
+    if (updateCategory(nodeLine,id)) id++;
+    if (updateCategory(nodeSegment,id)) id++;
+    if (updateCategory(nodeCircle,id)) id++;
+    if (updateCategory(nodeCurve,id)) id++;
+    if (updateCategory(nodePolygon,id)) id++;
+    if (updateCategory(nodeVector,id)) id++;
+    if (updateCategory(nodeHalfLine,id)) id++;
 }
 
 void PanelProperties::clearSelection(){
@@ -1456,19 +1729,19 @@ void PanelProperties::clearSelection(){
         displayPanel->hide();
     }
 }
-DisplayProperties::DisplayProperties(Canvas2D *canvas){
+DisplayProperties::DisplayProperties(Canvas2D *canvas):QTabWidget(canvas){
     parent=canvas;
     initGui();
 }
 void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     setVisible(true);
     listItems=l;
-
     if (l->count()>1) valuePanel->setVisible(false);
-    else {
+    else if (!listItems->at(0)->getValue().trimmed().isEmpty()){
         valuePanel->setValue(listItems->at(0)->getValue());
         valuePanel->setVisible(true);
     }
+    else valuePanel->setVisible(false);
 
     displayObjectPanel->setChecked(listItems->at(0)->isVisible());
 
@@ -2008,5 +2281,569 @@ void GenValuePanel::setValue(const QString & s){
       p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
       mmlWidget->setPalette(p);
       mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-     mmlWidget->updateGeometry();
+      mmlWidget->updateGeometry();
 }
+
+AxisGridPanel::AxisGridPanel(Canvas2D * p):QTabWidget(p){
+    parent=p;
+    initGui();
+}
+void AxisGridPanel::initGui(){
+    xPanel=new AxisPanel(this);
+    yPanel=new AxisPanel(this);
+    addTab(xPanel,tr("Axe (Ox)"));
+    addTab(yPanel,tr("Axe (Oy)"));
+}
+
+void AxisGridPanel::initValue(){
+    xPanel->initValue(parent->getXAxisLegend(),parent->getXUnitSuffix(),parent->getXmin(),parent->getXmax(),giac::show_axes(parent->getContext()));
+    yPanel->initValue(parent->getYAxisLegend(),parent->getYUnitSuffix(),parent->getYmin(),parent->getYmax(),giac::show_axes(parent->getContext()));
+}
+
+
+void AxisGridPanel::updateCanvas(const bool &b){
+     parent->setXAxisTick(xPanel->editDistance->text().toDouble());
+     parent->setYAxisTick(yPanel->editDistance->text().toDouble());
+     parent->setXAxisLegend(xPanel->editLabel->text());
+     parent->setYAxisLegend(yPanel->editLabel->text());
+     parent->setXUnitSuffix(xPanel->editUnitLabel->text());
+     parent->setYUnitSuffix(yPanel->editUnitLabel->text());
+     parent->setBounds(xPanel->editMin->text().toDouble(),xPanel->editMax->text().toDouble(),yPanel->editMin->text().toDouble(),yPanel->editMax->text().toDouble());
+     giac::show_axes(xPanel->showAxis->isChecked()&& yPanel->showAxis->isChecked(),parent->getContext());
+     parent->setXYUnit();
+     parent->updatePixmap(b);
+     parent->repaint();
+}
+
+AxisPanel::AxisPanel(AxisGridPanel* p):QWidget(p){
+    parent=p;
+    initGui();
+
+}
+
+void AxisPanel::initGui(){
+    QGridLayout *grid=new QGridLayout(this);
+
+    showAxis=new QCheckBox(tr("Afficher l'axe"),this);
+    QLabel * labelMin=new QLabel(tr("Minimum:"),this);
+    editMin=new QLineEdit(this);
+    editMin->setValidator(new QDoubleValidator);
+    QLabel * labelMax=new QLabel(tr("Maximum:"),this);
+    editMax=new QLineEdit(this);
+    editMax->setValidator(new QDoubleValidator);
+
+    QLabel * labelLegend=new QLabel(tr("Légende:"),this);
+    editLabel=new QLineEdit(this);
+    QLabel * labelUnit=new QLabel(tr("Suffixe (unité):"),this);
+    editUnitLabel=new QLineEdit(this);
+    QLabel * labelDistance=new QLabel(tr("Espace-graduations:"),this);
+    editDistance=new QLineEdit(this);
+    editDistance->setValidator(new QDoubleValidator);
+
+    grid->addWidget(showAxis,0,0,1,2);
+    grid->addWidget(labelMin,1,0);
+    grid->addWidget(editMin,1,1);
+    grid->addWidget(labelMax,2,0);
+    grid->addWidget(editMax,2,1);
+    grid->addWidget(labelLegend,3,0);
+    grid->addWidget(editLabel,3,1);
+    grid->addWidget(labelUnit,4,0);
+    grid->addWidget(editUnitLabel,4,1);
+    grid->addWidget(labelDistance,5,0);
+    grid->addWidget(editDistance,5,1);
+
+    connect(showAxis,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+    connect(editMin,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(editMax,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+}
+void AxisPanel::updateCanvas(){
+    QLineEdit* edit=qobject_cast<QLineEdit*>(sender());
+            bool b=false;
+    if (editMin==edit|| editMax==edit) b=true;
+    parent->updateCanvas(b);
+}
+
+void AxisPanel::initValue(const QString & axisLabel, const QString &suffix, const double & min, const double &max, const bool & b){
+    editLabel->setText(axisLabel);
+    editUnitLabel->setText(suffix);
+    editMin->setText(QString::number(min));
+    editMax->setText(QString::number(max));
+    showAxis->setChecked(b);
+}
+
+
+SourceDialog::SourceDialog(Canvas2D* p){
+    parent=p;
+    initGui();
+}
+
+
+void SourceDialog::initGui(){
+    QHBoxLayout* hbox=new QHBoxLayout(this);
+    listWidget=new QListWidget(this);
+    listWidget->addItems(parent->getCommands());
+    listWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    deleteButton=new QPushButton(tr("Supprimer"),this);
+    hbox->addWidget(listWidget);
+    hbox->addWidget(deleteButton);
+    hbox->setSizeConstraint(QLayout::SetFixedSize);
+    setLayout(hbox);
+    connect(deleteButton,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+}
+void SourceDialog::updateCanvas(){
+    int id=listWidget->currentRow();
+    delete listWidget->item(id);
+    parent->getCommands().removeAt(id);
+    parent->updatePixmap(true);
+    parent->repaint();
+
+}
+
+/*
+  void Graph2d3d::update_infos(const gen & g,GIAC_CONTEXT){
+    if (g.is_symb_of_sommet(at_equal)){
+      // detect a title or a x/y-axis name
+      gen & f = g._SYMBptr->feuille;
+      if (f.type==_VECT && f._VECTptr->size()==2){
+    gen & optname = f._VECTptr->front();
+    gen & optvalue= f._VECTptr->back();
+    if (optname==at_legende && optvalue.type==_VECT){
+      vecteur & optv=(*optvalue._VECTptr);
+      int optvs=optv.size();
+      if (optvs>=1)
+        x_axis_unit=printstring(optv[0],contextptr);
+      if (optvs>=2)
+        y_axis_unit=printstring(optv[1],contextptr);
+      if (optvs>=3)
+        z_axis_unit=printstring(optv[2],contextptr);
+    }
+    if (optname.type==_INT_ && optname.subtype == _INT_PLOT){
+      if (optname.val==_GL_TEXTURE){
+        if (optvalue.type==_STRNG){
+          get_texture2d(*optvalue._STRNGptr,background_image);
+        }
+        else
+          background_image=0;
+      }
+      if (optname.val==_TITLE )
+        title=printstring(optvalue,contextptr);
+      if (optname.val==_AXES){
+        if (optvalue.type==_INT_)
+          show_axes=optvalue.val;
+      }
+      if (optname.val==_LABELS && optvalue.type==_VECT){
+        vecteur & optv=(*optvalue._VECTptr);
+        int optvs=optv.size();
+        if (optvs>=1)
+          x_axis_name=printstring(optv[0],contextptr);
+        if (optvs>=2)
+          y_axis_name=printstring(optv[1],contextptr);
+        if (optvs>=3)
+          z_axis_name=printstring(optv[2],contextptr);
+      }
+      if (optname.val==_GL_ORTHO && optvalue==1)
+        orthonormalize();
+      if (optname.val==_GL_X_AXIS_COLOR && optvalue.type==_INT_)
+        x_axis_color=optvalue.val;
+      if (optname.val==_GL_Y_AXIS_COLOR && optvalue.type==_INT_)
+        y_axis_color=optvalue.val;
+      if (optname.val==_GL_Z_AXIS_COLOR && optvalue.type==_INT_)
+        z_axis_color=optvalue.val;
+      if (optname.val>=_GL_X && optname.val<=_GL_Z && optvalue.is_symb_of_sommet(at_interval)){
+        gen optvf=evalf_double(optvalue._SYMBptr->feuille,1,contextptr);
+        if (optvf.type==_VECT && optvf._VECTptr->size()==2){
+          gen a=optvf._VECTptr->front();
+          gen b=optvf._VECTptr->back();
+          if (a.type==_DOUBLE_ && b.type==_DOUBLE_){
+        switch (optname.val){
+        case _GL_X:
+          window_xmin=a._DOUBLE_val;
+          window_xmax=b._DOUBLE_val;
+          break;
+        case _GL_Y:
+          window_ymin=a._DOUBLE_val;
+          window_ymax=b._DOUBLE_val;
+          break;
+        case _GL_Z:
+          window_zmin=a._DOUBLE_val;
+          window_zmax=b._DOUBLE_val;
+          break;
+        }
+          }
+        }
+      }
+      gen optvalf=evalf_double(optvalue,1,contextptr);
+      if (optname.val==_GL_XTICK && optvalf.type==_DOUBLE_)
+        x_tick=optvalf._DOUBLE_val;
+      if (optname.val==_GL_YTICK && optvalf.type==_DOUBLE_)
+        y_tick=optvalf._DOUBLE_val;
+      if (optname.val==_GL_ZTICK && optvalf.type==_DOUBLE_)
+        z_tick=optvalf._DOUBLE_val;
+      if (optname.val==_GL_ANIMATE && optvalf.type==_DOUBLE_)
+        animation_dt=optvalf._DOUBLE_val;
+      if (optname.val==_GL_SHOWAXES && optvalue.type==_INT_)
+        show_axes=optvalue.val;
+      if (optname.val==_GL_SHOWNAMES && optvalue.type==_INT_)
+        show_names=optvalue.val;
+      if (optname.val>=_GL_X_AXIS_NAME && optname.val<=_GL_Z_AXIS_UNIT && optvalue.type==_STRNG){
+        if (optname.val==_GL_X_AXIS_NAME) x_axis_name=*optvalue._STRNGptr;
+        if (optname.val==_GL_Y_AXIS_NAME) y_axis_name=*optvalue._STRNGptr;
+        if (optname.val==_GL_Z_AXIS_NAME) z_axis_name=*optvalue._STRNGptr;
+        if (optname.val==_GL_X_AXIS_UNIT) x_axis_unit=*optvalue._STRNGptr;
+        if (optname.val==_GL_Y_AXIS_UNIT) y_axis_unit=*optvalue._STRNGptr;
+        if (optname.val==_GL_Z_AXIS_UNIT) z_axis_unit=*optvalue._STRNGptr;
+      }
+      if (optname.val==_GL_QUATERNION && optvalf.type==_VECT && optvalf._VECTptr->size()==4){
+        vecteur & optvalv=*optvalf._VECTptr;
+        if (optvalv[0].type==_DOUBLE_ && optvalv[1].type==_DOUBLE_ &&
+        optvalv[2].type==_DOUBLE_ && optvalv[3].type==_DOUBLE_){
+          q.x=optvalv[0]._DOUBLE_val;
+          q.y=optvalv[1]._DOUBLE_val;
+          q.z=optvalv[2]._DOUBLE_val;
+          q.w=optvalv[3]._DOUBLE_val;
+        }
+      }
+      if (dynamic_cast<Graph3d *>(this)){
+        if (optname.val==_GL_ROTATION_AXIS && optvalf.type==_VECT && optvalf._VECTptr->size()==3){
+          vecteur & optvalv=*optvalf._VECTptr;
+          if (optvalv[0].type==_DOUBLE_ && optvalv[1].type==_DOUBLE_ &&
+          optvalv[2].type==_DOUBLE_ ){
+        rotanim_rx=optvalv[0]._DOUBLE_val;
+        rotanim_ry=optvalv[1]._DOUBLE_val;
+        rotanim_rz=optvalv[2]._DOUBLE_val;
+          }
+        }
+        if (optname.val==_GL_FLAT && optvalue.type==_INT_){
+          display_mode &= (0xffff ^ 0x10);
+          if (optvalue.val)
+        display_mode |= 0x10;
+        }
+        if (optname.val==_GL_LIGHT && optvalue.type==_INT_){
+          display_mode &= (0xffff ^ 0x8);
+          if (optvalue.val)
+        display_mode |= 0x8;
+        }
+        if (optname.val==_GL_PERSPECTIVE && optvalue.type==_INT_){
+          display_mode &= (0xffff ^ 0x4);
+          if (!optvalue.val)
+        display_mode |= 0x4;
+        }
+        // GL_LIGHT_MODEL_COLOR_CONTROL=GL_SEPARATE_SPECULAR_COLOR ||  GL_SINGLE_COLOR
+#ifndef WIN32
+        if (optname.val==_GL_LIGHT_MODEL_COLOR_CONTROL && optvalue.type==_INT_)
+          glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,optvalue.val);
+        /* GL_LIGHT_MODEL_LOCAL_VIEWER=floating-point value that spec-
+           ifies how specular reflection angles are computed.  If params
+           is 0 (or 0.0),  specular  reflection  angles  take  the  view
+           direction  to  be  parallel to and in the direction of the -z
+           axis, regardless of the location of the vertex in eye coordi-
+           nates.  Otherwise, specular reflections are computed from the
+           origin of the eye coordinate system.  The initial value is 0. *//*
+        if (optname.val==_GL_LIGHT_MODEL_LOCAL_VIEWER){
+          if (optvalf.type==_DOUBLE_)
+        glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,optvalf._DOUBLE_val);
+        }
+#endif
+        // GL_LIGHT_MODEL_TWO_SIDE = true /false /
+        if (optname.val==_GL_LIGHT_MODEL_TWO_SIDE && optvalue.type==_INT_){
+          glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,optvalue.val);
+        }
+        // GL_LIGHT_MODEL_AMBIENT=[r,g,b,a] /
+        if (optname.val==_GL_LIGHT_MODEL_AMBIENT && optvalf.type==_VECT && optvalf._VECTptr->size()==4){
+          vecteur & w=*optvalf._VECTptr;
+          GLfloat tab[4]={w[0]._DOUBLE_val,w[1]._DOUBLE_val,w[2]._DOUBLE_val,w[3]._DOUBLE_val};
+          glLightModelfv(GL_LIGHT_MODEL_AMBIENT,tab);
+        }
+        // gl_blend=[d,s]
+        // habituellement gl_blend=[gl_src_alpha,gl_one_minus_src_alpha]
+        if (optname.val==_GL_BLEND){
+          if (is_zero(optvalue)){
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+          }
+          else {
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        if (optvalue.type==_VECT && optvalue._VECTptr->size()==2)
+          glBlendFunc(optvalue._VECTptr->front().val,optvalue._VECTptr->back().val);
+        if (is_minus_one(optvalue))
+          glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+          }
+        }
+        // gl_light0=[option1=value1,...]
+        if (optname.val>=_GL_LIGHT0 && optname.val<=_GL_LIGHT7 && optvalue.type==_VECT){
+          int j=optname.val-_GL_LIGHT0;
+          // reset light0+j
+          light_x[j]=0;light_y[j]=0;light_z[j]=0;light_w[j]=1;
+          float di=j?0:1;
+          light_diffuse_r[j]=di;light_diffuse_g[j]=di;light_diffuse_b[j]=di;light_diffuse_a[j]=di;
+          light_specular_r[j]=di;light_specular_g[j]=di;light_specular_b[j]=di;light_specular_a[j]=di;
+          light_ambient_r[j]=0;light_ambient_g[j]=0;light_ambient_b[j]=0;light_ambient_a[j]=1;
+          light_spot_x[j]=0;light_spot_y[j]=0;light_spot_z[j]=-1;light_spot_w[j]=0;
+          light_spot_exponent[j]=0;light_spot_cutoff[j]=180;
+          light_0[j]=1;light_1[j]=0;light_2[j]=0;
+          vecteur & optv=*optvalue._VECTptr;
+          for (unsigned i=0;i<optv.size();++i){
+        gen & optg = optv[i];
+        if ( (optg.is_symb_of_sommet(at_equal) || optg.is_symb_of_sommet(at_same) )  && optg._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==2){
+          gen & optgname = optg._SYMBptr->feuille._VECTptr->front();
+          gen optgval = evalf_double(optg._SYMBptr->feuille._VECTptr->back(),1,contextptr);
+          bool vect4=optgval.type==_VECT && optgval._VECTptr->size()==4;
+          vecteur xyzw;
+          if (vect4)
+            xyzw=*optgval._VECTptr;
+          switch (optgname.val){
+          case _GL_AMBIENT:
+            light_ambient_r[j]=xyzw[0]._DOUBLE_val;
+            light_ambient_g[j]=xyzw[1]._DOUBLE_val;
+            light_ambient_b[j]=xyzw[2]._DOUBLE_val;
+            light_ambient_a[j]=xyzw[3]._DOUBLE_val;
+            break;
+          case _GL_SPECULAR:
+            light_specular_r[j]=xyzw[0]._DOUBLE_val;
+            light_specular_g[j]=xyzw[1]._DOUBLE_val;
+            light_specular_b[j]=xyzw[2]._DOUBLE_val;
+            light_specular_a[j]=xyzw[3]._DOUBLE_val;
+            break;
+          case _GL_DIFFUSE:
+            light_diffuse_r[j]=xyzw[0]._DOUBLE_val;
+            light_diffuse_g[j]=xyzw[1]._DOUBLE_val;
+            light_diffuse_b[j]=xyzw[2]._DOUBLE_val;
+            light_diffuse_a[j]=xyzw[3]._DOUBLE_val;
+            break;
+          case _GL_POSITION:
+            light_x[j]=xyzw[0]._DOUBLE_val;
+            light_y[j]=xyzw[1]._DOUBLE_val;
+            light_z[j]=xyzw[2]._DOUBLE_val;
+            light_w[j]=xyzw[3]._DOUBLE_val;
+            break;
+          case _GL_SPOT_DIRECTION:
+            light_spot_x[j]=xyzw[0]._DOUBLE_val;
+            light_spot_y[j]=xyzw[1]._DOUBLE_val;
+            light_spot_z[j]=xyzw[2]._DOUBLE_val;
+            light_spot_w[j]=xyzw[3]._DOUBLE_val;
+            break;
+          case _GL_SPOT_EXPONENT:
+            light_spot_exponent[j]=optgval._DOUBLE_val;
+            break;
+          case _GL_SPOT_CUTOFF:
+            light_spot_cutoff[j]=optgval._DOUBLE_val;
+            break;
+          case _GL_CONSTANT_ATTENUATION:
+            light_0[j]=optgval._DOUBLE_val;
+            break;
+          case _GL_LINEAR_ATTENUATION:
+            light_1[j]=optgval._DOUBLE_val;
+            break;
+          case _GL_QUADRATIC_ATTENUATION:
+            light_2[j]=optgval._DOUBLE_val;
+            break;
+          }
+        }
+        ;
+          } // end for i
+        }
+      } // end opengl options
+    }
+      }
+    }
+    if (g.type==_VECT){
+      const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
+      for (;it!=itend;++it)
+    update_infos(*it,contextptr);
+    }
+  }*/
+
+
+
+
+
+/*  void Graph2d::in_draw(int clip_x,int clip_y,int clip_w,int clip_h,int & vertical_pixels){
+    struct timezone tz;
+    gettimeofday(&animation_last,&tz);
+    gen title_tmp;
+    gen plot_tmp;
+    History_Pack * hp =get_history_pack(this);
+    context * contextptr=hp?hp->contextptr:get_context(this);
+    find_title_plot(title_tmp,plot_tmp,contextptr);
+    int horizontal_pixels=w()-(show_axes?int(ylegende*labelsize()):0);
+    vertical_pixels=h()-((show_axes?1:0)+(!title.empty()))*labelsize();
+    int deltax=x(),deltay=y();
+    double y_scale=vertical_pixels/(window_ymax-window_ymin);
+    double x_scale=horizontal_pixels/(window_xmax-window_xmin);
+    // Then redraw the background
+    fl_color(FL_WHITE);
+    fl_rectf(clip_x, clip_y, clip_w, clip_h);
+    fl_color(FL_BLACK);
+    if ( !(display_mode & 0x100) )
+      fl_rect(x(), y(), horizontal_pixels, vertical_pixels);
+    if (background_image){
+      if (!background_image->second || background_image->second->w()!=w() || background_image->second->h()!=h()){
+    if (background_image->second)
+      delete background_image->second;
+    background_image->second=background_image->first->copy(w(),h());
+      }
+      background_image->second->draw(x(),y(),w(),h());
+    }
+    // History draw
+    /***************  //
+    int xx,yy,ww,hh;
+    fl_clip_box(clip_x,clip_y,horizontal_pixels,vertical_pixels,xx,yy,ww,hh);
+    fl_push_clip(xx,yy,ww,hh);
+    // fl_push_clip(clip_x,clip_y,horizontal_pixels,vertical_pixels);
+    /**************** //
+    fl_color(FL_BLACK);
+    fl_font(FL_HELVETICA,labelsize());
+    if ( (display_mode & 2) && !animation_instructions.empty()){
+      gen tmp=animation_instructions[animation_instructions_pos % animation_instructions.size()];
+      fltk_draw(*this,-1,tmp,x_scale,y_scale,clip_x,clip_y,clip_w,clip_h);
+    }
+    if ( display_mode & 0x40 ){
+      fltk_draw(*this,-1,trace_instructions,x_scale,y_scale,clip_x,clip_y,clip_w,clip_h);
+    }
+    if (display_mode & 1) {
+      const_iterateur at=plot_instructions.begin(),atend=plot_instructions.end(),it,itend;
+      for (int plot_i=0;at!=atend;++at,++plot_i){
+    if (at->type==_INT_)
+      continue;
+    update_infos(*at,contextptr);
+    if (at->is_symb_of_sommet(at_parameter)){
+      gen ff = at->_SYMBptr->feuille;
+      vecteur f;
+      if (ff.type==_VECT && (f=*ff._VECTptr).size()==4){
+        // parameters.push_back(f);
+      }
+      continue;
+    }
+    fltk_draw(*this,plot_i,*at,x_scale,y_scale,clip_x,clip_y,clip_w,clip_h);
+      } // end for at
+    }
+    vecteur plot_tmp_v=gen2vecteur(plot_tmp);
+    const_iterateur jt=plot_tmp_v.begin(),jtend=plot_tmp_v.end();
+    for (;jt!=jtend;++jt){
+      gen plot_tmp=*jt;
+      if (plot_tmp.is_symb_of_sommet(at_pnt) && plot_tmp._SYMBptr->feuille.type==_VECT && !plot_tmp._SYMBptr->feuille._VECTptr->empty()){
+    vecteur & v=*plot_tmp._SYMBptr->feuille._VECTptr;
+    // cerr << v << endl;
+    if (v[1].type==_INT_)
+      plot_tmp=symbolic(at_pnt,makevecteur(v[0],v[1].val | _DOT_LINE | _LINE_WIDTH_2));
+    else
+      plot_tmp=symbolic(at_pnt,v);
+    try {
+      fltk_draw(*this,-1,plot_tmp,x_scale,y_scale,clip_x,clip_y,clip_w,clip_h);
+    }
+    catch (...){
+    }
+      }
+    }
+    fl_line_style(0); // back to default line style
+    // Draw axis
+    double I0,J0;
+    findij(zero,x_scale,y_scale,I0,J0,contextptr);
+    int i_0=round(I0),j_0=round(J0);
+    if ( show_axes &&  (window_ymax>=0) && (window_ymin<=0)){ // X-axis
+      fl_color(x_axis_color);
+      check_fl_line(deltax,deltay+j_0,deltax+horizontal_pixels,deltay+j_0,clip_x,clip_y,clip_w,clip_h,0,0);
+      fl_color(FL_CYAN);
+      check_fl_line(deltax+i_0,deltay+j_0,deltax+i_0+int(x_scale),deltay+j_0,clip_x,clip_y,clip_w,clip_h,0,0);
+      fl_color(x_axis_color);
+      if (x_tick>0 && (horizontal_pixels)/(x_scale*x_tick) < 40){
+    double nticks=(horizontal_pixels-I0)/(x_scale*x_tick);
+    int count=0;
+    for (int ii=int(-I0/(x_tick*x_scale));ii<=nticks && count<25;++ii,++count){
+      int iii=int(I0+ii*x_scale*x_tick+.5);
+      check_fl_line(deltax+iii,deltay+j_0,deltax+iii,deltay+j_0-4,clip_x,clip_y,clip_w,clip_h,0,0);
+    }
+      }
+      string tmp=x_axis_name.empty()?"x":x_axis_name;
+      check_fl_draw(tmp.c_str(),deltax+horizontal_pixels-int(fl_width(tmp.c_str())),deltay+j_0+labelsize(),clip_x,clip_y,clip_w,clip_h,0,0);
+    }
+    if ( show_axes && (window_xmax>=0) && (window_xmin<=0) ) {// Y-axis
+      fl_color(y_axis_color);
+      check_fl_line(deltax+i_0,deltay,deltax+i_0,deltay+vertical_pixels,clip_x,clip_y,clip_w,clip_h,0,0);
+      fl_color(FL_CYAN);
+      check_fl_line(deltax+i_0,deltay+j_0,deltax+i_0,deltay+j_0-int(y_scale),clip_x,clip_y,clip_w,clip_h,0,0);
+      fl_color(y_axis_color);
+      if (y_tick>0 && vertical_pixels/(y_tick*y_scale) <40 ){
+    double nticks=(vertical_pixels-J0)/(y_tick*y_scale);
+    int count=0;
+    for (int jj=int(-J0/(y_tick*y_scale));jj<=nticks && count<25;++jj,++count){
+      int jjj=int(J0+jj*y_scale*y_tick+.5);
+      check_fl_line(deltax+i_0,deltay+jjj,deltax+i_0+4,deltay+jjj,clip_x,clip_y,clip_w,clip_h,0,0);
+    }
+      }
+      check_fl_draw(y_axis_name.empty()?"y":y_axis_name.c_str(),deltax+i_0+2,deltay+labelsize(),clip_x,clip_y,clip_w,clip_h,0,0);
+    }
+    // Ticks
+    if (show_axes && (horizontal_pixels)/(x_scale*x_tick) < 40 && vertical_pixels/(y_tick*y_scale) <40  ){
+      if (x_tick>0 && y_tick>0 ){
+    fl_color(FL_BLACK);
+    double nticks=(horizontal_pixels-I0)/(x_scale*x_tick);
+    double mticks=(vertical_pixels-J0)/(y_tick*y_scale);
+    int count=0;
+    for (int ii=int(-I0/(x_tick*x_scale));ii<=nticks;++ii){
+      int iii=int(I0+ii*x_scale*x_tick+.5);
+      for (int jj=int(-J0/(y_tick*y_scale));jj<=mticks && count<625;++jj,++count){
+        int jjj=int(J0+jj*y_scale*y_tick+.5);
+        check_fl_point(deltax+iii,deltay+jjj,clip_x,clip_y,clip_w,clip_h,0,0);
+      }
+    }
+      }
+    }
+    /**************** //
+    fl_pop_clip();
+    /**************** //
+    fl_color(FL_BLACK);
+    fl_font(FL_HELVETICA,labelsize());
+    if (!args_help.empty() && args_tmp.size()<= args_help.size()){
+      fl_draw((gettext("Click ")+args_help[max(1,args_tmp.size())-1]).c_str(),x(),y()+labelsize()-2);
+    }
+    string mytitle(title);
+    if (!is_zero(title_tmp) && function_final.type==_FUNC)
+      mytitle=gen(symbolic(*function_final._FUNCptr,title_tmp)).print(contextptr);
+    if (!mytitle.empty()){
+      int dt=int(fl_width(mytitle.c_str()));
+      check_fl_draw(mytitle.c_str(),deltax+(horizontal_pixels-dt)/2,deltay+h()-labelsize()/4,clip_x,clip_y,clip_w,clip_h,0,0);
+    }
+    // Boundary values
+    fl_font(FL_HELVETICA,labelsize());
+    if (show_axes){
+      int taille,affs,delta;
+      vecteur aff;
+      string tmp;
+      // X
+      fl_color(x_axis_color);
+      aff=ticks(window_xmin,window_xmax,true);
+      affs=aff.size();
+      for (int i=0;i<affs;++i){
+    double d=evalf_double(aff[i],1,contextptr)._DOUBLE_val;
+    tmp=print_DOUBLE_(d);
+    delta=int(horizontal_pixels*(d-window_xmin)/(window_xmax-window_xmin));
+    taille=int(fl_width(tmp.c_str()));
+    if (delta>=taille/2 && delta<=horizontal_pixels){
+      fl_line(x()+delta,y()+vertical_pixels,x()+delta,y()+vertical_pixels+3);
+      if (args_tmp.empty())
+        fl_draw(tmp.c_str(),x()+delta-taille/2,y()+vertical_pixels+labelsize()-2);
+    }
+      }
+      if (args_tmp.empty())
+    fl_draw(x_axis_unit.c_str(),x()+horizontal_pixels,y()+vertical_pixels+labelsize()-2);
+      // Y
+      fl_color(y_axis_color);
+      aff=ticks(window_ymin,window_ymax,true);
+      affs=aff.size();
+      taille=labelsize()/2;
+      for (int j=0;j<affs;++j){
+    double d=evalf_double(aff[j],1,contextptr)._DOUBLE_val;
+    tmp=print_DOUBLE_(d)+y_axis_unit;;
+    delta=int(vertical_pixels*(window_ymax-d)/(window_ymax-window_ymin));
+    if (delta>=taille && delta<=vertical_pixels-taille){
+      fl_line(x()+horizontal_pixels,y()+delta,x()+horizontal_pixels+3,y()+delta);
+      fl_draw(tmp.c_str(),x()+horizontal_pixels+3,y()+delta+taille);
+    }
+      }
+    }
+  }*/
