@@ -109,8 +109,13 @@ GraphWidget::GraphWidget(giac::context * context,bool b){
         initGui();
 }
 
-GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b):GraphWidget(context,b){
+GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b){
+    isInteractiveWidget=b;
+    canvas=new Canvas2D(this,context);
+    initGui();
+
     canvas->createScene(g);
+
     propPanel->updateAllCategories();
        /*   QPalette p=palette();
        p.setColor(QPalette::Window,Qt::white);
@@ -325,7 +330,7 @@ void GraphWidget::selectAction(){
     QToolButton* b=qobject_cast<QToolButton*>(sender());
     b->setChecked(true);
 
-    canvas->setActionTool(b->property("myAction").toInt());
+    canvas->setActionTool((Canvas2D::action)(b->property("myAction").toInt()));
 }
 
 
@@ -338,7 +343,7 @@ void GraphWidget::selectButtonIcon(QAction * ac){
    b->setChecked(true);
    b->setIcon(ac->icon());
    b->setProperty("myAction",ac->data().toInt());
-   canvas->setActionTool(ac->data().toInt());
+   canvas->setActionTool((Canvas2D::action)ac->data().toInt());
 }
 
 
@@ -1009,7 +1014,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     ortho=false;
     selection=false;
     focusOwner=0;
-    currentActionTool=-1;
+    currentActionTool=SINGLEPT;
     varPt="A";
     varLine="a";
     evaluationLevel=-1;
@@ -1621,6 +1626,7 @@ void PanelProperties::addToTree( MyItem * item){
         nodeHalfLine->addChild(item->getTreeItem());
     }
     else if(item->isCurve()){
+
         Curve* c= dynamic_cast<Curve*>(item);
         if (c->isVector())
             nodeVector->addChild(item->getTreeItem());
@@ -1694,7 +1700,7 @@ QList<MyItem*> PanelProperties::getTreeSelectedItems(){
     return listItems;
 
 }
-bool PanelProperties::updateCategory(const QTreeWidgetItem* node,const int & id){
+bool PanelProperties::updateCategory(QTreeWidgetItem* node,const int & id){
     if (tree->indexOfTopLevelItem(node)!=-1){
         if (node->childCount()>0) return true;
         else {
@@ -1703,9 +1709,10 @@ bool PanelProperties::updateCategory(const QTreeWidgetItem* node,const int & id)
         }
     }
     else {
-        if (node->childCount()>0) tree->insertTopLevelItem(id,node);
-        return true;
-
+        if (node->childCount()>0) {
+            tree->insertTopLevelItem(id,node);
+            return true;
+        }
     }
     return false;
 }

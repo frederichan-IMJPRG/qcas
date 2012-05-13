@@ -276,7 +276,7 @@ private:
     QBoxLayout*  hbox;
     AxisGridPanel* axisGridPanel;
     DisplayProperties* displayPanel;
-    bool updateCategory(const QTreeWidgetItem*, const int &);
+    bool updateCategory(QTreeWidgetItem *, const int &);
     void initGui();
 private slots:
     void updateTree();

@@ -35,7 +35,7 @@ using namespace giac;
 giac::gen CasManager::answer=giac::gen("",context0);
 
 
-MonitorThread::MonitorThread(const giac::context * c){
+MonitorThread::MonitorThread(giac::context * c){
     contextptr=c;
 }
 void MonitorThread::run(){
@@ -44,7 +44,7 @@ void MonitorThread::run(){
         else break;
     }
 }
-StopThread::StopThread(const giac::context * c){
+StopThread::StopThread(giac::context * c){
     contextptr=c;
 }
 void StopThread::run(){

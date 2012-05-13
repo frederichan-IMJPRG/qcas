@@ -28,7 +28,7 @@ class OutputWidget;
 class MonitorThread:public QThread{
     Q_OBJECT
 public:
-    MonitorThread(const giac::context * c);
+    MonitorThread(giac::context *c);
 protected:
     void run();
 private:
@@ -38,7 +38,7 @@ private:
 class StopThread:public QThread{
     Q_OBJECT
 public:
-    StopThread(const giac::context *);
+    StopThread(giac::context *);
 protected:
     void run();
 private:
