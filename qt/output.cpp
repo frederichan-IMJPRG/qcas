@@ -26,6 +26,8 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QCheckBox>
+#include <QClipboard>
+#include <QApplication>
 #include <QSpinBox>
 #include <QToolButton>
 #include <QButtonGroup>
@@ -39,7 +41,7 @@
 #include "config.h"
 #include "gui/qtmmlwidget.h"
 #include "output.h"
-
+#include "vecteur.h"
 using namespace giac;
 
 
@@ -57,25 +59,81 @@ int IconSize::pixelMetric(PixelMetric metric, const QStyleOption * option, const
 }
 
 
-OutputWidget::OutputWidget(QWidget*):QWidget(){
+OutputWidget::OutputWidget(QWidget* p):QWidget(p){
 
 }
 void OutputWidget::setLine(Line* l){
     line=l;
 }
-
-FormulaWidget::FormulaWidget(const QString &mml){
-    QString m("<math mode=\"display\">\n");
-    m.append(mml);
-    m.append("\n</math>");
-
-
+FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
+    formula=gen(1);
+    context=giac::context0;
+    initGui();
+}
+FormulaWidget::FormulaWidget(const giac::gen &g,const giac::context* c){
+    formula=g;
+    context=c;
+    initGui();
+}
+void FormulaWidget::initGui(){
 //    qDebug()<<"----------------------";
 //    qDebug()<<m;
 //    qDebug()<<"----------------------";
 
-    QtMmlWidget *mmlWidget=new QtMmlWidget;
+    mmlWidget=new QtMmlWidget(this);
+    updateFormula(formula,context);
+    QPalette p=mmlWidget->palette();
+    p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
+    mmlWidget->setPalette(p);
+    mmlWidget->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    menu=new QMenu(mmlWidget);
+    copyAction=new QAction(tr("Copier"),menu);
+    copyAction->setIcon(QIcon(":/images/edit-copy.png"));
+    toLatexAction=new QAction(tr("Copier vers LaTeX"),menu);
+    toLatexAction->setIcon(QIcon(":/images/tex.png"));
+    menu->addAction(copyAction);
+    menu->addAction(toLatexAction);
+
+    QHBoxLayout *layout=new QHBoxLayout(this);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+    layout->addWidget(mmlWidget);
+    setLayout(layout);
+    connect(mmlWidget,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayMenu(QPoint)));
+    connect(copyAction,SIGNAL(triggered()),this,SLOT(copy()));
+    connect(toLatexAction,SIGNAL(triggered()),this,SLOT(copyToLaTeX()));
+}
+void FormulaWidget::copy(){
+    QClipboard* clip=QApplication::clipboard();
+    clip->setText(QString::fromStdString(giac::print(formula,context)));
+}
+void FormulaWidget::copyToLaTeX(){
+    QClipboard* clip=QApplication::clipboard();
+    clip->setText(QString::fromStdString(gen2tex(formula,context)));
+
+}
+void FormulaWidget::displayMenu(QPoint p){
+    menu->popup(mapToGlobal(p));
+}
+void FormulaWidget::updateFormula(const QString  s){
+    QString errorMsg;
+      int errorLine;
+      int errorColumn;
+      bool ok = mmlWidget->setContent(s, &errorMsg, &errorLine, &errorColumn);
+      if (!ok) {
+        qWarning("MathML error: %s, Line: %d, Column: %d",
+                 errorMsg.constData(), errorLine, errorColumn);
+      }
+      mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+      mmlWidget->updateGeometry();
+}
+void FormulaWidget::updateFormula(const gen & g,const giac::context* c){
+    context=c;
+    formula=g;
+    QString m("<math mode=\"display\">\n");
+//    qDebug()<<QString::fromStdString(print(g,context));
+    m.append(QString::fromStdString(giac::gen2mathml(formula,context)));
+    m.append("\n</math>");
     QString errorMsg;
       int errorLine;
       int errorColumn;
@@ -84,16 +142,8 @@ FormulaWidget::FormulaWidget(const QString &mml){
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
-      QPalette p=mmlWidget->palette();
-      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
-      mmlWidget->setPalette(p);
-
-
-
-
-    QHBoxLayout *layout=new QHBoxLayout;
-    layout->addWidget(mmlWidget);
-    setLayout(layout);
+      mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+      mmlWidget->updateGeometry();
 }
 
 void FormulaWidget::toXML(QDomElement& d){
@@ -148,9 +198,10 @@ GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b){
  }
 void GraphWidget::initGui(){
     propPanel=new PanelProperties(canvas);
+    propPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Minimum);
     canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    QWidget* canvasWidget=new QWidget;
-    QVBoxLayout* vbox=new QVBoxLayout;
+    QWidget* canvasWidget=new QWidget(this);
+    QVBoxLayout* vbox=new QVBoxLayout(canvasWidget);
     if (isInteractiveWidget){
         createToolBar();
         vbox->addWidget(toolPanel);//,Qt::AlignLeft|Qt::AlignTop);
@@ -160,7 +211,7 @@ void GraphWidget::initGui(){
     canvasWidget->setLayout(vbox);
     canvasWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
-    QHBoxLayout *hbox=new QHBoxLayout;
+    QHBoxLayout *hbox=new QHBoxLayout(this);
     hbox->addWidget(canvasWidget);
     hbox->addWidget(propPanel);
     hbox->setSizeConstraint(QLayout::SetMinimumSize);
@@ -171,59 +222,60 @@ void GraphWidget::initGui(){
   * In interactive mode2D , adds the Tool bar
  **/
 void GraphWidget::createToolBar(){
-    buttonPt=new QToolButton;
-    buttonLine=new QToolButton;
-    buttonCircle=new QToolButton;
+    buttonPt=new QToolButton(this);
+    buttonLine=new QToolButton(this);
+    buttonCircle=new QToolButton(this);
+
+    // Menu creation
+    QMenu* menuPt=new QMenu(buttonPt);
+    QMenu* menuLine=new QMenu(buttonLine);
+    QMenu* menuCircle=new QMenu(buttonCircle);
 
 
 
     // Point Actions
-    singlept=new QAction(tr("Point"),this);
+    singlept=new QAction(tr("Point"),menuPt);
     singlept->setData(canvas->SINGLEPT);
     singlept->setParent(buttonPt);
     singlept->setIcon(QIcon(":/images/point.png"));
-    inter=new QAction(tr("Intersection entre deux objets"),this);
+    inter=new QAction(tr("Intersection entre deux objets"),menuPt);
     inter->setIcon(QIcon(":/images/inter.png"));
     inter->setData(canvas->INTER);
     inter->setParent(buttonPt);
-    midpoint=new QAction(tr("Milieu ou centre"),this);
+    midpoint=new QAction(tr("Milieu ou centre"),menuPt);
     midpoint->setIcon(QIcon(":/images/midpoint.png"));
     midpoint->setData(canvas->MIDPOINT);
     midpoint->setParent(buttonPt);
 
     // Line Actions
-    line=new QAction(tr("Droite"),this);
+    line=new QAction(tr("Droite"),menuLine);
     line->setIcon(QIcon(":/images/line.png"));
     line->setData(canvas->LINE);
     line->setParent(buttonLine);
-    segment=new QAction(tr("Segment"),this);
+    segment=new QAction(tr("Segment"),menuLine);
     segment->setIcon(QIcon(":/images/segment.png"));
     segment->setData(canvas->SEGMENT);
     segment->setParent(buttonLine);
-    halfline=new QAction(tr("Demie-droite"),this);
+    halfline=new QAction(tr("Demie-droite"),menuLine);
     halfline->setIcon(QIcon(":/images/halfline.png"));
     halfline->setData(canvas->HALFLINE);
     halfline->setParent(buttonLine);
 
     // Circle Actions
-    circle2pt=new QAction(tr("Cercle (centre-point)"),this);
+    circle2pt=new QAction(tr("Cercle (centre-point)"),menuCircle);
     circle2pt->setIcon(QIcon(":/images/circle2pt"));
     circle2pt->setData(canvas->CIRCLE2PT);
     circle2pt->setParent(buttonCircle);
-    circle3pt=new QAction(tr("Cercle (3 points)"),this);
+    circle3pt=new QAction(tr("Cercle (3 points)"),menuCircle);
     circle3pt->setIcon(QIcon(":/images/circle3pt"));
     circle3pt->setData(canvas->CIRCLE3PT);
     circle3pt->setParent(buttonCircle);
 
     // Set default actions
     buttonPt->setProperty("myAction",canvas->SINGLEPT);
-     buttonLine->setProperty("myAction",canvas->LINE);
+    buttonLine->setProperty("myAction",canvas->LINE);
     buttonCircle->setProperty("myAction",canvas->CIRCLE2PT);
 
-    // Menu creation
-    QMenu* menuPt=new QMenu(buttonPt);
-    QMenu* menuLine=new QMenu(buttonLine);
-    QMenu* menuCircle=new QMenu(buttonCircle);
 
     menuPt->addAction(singlept);
     menuPt->addAction(inter);
@@ -239,7 +291,8 @@ void GraphWidget::createToolBar(){
     menuCircle->addAction(circle3pt);
     menuCircle->setStyle(new IconSize);
 
-    buttonPt->setIconSize(QSize(48,48));
+    const QSize size(40,40);
+    buttonPt->setIconSize(size);
     QString s("QToolButton{margin: 8px;}"
 //              "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,"
 //              "stop: 0 #f6f7fa, stop: 1 #dadbde);}"
@@ -280,7 +333,7 @@ void GraphWidget::createToolBar(){
               //"subcontrol-position: bottom right;}"
 
 
-    buttonLine->setIconSize(QSize(48,48));
+    buttonLine->setIconSize(size);
     buttonLine->setPopupMode(QToolButton::MenuButtonPopup);
     buttonLine->setCheckable(true);
 //    buttonLine->setStyleSheet(t);
@@ -288,7 +341,7 @@ void GraphWidget::createToolBar(){
     buttonLine->setMenu(menuLine);
     buttonLine->setIcon(QIcon(":/images/line.png"));
 
-    buttonCircle->setIconSize(QSize(48,48));
+    buttonCircle->setIconSize(size);
     buttonCircle->setPopupMode(QToolButton::MenuButtonPopup);
     buttonCircle->setMenu(menuCircle);
     buttonCircle->setIcon(QIcon(":/images/circle2pt.png"));
@@ -300,14 +353,14 @@ void GraphWidget::createToolBar(){
   //  toolBar->setIconSize(QSize(48,48));
 
 
-    QButtonGroup *group=new QButtonGroup;
+    QButtonGroup *group=new QButtonGroup(this);
     group->addButton(buttonPt);
     group->addButton(buttonLine);
     group->addButton(buttonCircle);
 
-    toolPanel=new QWidget;
+    toolPanel=new QWidget(this);
     toolPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
-    QHBoxLayout* hbox=new QHBoxLayout;
+    QHBoxLayout* hbox=new QHBoxLayout(toolPanel);
     hbox->addWidget(buttonPt,Qt::AlignLeft);
     hbox->addWidget(buttonLine,Qt::AlignLeft);
     hbox->addWidget(buttonCircle,Qt::AlignLeft);
@@ -365,7 +418,12 @@ void GraphWidget::addToTree(MyItem * item){
 void GraphWidget::updateAllCategories(){
     propPanel->updateAllCategories();
 }
-
+void GraphWidget::updateValueInDisplayPanel(){
+    propPanel->updateValueInDisplayPanel();
+}
+void GraphWidget::selectInTree(const MyItem * item){
+    propPanel->selectInTree(item);
+}
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
 }
@@ -377,15 +435,7 @@ void GraphWidget::clearSelection(){
 }
 void Canvas2D::setActionTool(action a){
     currentActionTool=a;
-
-
-    switch(currentActionTool){
-        case SINGLEPT:
-
-        break;
-
-
-    }
+    selectedItems.clear();
 }
 void Canvas2D::setBounds(const double & xMin, const double &xMax, const double & yMin, const double & yMax){
     xmin=xMin;
@@ -435,12 +485,12 @@ giac::context* Canvas2D::getContext() const{
 }
 
 
-void Canvas2D::addToScene(const giac::gen &g){
+void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
     if (g.type==giac::_VECT){
       giac::vecteur & v =*g._VECTptr;
       const_iterateur it=v.begin(),itend=v.end();
       for (;it!=itend;++it){
-            addToScene(*it);
+            addToVector(*it,scene);
       } // end for it
     }
     if (g.type!=_SYMB)
@@ -563,14 +613,9 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
             circle->setLevel(evaluationLevel);
              circle->setAttributes(ensemble_attributs);
             circle->setLegend(QString::fromStdString(the_legend));
-            if (a2d-a1d>3.14){
-                QString mml("<math mode=\"display\">\n");
-                mml.append(QString::fromStdString(gen2mathml(_equation(g,context),context)));
-                mml.append("</math>");
-                circle->setValue(mml);
-            }
-            parent->addToTree(circle);
-            lineItems.append(circle);
+             circle->setValue(_equation(g,context));
+            scene.append(circle);
+
             return;
 /*            if (fill_polygon)
               fl_pie(deltax+round(i0-i1),deltay+round(j0-j1),round(2*i1),round(2*j1),(angled+a1d)*180/M_PI,(angled+a2d)*180/M_PI);
@@ -611,16 +656,14 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
               pix->setAttributes(v[2].val);
               pix->setLevel(evaluationLevel);
-              filledItems.append(pix);
-
+             scene.append(pix);
           }
           else{
               int delta_i=v[0].val,delta_j=v[1].val;
               Pixel* pix=new Pixel(QPointF(delta_i,delta_j),this);
               pix->setAttributes(v[2].val);
               pix->setLevel(evaluationLevel);
-              filledItems.append(pix);
-
+            scene.append(pix);
           }
           return;
         }
@@ -695,8 +738,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                     LegendItem* item=new LegendItem(QPoint(fvv[0].val,fvv[1].val),QString::fromStdString(*fv[1]._STRNGptr),this);
                     item->setAttributes(ensemble_attributs);
                     item->setLevel(evaluationLevel);
-                    parent->addToTree(item);
-                    pointItems.append(item);
+                    scene.append(item);
                 }
               }
             }
@@ -707,23 +749,13 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           gen e,f0,f1;
 
           evalfdouble2reim(point,e,f0,f1,context);
-
           if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
-              Point* pt=new Point(f0._DOUBLE_val,f1._DOUBLE_val,this);
-              QString mml("<math mode=\"display\">\n");
-              mml.append("<mfenced open=\"(\" close=\")\"><mrow>");
-              mml.append(QString::fromStdString(gen2mathml(point.re(context),context)));
-              mml.append("<mo>&#59;</mo>");
-              mml.append(QString::fromStdString(gen2mathml(point.im(context),context)));
-              mml.append("</mrow></mfenced>");
-              mml.append("\n</math>");
-              pt->setValue(mml);
+              Point* pt=new Point(point,this);
               pt->setAttributes(ensemble_attributs);
                pt->setLegend(QString::fromStdString(the_legend));
                pt->setLevel(evaluationLevel);
-               parent->addToTree(pt);
-               pointItems.append(pt);
-           }
+               scene.append(pt);
+          }
 
 
 /*        Mon_image.findij(point,x_scale,y_scale,i0,j0,context);
@@ -763,6 +795,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         return;
       // initial point
       gen e,f0,f1;
+
       evalfdouble2reim(*jt,e,f0,f1,context);
       if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
            i0=f0._DOUBLE_val;
@@ -796,34 +829,26 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         fl_line_style(type_line,width,0);
         fl_color(epaisseur_point-2+(type_point<<3));*/
       }
-        gen reSave=re(*jt,context);
-        gen imSave=im(*jt,context);
+         gen save(*jt);
 
 //      i0save=i0;
 //      j0save=j0;
       ++jt;
       if (jt==jtend){
        // if (i0>0 && i0<width && j0>0 && j0<myw)
-            Point* pt=new Point(i0,j0,this);
+            Point* pt=new Point(save,this);
             pt->setAttributes(ensemble_attributs);
             pt->setLegend(QString::fromStdString(the_legend));
             pt->setLevel(evaluationLevel);
-            QString mml("<math mode=\"display\">\n");
-            mml.append("<mfenced open=\"(\" close=\")\"><row>");
-            mml.append(QString::fromStdString(gen2mathml(reSave,context)));
-            mml.append("<mo>;</mo>");
-            mml.append(QString::fromStdString(gen2mathml(imSave,context)));
-            mml.append("</row></mfenced>\n");
-            mml.append("\n</math>");
-            pt->setValue(mml);
-            parent->addToTree(pt);
-            pointItems.append(pt);
- //       if (!hidden_name)
+            pt->setValue(save);
+            scene.append(pt);
+            //       if (!hidden_name)
 //          draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
         return;
       }
       bool seghalfline=(point.subtype==_LINE__VECT || point.subtype==_HALFLINE__VECT) && (point._VECTptr->size()==2);
       if (seghalfline){
+
           QPointF startPoint,endPoint;
 
           startPoint=QPointF(i0,j0);
@@ -838,50 +863,19 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           endPoint=QPointF(i0,j0);
           if (point.subtype==_LINE__VECT ) {
               LineItem* line=new LineItem(startPoint,endPoint,this);
-              QString mml("<math mode=\"display\">\n");
-              mml.append(QString::fromStdString(gen2mathml(_equation(g,context),context)));
-              mml.append("\n</math>");
-              line->setValue(mml);
+              line->setValue(_equation(g,context));
               line->setAttributes(ensemble_attributs);
               line->setLegend(QString::fromStdString(the_legend));
               line->setLevel(evaluationLevel);
-              parent->addToTree(line);
-              lineItems.append(line);
+                scene.append(line);
           }
           else {
               HalfLineItem* line=new HalfLineItem(startPoint,endPoint,this);
+              line->setValue(_equation(g,context));
               line->setAttributes(ensemble_attributs);
               line->setLegend(QString::fromStdString(the_legend));
               line->setLevel(evaluationLevel);
-              QString mml("<math mode=\"display\">\n<mfenced open=\"{\" close=\"\">\n<mtable>\n<mtr><mtd>");
-              mml.append(QString::fromStdString(gen2mathml(_equation(g,context),context)));
-              mml.append("</mtd></mtr>\n<mtr><mtd>\n <mrow>");
-              if (startPoint.x()!=endPoint.x()){
-                  if (startPoint.x()<endPoint.x()){
-                      mml.append("<mi>x</mi><mo>&gt;</mo>");
-                  }
-                  else if(startPoint.x()>endPoint.x()){
-                      mml.append("<mi>x</mi><mo>&lt;</mo>");
-                }
-                  mml.append(QString::fromStdString(gen2mathml(reSave,context)));
-                  mml.append("</mrow>");
-
-              }
-              else {
-                  if (startPoint.y()<endPoint.y()){
-                      mml.append("<mi>y</mi><mo>&gt;</mo>");
-                  }
-                  else {
-                      mml.append("<mi>y</mi><mo>&lt;</mo>");
-                  }
-                  mml.append(QString::fromStdString(gen2mathml(imSave,context)));
-                  mml.append("</mrow>");
-              }
-              mml.append("</mtd></mtr></mtable></mfenced>\n</math>");
-              line->setValue(mml);
-              parent->addToTree(line);
-              lineItems.append(line);
-
+              scene.append(line);
           }
 
         return;
@@ -897,12 +891,14 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           path.moveTo(i0,j0);
       }
 
-
+    gen save2;
       for (;;){
   //      Mon_image.findij(*jt,x_scale,y_scale,i1,j1,context);
           // segment
               gen e,f0,f1;
               evalfdouble2reim(*jt,e,f0,f1,context);
+              // For segment
+              save2=*jt;
               if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
                    i0=f0._DOUBLE_val;
                    j0=f1._DOUBLE_val;
@@ -924,42 +920,48 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         i0=i1;
         j0=j1;
       }
-     if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2))
-        ; // no legend for segment
+
+      Curve *curve=new Curve(path,this);
+     if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2)){
+
+           curve->setValue(giac::abs(save2-save,context));
+    }
+       // no legend for segment
       else {
           if (!hidden_name){}
       //    draw_legende(f,round(i0),round(j0),labelpos,&Mon_image,clip_x,clip_y,clip_w,clip_h,0,0);
       }
 
-      Curve *curve=new Curve(path,this);
       curve->setAttributes(ensemble_attributs);
       curve->setLegend(QString::fromStdString(the_legend));
       curve->setLevel(evaluationLevel);
       if (point.subtype==_VECTOR__VECT){
-              curve->setVector(true);
-        }
+              curve->setVector(true);              
+      }
       if (!isCurve&&path.elementCount()!=2){
           curve->setPolygon(true);
           curve->setFillable(fillable);
       }
       if (isCurve){
           QString mml("<math mode=\"display\">\n<mfenced open=\"{\" close=\"\"><mtable>\n<mtr><mtd><mfenced open=\"(\" close=\")\"><mrow>");
-          giac::gen value=f[0]._SYMBptr->feuille._VECTptr->front();
-          mml.append(QString::fromStdString(gen2mathml(value[0].re(context),context)));
+          giac::gen first=f[0]._SYMBptr->feuille._VECTptr->front();
+          //mml.append(QString::fromStdString(gen2mathml(value[0].re(context),context)));
           mml.append("<mo>;</mo>");
-          mml.append(QString::fromStdString(gen2mathml(value[0].im(context),context)));
+          //mml.append(QString::fromStdString(gen2mathml(value[0].im(context),context)));
           mml.append("</mrow></mfenced></mtd></mtr>\n<mtr><mtd><mrow>");
-          mml.append(QString::fromStdString(gen2mathml(value[2],context)));
+       //   mml.append(QString::fromStdString(gen2mathml(value[2],context)));
           mml.append("<mo>&lt;</mo>");
-          mml.append(QString::fromStdString(gen2mathml(value[1],context)));
+        //  mml.append(QString::fromStdString(gen2mathml(value[1],context)));
           mml.append("<mo>&lt;</mo>");
-          mml.append(QString::fromStdString(gen2mathml(value[3].re(context),context)));
+         // mml.append(QString::fromStdString(gen2mathml(value[3].re(context),context)));
           mml.append("</mrow></mtd></mtr>\n</mtable></mfenced></math>");
       //    qDebug()<<mml;
-          curve->setValue(mml);
+          gen value(makevecteur(first[0].re(context),first[0].im(context)));
+          value.subtype=giac::_SEQ__VECT;
+          curve->setValue(value);
       }
-      parent->addToTree(curve);
-      lineItems.append(curve);
+        scene.append(curve);
+
     } // end pnt subcase
 //*/
   }
@@ -975,20 +977,20 @@ double Canvas2D::getYmin() const{
 double Canvas2D::getYmax() const{
     return ymax;
 }
-QStringList& Canvas2D::getCommands(){
+QList<Canvas2D::Command> &Canvas2D::getCommands(){
     return commands;
 }
 
-QVector<MyItem*>* Canvas2D::getPointItem() {
+QList<MyItem*>* Canvas2D::getPointItem() {
     return &pointItems;
 
 }
-QVector<MyItem*>* Canvas2D::getFilledItem(){
+QList<MyItem*>* Canvas2D::getFilledItem(){
     return &filledItems;
 
 }
 
-QVector<MyItem*>* Canvas2D::getLineItem(){
+QList<MyItem*>* Canvas2D::getLineItem(){
     return &lineItems;
 
 }
@@ -1012,7 +1014,8 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
     context=c;
     ortho=false;
-    selection=false;
+    selectionRight=false;
+    selectionLeft=false;
     focusOwner=0;
     currentActionTool=SINGLEPT;
     varPt="A";
@@ -1112,9 +1115,42 @@ void Canvas2D::createScene(const giac::gen & g){
       xmin=-5;ymin=-5;xmax=5;ymax=5;
        setXYUnit();
     }*/
-     addToScene(g);
+    QList<MyItem*> v;
+    addToVector(g,v);
+    addToScene(v);
+
      updatePixmap(true);
 }
+void Canvas2D::addToScene(QList<MyItem *> & v){
+    if (parent->isInteractive()){
+        if (v.size()!=1) {
+        ListItem *list=new ListItem(v,this);
+        if (list->isFillable()) filledItems.append(list);
+        else if (checkForOnlyPoints(&v)) pointItems.append(list);
+        else lineItems.append(list);
+        parent->addToTree(list);
+        }
+        else{
+            MyItem *item=v.at(0);
+            if (item->isFillable()) filledItems.append(item);
+            else if (item->isPoint()) pointItems.append(item);
+            else lineItems.append(item);
+            focusOwner=item;
+            parent->addToTree(item);
+        }
+    }
+    else{
+        for (int i=0;i<v.size();++i){
+            MyItem * item =v.at(i);
+            parent->addToTree(item);
+
+            if (item->isFillable()) filledItems.append(item);
+            else if (item->isPoint()) pointItems.append(item);
+            else lineItems.append(item);
+        }
+    }
+}
+
 
 /*****************          **************
   ******            SLOTS       **********
@@ -1122,7 +1158,7 @@ void Canvas2D::createScene(const giac::gen & g){
 
 void Canvas2D::zoom_In(){
 
-    if (selection){
+    if (selectionRight){
         double tmpx,tmpy,tmpx2,tmpy2;
         toXY(startSel.x(),startSel.y(),tmpx,tmpy);
         toXY(endSel.x(),endSel.y(),tmpx2,tmpy2);
@@ -1154,7 +1190,7 @@ void Canvas2D::zoom_In(){
         ymin+=ystep;
         ymax-=ystep;
     }
-    selection=false;
+    selectionRight=false;
     setXYUnit();
     updatePixmap(true);
     this->repaint();
@@ -1180,7 +1216,7 @@ void Canvas2D::make_ortho(){
 
 }
 void Canvas2D::zoom_Out(){
-    selection=false;
+    selectionRight=false;
     double xstep=(xmax-xmin)/8;
     double ystep=(ymax-ymin)/8;
     xmin-=xstep;
@@ -1204,16 +1240,16 @@ void Canvas2D::displaySource(){
 //void Canvas2D::displayContextMenu(const QPoint &pos){
 //
 //}
-void Canvas2D::updatePixmap(const bool &compute,const int &level){
+void Canvas2D::updatePixmap(const bool &compute){
     pixmap=QPixmap(size());
     pixmap.fill(this,0,0);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing,true);
     drawGrid(&painter);
-    drawElements(filledItems,&painter,compute,level);
+    drawElements(filledItems,&painter,compute);
     if (show_axes(context)) drawAxes(&painter);
-    drawElements(lineItems,&painter,compute,level);
-    drawElements(pointItems,&painter,compute,level);
+    drawElements(lineItems,&painter,compute);
+    drawElements(pointItems,&painter,compute);
 }
 
 
@@ -1312,12 +1348,12 @@ void Canvas2D::drawGrid(QPainter * painter){
 
 
 }
-void Canvas2D::drawElements(QVector<MyItem*> & v,QPainter* painter,const bool &compute,const int &level){
+void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &compute){
 //    painter->setClipping(true);
 //    painter->setClipRect(20,20,width()-20,height()-20);
     if (v.isEmpty()) return;
     for(int i=0;i<v.size();++i){
-        if (v.at(i)->getLevel()==level) v.at(i)->updateScreenCoords(compute);
+        v.at(i)->updateScreenCoords(compute);
         v.at(i)->draw(painter);
 
     }
@@ -1347,109 +1383,6 @@ void Canvas2D::setXYUnit(){
     xunit=(width()-40)/(xmax-xmin);
     yunit=(height()-40)/(ymax-ymin);
 }
-
-bool Canvas2D::checkUnderMouse(QVector<MyItem*>* v, const QPointF & p){
-    QRectF r(p.x(),p.y(),5,5);
-    r.adjust(-2.5,-2.5,-2.5,-2.5);
-
-    for(int i=0;i<v->size();i++){
-        if (v->at(i)->isUnderMouse(r)) {
-            if (focusOwner!=v->at(i)){
-                focusOwner=v->at(i);
-                repaint();
-            }
-
-            return true;
-        }
-
-    }
-    return false;
-
-}
-void Canvas2D::mouseMoveEvent(QMouseEvent *e){
-    if (selection&&!hasMouseTracking()) {
-        endSel=e->pos();
-        repaint();
-        return;
-    }
-    selection=false;
-
-    QPointF mousePos(e->posF());
-
-    // Detects objects under mouse
-    bool objectUnderMouse=checkUnderMouse(&pointItems,mousePos) || checkUnderMouse(&lineItems,mousePos) ||   checkUnderMouse(&filledItems,mousePos);
-    // Case: No object
-    if (!objectUnderMouse){
-        if (focusOwner!=0){
-            focusOwner=0;
-            repaint();
-        }
-    }
-    else repaint();
-
-    repaint();
-
-}
-
-
-void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
-    Qt::MouseButton b=e->button();
-    if (b==Qt::RightButton&& selection) {
-                endSel=e->pos();
-                setMouseTracking(true);
-                QRect r(startSel,endSel);
-                if (selection&& std::abs(r.width())>10&& std::abs(r.height())>10){
-                    zoom_In();
-                }
-                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
-
-                selection=false;
-    }
-    // Left Button
-    else if (b==Qt::LeftButton){
-
-        // An object is already highlighted
-        if (focusOwner!=0){
-                focusOwner->getTreeItem()->treeWidget()->collapseAll();
-                focusOwner->getTreeItem()->treeWidget()->clearSelection();
-                focusOwner->getTreeItem()->setSelected(true);
-                focusOwner->getTreeItem()->parent()->setExpanded(true);
-        }
-        else {
-            if (parent->isInteractive()){
-                if (currentActionTool==SINGLEPT){
-                    findFreeVar(varPt);
-                    QPointF pos(e->posF());
-                    double a,b;
-                    toXY(pos.x(),pos.y(),a,b);
-
-                    QString newCommand(varPt);
-                    incrementVariable(varPt);
-                    newCommand.append(":=point(");
-                    newCommand.append(QString::number(a));
-                    newCommand.append(",");
-                    newCommand.append(QString::number(b));
-                    newCommand.append(");");
-                    gen g(newCommand.toStdString(),context);
-                    commands.append(newCommand);
-                    evaluationLevel=commands.size()-1;
-
-                    addToScene(protecteval(g,1,context));
-                    parent->updateAllCategories();
-                    updatePixmap(true,evaluationLevel);
-                    repaint();
-
-                    //qDebug()<<newCommand;
-
-
-
-                }
-            }
-            else  parent->clearSelection();
-        }
-    }
-}
-
 /**
   * In interactive mode: Points are labeled consecutively as follow:
   *     A,B,...,Z,A1,....,Z1, A2 .....
@@ -1481,7 +1414,302 @@ void Canvas2D::incrementVariable(QString & var){
         s.append(QString::number(QString(var.right(var.length()-1)).toInt()+1));
         var=s;
     }
+    // letter i can't label a variable, it stands for complex number
+    else if (c=='h'&&var.length()==1) var="j";
+    // letter e can't label a variable, it stands for function exp
+    else if  (c=='d'&&var.length()==1) {var="f";}
     else var[0]=QChar(c.toAscii()+1);
+}
+
+bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
+    QRectF r(p.x(),p.y(),5,5);
+    r.adjust(-2.5,-2.5,-2.5,-2.5);
+
+    for(int i=0;i<v->size();i++){
+        if (v->at(i)->isUnderMouse(r)&& checkForValidAction(v->at(i))) {
+
+
+            if (focusOwner!=v->at(i)){
+                focusOwner=v->at(i);
+                repaint();
+            }
+
+            return true;
+        }
+
+    }
+    return false;
+
+}
+/**
+ * @brief Canvas2D::checkForValidAction
+ * @param item
+ * @return true if this item can be selected for the the current action tool
+ * (Eg: If selected action tool is "Segment", it is waiting only for points. Then, we don't highlight circle for example.
+ */
+bool Canvas2D::checkForValidAction(const MyItem * item){
+    if (!parent->isInteractive()) return true;
+    switch(currentActionTool){
+    case  SINGLEPT:
+        return true;
+    case SEGMENT:
+    case LINE:
+    case HALFLINE:
+        if (item->isPoint()) return true;
+        else return false;
+    default:
+        return true;
+    }
+}
+
+void Canvas2D::mouseMoveEvent(QMouseEvent *e){
+    if (selectionRight&&!hasMouseTracking()) {
+        endSel=e->pos();
+        repaint();
+        return;
+    }
+    selectionRight=false;
+
+    QPointF mousePos(e->posF());
+    // try to move and object
+    if (parent->isInteractive()&&focusOwner!=0&& selectionLeft){
+        if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
+        return;
+    }
+    // Detects objects under mouse
+    bool objectUnderMouse=checkUnderMouse(&pointItems,mousePos) || checkUnderMouse(&lineItems,mousePos) ||   checkUnderMouse(&filledItems,mousePos);
+    // Case: No object
+    if (!objectUnderMouse){
+        if (focusOwner!=0){
+            focusOwner=0;
+            repaint();
+        }
+    }
+    else repaint();
+
+//    repaint();
+
+}
+
+bool lessThan(const MyItem* a, const MyItem*b){
+    return a->getLevel()<b->getLevel();
+}
+void Canvas2D::moveItem(MyItem* item,const QPointF &p){
+    if (item->isPoint()){
+        int eval_save=evaluationLevel;
+        evaluationLevel=item->getLevel();
+        Command c=commands.at(item->getLevel());
+        gen g(c.var.append(commandFreePoint(p,0)).toStdString(),context);
+        QList<MyItem*> v;
+        addToVector(protecteval(g,1,context),v);
+        evaluationLevel=eval_save;
+        item->updateValueFrom(v.at(0));
+        delete v.at(0);
+
+        if (item->hasChildren()){
+            v.clear();
+            refreshFromItem(item,v);
+            qSort(v.begin(),v.end(),lessThan);
+
+            for (int i=0;i<v.size();++i){
+                eval_save=evaluationLevel;
+                int level=v.at(i)->getLevel();
+
+                Command c=commands.at(level);
+                gen g(c.command.toStdString(),context);
+
+                QList<MyItem*> vv;
+//                evaluationLevel=level;
+                addToVector(protecteval(g,1,context),vv);
+
+//                qDebug()<<QString::fromStdString(protecteval(g,1,context).print(context));
+//                qDebug()<<vv.at(0)->getType();
+//                evaluationLevel=eval_save;
+                v.at(i)->updateValueFrom(vv.at(0));
+                delete vv.at(0);
+
+
+            }
+        }
+        updatePixmap(false);
+        parent->updateValueInDisplayPanel();
+        repaint();
+    }
+}
+
+
+void Canvas2D::refreshFromItem(const MyItem * item,QList<MyItem*>& list){
+    QVector<MyItem*> v=item->getChildren();
+    for (int i=0;i<v.size();++i){
+        if (!list.contains(v.at(i))){
+            list.append(v.at(i));
+            if (v.at(i)->hasChildren()) refreshFromItem(v.at(i),list);
+        }
+    }
+}
+
+    //gen g(commands.at(level).toStdString(),context);
+    //gen answer=protecteval(g,1,context);
+
+
+
+
+
+void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
+    Qt::MouseButton b=e->button();
+    if (b==Qt::RightButton&& selectionRight) {
+                endSel=e->pos();
+                setMouseTracking(true);
+                QRect r(startSel,endSel);
+                if (selectionRight&& std::abs(r.width())>10&& std::abs(r.height())>10){
+                    zoom_In();
+                }
+                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
+
+                selectionRight=false;
+    }
+    // Left Button
+    else if (b==Qt::LeftButton){
+        selectionLeft=false;
+        // An object is already highlighted
+        if (focusOwner!=0){
+            if (parent->isInteractive()){
+                selectedItems<<focusOwner;
+                if (checkForCompleteAction()){
+
+                      executeMyAction();
+                }
+            }
+            else parent->selectInTree(focusOwner);
+        }
+        else {
+            if (parent->isInteractive()){
+                // No focusOwner
+                // First, Does the selected action tool allow us to add a new point?
+                // If not:
+                if (!addNewPoint(e->posF())) parent->clearSelection();
+                // Else, after this point is added on drawing screen, is selectedItem full?
+                else if (checkForCompleteAction()){
+
+                    executeMyAction();
+                }
+            }
+            else  parent->clearSelection();
+        }
+    }
+}
+/**
+ * @brief Canvas2D::checkForCompleteAction
+ * @return true if current tool has enough selected items to proceed
+ */
+bool Canvas2D::checkForCompleteAction(){
+    switch(currentActionTool){
+        case SEGMENT:
+        case LINE:
+        case HALFLINE:
+        return (selectedItems.size()==2);
+    default:
+        return false;
+    }
+}
+void Canvas2D::addNewLine(const QString & type){
+    findFreeVar(varLine);
+    Command c;
+    c.var=QString(varLine);
+    c.attributes=0;
+    c.command=QString(c.var);
+    commandTwoArgs(type,(commands.at(selectedItems.at(0)->getLevel())).var,
+                   (commands.at(selectedItems.at(1)->getLevel())).var,c.command);
+    c.isCustom=false;
+    commands.append(c);
+    evaluationLevel=commands.size()-1;
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+
+    addToVector(protecteval(g,1,context),v);
+    selectedItems.at(0)->addChild(v.at(0));
+    selectedItems.at(1)->addChild(v.at(0));
+    lineItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    focusOwner=v.at(0);
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(true);
+    repaint();
+}
+void Canvas2D::executeMyAction(){
+    switch(currentActionTool){
+        case SEGMENT:  addNewLine("segment");
+        break;
+        case LINE: addNewLine("line");
+        break;
+        case HALFLINE: addNewLine("half_line");
+        break;
+    default:
+        qDebug()<<"coucou";
+    }
+
+    selectedItems.clear();
+
+}
+void Canvas2D::commandTwoArgs(const QString &command,const QString &first,const QString &second,QString  & result){
+    result.append(":=");
+    result.append(command);
+    result.append("(");
+    result.append(first);
+    result.append(",");
+    result.append(second);
+    result.append(");");
+}
+/**
+ * @brief Canvas2D::addNewPoint
+ * @param p the current mouse position
+ * @return true if the current tool is waiting for a point and adds this point,
+ * returns false otherwise
+ */
+bool Canvas2D::addNewPoint(const QPointF & p){
+    // application is currently waiting for a point selection
+    if (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE){
+        findFreeVar(varPt);
+        Command newCommand;
+        newCommand.var=QString(varPt);
+        QString s(varPt);
+        s.append(commandFreePoint(p,0));
+        newCommand.command=s;
+        newCommand.attributes=0;
+        newCommand.isCustom=false;
+        commands.append(newCommand);
+        evaluationLevel=commands.size()-1;
+        gen g(newCommand.command.toStdString(),context);
+//                    qDebug()<<QString::fromStdString(g.print(context));
+        QList<MyItem*> v;
+        addToVector(protecteval(g,1,context),v);
+        v.at(0)->updateScreenCoords(true);
+        pointItems.append(v.at(0));
+        parent->addToTree(v.at(0));
+        focusOwner=v.at(0);
+        parent->updateAllCategories();
+        parent->selectInTree(focusOwner);
+        selectedItems.append(focusOwner);
+        updatePixmap(false);
+        repaint();
+        return true;
+    }
+    return false;
+
+}
+
+QString  Canvas2D::commandFreePoint(const QPointF & p,const int attributes){
+    double a,b;
+    toXY(p.x(),p.y(),a,b);
+    QString newCommand(":=point([");
+    newCommand.append(QString::number(a));
+    newCommand.append(",");
+    newCommand.append(QString::number(b));
+    newCommand.append("],display=");
+    newCommand.append(QString::number(attributes));
+    newCommand.append(");");
+    return newCommand;
 }
 
 
@@ -1490,13 +1718,12 @@ void Canvas2D::mousePressEvent(QMouseEvent *e){
     Qt::MouseButton b=e->button();
     if (b==Qt::RightButton){
             setMouseTracking(false);
-            selection=true;
+            selectionRight=true;
             startSel=e->pos();
-
-
     }
-
-
+    else if(b==Qt::LeftButton){
+        if (parent->isInteractive()) selectionLeft=true;
+    }
 }
 bool Canvas2D::event(QEvent * ev){
     if (ev->type() == QEvent::ToolTip){
@@ -1512,14 +1739,19 @@ bool Canvas2D::event(QEvent * ev){
     else return QWidget::event(ev);
 
 }
-
+/**
+  * Draws the geometry scene
+  *
+  * First, draw the pixmap
+  * Then, highlights some selected objects
+  */
 void Canvas2D::paintEvent(QPaintEvent * ){
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing,true);
     painter.drawPixmap(0,0,pixmap);
 
     // draw selection
-    if (selection){
+    if (selectionRight){
         QColor fill=QColor(50,0,255,50);
         painter.setPen(fill);
         QBrush brush(fill,Qt::SolidPattern);
@@ -1541,6 +1773,14 @@ void Canvas2D::paintEvent(QPaintEvent * ){
         focusOwner->setHighLighted(false);
     }
 }
+void Canvas2D::resizeEvent(QResizeEvent * ev){
+    xmax=xmin+(ev->size().width()-40)/xunit;
+    ymin=ymax-(ev->size().height()-40)/yunit;
+
+    updatePixmap(false);
+    repaint();
+
+}
 void  Canvas2D::toXML(){
     }
 
@@ -1556,6 +1796,31 @@ void Canvas2D::setFocusOwner(MyItem * item){
 bool Canvas2D::isInteractive() const{
     return parent->isInteractive();
 }
+bool Canvas2D::checkForOnlyPoints(const QList<MyItem *> *list) const{
+
+    for (int i=0;i<list->size();++i){
+        if (!list->at(i)->isPoint()) return false;
+    }
+    return true;
+
+}
+bool Canvas2D::checkForOnlyFillables(const QList<MyItem *> *list) const{
+    for (int i=0;i<list->size();++i){
+        if (!list->at(i)->isFillable()) return false;
+    }
+    return true;
+}
+
+
+bool Canvas2D::checkForOnlyLines(const QList<MyItem *> *list) const{
+
+    for (int i=0;i<list->size();++i){
+        if (list->at(i)->isPoint()) return false;
+    }
+    return true;
+
+}
+
 
 PanelProperties::PanelProperties(Canvas2D* c){
     parent=c;
@@ -1584,6 +1849,7 @@ void PanelProperties::initGui(){
     nodeHalfLine=new QTreeWidgetItem;
     nodeCircle=new QTreeWidgetItem;
     nodePolygon=new QTreeWidgetItem;
+    nodeList=new QTreeWidgetItem;
 
     nodeAxis->setText(0,tr("Axes/grille"));
     nodePoint->setText(0,tr("Point"));
@@ -1594,6 +1860,7 @@ void PanelProperties::initGui(){
     nodeHalfLine->setText(0,tr("Demie-droite"));
     nodePolygon->setText(0,tr("Polygône"));
     nodeCircle->setText(0,tr("Cercle"));
+    nodeList->setText(0,tr("Liste"));
 
 
     tree->addTopLevelItem(nodeAxis);
@@ -1613,40 +1880,45 @@ void PanelProperties::initGui(){
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
 void PanelProperties::addToTree( MyItem * item){
+    QTreeWidgetItem* treeItem=new QTreeWidgetItem;
+
     if (item->isPixel()) return;
 
     if (item->isPoint()){
-       nodePoint->addChild(item->getTreeItem());
+       nodePoint->addChild(treeItem);
 
     }
     else if(item->isLine()){
-        nodeLine->addChild(item->getTreeItem());
+        nodeLine->addChild(treeItem);
     }
     else if(item->isHalfLine()){
-        nodeHalfLine->addChild(item->getTreeItem());
+        nodeHalfLine->addChild(treeItem);
     }
     else if(item->isCurve()){
 
         Curve* c= dynamic_cast<Curve*>(item);
         if (c->isVector())
-            nodeVector->addChild(item->getTreeItem());
+            nodeVector->addChild(treeItem);
         else if (c->isSegment())
-            nodeSegment->addChild(item->getTreeItem());
+            nodeSegment->addChild(treeItem);
         else if (c->isPolygon())
-            nodePolygon->addChild(item->getTreeItem());
+            nodePolygon->addChild(treeItem);
         else
-            nodeCurve->addChild(item->getTreeItem());
+            nodeCurve->addChild(treeItem);
     }
     else if(item->isCircle()){
-        nodeCircle->addChild(item->getTreeItem());
+        nodeCircle->addChild(treeItem);
 
     }
-    nodeLinks.insert(item->getTreeItem(),item);
+    else if(item->isList()){
+        nodeList->addChild(treeItem);
+    }
+    nodeLinks.insert(treeItem,item);
     QString legend=item->getLegend();
     if (legend.trimmed().isEmpty()){
-        item->getTreeItem()->setText(0,item->getType().append(" ").append(QString::number(item->getTreeItem()->parent()->childCount())));
+        treeItem->setText(0,item->getType().append(" ").append(QString::number(treeItem->parent()->childCount())));
     }
-    else item->getTreeItem()->setText(0,legend);
+    else treeItem->setText(0,legend);
 }
 
 
@@ -1718,7 +1990,7 @@ bool PanelProperties::updateCategory(QTreeWidgetItem* node,const int & id){
 }
 
 void PanelProperties::updateAllCategories(){
-    int id=0;
+    int id=1;
     if (updateCategory(nodePoint,id)) id++;
     if (updateCategory(nodeLine,id)) id++;
     if (updateCategory(nodeSegment,id)) id++;
@@ -1727,8 +1999,15 @@ void PanelProperties::updateAllCategories(){
     if (updateCategory(nodePolygon,id)) id++;
     if (updateCategory(nodeVector,id)) id++;
     if (updateCategory(nodeHalfLine,id)) id++;
+    if (updateCategory(nodeList,id)) id++;
 }
-
+void PanelProperties::selectInTree(const MyItem * item){
+   QTreeWidgetItem* treeItem=nodeLinks.key(item);
+   tree->collapseAll();
+    tree->clearSelection();
+    treeItem->setSelected(true);
+    treeItem->parent()->setExpanded(true);
+}
 void PanelProperties::clearSelection(){
     if (!tree->selectedItems().isEmpty()) {
         tree->clearSelection();
@@ -1736,16 +2015,22 @@ void PanelProperties::clearSelection(){
         displayPanel->hide();
     }
 }
+void PanelProperties::updateValueInDisplayPanel(){
+    displayPanel->updateValueInDisplayPanel();
+
+}
 DisplayProperties::DisplayProperties(Canvas2D *canvas):QTabWidget(canvas){
     parent=canvas;
     initGui();
+    listItems=new QList<MyItem*>;
 }
 void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     setVisible(true);
+    delete listItems;
     listItems=l;
     if (l->count()>1) valuePanel->setVisible(false);
-    else if (!listItems->at(0)->getValue().trimmed().isEmpty()){
-        valuePanel->setValue(listItems->at(0)->getValue());
+   else if (!QString::fromStdString(giac::print(listItems->at(0)->getValue(),parent->getContext())).trimmed().isEmpty()){
+        valuePanel->setValue(listItems->at(0)->getDisplayValue());
         valuePanel->setVisible(true);
     }
     else valuePanel->setVisible(false);
@@ -1760,7 +2045,7 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     else {
         legendPanel->setLegend(true,listItems->at(0)->getLegend());
     }
-    bool b=checkForOnlyPoints();
+    bool b=parent->checkForOnlyPoints(listItems);
     if (listItems->at(0)->getAngleLegend()==-1){
         legendPanel->setLegendPosition(listItems->at(0)->getQuadrant());
 
@@ -1774,7 +2059,7 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         typePointPanel->setStyle(dynamic_cast<Point*>(listItems->at(0))->getPointStyle()>>25);
         typePointPanel->setVisible(true);
     }
-    else if (checkForOnlyLines()) {
+    else if (parent->checkForOnlyLines(listItems)) {
         typePointPanel->hide();
         typeLinePanel->setStyle(listItems->at(0)->getStyle());
         typeLinePanel->setVisible(true);
@@ -1783,7 +2068,7 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         typeLinePanel->hide();
         typePointPanel->hide();
     }
-    if (checkForOnlyFillables()) {
+    if (parent->checkForOnlyFillables(listItems)) {
         if (listItems->at(0)->isFilled())
         alphaFillPanel->setValue(8-listItems->at(0)->getColor().alpha()/36);
         else alphaFillPanel->setValue(8);
@@ -1794,11 +2079,15 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 
 
 }
+void DisplayProperties::updateValueInDisplayPanel(){
+    if (!listItems->isEmpty())
+        valuePanel->setValue(listItems->at(0)->getDisplayValue());
+}
 void DisplayProperties::initGui(){
     QWidget * generalPanel=new QWidget;
     vLayoutGeneral=new QVBoxLayout;
     vLayoutGeneral->setSizeConstraint(QLayout::SetFixedSize);
-    valuePanel=new GenValuePanel(this);
+    valuePanel=new GenValuePanel(parent);
     valuePanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     displayObjectPanel=new DisplayObjectPanel(this);
     displayObjectPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
@@ -1833,32 +2122,9 @@ void DisplayProperties::initGui(){
     addTab(generalPanel,tr("Général"));
     addTab(attributesPanel,tr("Style"));
 
-}
-
-bool DisplayProperties::checkForOnlyPoints() const{
-
-    for (int i=0;i<listItems->size();++i){
-        if (!listItems->at(i)->isPoint()) return false;
-    }
-    return true;
 
 }
-bool DisplayProperties::checkForOnlyFillables() const{
-    for (int i=0;i<listItems->size();++i){
-        if (!listItems->at(i)->isFillable()) return false;
-    }
-    return true;
-}
 
-
-bool DisplayProperties::checkForOnlyLines() const{
-
-    for (int i=0;i<listItems->size();++i){
-        if (listItems->at(i)->isPoint()) return false;
-    }
-    return true;
-
-}
 
 void DisplayProperties::updateCanvas(){
 
@@ -2263,32 +2529,21 @@ void DisplayObjectPanel::updateCanvas(){
     parent->updateCanvas();
 
 }
-GenValuePanel::GenValuePanel(DisplayProperties * p):QWidget(p){
+GenValuePanel::GenValuePanel(Canvas2D * p):QWidget(p){
     parent=p;
     initGui();
 }
 void GenValuePanel::initGui(){
-    layout=new QHBoxLayout;
-    mmlWidget=new QtMmlWidget;
-    layout->addWidget(mmlWidget,Qt::AlignLeft);
+    layout=new QHBoxLayout(this);
+//    label=new QLabel
+    formulaWidget=new FormulaWidget(this);
+    layout->addWidget(formulaWidget,Qt::AlignLeft);
     layout->setSizeConstraint(QLayout::SetMinimumSize);
     setLayout(layout);
 }
-void GenValuePanel::setValue(const QString & s){
-
-     QString errorMsg;
-      int errorLine;
-      int errorColumn;
-      bool ok = mmlWidget->setContent(s, &errorMsg, &errorLine, &errorColumn);
-      if (!ok) {
-        qWarning("MathML error: %s, Line: %d, Column: %d",
-                 errorMsg.constData(), errorLine, errorColumn);
-      }
-      QPalette p=mmlWidget->palette();
-      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
-      mmlWidget->setPalette(p);
-      mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-      mmlWidget->updateGeometry();
+void GenValuePanel::setValue(const QString  s){
+      formulaWidget->updateFormula(s);
+      formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 }
 
 AxisGridPanel::AxisGridPanel(Canvas2D * p):QTabWidget(p){
@@ -2315,7 +2570,8 @@ void AxisGridPanel::updateCanvas(const bool &b){
      parent->setYAxisLegend(yPanel->editLabel->text());
      parent->setXUnitSuffix(xPanel->editUnitLabel->text());
      parent->setYUnitSuffix(yPanel->editUnitLabel->text());
-     parent->setBounds(xPanel->editMin->text().toDouble(),xPanel->editMax->text().toDouble(),yPanel->editMin->text().toDouble(),yPanel->editMax->text().toDouble());
+     if (xPanel->editMin->text().toDouble()<xPanel->editMax->text().toDouble()&&yPanel->editMin->text().toDouble()<yPanel->editMax->text().toDouble())
+         parent->setBounds(xPanel->editMin->text().toDouble(),xPanel->editMax->text().toDouble(),yPanel->editMin->text().toDouble(),yPanel->editMax->text().toDouble());
      giac::show_axes(xPanel->showAxis->isChecked()&& yPanel->showAxis->isChecked(),parent->getContext());
      parent->setXYUnit();
      parent->updatePixmap(b);
@@ -2391,7 +2647,13 @@ SourceDialog::SourceDialog(Canvas2D* p){
 void SourceDialog::initGui(){
     QHBoxLayout* hbox=new QHBoxLayout(this);
     listWidget=new QListWidget(this);
-    listWidget->addItems(parent->getCommands());
+    QList<Canvas2D::Command> commands=parent->getCommands();
+    QStringList list;
+    for (int i=0;i<commands.size();++i){
+        list.append(commands.at(i).command);
+    }
+
+    listWidget->addItems(list);
     listWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     deleteButton=new QPushButton(tr("Supprimer"),this);
     hbox->addWidget(listWidget);

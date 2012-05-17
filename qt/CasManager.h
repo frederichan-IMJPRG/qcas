@@ -111,8 +111,7 @@ private:
     giac::gen expression;
     giac::context *context;
     void info(giac::gen &, int decal ) const;
-    OutputWidget* formula2Widget(const QString &mathml);
-    OutputWidget* graph2Widget(const giac::gen&);
+     OutputWidget* graph2Widget(const giac::gen&);
     QString displayType(int c) const;
     QString displaySubType(int c) const;
 

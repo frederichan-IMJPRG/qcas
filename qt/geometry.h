@@ -20,31 +20,38 @@
 #include <QVector>
 #include <QColor>
 #include <QPainterPath>
-
+#include "../giac/gen.h"
+#include "tex.h"
 
 class QPainter;
 class Canvas2D;
 class QTreeWidgetItem ;
-
+//class FormulaWidget;
 
 
 class MyItem{
 public:
   MyItem(Canvas2D*);
+  virtual ~MyItem();
   virtual bool isPoint() const;
   virtual bool isLine() const;
   virtual bool isSegment() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
+  virtual bool isList() const;
   virtual bool isCircle() const;
   virtual bool isPixel() const;
   virtual bool isFillable() const;
   virtual bool isLegendItem() const;
+  virtual void setValue(const giac::gen & ) ;
+  virtual void updateValueFrom(MyItem*);
+  virtual QString getDisplayValue();
+  bool isMovable() const;
+  void setMovable(const bool &);
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
   virtual QString getType()const =0 ;
   virtual bool isUnderMouse(const QRectF &p) const;
-  QTreeWidgetItem * getTreeItem();
   void setColor(const QColor &) ;
   void setPointStyle(const int );
   void setStyle(const int);
@@ -55,11 +62,15 @@ public:
   int getQuadrant() const;
   virtual void setWidth(const int);
   virtual int getPenWidth() const;
-
+  QVector<MyItem*> & getChildren();
+  bool hasChildren() const;
+  void addChild(const MyItem* );
   void setHighLighted(const bool& );
   void setLegendPos(const int &);
-     void setValue(const QString & ) ;
-     QString  getValue() const;
+   giac::gen &getValue();
+   void setCommand(const QString &);
+   QString getCommand() const;
+//   virtual FormulaWidget* getDisplayWidget();
 
   Qt::PenCapStyle getPenStyle();
   Qt::PenStyle getLineType();
@@ -79,20 +90,22 @@ public:
 protected:
   Canvas2D* g2d;
   unsigned int attributes;
-  QString value;
+  giac::gen value;
   bool highLighted;
   double angleLegend;
   QString legend;
   bool visible;
+private:
+  bool movable;
   int level;
 
-  private:
-
-    QTreeWidgetItem* treeItem;
+  QString command;
+  QVector<MyItem*> children;
 };
 class Point:public MyItem{
 public:
-    Point(const double x,const double y,Canvas2D* );
+    Point(const giac::gen &,Canvas2D *graph );
+   virtual void updateValueFrom(MyItem *);
     virtual bool isPoint() const;
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool);
@@ -101,6 +114,10 @@ public:
     virtual QString getType() const;
     int getPointStyle() const;
     virtual int getPenWidth() const;
+    virtual void setValue(const giac::gen & );
+    virtual QString  getDisplayValue();
+
+
 
 private:
     QRectF recSel;
@@ -110,13 +127,18 @@ private:
 
 class LineItem:public MyItem{
 public:
-    LineItem(const QPointF&,const QPointF&,Canvas2D*);
+    LineItem(const QPointF &, const QPointF &, Canvas2D*);
     virtual bool isLine() const;
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool);
     virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void setValue(const giac::gen &);
     virtual QString getType() const;
+    virtual QString getDisplayValue();
+    virtual void updateValueFrom(MyItem *);
 
+    QPointF getStartPoint() const;
+    QPointF getEndPoint() const;
 
 private:
     QPointF startPoint;
@@ -130,13 +152,17 @@ private:
 
 class HalfLineItem:public MyItem{
 public:
-    HalfLineItem(const QPointF&,const QPointF&,Canvas2D*);
+    HalfLineItem(const QPointF &, const QPointF &, Canvas2D*);
     virtual bool isHalfLine() const;
     virtual void draw(QPainter*) const;
     virtual void updateScreenCoords(const bool );
     virtual QString getType() const;
-
+    virtual QString getDisplayValue();
+    virtual void setValue(const giac::gen &);
+    virtual void updateValueFrom(MyItem *);
     virtual bool isUnderMouse(const QRectF& p) const;
+    QPointF getStartPoint() const;
+    QPointF getEndPoint() const;
 
 private:
     QPointF startPoint;
@@ -164,7 +190,9 @@ public:
     bool isPolygon() const;
     virtual bool isFillable() const;
     void setFillable(const bool &);
-
+    virtual QString getDisplayValue();
+    virtual void updateValueFrom(MyItem *);
+    QPainterPath getPath() const;
 private:
     bool vector;
     bool polygon;
@@ -185,7 +213,7 @@ public:
     virtual void draw(QPainter*) const;
     virtual QString getType() const;
     virtual bool isFillable() const;
-
+    virtual QString getDisplayValue();
 private:
     QPointF center;
     double diametre;
@@ -203,7 +231,7 @@ public:
     virtual void draw(QPainter*) const;
     virtual bool isPixel() const;
     virtual QString getType() const;
-
+    virtual bool isFillable() const;
 private:
     QPointF pixel;
     QPointF pixelScreen;
@@ -216,8 +244,22 @@ public:
     virtual void draw(QPainter*) const;
     virtual bool isLegendItem() const;
     virtual QString getType() const;
-
 private:
     QPointF pos;
 };
+class ListItem:public MyItem{
+public:
+    ListItem(const QList<MyItem*> & , Canvas2D*);
+    ~ListItem();
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual bool isList() const;
+    virtual QString getType() const;
+    virtual bool isFillable() const;
+
+private:
+    QList<MyItem*> list;
+};
+
 #endif // GEOMETRY_H

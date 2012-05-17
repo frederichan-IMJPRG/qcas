@@ -29,7 +29,10 @@
 #include <QGroupBox>
 #include <QWindowsStyle>
 #include <QTabWidget>
+#include <QList>
+#include <QPoint>
 class QMenu;
+//class QLabel;
 class QBoxLayout;
 class Line;
 class QComboBox;
@@ -82,9 +85,26 @@ private:
     Line* line;
 };
 class FormulaWidget :public OutputWidget{
+    Q_OBJECT
 public:
-    FormulaWidget(const QString &);
+    FormulaWidget(QWidget*);
+    FormulaWidget(const giac::gen &, const giac::context *);
     virtual void toXML(QDomElement&);
+    void updateFormula(const giac::gen &, const giac::context *);
+    void updateFormula(const QString );
+
+private:
+    void initGui();
+    const giac::context* context;
+    giac::gen formula;
+    QtMmlWidget *mmlWidget;
+    QMenu* menu;
+    QAction* copyAction;
+    QAction* toLatexAction;
+private slots:
+    void displayMenu(QPoint);
+    void copy();
+    void copyToLaTeX();
 
 };
 
@@ -103,6 +123,8 @@ class GraphWidget:public OutputWidget{
     bool isInteractive() const;
     void addToTree(MyItem*);
     void updateAllCategories();
+    void updateValueInDisplayPanel();
+    void selectInTree(const MyItem*);
 
  private:
     bool isInteractiveWidget;
@@ -141,20 +163,30 @@ class Canvas2D:public QWidget{
     Q_OBJECT
 public:
     enum action{SINGLEPT,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE3PT};
-
+    struct Command{
+        QString var;
+        QString command;
+        int attributes;
+        MyItem* item;
+        bool isCustom;
+    };
     Canvas2D(GraphWidget* g2d, giac::context*);
     void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
     void toXML();
     QSize sizeHint() const;
-    QVector<MyItem*>* getPointItem();
-    QVector<MyItem*>* getLineItem();
-    QVector<MyItem*>* getFilledItem();
+    QList<MyItem*>* getPointItem();
+    QList<MyItem *> *getLineItem();
+    QList<MyItem*>* getFilledItem();
     void setFocusOwner(MyItem*);
-    void updatePixmap(const bool &, const int & level=-1 );
+    void updatePixmap(const bool &);
     void setActionTool(action);
     void setXYUnit();
+    bool checkForOnlyPoints(const QList<MyItem *> *) const;
+    bool checkForOnlyLines(const QList<MyItem *> *) const;
+    bool checkForOnlyFillables(const QList<MyItem *> *) const;
+
 
     // Getter & Setter
     bool isInteractive() const;
@@ -176,7 +208,7 @@ public:
     double getXmax() const ;
     double getYmin() const;
     double getYmax() const;
-    QStringList& getCommands();
+    QList<Command>& getCommands();
 
 
 
@@ -186,6 +218,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
     bool event(QEvent *);
+    void resizeEvent(QResizeEvent *);
 
 private:
     giac::context*context;
@@ -199,17 +232,20 @@ private:
     // Axis and grid parameters
     QString xAxisLegend,yAxisLegend;
     QString xUnitSuffix,yUnitSuffix;
-    double xAxisTick,yAxisTick;
+    double xAxisTick,yAxisTick,xGrid,yGrid;
+
 
     // vectors to store geometry items
-    QVector<MyItem*> lineItems;
-    QVector<MyItem*> pointItems;
-    QVector<MyItem*> filledItems;
+    QList<MyItem*> lineItems;
+    QList<MyItem*> pointItems;
+    QList<MyItem*> filledItems;
 
     // A command for each line
-    QStringList commands;
+    QList<Command> commands;
+
     // action selected
     action currentActionTool;
+    QList<MyItem*> selectedItems;
 
     QMenu * menuGeneral;
     QAction* zoomIn;
@@ -218,10 +254,13 @@ private:
     QAction* sourceAction;
 
     GraphWidget *parent;
+
     // To draw a rectangle selection
-    bool selection;
+    bool selectionRight;
     QPoint startSel;
     QPoint endSel;
+    // If the user press the left button
+    bool selectionLeft;
     // The Pixmap on which all Items are drawn.
     QPixmap pixmap;
     // Variables names for points and lines.
@@ -232,14 +271,28 @@ private:
     int evaluationLevel;
 
     void createMenuAction();
-    void addToScene(const giac::gen &);
+    void addToVector(const giac::gen &, QList<MyItem *> &);
+    void addToScene(QList<MyItem *> &);
+
     double find_tick(double);
     void drawAxes(QPainter*);
     void drawGrid(QPainter*);
-    void drawElements(QVector<MyItem*> &, QPainter*, const bool& ,const int&);
-    bool checkUnderMouse(QVector<MyItem*>* v, const QPointF &);
+    void drawElements(QList<MyItem *> &, QPainter*, const bool&);
+    bool checkUnderMouse(QList<MyItem *> *v, const QPointF &);
+    bool checkForValidAction(const MyItem*);
     void findFreeVar(QString &);
     void incrementVariable(QString &);
+    void moveItem(MyItem*, const QPointF & );
+    QString commandFreePoint(const QPointF&, const int );
+    void refreshFromItem(const MyItem*, QList<MyItem *> &);
+//    bool lessThan(const MyItem* ,const MyItem* );
+    bool addNewPoint(const QPointF &);
+    void addNewLine(const QString &);
+    void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
+    bool checkForCompleteAction();
+//    bool checkForValidItem(MyItem*);
+    void executeMyAction();
+
 
 private slots:
     void zoom_In();
@@ -257,6 +310,8 @@ public:
     void clearSelection();
     void addToTree(MyItem* );
     void updateAllCategories();
+    void selectInTree(const MyItem * );
+    void updateValueInDisplayPanel();
 
 
 private:
@@ -271,6 +326,7 @@ private:
     QTreeWidgetItem* nodeHalfLine;
     QTreeWidgetItem* nodePolygon;
     QTreeWidgetItem* nodeCircle;
+    QTreeWidgetItem* nodeList;
 
     QHash<QTreeWidgetItem*,MyItem*> nodeLinks;
     QBoxLayout*  hbox;
@@ -289,6 +345,7 @@ public:
     void updateCanvas();
     QList<MyItem*>* getListItems() const;
     void updateDisplayPanel(QList<MyItem*>*);
+    void updateValueInDisplayPanel();
 
 private:
     Canvas2D* parent;
@@ -305,9 +362,6 @@ private:
     AlphaFillPanel* alphaFillPanel;
 
     void initGui();
-    bool checkForOnlyPoints() const;
-    bool checkForOnlyLines() const;
-    bool checkForOnlyFillables() const;
 
 };
 class ColorPanel:public QWidget{
@@ -428,14 +482,15 @@ private slots:
 };
 class GenValuePanel:public QWidget{
 public:
-    GenValuePanel(DisplayProperties* );
-    void setValue(const QString &);
+    GenValuePanel(Canvas2D * );
+    void setValue(const QString);
 private:
-    QtMmlWidget *mmlWidget;
+ //   QLabel* label;
+    FormulaWidget *formulaWidget;
     QBoxLayout * layout;
-    QString value;
+//    QString value;
     void initGui();
-    DisplayProperties* parent;
+    Canvas2D* parent;
 
 //private slots:
   //  void updateCanvas(int );

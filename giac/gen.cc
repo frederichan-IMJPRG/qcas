@@ -9312,6 +9312,7 @@ namespace giac {
     if (sf || d>=1073741824 || d<=-1073741824)
       return s;
     for (int i=0;s[i];++i){
+//        if (s[i]=='.' || s[i]==',' || s[i]=='e' || s[i]=='E')
       if (s[i]=='.' || s[i]=='e' || s[i]=='E')
 	return s;
     }

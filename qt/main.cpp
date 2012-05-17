@@ -19,9 +19,12 @@
 #include <QApplication>
 #include <QTextCodec>
 #include "MainWindow.h"
+#include <locale.h>
 
 int main(int argc, char * argv []){
     QApplication app(argc, argv);
+    setlocale(LC_NUMERIC,"POSIX");
+
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
     MainWindow win;
     win.show();

@@ -98,7 +98,6 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
   int PARENTHESIS_NWAIT=100;
 #endif
-
   // FIXME: threads allowed curently disabled
   // otherwise fermat_gcd_mod_2var crashes at puccini
   bool threads_allowed=true,mpzclass_allowed=true;
