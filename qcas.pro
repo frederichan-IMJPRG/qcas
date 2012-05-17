@@ -10,12 +10,12 @@ QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
+    -DGIAC_GENERIC_CONSTANTS 
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
+    -DGIAC_GENERIC_CONSTANTS 
 DEPENDPATH += . \
     qt \
     giac \

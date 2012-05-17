@@ -62,9 +62,9 @@ public:
   int getQuadrant() const;
   virtual void setWidth(const int);
   virtual int getPenWidth() const;
-  QVector<MyItem*> & getChildren();
+  QVector<MyItem*>  getChildren();
   bool hasChildren() const;
-  void addChild(const MyItem* );
+  void addChild(MyItem * );
   void setHighLighted(const bool& );
   void setLegendPos(const int &);
    giac::gen &getValue();

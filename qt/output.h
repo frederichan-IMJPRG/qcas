@@ -88,14 +88,14 @@ class FormulaWidget :public OutputWidget{
     Q_OBJECT
 public:
     FormulaWidget(QWidget*);
-    FormulaWidget(const giac::gen &, const giac::context *);
+    FormulaWidget(const giac::gen &, giac::context *);
     virtual void toXML(QDomElement&);
-    void updateFormula(const giac::gen &, const giac::context *);
+    void updateFormula(const giac::gen &, giac::context *);
     void updateFormula(const QString );
 
 private:
     void initGui();
-    const giac::context* context;
+    giac::context* context;
     giac::gen formula;
     QtMmlWidget *mmlWidget;
     QMenu* menu;
@@ -124,7 +124,7 @@ class GraphWidget:public OutputWidget{
     void addToTree(MyItem*);
     void updateAllCategories();
     void updateValueInDisplayPanel();
-    void selectInTree(const MyItem*);
+    void selectInTree(MyItem *);
 
  private:
     bool isInteractiveWidget;
@@ -284,7 +284,7 @@ private:
     void incrementVariable(QString &);
     void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&, const int );
-    void refreshFromItem(const MyItem*, QList<MyItem *> &);
+    void refreshFromItem(MyItem *, QList<MyItem *> &);
 //    bool lessThan(const MyItem* ,const MyItem* );
     bool addNewPoint(const QPointF &);
     void addNewLine(const QString &);
@@ -310,7 +310,7 @@ public:
     void clearSelection();
     void addToTree(MyItem* );
     void updateAllCategories();
-    void selectInTree(const MyItem * );
+    void selectInTree(MyItem * );
     void updateValueInDisplayPanel();
 
 

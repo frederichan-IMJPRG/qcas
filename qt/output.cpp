@@ -67,10 +67,10 @@ void OutputWidget::setLine(Line* l){
 }
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
     formula=gen(1);
-    context=giac::context0;
+    context=new giac::context;
     initGui();
 }
-FormulaWidget::FormulaWidget(const giac::gen &g,const giac::context* c){
+FormulaWidget::FormulaWidget(const giac::gen &g,giac::context *c){
     formula=g;
     context=c;
     initGui();
@@ -127,7 +127,7 @@ void FormulaWidget::updateFormula(const QString  s){
       mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
       mmlWidget->updateGeometry();
 }
-void FormulaWidget::updateFormula(const gen & g,const giac::context* c){
+void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     context=c;
     formula=g;
     QString m("<math mode=\"display\">\n");
@@ -421,7 +421,7 @@ void GraphWidget::updateAllCategories(){
 void GraphWidget::updateValueInDisplayPanel(){
     propPanel->updateValueInDisplayPanel();
 }
-void GraphWidget::selectInTree(const MyItem * item){
+void GraphWidget::selectInTree(MyItem * item){
     propPanel->selectInTree(item);
 }
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
@@ -1538,7 +1538,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
 }
 
 
-void Canvas2D::refreshFromItem(const MyItem * item,QList<MyItem*>& list){
+void Canvas2D::refreshFromItem(MyItem * item,QList<MyItem*>& list){
     QVector<MyItem*> v=item->getChildren();
     for (int i=0;i<v.size();++i){
         if (!list.contains(v.at(i))){
@@ -2001,7 +2001,7 @@ void PanelProperties::updateAllCategories(){
     if (updateCategory(nodeHalfLine,id)) id++;
     if (updateCategory(nodeList,id)) id++;
 }
-void PanelProperties::selectInTree(const MyItem * item){
+void PanelProperties::selectInTree(MyItem * item){
    QTreeWidgetItem* treeItem=nodeLinks.key(item);
    tree->collapseAll();
     tree->clearSelection();

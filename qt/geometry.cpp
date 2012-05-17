@@ -68,10 +68,10 @@ void MyItem::setMovable(const bool & b){
 bool MyItem::hasChildren() const{
     return !children.isEmpty();
 }
-void MyItem::addChild(const MyItem * item){
+void MyItem::addChild(MyItem * item){
     children.append(item);
 }
-QVector<MyItem*> &MyItem::getChildren(){
+QVector<MyItem*> MyItem::getChildren(){
     return children;
 }
 
