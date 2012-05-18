@@ -214,6 +214,11 @@ public:
     virtual QString getType() const;
     virtual bool isFillable() const;
     virtual QString getDisplayValue();
+    virtual void updateValueFrom(MyItem*);
+    QPointF getCenter() const;
+    double getDiametre() const;
+    double getStartAngle() const;
+    double getEndAngle() const;
 private:
     QPointF center;
     double diametre;

@@ -836,7 +836,7 @@ QPainterPath Curve::getPath() const{
 }
 
 QString Curve::getDisplayValue(){
-    qDebug()<<QString::fromStdString(giac::print(value,g2d->getContext()));
+//    qDebug()<<QString::fromStdString(giac::print(value,g2d->getContext()));
     QString mml("<math mode=\"display\">\n");
     mml.append(QString::fromStdString(gen2mathml(value,g2d->getContext())));
     mml.append("</math>");
@@ -958,6 +958,28 @@ QString Circle::getDisplayValue(){
 }
 bool Circle::isCircle() const{
     return true;
+}
+QPointF Circle::getCenter() const{
+    return center;
+}
+double Circle::getDiametre() const{
+    return diametre;
+}
+double Circle::getStartAngle() const{
+    return startAngle;
+}
+double Circle::getEndAngle() const{
+    return endAngle;
+}
+void Circle::updateValueFrom(MyItem* item){
+    if (!item->isCircle()) return;
+    Circle* circle=dynamic_cast<Circle*>(item);
+    value=item->getValue();
+    center=circle->getCenter();
+    diametre=circle->getDiametre();
+    startAngle=circle->getStartAngle();
+    endAngle=circle->getEndAngle();
+    updateScreenCoords(true);
 }
 void Circle::updateScreenCoords(const bool compute){
 

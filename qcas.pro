@@ -348,5 +348,6 @@ OTHER_FILES += \
     qt/images/zoom-in.png \
     qt/images/ortho.png \
     qt/images/source.png \
-    qt/images/tex.png
+    qt/images/tex.png \
+    qt/images/circleRadius.png
 RESOURCES += qt/qcas.qrc

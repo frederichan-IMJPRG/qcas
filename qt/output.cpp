@@ -219,8 +219,10 @@ void GraphWidget::initGui(){
 
 }
 /**
-  * In interactive mode2D , adds the Tool bar
- **/
+ * @brief GraphWidget::createToolBar
+ * In interactive mode2D , adds the Tool bar
+ */
+
 void GraphWidget::createToolBar(){
     buttonPt=new QToolButton(this);
     buttonLine=new QToolButton(this);
@@ -234,42 +236,41 @@ void GraphWidget::createToolBar(){
 
 
     // Point Actions
-    singlept=new QAction(tr("Point"),menuPt);
+    singlept=new QAction(tr("Point"),buttonPt);
     singlept->setData(canvas->SINGLEPT);
-    singlept->setParent(buttonPt);
     singlept->setIcon(QIcon(":/images/point.png"));
-    inter=new QAction(tr("Intersection entre deux objets"),menuPt);
+    inter=new QAction(tr("Intersection entre deux objets"),buttonPt);
     inter->setIcon(QIcon(":/images/inter.png"));
     inter->setData(canvas->INTER);
-    inter->setParent(buttonPt);
-    midpoint=new QAction(tr("Milieu ou centre"),menuPt);
+    midpoint=new QAction(tr("Milieu ou centre"),buttonPt);
     midpoint->setIcon(QIcon(":/images/midpoint.png"));
     midpoint->setData(canvas->MIDPOINT);
-    midpoint->setParent(buttonPt);
+    pointxy=new QAction(tr("Point repéré"),buttonPt);
+    pointxy->setData(canvas->POINT_XY);
+    pointxy->setIcon(QIcon(":/images/pointxy.png"));
+
 
     // Line Actions
-    line=new QAction(tr("Droite"),menuLine);
+    line=new QAction(tr("Droite"),buttonLine);
     line->setIcon(QIcon(":/images/line.png"));
     line->setData(canvas->LINE);
-    line->setParent(buttonLine);
-    segment=new QAction(tr("Segment"),menuLine);
+    segment=new QAction(tr("Segment"),buttonLine);
     segment->setIcon(QIcon(":/images/segment.png"));
     segment->setData(canvas->SEGMENT);
-    segment->setParent(buttonLine);
-    halfline=new QAction(tr("Demie-droite"),menuLine);
+    halfline=new QAction(tr("Demie-droite"),buttonLine);
     halfline->setIcon(QIcon(":/images/halfline.png"));
     halfline->setData(canvas->HALFLINE);
-    halfline->setParent(buttonLine);
 
     // Circle Actions
-    circle2pt=new QAction(tr("Cercle (centre-point)"),menuCircle);
-    circle2pt->setIcon(QIcon(":/images/circle2pt"));
+    circle2pt=new QAction(tr("Cercle (centre-point)"),buttonCircle);
+    circle2pt->setIcon(QIcon(":/images/circle2pt.png"));
     circle2pt->setData(canvas->CIRCLE2PT);
-    circle2pt->setParent(buttonCircle);
-    circle3pt=new QAction(tr("Cercle (3 points)"),menuCircle);
-    circle3pt->setIcon(QIcon(":/images/circle3pt"));
+    circleRadius=new QAction(tr("Cercle (centre-point)"),buttonCircle);
+    circleRadius->setIcon(QIcon(":/images/circleRadius.png"));
+    circleRadius->setData(canvas->CIRCLE_RADIUS);
+    circle3pt=new QAction(tr("Cercle (3 points)"),buttonCircle);
+    circle3pt->setIcon(QIcon(":/images/circle3pt.png"));
     circle3pt->setData(canvas->CIRCLE3PT);
-    circle3pt->setParent(buttonCircle);
 
     // Set default actions
     buttonPt->setProperty("myAction",canvas->SINGLEPT);
@@ -278,6 +279,7 @@ void GraphWidget::createToolBar(){
 
 
     menuPt->addAction(singlept);
+    menuPt->addAction(pointxy);
     menuPt->addAction(inter);
     menuPt->addAction(midpoint);
     menuPt->setStyle(new IconSize);
@@ -288,6 +290,7 @@ void GraphWidget::createToolBar(){
     menuLine->setStyle(new IconSize);
 
     menuCircle->addAction(circle2pt);
+    menuCircle->addAction(circleRadius);
     menuCircle->addAction(circle3pt);
     menuCircle->setStyle(new IconSize);
 
@@ -382,7 +385,6 @@ void GraphWidget::selectAction(){
 
     QToolButton* b=qobject_cast<QToolButton*>(sender());
     b->setChecked(true);
-
     canvas->setActionTool((Canvas2D::action)(b->property("myAction").toInt()));
 }
 
@@ -393,9 +395,13 @@ void GraphWidget::selectAction(){
 
 void GraphWidget::selectButtonIcon(QAction * ac){
    QToolButton* b=qobject_cast<QToolButton*>(ac->parent());
+
    b->setChecked(true);
+
    b->setIcon(ac->icon());
+
    b->setProperty("myAction",ac->data().toInt());
+
    canvas->setActionTool((Canvas2D::action)ac->data().toInt());
 }
 
@@ -435,8 +441,44 @@ void GraphWidget::clearSelection(){
 }
 void Canvas2D::setActionTool(action a){
     currentActionTool=a;
+    if (currentActionTool==POINT_XY){
+        CoordsDialog* dialog=new CoordsDialog(this);
+        if (dialog->exec()){
+            findFreeVar(varPt);
+            Command newCommand;
+            newCommand.var=QString(varPt);
+            QString s(varPt);
+            s.append(":=point(");
+            s.append(dialog->editX->text());
+            s.append(",");
+            s.append(dialog->editY->text());
+            s.append(");");
+            newCommand.command=s;
+            newCommand.attributes=0;
+            newCommand.isCustom=false;
+            commands.append(newCommand);
+            evaluationLevel=commands.size()-1;
+            gen g(newCommand.command.toStdString(),context);
+    //                    qDebug()<<QString::fromStdString(g.print(context));
+            QList<MyItem*> v;
+            addToVector(protecteval(g,1,context),v);
+            v.at(0)->updateScreenCoords(true);
+            pointItems.append(v.at(0));
+            parent->addToTree(v.at(0));
+            focusOwner=v.at(0);
+            v.at(0)->setMovable(false);
+            parent->updateAllCategories();
+            parent->selectInTree(focusOwner);
+            selectedItems.append(focusOwner);
+            updatePixmap(false);
+            repaint();
+        }
+        delete(dialog);
+
+    }
     selectedItems.clear();
 }
+
 void Canvas2D::setBounds(const double & xMin, const double &xMax, const double & yMin, const double & yMax){
     xmin=xMin;
     xmax=xMax;
@@ -1455,6 +1497,9 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
     case SEGMENT:
     case LINE:
     case HALFLINE:
+    case CIRCLE2PT:
+    case CIRCLE3PT:
+    case CIRCLE_RADIUS:
         if (item->isPoint()) return true;
         else return false;
     default:
@@ -1496,13 +1541,13 @@ bool lessThan(const MyItem* a, const MyItem*b){
 }
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     if (item->isPoint()){
-        int eval_save=evaluationLevel;
-        evaluationLevel=item->getLevel();
+//        int eval_save=evaluationLevel;
+  //      evaluationLevel=item->getLevel();
         Command c=commands.at(item->getLevel());
         gen g(c.var.append(commandFreePoint(p,0)).toStdString(),context);
         QList<MyItem*> v;
         addToVector(protecteval(g,1,context),v);
-        evaluationLevel=eval_save;
+    //    evaluationLevel=eval_save;
         item->updateValueFrom(v.at(0));
         delete v.at(0);
 
@@ -1512,7 +1557,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
             qSort(v.begin(),v.end(),lessThan);
 
             for (int i=0;i<v.size();++i){
-                eval_save=evaluationLevel;
+                //eval_save=evaluationLevel;
                 int level=v.at(i)->getLevel();
 
                 Command c=commands.at(level);
@@ -1607,10 +1652,71 @@ bool Canvas2D::checkForCompleteAction(){
         case SEGMENT:
         case LINE:
         case HALFLINE:
+        case CIRCLE2PT:
         return (selectedItems.size()==2);
+        case CIRCLE3PT:
+        return (selectedItems.size()==3);
+        case CIRCLE_RADIUS:
+        return (selectedItems.size()==1);
     default:
         return false;
     }
+}
+void Canvas2D::addNewCircle(){
+    findFreeVar(varLine);
+    Command c;
+    c.var=QString(varLine);
+    c.attributes=0;
+    c.command=QString(c.var);
+    // CIRCLE RADIUS
+    if (selectedItems.size()==1){
+        RadiusDialog *dialog=new RadiusDialog(this);
+        if (dialog->exec()){
+            QString first(commands.at(selectedItems.at(0)->getLevel()).var);
+            commandTwoArgs("circle",first,dialog->editRadius->text(),c.command);
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+        delete dialog;
+    }
+    else if (selectedItems.size()==2){
+        QString first(commands.at(selectedItems.at(0)->getLevel()).var);
+        QString second(commands.at(selectedItems.at(1)->getLevel()).var);
+        second.append("-");
+        second.append(first);
+        commandTwoArgs("circle",first,second,c.command);
+    }
+    else{
+        QString first(commands.at(selectedItems.at(0)->getLevel()).var);
+        QString second(commands.at(selectedItems.at(1)->getLevel()).var);
+        QString third(commands.at(selectedItems.at(2)->getLevel()).var);
+        c.command.append((":=circumcircle("));
+        c.command.append(first);
+        c.command.append(",");
+        c.command.append(second);
+        c.command.append(",");
+        c.command.append(third);
+        c.command.append(");");
+    }
+    c.isCustom=false;
+    commands.append(c);
+    evaluationLevel=commands.size()-1;
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+    filledItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    focusOwner=v.at(0);
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(true);
+    repaint();
 }
 void Canvas2D::addNewLine(const QString & type){
     findFreeVar(varLine);
@@ -1645,6 +1751,10 @@ void Canvas2D::executeMyAction(){
         break;
         case HALFLINE: addNewLine("half_line");
         break;
+        case CIRCLE2PT:
+        case CIRCLE3PT:
+        case CIRCLE_RADIUS: addNewCircle();
+        break;
     default:
         qDebug()<<"coucou";
     }
@@ -1669,7 +1779,8 @@ void Canvas2D::commandTwoArgs(const QString &command,const QString &first,const 
  */
 bool Canvas2D::addNewPoint(const QPointF & p){
     // application is currently waiting for a point selection
-    if (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE){
+    if (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
+            ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS){
         findFreeVar(varPt);
         Command newCommand;
         newCommand.var=QString(varPt);
@@ -2668,6 +2779,64 @@ void SourceDialog::updateCanvas(){
     parent->getCommands().removeAt(id);
     parent->updatePixmap(true);
     parent->repaint();
+
+}
+CoordsDialog::CoordsDialog(Canvas2D* p):QDialog (p){
+    initGui();
+}
+
+
+void CoordsDialog::initGui(){
+
+    QGridLayout* grid=new QGridLayout(this);
+    QLabel* labelx=new QLabel(tr("Abscisse x:"),this);
+    editX=new QLineEdit(this);
+    QLabel* labely=new QLabel(tr("Ordonnée y:"),this);
+    ok=new QPushButton(tr("Ok"),this);
+    cancel=new QPushButton(tr("Annuler"),this);
+    editY=new QLineEdit(this);
+    setTabOrder(editX,editY);
+    setTabOrder(editY,ok);
+    setTabOrder(ok,cancel);
+    setTabOrder(cancel,editX);
+    editX->setFocus();
+
+    grid->addWidget(labelx,0,0);
+    grid->addWidget(editX,0,1);
+    grid->addWidget(labely,1,0);
+    grid->addWidget(editY,1,1);
+    grid->addWidget(ok,0,2);
+    grid->addWidget(cancel,1,2);
+    setLayout(grid);
+
+    connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
+    connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
+
+}
+RadiusDialog::RadiusDialog(Canvas2D* p):QDialog (p){
+    initGui();
+}
+
+
+void RadiusDialog::initGui(){
+    QGridLayout* grid=new QGridLayout(this);
+    QLabel* labelRadius=new QLabel(tr("Rayon:"),this);
+    editRadius=new QLineEdit(this);
+    ok=new QPushButton(tr("Ok"),this);
+    cancel=new QPushButton(tr("Annuler"),this);
+    setTabOrder(editRadius,ok);
+    setTabOrder(ok,cancel);
+    setTabOrder(cancel,editRadius);
+    editRadius->setFocus();
+
+    grid->addWidget(labelRadius,0,0);
+    grid->addWidget(editRadius,0,1);
+    grid->addWidget(ok,0,2);
+    grid->addWidget(cancel,1,2);
+    setLayout(grid);
+
+    connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
+    connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
 }
 

@@ -108,10 +108,13 @@ private slots:
 
 };
 
-/** This widget is used for 2D graphics rendering.
- *  It supports two modes:  normal or interactive
-**/
 
+/**
+ * @brief The GraphWidget class
+ * This widget is used for 2D graphics rendering.
+ *  It supports two modes:  normal or interactive
+ *
+ */
 class GraphWidget:public OutputWidget{
     Q_OBJECT
 
@@ -137,6 +140,7 @@ class GraphWidget:public OutputWidget{
     QToolButton* buttonLine;
     QToolButton* buttonCircle;
     QAction* singlept;
+    QAction* pointxy;
     QAction * inter;
     QAction* midpoint;
     QAction* line;
@@ -144,6 +148,7 @@ class GraphWidget:public OutputWidget{
     QAction* segment;
     QAction* circle2pt;
     QAction* circle3pt;
+    QAction* circleRadius;
 
 
     void initGui();
@@ -162,7 +167,7 @@ class GraphWidget:public OutputWidget{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SINGLEPT,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE3PT};
+    enum action{SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
     struct Command{
         QString var;
         QString command;
@@ -288,6 +293,7 @@ private:
 //    bool lessThan(const MyItem* ,const MyItem* );
     bool addNewPoint(const QPointF &);
     void addNewLine(const QString &);
+    void addNewCircle();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
 //    bool checkForValidItem(MyItem*);
@@ -538,6 +544,27 @@ private:
     QPushButton* deleteButton;
 private slots:
     void updateCanvas();
+};
+
+class CoordsDialog:public QDialog{
+public:
+    CoordsDialog(Canvas2D*);
+    QLineEdit* editX;
+    QLineEdit* editY;
+
+private:
+    void initGui();
+    QPushButton* ok;
+    QPushButton* cancel;
+};
+class RadiusDialog:public QDialog{
+public:
+    RadiusDialog(Canvas2D*);
+    QLineEdit* editRadius;
+private:
+    void initGui();
+    QPushButton* ok;
+    QPushButton* cancel;
 };
 
 #endif // OUTPUT_H
