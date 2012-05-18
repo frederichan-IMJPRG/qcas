@@ -152,8 +152,11 @@ namespace giac {
     return s;
   }
 
-  static string _VECT2mathml(const vecteur & v, string &svg,GIAC_CONTEXT){ 
-    string s("<mo>[</mo>");
+  static string _VECT2mathml(const vecteur & v, unsigned char type,string &svg,GIAC_CONTEXT){
+    string s("<mfenced open=\"");
+    if (type==_SEQ__VECT) s.append("(\" close=\")\">");
+    else s.append("[\" close=\"]\">");
+    s.append("<mrow>");
     vecteur::const_iterator it=v.begin(),itend=v.end();
     for (;it!=itend;){
       s += gen2mathml(*it,svg,contextptr);  
@@ -161,7 +164,7 @@ namespace giac {
       if (it!=itend)
 	s += "<mo>,</mo>";
     }
-    s +="<mo>]</mo>";
+    s +="</mrow></mfenced>";
     return s;
   }
 
@@ -189,16 +192,21 @@ namespace giac {
       else if (it->type==_CPLX){
 	if  (!is_zero(re(*it,contextptr)) && !is_zero(im(*it,contextptr)))
 	  s += "<mo>(</mo>"+gen2mathml(*it,contextptr)+"<mo>)</mo>";
-	else
-	  s += gen2mathml(*it,contextptr);
+    else{
+
+        s += gen2mathml(*it,contextptr);
+
+    }
       }
       else 
-	s += gen2mathml(*it,contextptr);
+{	s += gen2mathml(*it,contextptr);
+
+      }
       ++it;
       if (it==itend)
 	return s;
       else if (needs_times(*it,contextptr))
-	s += "<mo>*</mo>";  
+    s += "<mo>&times;</mo>";
     }
   }
 
@@ -378,6 +386,8 @@ namespace giac {
   // ----------------------- fin provenant de derive ---------------------------
 
   static string mathml_print(const symbolic & mys,GIAC_CONTEXT){
+
+
     unary_function_ptr u =mys.sommet;
     if (u==at_equal)
       return mathml_printsommetasoperator(mys.feuille,"<mo>=</mo>",contextptr);  
@@ -832,6 +842,7 @@ namespace giac {
 
 
   static string symbolic2mathml(const symbolic & mys, string &svg,GIAC_CONTEXT){
+
     string opstring(mys.sommet.ptr()->print(contextptr));
     if (opstring!="/" && mys.sommet.ptr()->texprint)  
       return mathml_print(mys,contextptr);
@@ -842,6 +853,7 @@ namespace giac {
     if ( (mys.feuille.type==_VECT) && (mys.feuille._VECTptr->empty()) )
       return string(provisoire_mbox_begin)+mys.sommet.ptr()->print(contextptr)+string("()")+string(provisoire_mbox_end);
     if ( (mys.feuille.type!=_VECT) || (mys.feuille._VECTptr->front().type==_VECT)){
+
       if ((mys.sommet==at_neg) || (mys.sommet==at_plus)){
 	if (mys.feuille.type!=_SYMB) 
 	  return string("<mo>")+mys.sommet.ptr()->print(contextptr)+"</mo>"+gen2mathml(mys.feuille,contextptr); 
@@ -853,6 +865,11 @@ namespace giac {
       if (mys.sommet==at_inv){
 	return string("<mfrac><mrow><mn>1</mn></mrow><mrow>") + gen2mathml(mys.feuille,contextptr) 
 	  + string("</mrow></mfrac>");
+      }
+      if (mys.sommet==at_pow) {
+          return "<msup><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[0],contextptr)
+        +"</mrow><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[1],contextptr)+"</mrow></msup>";
+
       }
       return string(provisoire_mbox_begin) +mys.sommet.ptr()->print(contextptr)+ string(provisoire_mbox_end)
 	+ "<mrow><mo>(</mo>" + gen2mathml(mys.feuille,contextptr) +"<mo>)</mo></mrow>" ;
@@ -886,6 +903,7 @@ namespace giac {
       vecteur num;
       vecteur den;
       for (int i=0;i<l;++i){
+
 	gen e((*(mys.feuille._VECTptr))[i]);
 	if ( (e.type==_SYMB) && (e._SYMBptr->sommet==at_inv) )
 	  den.push_back(e._SYMBptr->feuille);
@@ -899,6 +917,7 @@ namespace giac {
 	  num.push_back(e);
 	}
       }
+
       if (den.empty())
 	return s+prod_vect2mathml(num,contextptr);
       return s+"<mfrac><mrow>"+prod_vect2mathml_no_bra(num,contextptr)+"</mrow><mrow>"
@@ -906,17 +925,19 @@ namespace giac {
     } // end if sommet_is_prod
 
     if (mys.sommet==at_pow){
-      if ( (mys.feuille._VECTptr->back()==plus_one_half)  )
-	return "<msqrt>"+gen2mathml(mys.feuille._VECTptr->front(),contextptr)+"</msqrt>";
+      if ( (mys.feuille._VECTptr->back()==plus_one_half)  ){
+    return "<msqrt><mrow>"+gen2mathml(mys.feuille._VECTptr->front(),contextptr)+"</mrow></msqrt>";
+      }
       if ( (mys.feuille._VECTptr->back()==minus_one_half ) || 
 	   (mys.feuille._VECTptr->back()==fraction(minus_one,plus_two) ) )
 	return "<mfrac><mn>1</mn><msqrt>"+gen2mathml(mys.feuille._VECTptr->front(),contextptr)+"</msqrt></mfrac>";
-      string s_bra="<msup><mrow><mo>(</mo>"+gen2mathml((*(mys.feuille._VECTptr))[0],contextptr)
-	+"<mo>)</mo></mrow><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[1],contextptr)
+      string s_bra="<msup><mfenced open=\"(\" close=\")\"><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[0],contextptr)
+    +"</mrow></mfenced><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[1],contextptr)
 	+"</mrow></msup>";
       string s_no_bra= "<msup><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[0],contextptr) 
 	+"</mrow><mrow>"+gen2mathml((*(mys.feuille._VECTptr))[1],contextptr)+"</mrow></msup>";
       if (mys.feuille._VECTptr->front().type==_SYMB){
+
 	symbolic mantisse(*mys.feuille._VECTptr->front()._SYMBptr);
 	if ( (mantisse.feuille.type==_VECT) && (mantisse.feuille._VECTptr->empty()) )
 	  return s_bra;
@@ -929,6 +950,10 @@ namespace giac {
       }
       else if (mys.feuille._VECTptr->front().type==_FRAC)
 	return s_bra;
+      else if (mys.feuille._VECTptr->front().type=_CPLX){
+          if  (is_zero(im(mys.feuille._VECTptr->front(),contextptr))) return s_no_bra;
+          else return s_bra;
+      }
       else
 	return s_no_bra;
     }
@@ -971,7 +996,7 @@ namespace giac {
 	  return "<mn>0.0</mn>";
 	else
 	  return "<mn>"+e.print(contextptr)+"</mn>"; 
-      case _CPLX:                        
+      case _CPLX:
 	if (!is_zero(re(e,contextptr)))
 	    part_re="<mn>"+re(e,contextptr).print(contextptr)+"</mn>";
 	if (!is_zero(im(e,contextptr))){
@@ -998,12 +1023,11 @@ namespace giac {
       case _SYMB:                        
 	return symbolic2mathml(*e._SYMBptr, svg,contextptr);
       case _VECT:                        
-	if (e.subtype==_SPREAD__VECT)
+    if (e.subtype==_SPREAD__VECT)
 	  return spread2mathml(*e._VECTptr,1,contextptr); //----------------vérifier le 2ème paramètre
 	if (ckmatrix(*e._VECTptr))
 	  return matrix2mathml(*e._VECTptr,contextptr);
-	else
-	  return _VECT2mathml(*e._VECTptr, svg,contextptr);
+    else return _VECT2mathml(*e._VECTptr,e.subtype, svg,contextptr);
       case _POLY:
 	return string("<mi>polynome</mi>");
       case _FRAC:                        

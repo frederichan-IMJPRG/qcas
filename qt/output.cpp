@@ -134,6 +134,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
 //    qDebug()<<QString::fromStdString(print(g,context));
     m.append(QString::fromStdString(giac::gen2mathml(formula,context)));
     m.append("\n</math>");
+//    qDebug()<<m;
     QString errorMsg;
       int errorLine;
       int errorColumn;
