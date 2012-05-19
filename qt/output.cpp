@@ -504,6 +504,9 @@ void Canvas2D::setXAxisTick(const double &d){
 void Canvas2D::setYAxisTick(const double &d){
     yAxisTick=d;
 }
+void Canvas2D::setGridParam(const GridParam & p){
+    gridParam=p;
+}
 QString Canvas2D::getXAxisLegend() const{
     return xAxisLegend;
 }
@@ -516,7 +519,9 @@ QString Canvas2D::getXUnitSuffix() const{
 QString Canvas2D::getYUnitSuffix() const{
     return yUnitSuffix;
 }
-
+GridParam Canvas2D::getGridParam()const{
+    return gridParam;
+}
 double Canvas2D::getXAxisTick() const{
     return xAxisTick;
 }
@@ -1065,6 +1070,12 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     varLine="a";
     evaluationLevel=-1;
 
+    // Grid parameters
+    gridParam.isVisible=true;
+    gridParam.color=Qt::lightGray;
+    gridParam.isCartesian=true;
+    gridParam.line=1;
+    gridParam.x=1;gridParam.y=1;gridParam.r=1;gridParam.theta=PI_6;
 
     setMouseTracking(true);
     setBackgroundRole(QPalette::Light);
@@ -1388,7 +1399,58 @@ void Canvas2D::drawAxes(QPainter * painter){
     }
 }
 void Canvas2D::drawGrid(QPainter * painter){
+    QPen pen(gridParam.color,1);
+    if (gridParam.line==0) pen.setStyle(Qt::SolidLine);
+    else if (gridParam.line==1) pen.setStyle(Qt::DashLine);
+    else if (gridParam.line==2) pen.setStyle(Qt::DotLine);
+    else if (gridParam.line==3) pen.setStyle(Qt::DashDotLine);
+    else if (gridParam.line==4) pen.setStyle(Qt::DashDotDotLine);
+    else if (gridParam.line==5) pen.setCapStyle(Qt::FlatCap);
+    else if (gridParam.line==6) pen.setCapStyle(Qt::RoundCap);
+    else if (gridParam.line==7) pen.setCapStyle(Qt::SquareCap);
+    painter->setPen(pen);
+    if (gridParam.isCartesian){
+        double i=(int)(xmin/gridParam.x)*gridParam.x;
+        double a,b,c,d;
+        toScreenCoord(0,ymin,c,a);
+        toScreenCoord(0,ymax,c,b);
+        while (i<xmax){
+            toScreenCoord(i,0,c,d);
+            painter->drawLine(c,a,c,b);
+            i+=gridParam.x;
+        }
+        i=(int)(ymin/gridParam.y)*gridParam.y;
+        toScreenCoord(xmin,0,a,c);
+        toScreenCoord(xmax,0,b,c);
 
+        while (i<ymax){
+            double c,d;
+            toScreenCoord(0,i,c,d);
+            painter->drawLine(a,d,b,d);
+            i+=gridParam.y;
+        }
+
+    }
+    else {
+        double X=std::max(std::abs(xmin),std::abs(xmax));
+        double Y=std::max(std::abs(ymax),std::abs(ymin));
+        double i=gridParam.r;
+
+        while( i<std::sqrt(X*X+Y*Y)){
+            double a,b;
+            toScreenCoord(-i,i,a,b);
+            double w,h;
+            toScreenCoord(i,-i,w,h);
+            w=w-a;
+            h=h-b;
+            painter->setClipRect(20,20,width()-40,height()-40);
+            painter->drawEllipse(a,b,w,h);
+             i+=gridParam.r;
+
+        }
+
+
+    }
 
 }
 void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &compute){
@@ -2215,12 +2277,14 @@ void DisplayProperties::initGui(){
     vLayoutAttributes=new QVBoxLayout;
     colorPanel=new ColorPanel(this);
     colorPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
     widthPanel=new WidthPanel(this,tr("Épaisseur (1-8):"));
     widthPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     typePointPanel=new TypePointPanel(2,this);
     typePointPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     typeLinePanel=new TypeLinePanel(2,this);
     typeLinePanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
     alphaFillPanel=new AlphaFillPanel(this,tr("Transparence (0%-100%):"));
     alphaFillPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
 
@@ -2234,9 +2298,23 @@ void DisplayProperties::initGui(){
     addTab(generalPanel,tr("Général"));
     addTab(attributesPanel,tr("Style"));
 
-
+    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
+    connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateTypeLine(int)));
 }
-
+void DisplayProperties::updateColor(QColor color){
+    for (int i=0;i<listItems->count();++i){
+        QColor c(color);
+        c.setAlpha(listItems->at(i)->getColor().alpha());
+        listItems->at(i)->setColor(c);
+    }
+    updateCanvas();
+}
+void DisplayProperties::updateTypeLine(int c){
+    for (int i=0;i<listItems->count();++i){
+        listItems->at(i)->setStyle(c);
+    }
+    updateCanvas();
+}
 
 void DisplayProperties::updateCanvas(){
 
@@ -2248,8 +2326,7 @@ QList<MyItem*>* DisplayProperties::getListItems() const{
 }
 
 
-ColorPanel::ColorPanel(DisplayProperties *p):QWidget(p){
-    parent=p;
+ColorPanel::ColorPanel(QWidget *p):QWidget(p){
     initGui();
 }
 void ColorPanel::setColor(const QColor & c){
@@ -2274,12 +2351,7 @@ void ColorPanel::chooseColor(){
     if (newColor.isValid()){
         color=newColor;
         updateButton();
-        for (int i=0;i<parent->getListItems()->count();++i){
-            QColor c(color);
-            c.setAlpha(parent->getListItems()->at(i)->getColor().alpha());
-            parent->getListItems()->at(i)->setColor(c);
-        }
-        parent->updateCanvas();
+        emit colorSelected(color);
     }
 }
 
@@ -2406,9 +2478,9 @@ void AlphaFillPanel::updateCanvas(){
     }
     parent->updateCanvas();
 }
-TypePointPanel::TypePointPanel(const int t, DisplayProperties * p):QWidget(p){
-    type=t;
+TypePointPanel::TypePointPanel(const int t, DisplayProperties *p):QWidget(p){
     parent=p;
+    type=t;
     initGui();
 }
 void TypePointPanel::initGui(){
@@ -2527,9 +2599,8 @@ void TypePointPanel::setStyle(int c){
 
 }
 
-TypeLinePanel::TypeLinePanel(const int t, DisplayProperties * p):QWidget(p){
+TypeLinePanel::TypeLinePanel(const int t, QWidget* p):QWidget(p){
     type=t;
-    parent=p;
     initGui();
 }
 void TypeLinePanel::initGui(){
@@ -2600,21 +2671,13 @@ void TypeLinePanel::initGui(){
     hbox->addWidget(combo);
     setLayout(hbox);
 
-    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typeLineSelected(int)));
 }
 
-
-void TypeLinePanel::updateCanvas(int c){
-    for (int i=0;i<parent->getListItems()->count();++i){
-        parent->getListItems()->at(i)->setStyle(c);
-    }
-    parent->updateCanvas();
-
-}
 void TypeLinePanel::setStyle(const int &c){
-    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typeLineSelected(int)));
     combo->setCurrentIndex(c);
-    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typeLineSelected(int)));
 
 }
 
@@ -2665,13 +2728,23 @@ AxisGridPanel::AxisGridPanel(Canvas2D * p):QTabWidget(p){
 void AxisGridPanel::initGui(){
     xPanel=new AxisPanel(this);
     yPanel=new AxisPanel(this);
+    gridPanel=new GridPanel(this);
     addTab(xPanel,tr("Axe (Ox)"));
     addTab(yPanel,tr("Axe (Oy)"));
+    addTab(gridPanel,tr("Grille"));
+    connect(gridPanel,SIGNAL(gridUpdated(GridParam)),this,SLOT(updateGrid(GridParam)));
+}
+void AxisGridPanel::updateGrid(GridParam p){
+    parent->setGridParam(p);
+    parent->updatePixmap(false);
+    parent->repaint();
 }
 
 void AxisGridPanel::initValue(){
     xPanel->initValue(parent->getXAxisLegend(),parent->getXUnitSuffix(),parent->getXmin(),parent->getXmax(),giac::show_axes(parent->getContext()));
     yPanel->initValue(parent->getYAxisLegend(),parent->getYUnitSuffix(),parent->getYmin(),parent->getYmax(),giac::show_axes(parent->getContext()));
+    gridPanel->initValue(parent->getGridParam());
+
 }
 
 
@@ -2688,6 +2761,133 @@ void AxisGridPanel::updateCanvas(const bool &b){
      parent->setXYUnit();
      parent->updatePixmap(b);
      parent->repaint();
+}
+GridPanel::GridPanel(QWidget* p):QWidget(p){
+        initGui();
+}
+/**
+ * @brief GridPanel::initValue initializes all value in grid Panel
+ *@param p All grid parameters
+ *
+ */
+void GridPanel::initValue(const GridParam &p){
+    param=p;
+    showGrid->setChecked(p.isVisible);
+    if (p.isCartesian) comboType->setCurrentIndex(0);
+    else comboType->setCurrentIndex(1);
+    displayValidPanel(comboType->currentIndex());
+    if (p.x<0) comboX->setCurrentIndex((int)(-p.x-1));
+    else comboX->setEditText(QString::number(p.x));
+    if (p.y<0) comboY->setCurrentIndex((int)(-p.y-1));
+    else comboY->setEditText(QString::number(p.y));
+    editDistance->setText(QString::number(p.r));
+    comboPolarAngle->setCurrentIndex(p.theta);
+    colorPanel->setColor(p.color);
+    typeLinePanel->setStyle(p.line);
+
+    connect(showGrid,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+    connect(comboType,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
+    connect(comboX,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateCanvas()));
+    connect(comboY,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateCanvas()));
+    connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
+    connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateLineType(int)));
+    //    connect()
+}
+void GridPanel::updateColor(QColor c){
+    param.color=c;
+    emit gridUpdated(param);
+}
+void GridPanel::updateLineType(int id){
+    param.line=id;
+    emit gridUpdated(param);
+}
+void GridPanel::updateCanvas(){
+    param.isVisible=showGrid->isChecked();
+    param.isCartesian=(comboType->currentIndex()==0);
+    param.x=comboX->currentText().toDouble();
+    if (param.x==0) param.x=1;
+    param.y=comboY->currentText().toDouble();
+    if (param.y==0) param.y=1;
+    param.r=editDistance->text().toDouble();
+    if (param.r==0) param.r=1;
+    param.theta=comboPolarAngle->currentIndex();
+    emit gridUpdated(param);
+}
+void GridPanel::initGui(){
+    QVBoxLayout* vbox=new QVBoxLayout(this);
+    showGrid=new QCheckBox(tr("Afficher la grille"),this);
+    comboType=new QComboBox(this);
+    comboType->addItem(tr("Cartésienne"));
+    comboType->addItem(tr("Polaire"));
+
+    polarPanel=new QWidget(this);
+    QGridLayout* boxPolar=new QGridLayout(polarPanel);
+    QLabel* labelPolarDistance=new QLabel(tr("Distance:"),polarPanel);
+    QLabel* labelPolarAngle=new QLabel(tr("Angle:"),polarPanel);
+    editDistance=new QLineEdit(polarPanel);
+    comboPolarAngle=new QComboBox(polarPanel);
+    const QChar pi(0x3c0);
+    comboPolarAngle->addItem( QString("%1/12").arg(pi));
+    comboPolarAngle->addItem( QString("%1/6").arg(pi));
+    comboPolarAngle->addItem( QString("%1/4").arg(pi));
+    comboPolarAngle->addItem( QString("%1/3").arg(pi));
+    comboPolarAngle->addItem( QString("%1/2").arg(pi));
+
+    boxPolar->addWidget(labelPolarDistance,0,0);
+    boxPolar->addWidget(editDistance,0,1);
+    boxPolar->addWidget(labelPolarAngle,1,0);
+    boxPolar->addWidget(comboPolarAngle,1,1);
+    polarPanel->setLayout(boxPolar);
+
+    cartesianPanel=new QWidget(this);
+    QGridLayout* boxCartesian=new QGridLayout(cartesianPanel);
+    QLabel* labelCartesianX=new QLabel(tr("x:"),cartesianPanel);
+    QLabel* labelCartesianY=new QLabel(tr("y:"),cartesianPanel);
+    comboX=new QComboBox(cartesianPanel);
+    comboX->addItem("1");
+    comboX->addItem( QString("%1/6").arg(pi));
+    comboX->addItem( QString("%1/4").arg(pi));
+    comboX->addItem( QString("%1/3").arg(pi));
+    comboX->addItem( QString("%1/2").arg(pi));
+    comboY=new QComboBox(cartesianPanel);
+    comboY->addItem("1");
+    comboY->addItem( QString("%1/6").arg(pi));
+    comboY->addItem( QString("%1/4").arg(pi));
+    comboY->addItem( QString("%1/3").arg(pi));
+    comboY->addItem( QString("%1/2").arg(pi));
+    comboX->setEditable(true);
+    comboY->setEditable(true);
+    boxCartesian->addWidget(labelCartesianX,0,0);
+    boxCartesian->addWidget(comboX,0,1);
+    boxCartesian->addWidget(labelCartesianY,1,0);
+    boxCartesian->addWidget(comboY,1,1);
+
+    colorPanel=new ColorPanel(this);
+    typeLinePanel=new TypeLinePanel(0,this);
+
+    vbox->addWidget(showGrid);
+    vbox->addWidget(comboType);
+    vbox->addWidget(cartesianPanel);
+    vbox->addWidget(polarPanel);
+    vbox->addWidget(colorPanel);
+    vbox->addWidget(typeLinePanel);
+    setLayout(vbox);
+    connect(comboType,SIGNAL(currentIndexChanged(int)),this,SLOT(displayValidPanel(int)));
+//    QLabel* labelX=new QLabel(tr("x:"),this);
+//    QLabel* labelY=new QLabel(tr("y:"),this);
+
+}
+
+void GridPanel::displayValidPanel(int id){
+    if (id==0){
+        polarPanel->setVisible(false);
+        cartesianPanel->setVisible(true);
+    }
+    else{
+        polarPanel->setVisible(true);
+        cartesianPanel->setVisible(false);
+    }
 }
 
 AxisPanel::AxisPanel(AxisGridPanel* p):QWidget(p){

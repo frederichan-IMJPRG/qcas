@@ -47,6 +47,7 @@ class PanelProperties;
 class DisplayProperties;
 class DisplayObjectPanel;
 class AxisPanel;
+class GridPanel;
 class AxisGridPanel;
 class GenValuePanel;
 class QTreeWidget;
@@ -160,6 +161,29 @@ class GraphWidget:public OutputWidget{
 };
 
 
+enum PolarAngle{
+    PI_12=0,PI_6=1,PI_4=2,PI_3=3,PI_2=4};
+/**
+ * @brief The GridParam struct
+ *
+ * @variable color: Grid color
+ * @variable line: line Type
+ * @variable isVisible true if grid is visible
+ * @variable isCartesian if grid is cartesian, false if polar
+ * @variable x: step on x axis (cartesian)
+ * @variable y: step on y axis (cartesian)
+ * @variable r: distance from origin (polar)
+ * @variable theta: angle for graduation (polar)
+ *
+ *
+ */
+struct GridParam{
+    QColor color;
+    int  line;
+    bool isCartesian,isVisible;
+    double x,y,r;
+    PolarAngle theta;
+};
 
 
 // The canvas to draw 2D graphics
@@ -168,6 +192,7 @@ class Canvas2D:public QWidget{
     Q_OBJECT
 public:
     enum action{SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
+
     struct Command{
         QString var;
         QString command;
@@ -175,6 +200,7 @@ public:
         MyItem* item;
         bool isCustom;
     };
+
     Canvas2D(GraphWidget* g2d, giac::context*);
     void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
@@ -200,6 +226,7 @@ public:
     QString getYAxisLegend() const;
     QString getXUnitSuffix() const;
     QString getYUnitSuffix() const;
+    GridParam getGridParam() const;
     giac::context* getContext() const;
     double getXAxisTick() const;
     double getYAxisTick() const;
@@ -209,6 +236,8 @@ public:
     void setYUnitSuffix(const QString &);
     void setXAxisTick(const double &);
     void setYAxisTick(const double &);
+    void setGridParam(const GridParam &);
+
     double getXmin() const;
     double getXmax() const ;
     double getYmin() const;
@@ -237,7 +266,8 @@ private:
     // Axis and grid parameters
     QString xAxisLegend,yAxisLegend;
     QString xUnitSuffix,yUnitSuffix;
-    double xAxisTick,yAxisTick,xGrid,yGrid;
+    double xAxisTick,yAxisTick;
+    GridParam gridParam;
 
 
     // vectors to store geometry items
@@ -290,13 +320,11 @@ private:
     void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&, const int );
     void refreshFromItem(MyItem *, QList<MyItem *> &);
-//    bool lessThan(const MyItem* ,const MyItem* );
     bool addNewPoint(const QPointF &);
     void addNewLine(const QString &);
     void addNewCircle();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
-//    bool checkForValidItem(MyItem*);
     void executeMyAction();
 
 
@@ -368,21 +396,24 @@ private:
     AlphaFillPanel* alphaFillPanel;
 
     void initGui();
-
+private slots:
+    void updateColor(QColor);
+    void updateTypeLine(int);
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
 public:
-    ColorPanel(DisplayProperties* );
+    ColorPanel(QWidget*);
    void setColor(const QColor &);
 private:
-    DisplayProperties * parent;
     QColor color;
     QPushButton* preview;
     void initGui();
     void updateButton();
 private slots:
     void chooseColor();
+signals:
+    void colorSelected(QColor);
 
 };
 class LegendPanel:public QWidget{
@@ -475,16 +506,15 @@ private slots:
 class TypeLinePanel:public QWidget{
     Q_OBJECT
 public:
-    TypeLinePanel(const int,DisplayProperties* );
+    TypeLinePanel(const int,QWidget* );
     void setStyle(const int&);
 private:
     void initGui();
-    DisplayProperties * parent;
     int type;
     QComboBox *combo;
-private slots:
-    void updateCanvas(int);
 
+signals:
+   void  typeLineSelected(int);
 };
 class GenValuePanel:public QWidget{
 public:
@@ -503,17 +533,49 @@ private:
 
 };
 class AxisGridPanel: public QTabWidget{
+    Q_OBJECT
 public:
     AxisGridPanel(Canvas2D*);
     void initValue();
     void updateCanvas(const bool &);
 private:
     void initGui();
+    GridPanel* gridPanel;
     AxisPanel* xPanel;
     AxisPanel* yPanel;
     Canvas2D* parent;
-
+private slots:
+    void updateGrid(GridParam);
 };
+class GridPanel:public QWidget{
+    Q_OBJECT
+public:
+    GridPanel(QWidget* );
+
+    void initValue(const GridParam &);
+private:
+    QComboBox* comboType;
+    QWidget* polarPanel;
+    QWidget* cartesianPanel;
+    QLineEdit* editDistance;
+    QComboBox* comboPolarAngle;
+    QComboBox* comboX;
+    QComboBox* comboY;
+    QCheckBox* showGrid;
+    ColorPanel* colorPanel;
+    TypeLinePanel* typeLinePanel;
+    void initGui();
+    GridParam param;
+private slots:
+    void updateCanvas();
+    void updateColor(QColor);
+    void updateLineType(int);
+    void displayValidPanel(int);
+
+signals:
+    void gridUpdated(GridParam);
+};
+
 class AxisPanel:public QWidget{
     Q_OBJECT
 public:
@@ -526,6 +588,8 @@ private:
     QLineEdit* editMax;
     QLineEdit* editDistance;
     QCheckBox* showAxis;
+    ColorPanel* colorPanel;
+    TypeLinePanel* typeLinePanel;
     void initGui();
     friend class AxisGridPanel;
 
