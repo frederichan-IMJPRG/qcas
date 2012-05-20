@@ -200,7 +200,7 @@ GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b){
 void GraphWidget::initGui(){
     propPanel=new PanelProperties(canvas);
     propPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Minimum);
-    canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+//    canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     QWidget* canvasWidget=new QWidget(this);
     QVBoxLayout* vbox=new QVBoxLayout(canvasWidget);
     if (isInteractiveWidget){
@@ -266,7 +266,7 @@ void GraphWidget::createToolBar(){
     circle2pt=new QAction(tr("Cercle (centre-point)"),buttonCircle);
     circle2pt->setIcon(QIcon(":/images/circle2pt.png"));
     circle2pt->setData(canvas->CIRCLE2PT);
-    circleRadius=new QAction(tr("Cercle (centre-point)"),buttonCircle);
+    circleRadius=new QAction(tr("Cercle (centre-rayon)"),buttonCircle);
     circleRadius->setIcon(QIcon(":/images/circleRadius.png"));
     circleRadius->setData(canvas->CIRCLE_RADIUS);
     circle3pt=new QAction(tr("Cercle (3 points)"),buttonCircle);
@@ -2038,19 +2038,20 @@ void PanelProperties::initGui(){
 
 
     tree->addTopLevelItem(nodeAxis);
-    tree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    tree->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
 
     if (!parent->isInteractive()){
-        hbox=new QHBoxLayout;
+        hbox=new QHBoxLayout(this);
     }
     else{
-        hbox=new QVBoxLayout;
+        hbox=new QVBoxLayout(this);
     }
     hbox->addWidget(tree);
     hbox->addWidget(displayPanel,0,Qt::AlignLeft|Qt::AlignTop);
     hbox->addWidget(axisGridPanel,0,Qt::AlignLeft|Qt::AlignTop);
-    hbox->setSizeConstraint(QLayout::SetFixedSize);
+    hbox->setSizeConstraint(QLayout::SetMaximumSize);
     setLayout(hbox);
+    displayPanel->setFixedWidth(tree->width());
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
 void PanelProperties::addToTree( MyItem * item){
@@ -2271,7 +2272,6 @@ void DisplayProperties::initGui(){
     vLayoutGeneral->addWidget(legendPanel);
     vLayoutGeneral->addWidget(displayObjectPanel);
     generalPanel->setLayout(vLayoutGeneral);
-
 
     QWidget * attributesPanel=new QWidget;
     vLayoutAttributes=new QVBoxLayout;
@@ -2719,6 +2719,7 @@ void GenValuePanel::initGui(){
 void GenValuePanel::setValue(const QString  s){
       formulaWidget->updateFormula(s);
       formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+
 }
 
 AxisGridPanel::AxisGridPanel(Canvas2D * p):QTabWidget(p){
@@ -3008,6 +3009,7 @@ void CoordsDialog::initGui(){
     grid->addWidget(editY,1,1);
     grid->addWidget(ok,0,2);
     grid->addWidget(cancel,1,2);
+    grid->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(grid);
 
     connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
@@ -3035,7 +3037,7 @@ void RadiusDialog::initGui(){
     grid->addWidget(ok,0,2);
     grid->addWidget(cancel,1,2);
     setLayout(grid);
-
+    grid->setSizeConstraint(QLayout::SetFixedSize);
     connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
