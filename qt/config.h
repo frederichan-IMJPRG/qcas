@@ -29,6 +29,7 @@ public:
        ENGLISH=1
     };
     static LANGUAGES language;
+    static bool gridAttraction;
 };
 
 #endif // CONFIG_H

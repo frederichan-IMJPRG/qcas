@@ -83,7 +83,9 @@ EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         numeric=new QCheckBox(tr("Résolution numérique"));
         inC=new QCheckBox(tr("Solutions complexes"));
 
-        QPushButton *button=new QPushButton(tr("Go!"));
+        QPushButton *button=new QPushButton;
+        button->setIcon(QIcon(":/images/right.png"));
+
         QGridLayout *grid=new QGridLayout();
         grid->addWidget(labelEq,0,0);
         grid->addWidget(eq,0,1);
@@ -148,7 +150,8 @@ DiffPanel::DiffPanel(WizardEquation *parent):TabChild(parent){
     layout->addWidget(editor);
     group->setLayout(layout);
 
-    QPushButton *button=new QPushButton(tr("Go!"));
+    QPushButton *button=new QPushButton;
+    button->setIcon(QIcon(":/images/right.png"));
 
     QGridLayout *grid=new QGridLayout();
     grid->addWidget(labelEq,0,0);
@@ -215,7 +218,9 @@ SystPanel::SystPanel(WizardEquation *parent):TabChild(parent){
     labelVar->setBuddy(var);
 
     check=new QCheckBox(tr("Systèmes linéaires"));
-    button=new QPushButton(tr("Go!"));
+    button=new QPushButton;
+    button->setIcon(QIcon(":/images/right.png"));
+
 
     grid=new QGridLayout;
     updateGrid();

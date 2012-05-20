@@ -93,7 +93,8 @@ public:
     virtual void toXML(QDomElement&);
     void updateFormula(const giac::gen &, giac::context *);
     void updateFormula(const QString );
-
+protected:
+    QSize sizeHint();
 private:
     void initGui();
     giac::context* context;
@@ -162,7 +163,8 @@ class GraphWidget:public OutputWidget{
 
 
 enum PolarAngle{
-    PI_12=0,PI_6=1,PI_4=2,PI_3=3,PI_2=4};
+    PI_12=0,PI_8=1,PI_6=2,PI_4=3,PI_3=4,PI_2=5
+};
 /**
  * @brief The GridParam struct
  *
@@ -184,7 +186,14 @@ struct GridParam{
     double x,y,r;
     PolarAngle theta;
 };
-
+struct AxisParam{
+    QColor color;
+    int  line;
+    bool isVisible;
+    QString legend;
+    QString unitSuffix;
+    double tick,min,max;
+};
 
 // The canvas to draw 2D graphics
 
@@ -227,16 +236,12 @@ public:
     QString getXUnitSuffix() const;
     QString getYUnitSuffix() const;
     GridParam getGridParam() const;
+    AxisParam getXAxisParam() const;
+    AxisParam getYAxisParam() const;
     giac::context* getContext() const;
-    double getXAxisTick() const;
-    double getYAxisTick() const;
-    void setXAxisLegend(const QString &);
-    void setYAxisLegend(const QString &);
-    void setXUnitSuffix(const QString &);
-    void setYUnitSuffix(const QString &);
-    void setXAxisTick(const double &);
-    void setYAxisTick(const double &);
     void setGridParam(const GridParam &);
+    void setXAxisParam(const AxisParam &);
+    void setYAxisParam(const AxisParam &);
 
     double getXmin() const;
     double getXmax() const ;
@@ -263,12 +268,8 @@ private:
     double xmin,xmax,ymin,ymax,xunit,yunit;
     bool ortho;
 
-    // Axis and grid parameters
-    QString xAxisLegend,yAxisLegend;
-    QString xUnitSuffix,yUnitSuffix;
-    double xAxisTick,yAxisTick;
     GridParam gridParam;
-
+    AxisParam xAxisParam,yAxisParam;
 
     // vectors to store geometry items
     QList<MyItem*> lineItems;
@@ -312,6 +313,9 @@ private:
     double find_tick(double);
     void drawAxes(QPainter*);
     void drawGrid(QPainter*);
+    void drawPolarLine(const int &,QPainter * );
+    bool isInScene(const double & x,const double & y);
+//    int findPolarInter(const double &,double & , double & , double &,double &);
     void drawElements(QList<MyItem *> &, QPainter*, const bool&);
     bool checkUnderMouse(QList<MyItem *> *v, const QPointF &);
     bool checkForValidAction(const MyItem*);
@@ -346,7 +350,8 @@ public:
     void updateAllCategories();
     void selectInTree(MyItem * );
     void updateValueInDisplayPanel();
-
+/*protected:
+    void resizeEvent(QResizeEvent *);*/
 
 private:
     Canvas2D* parent;
@@ -383,6 +388,8 @@ public:
 
 private:
     Canvas2D* parent;
+    QWidget * generalPanel;
+    QWidget * attributesPanel;
     QVBoxLayout *vLayoutGeneral;
     QVBoxLayout *vLayoutAttributes;
     QList<MyItem*>* listItems;
@@ -546,6 +553,9 @@ private:
     Canvas2D* parent;
 private slots:
     void updateGrid(GridParam);
+    void updateXAxis(AxisParam,bool);
+    void updateYAxis(AxisParam,bool);
+
 };
 class GridPanel:public QWidget{
     Q_OBJECT
@@ -579,8 +589,8 @@ signals:
 class AxisPanel:public QWidget{
     Q_OBJECT
 public:
-    AxisPanel(AxisGridPanel* );
-    void initValue(const QString&,const QString&,const double&,const double&,const bool&);
+    AxisPanel(QWidget* );
+    void initValue(const AxisParam&,const double&,const double&);
 private:
     QLineEdit* editLabel;
     QLineEdit* editUnitLabel;
@@ -589,13 +599,11 @@ private:
     QLineEdit* editDistance;
     QCheckBox* showAxis;
     ColorPanel* colorPanel;
-    TypeLinePanel* typeLinePanel;
     void initGui();
-    friend class AxisGridPanel;
-
-    AxisGridPanel* parent;
 private slots:
     void updateCanvas();
+signals:
+    void axisUpdated(AxisParam,bool);
 };
 class SourceDialog:public QDialog{
     Q_OBJECT

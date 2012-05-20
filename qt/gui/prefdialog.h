@@ -81,6 +81,7 @@ public:
     void apply();
 private:
     QLineEdit* editWidth;
+    QCheckBox* checkGridAttraction;
     QComboBox* comboLanguage;
     QLineEdit* editXMin;
     QLineEdit* editXMax;

@@ -409,7 +409,8 @@ void MainWindow::createGui(){
     tabPages=new MainTabWidget(this);
     QSplitter *vertSplit=new QSplitter(Qt::Horizontal);
 
-    QWidget *leftPanel=new QWidget;
+
+    leftPanel=new QWidget;
 
     QHBoxLayout *h=new QHBoxLayout;
     h->addWidget(wizardList);
@@ -433,8 +434,7 @@ void MainWindow::createGui(){
     leftLayout->addStretch(1);
     leftLayout->addWidget(giacPanel);
     leftPanel->setLayout(leftLayout);
-
-
+//    leftPanel->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Minimum);
 
 
 
@@ -524,6 +524,7 @@ void MainWindow::createWizards(){
     wizardPages->addWidget(new WizardMatrix(this));
     wizardPages->addWidget(new WizardEquation(this));
     wizardPages->addWidget(new WizardCatalog(this));
+//    wizardPages->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
 
     QListWidgetItem *matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),tr("Matrices"),wizardList);
     matrixItem->setTextAlignment(Qt::AlignHCenter);
@@ -581,7 +582,7 @@ void MainWindow::copy(){
    case MainSheet::PROGRAMMING_TYPE:
        break;
    }
-}
+   }
 void MainWindow::cut(){
     MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
     switch(sheet->getType()){

@@ -118,6 +118,7 @@ private:
     QAction *stopAction;
     QToolButton * stopButton;
 
+    QWidget* leftPanel;
     QListWidget *wizardList;
     QStackedWidget *wizardPages;
 

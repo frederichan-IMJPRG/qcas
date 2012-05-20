@@ -66,7 +66,7 @@ void OutputWidget::setLine(Line* l){
     line=l;
 }
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
-    formula=gen(1);
+    formula=giac::undef;
     context=new giac::context;
     initGui();
 }
@@ -124,8 +124,12 @@ void FormulaWidget::updateFormula(const QString  s){
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
-      mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+//      mmlWidget->setSizePolicy(QSizePolicy::Mi,QSizePolicy::Minimum);
       mmlWidget->updateGeometry();
+      resize(mmlWidget->size());
+}
+QSize FormulaWidget::sizeHint(){
+    return mmlWidget->size();
 }
 void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     context=c;
@@ -143,8 +147,8 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
-      mmlWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
       mmlWidget->updateGeometry();
+     resize(mmlWidget->size());
 }
 
 void FormulaWidget::toXML(QDomElement& d){
@@ -486,47 +490,24 @@ void Canvas2D::setBounds(const double & xMin, const double &xMax, const double &
     ymin=yMin;
     ymax=yMax;
 }
-void Canvas2D::setXAxisLegend(const QString &s){
-    xAxisLegend=s;
+void Canvas2D::setXAxisParam(const AxisParam & s){
+    xAxisParam=s;
 }
-void Canvas2D::setYAxisLegend(const QString &s){
-    yAxisLegend=s;
+void Canvas2D::setYAxisParam(const AxisParam & s){
+    yAxisParam=s;
 }
-void Canvas2D::setXUnitSuffix(const QString &s){
-    xUnitSuffix=s;
-}
-void Canvas2D::setYUnitSuffix(const QString &s){
-    yUnitSuffix=s;
-}
-void Canvas2D::setXAxisTick(const double &d){
-    xAxisTick=d;
-}
-void Canvas2D::setYAxisTick(const double &d){
-    yAxisTick=d;
-}
+
 void Canvas2D::setGridParam(const GridParam & p){
     gridParam=p;
 }
-QString Canvas2D::getXAxisLegend() const{
-    return xAxisLegend;
+AxisParam Canvas2D::getXAxisParam()const{
+    return xAxisParam;
 }
-QString Canvas2D::getYAxisLegend() const{
-    return yAxisLegend;
-}
-QString Canvas2D::getXUnitSuffix() const{
-    return xUnitSuffix;
-}
-QString Canvas2D::getYUnitSuffix() const{
-    return yUnitSuffix;
+AxisParam Canvas2D::getYAxisParam() const{
+    return yAxisParam;
 }
 GridParam Canvas2D::getGridParam()const{
     return gridParam;
-}
-double Canvas2D::getXAxisTick() const{
-    return xAxisTick;
-}
-double Canvas2D::getYAxisTick() const{
-    return yAxisTick;
 }
 giac::context* Canvas2D::getContext() const{
     return context;
@@ -1061,6 +1042,7 @@ QSize Canvas2D::sizeHint() const{
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
     context=c;
+    giac::decimal_digits(3,c);
     ortho=false;
     selectionRight=false;
     selectionLeft=false;
@@ -1076,6 +1058,13 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     gridParam.isCartesian=true;
     gridParam.line=1;
     gridParam.x=1;gridParam.y=1;gridParam.r=1;gridParam.theta=PI_6;
+    // Axis parameters
+    xAxisParam.isVisible=true;
+    xAxisParam.color=Qt::black;
+    xAxisParam.tick=1;
+    yAxisParam.isVisible=true;
+    yAxisParam.color=Qt::black;
+    yAxisParam.tick=1;
 
     setMouseTracking(true);
     setBackgroundRole(QPalette::Light);
@@ -1096,6 +1085,8 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 
     createMenuAction();
     setContextMenuPolicy(Qt::NoContextMenu);
+    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+
 }
 void Canvas2D::createMenuAction(){
     zoomIn=new QAction(tr("Zoom avant"),this);
@@ -1297,8 +1288,9 @@ void Canvas2D::displaySource(){
 void Canvas2D::updatePixmap(const bool &compute){
     pixmap=QPixmap(size());
     pixmap.fill(this,0,0);
-    QPainter painter(&pixmap);
+    QPainter painter(&pixmap);    
     painter.setRenderHint(QPainter::Antialiasing,true);
+    painter.setClipRect(20,20,width()-40,height()-40);
     drawGrid(&painter);
     drawElements(filledItems,&painter,compute);
     if (show_axes(context)) drawAxes(&painter);
@@ -1399,6 +1391,7 @@ void Canvas2D::drawAxes(QPainter * painter){
     }
 }
 void Canvas2D::drawGrid(QPainter * painter){
+    if (!gridParam.isVisible) return;
     QPen pen(gridParam.color,1);
     if (gridParam.line==0) pen.setStyle(Qt::SolidLine);
     else if (gridParam.line==1) pen.setStyle(Qt::DashLine);
@@ -1446,13 +1439,77 @@ void Canvas2D::drawGrid(QPainter * painter){
             painter->setClipRect(20,20,width()-40,height()-40);
             painter->drawEllipse(a,b,w,h);
              i+=gridParam.r;
-
+        }
+        switch(gridParam.theta){
+            case PI_12:drawPolarLine(12,painter);
+            break;
+        case PI_8:drawPolarLine(8,painter);
+            break;
+           case PI_6:drawPolarLine(6,painter);
+            break;
+            case PI_4:drawPolarLine(4,painter);
+            break;
+            case PI_3:drawPolarLine(3,painter);
+            break;
+            case PI_2:drawPolarLine(2,painter);
+            break;
         }
 
-
     }
+}
+
+void Canvas2D::drawPolarLine(const int &frac,QPainter * painter ){
+    QVector<double> v;
+    double theta=3.14159265/frac;
+    double angle=0;
+
+     for (int i=0;i<frac;++i){
+
+         if ((2*i)!=frac) {
+
+             double tan=std::tan(angle);
+             if (isInScene(xmin,tan*xmin)){
+                v.append(xmin);v.append(tan*xmin);
+            }
+            if (isInScene(xmax,tan*xmax)){
+                v.append(xmax);v.append(tan*xmax);
+             }
+            if (isInScene(ymin/tan,ymin)){
+                v.append(ymin/tan);v.append(ymin);
+            }
+            if (isInScene(ymax/tan,ymax)){
+                v.append(ymax/tan);v.append(ymax);
+            }
+
+            if (v.size()==4){
+                double a,b,c,d;
+                toScreenCoord(v.at(0),v.at(1),a,b);
+                toScreenCoord(v.at(2),v.at(3),c,d);
+
+                 painter->drawLine(QPointF(a,b),QPointF(c,d));
+           }
+           v.clear();
+         }
+         else {
+             double a,b,c,d;
+             toScreenCoord(0,ymin,a,b);
+             toScreenCoord(0,ymax,c,d);
+             painter->drawLine(QPointF(a,b),QPointF(c,d));
+            }
+         angle+=theta;
+     }
 
 }
+
+
+bool Canvas2D::isInScene(const double & x,const double & y){
+//    qDebug()<<x<<y<<(((x>=xmin)&&(x<=xmax))&&((y>=ymin)&&(y<=ymax)));
+    return ((x>=xmin)&&(x<=xmax))&&((y>=ymin)&&(y<=ymax));
+}
+
+
+
+
 void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &compute){
 //    painter->setClipping(true);
 //    painter->setClipRect(20,20,width()-20,height()-20);
@@ -1848,15 +1905,55 @@ bool Canvas2D::addNewPoint(const QPointF & p){
         Command newCommand;
         newCommand.var=QString(varPt);
         QString s(varPt);
-        s.append(commandFreePoint(p,0));
+        if (Config::gridAttraction&&gridParam.isVisible){
+            if (gridParam.isCartesian){
+
+
+                double xcoord,ycoord;
+                toXY(p.x(),p.y(),xcoord,ycoord);
+                double a,b;
+                int quotient=(int)(xcoord/gridParam.x);
+                double between=std::abs(xcoord-quotient*gridParam.x);
+                if (between<gridParam.x*0.15){
+                    a=quotient*gridParam.x;
+                }
+                else if (between>0.85*gridParam.x){
+                    if (xcoord>0) a=(quotient+1)*gridParam.x;
+                    else a=(quotient-1)*gridParam.x;
+
+                }
+                else a=xcoord;
+
+                quotient=(int)(ycoord/gridParam.y);
+                between=std::abs(ycoord-quotient*gridParam.y);
+                if (between<gridParam.y*0.15){
+                    b=quotient*gridParam.y;
+                }
+                else if (between>0.85*gridParam.y){
+                    if (ycoord>0) b=(quotient+1)*gridParam.y;
+                    else b=(quotient-1)*gridParam.y;
+                }
+                else b=ycoord;
+
+                s.append(":=point([");
+                s.append(QString::number(a));
+                s.append(",");
+                s.append(QString::number(b));
+                s.append("],display=0);");
+            }
+
+        }
+
+        else s.append(commandFreePoint(p,0));
         newCommand.command=s;
         newCommand.attributes=0;
         newCommand.isCustom=false;
         commands.append(newCommand);
         evaluationLevel=commands.size()-1;
         gen g(newCommand.command.toStdString(),context);
-//                    qDebug()<<QString::fromStdString(g.print(context));
+               //    qDebug()<<QString::fromStdString(g.print(context));
         QList<MyItem*> v;
+
         addToVector(protecteval(g,1,context),v);
         v.at(0)->updateScreenCoords(true);
         pointItems.append(v.at(0));
@@ -1923,6 +2020,7 @@ void Canvas2D::paintEvent(QPaintEvent * ){
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing,true);
     painter.drawPixmap(0,0,pixmap);
+    painter.setClipRect(20,20,width()-40,height()-40);
 
     // draw selection
     if (selectionRight){
@@ -2047,13 +2145,21 @@ void PanelProperties::initGui(){
         hbox=new QVBoxLayout(this);
     }
     hbox->addWidget(tree);
+    if (parent->isInteractive()){
+        hbox->addStretch(1);
+    }
     hbox->addWidget(displayPanel,0,Qt::AlignLeft|Qt::AlignTop);
     hbox->addWidget(axisGridPanel,0,Qt::AlignLeft|Qt::AlignTop);
-    hbox->setSizeConstraint(QLayout::SetMaximumSize);
+//    hbox->setSizeConstraint(QLayout::SetMaximumSize);
     setLayout(hbox);
-    displayPanel->setFixedWidth(tree->width());
+    setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Maximum);
+
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
+/*void PanelProperties::resizeEvent(QResizeEvent * e){
+    displayPanel->setMaximumWidth(tree->width());
+    displayPanel->updateGeometry();
+}*/
 void PanelProperties::addToTree( MyItem * item){
     QTreeWidgetItem* treeItem=new QTreeWidgetItem;
 
@@ -2200,6 +2306,7 @@ DisplayProperties::DisplayProperties(Canvas2D *canvas):QTabWidget(canvas){
     listItems=new QList<MyItem*>;
 }
 void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
+
     setVisible(true);
     delete listItems;
     listItems=l;
@@ -2250,20 +2357,21 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         alphaFillPanel->setVisible(true);
 
     }
+
+
     else alphaFillPanel->setVisible(false);
-
-
 }
 void DisplayProperties::updateValueInDisplayPanel(){
     if (!listItems->isEmpty())
         valuePanel->setValue(listItems->at(0)->getDisplayValue());
+        generalPanel->updateGeometry();
 }
 void DisplayProperties::initGui(){
-    QWidget * generalPanel=new QWidget;
+    setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Maximum);
+    generalPanel=new QWidget(this);
     vLayoutGeneral=new QVBoxLayout;
-    vLayoutGeneral->setSizeConstraint(QLayout::SetFixedSize);
     valuePanel=new GenValuePanel(parent);
-    valuePanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    valuePanel->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred);
     displayObjectPanel=new DisplayObjectPanel(this);
     displayObjectPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     legendPanel=new LegendPanel(this);
@@ -2271,9 +2379,10 @@ void DisplayProperties::initGui(){
     vLayoutGeneral->addWidget(valuePanel);
     vLayoutGeneral->addWidget(legendPanel);
     vLayoutGeneral->addWidget(displayObjectPanel);
+    generalPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     generalPanel->setLayout(vLayoutGeneral);
 
-    QWidget * attributesPanel=new QWidget;
+    attributesPanel=new QWidget;
     vLayoutAttributes=new QVBoxLayout;
     colorPanel=new ColorPanel(this);
     colorPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
@@ -2713,12 +2822,12 @@ void GenValuePanel::initGui(){
 //    label=new QLabel
     formulaWidget=new FormulaWidget(this);
     layout->addWidget(formulaWidget,Qt::AlignLeft);
-    layout->setSizeConstraint(QLayout::SetMinimumSize);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);
 }
 void GenValuePanel::setValue(const QString  s){
       formulaWidget->updateFormula(s);
-      formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+//      formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
 }
 
@@ -2734,7 +2843,27 @@ void AxisGridPanel::initGui(){
     addTab(yPanel,tr("Axe (Oy)"));
     addTab(gridPanel,tr("Grille"));
     connect(gridPanel,SIGNAL(gridUpdated(GridParam)),this,SLOT(updateGrid(GridParam)));
+    connect(xPanel,SIGNAL(axisUpdated(AxisParam,bool)),this,SLOT(updateXAxis(AxisParam,bool)));
+    connect(yPanel,SIGNAL(axisUpdated(AxisParam,bool)),this,SLOT(updateYAxis(AxisParam,bool)));
 }
+void AxisGridPanel::updateXAxis(AxisParam p, bool b){
+    parent->setXAxisParam(p);
+    updateCanvas(b);
+}
+void AxisGridPanel::updateYAxis(AxisParam p, bool b){
+    parent->setYAxisParam(p);
+    updateCanvas(b);
+}
+void AxisGridPanel::updateCanvas(const bool & b){
+    bool b1=(parent->getXAxisParam().max>parent->getXAxisParam().min);
+    bool b2=(parent->getYAxisParam().max>parent->getYAxisParam().min);
+    if (b1&& b2) parent->setBounds(parent->getXAxisParam().min,parent->getXAxisParam().max,
+                parent->getYAxisParam().min,parent->getYAxisParam().max);
+    parent->setXYUnit();
+    parent->updatePixmap(b);
+    parent->repaint();
+}
+
 void AxisGridPanel::updateGrid(GridParam p){
     parent->setGridParam(p);
     parent->updatePixmap(false);
@@ -2742,27 +2871,12 @@ void AxisGridPanel::updateGrid(GridParam p){
 }
 
 void AxisGridPanel::initValue(){
-    xPanel->initValue(parent->getXAxisLegend(),parent->getXUnitSuffix(),parent->getXmin(),parent->getXmax(),giac::show_axes(parent->getContext()));
-    yPanel->initValue(parent->getYAxisLegend(),parent->getYUnitSuffix(),parent->getYmin(),parent->getYmax(),giac::show_axes(parent->getContext()));
+    xPanel->initValue(parent->getXAxisParam(),parent->getXmin(),parent->getXmax());
+    yPanel->initValue(parent->getYAxisParam(),parent->getYmin(),parent->getYmax());
     gridPanel->initValue(parent->getGridParam());
 
 }
 
-
-void AxisGridPanel::updateCanvas(const bool &b){
-     parent->setXAxisTick(xPanel->editDistance->text().toDouble());
-     parent->setYAxisTick(yPanel->editDistance->text().toDouble());
-     parent->setXAxisLegend(xPanel->editLabel->text());
-     parent->setYAxisLegend(yPanel->editLabel->text());
-     parent->setXUnitSuffix(xPanel->editUnitLabel->text());
-     parent->setYUnitSuffix(yPanel->editUnitLabel->text());
-     if (xPanel->editMin->text().toDouble()<xPanel->editMax->text().toDouble()&&yPanel->editMin->text().toDouble()<yPanel->editMax->text().toDouble())
-         parent->setBounds(xPanel->editMin->text().toDouble(),xPanel->editMax->text().toDouble(),yPanel->editMin->text().toDouble(),yPanel->editMax->text().toDouble());
-     giac::show_axes(xPanel->showAxis->isChecked()&& yPanel->showAxis->isChecked(),parent->getContext());
-     parent->setXYUnit();
-     parent->updatePixmap(b);
-     parent->repaint();
-}
 GridPanel::GridPanel(QWidget* p):QWidget(p){
         initGui();
 }
@@ -2793,7 +2907,7 @@ void GridPanel::initValue(const GridParam &p){
     connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
     connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateLineType(int)));
-    //    connect()
+    connect(comboPolarAngle,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
 }
 void GridPanel::updateColor(QColor c){
     param.color=c;
@@ -2812,7 +2926,7 @@ void GridPanel::updateCanvas(){
     if (param.y==0) param.y=1;
     param.r=editDistance->text().toDouble();
     if (param.r==0) param.r=1;
-    param.theta=comboPolarAngle->currentIndex();
+    param.theta=(PolarAngle)(comboPolarAngle->currentIndex());
     emit gridUpdated(param);
 }
 void GridPanel::initGui(){
@@ -2830,6 +2944,7 @@ void GridPanel::initGui(){
     comboPolarAngle=new QComboBox(polarPanel);
     const QChar pi(0x3c0);
     comboPolarAngle->addItem( QString("%1/12").arg(pi));
+    comboPolarAngle->addItem( QString("%1/8").arg(pi));
     comboPolarAngle->addItem( QString("%1/6").arg(pi));
     comboPolarAngle->addItem( QString("%1/4").arg(pi));
     comboPolarAngle->addItem( QString("%1/3").arg(pi));
@@ -2891,8 +3006,7 @@ void GridPanel::displayValidPanel(int id){
     }
 }
 
-AxisPanel::AxisPanel(AxisGridPanel* p):QWidget(p){
-    parent=p;
+AxisPanel::AxisPanel(QWidget *p):QWidget(p){
     initGui();
 
 }
@@ -2904,6 +3018,8 @@ void AxisPanel::initGui(){
     QLabel * labelMin=new QLabel(tr("Minimum:"),this);
     editMin=new QLineEdit(this);
     editMin->setValidator(new QDoubleValidator);
+    editMin->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Maximum);
+
     QLabel * labelMax=new QLabel(tr("Maximum:"),this);
     editMax=new QLineEdit(this);
     editMax->setValidator(new QDoubleValidator);
@@ -2915,7 +3031,7 @@ void AxisPanel::initGui(){
     QLabel * labelDistance=new QLabel(tr("Espace-graduations:"),this);
     editDistance=new QLineEdit(this);
     editDistance->setValidator(new QDoubleValidator);
-
+    colorPanel=new ColorPanel(this);
     grid->addWidget(showAxis,0,0,1,2);
     grid->addWidget(labelMin,1,0);
     grid->addWidget(editMin,1,1);
@@ -2927,27 +3043,44 @@ void AxisPanel::initGui(){
     grid->addWidget(editUnitLabel,4,1);
     grid->addWidget(labelDistance,5,0);
     grid->addWidget(editDistance,5,1);
+    grid->addWidget(colorPanel,6,0,2,1);
+}
+void AxisPanel::updateCanvas(){
+    QLineEdit* edit=qobject_cast<QLineEdit*>(sender());
+            bool b=false;
+    if (editMin==edit|| editMax==edit) b=true;
 
+    AxisParam p;
+    p.tick=editDistance->text().toDouble();
+    p.legend=editLabel->text();
+    p.unitSuffix=editUnitLabel->text();
+    p.isVisible=showAxis->isChecked();
+    p.min=editMin->text().toDouble();
+    p.max=editMax->text().toDouble();
+
+   emit axisUpdated(p,b);
+
+
+
+}
+
+void AxisPanel::initValue(const AxisParam& p, const double & min, const double &max){
+//    qDebug()<<min<<max;
+
+    editLabel->setText(p.legend);
+    editUnitLabel->setText(p.unitSuffix);
+    editMin->setText(QString::number(min));
+    editMax->setText(QString::number(max));
+    showAxis->setChecked(p.isVisible);
+    editDistance->setText(QString::number(p.tick));
+    colorPanel->setColor(p.color);
     connect(showAxis,SIGNAL(clicked()),this,SLOT(updateCanvas()));
     connect(editMin,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editMax,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
-}
-void AxisPanel::updateCanvas(){
-    QLineEdit* edit=qobject_cast<QLineEdit*>(sender());
-            bool b=false;
-    if (editMin==edit|| editMax==edit) b=true;
-    parent->updateCanvas(b);
-}
-
-void AxisPanel::initValue(const QString & axisLabel, const QString &suffix, const double & min, const double &max, const bool & b){
-    editLabel->setText(axisLabel);
-    editUnitLabel->setText(suffix);
-    editMin->setText(QString::number(min));
-    editMax->setText(QString::number(max));
-    showAxis->setChecked(b);
+    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateCanvas()));
 }
 
 

@@ -364,6 +364,7 @@ void GeneralPanel::initGui(){
     editTMax=new QLineEdit(this);
     editTMax->setValidator(new QDoubleValidator(editTMax));
     checkAutoScale=new QCheckBox(tr("autoscale"));
+    checkGridAttraction=new QCheckBox(tr("Grille aimantée"));
 
     graphicGrid->addWidget(labelWidth,0,0,1,3);
     graphicGrid->addWidget(editWidth,0,3);
@@ -384,6 +385,7 @@ void GeneralPanel::initGui(){
     graphicGrid->addWidget(editTMin,2,5);
     graphicGrid->addWidget(labelTMax,2,6);
     graphicGrid->addWidget(editTMax,2,7);
+    graphicGrid->addWidget(checkGridAttraction,3,0,2,1);
     graphicGrid->setSizeConstraint(QLayout::SetFixedSize);
 
     QLabel* labelLanguage=new QLabel(tr("Langue"),this);
@@ -417,7 +419,7 @@ void GeneralPanel::initValue(){
     editTMin->setText(QString::number(giac::gnuplot_tmin));
     editTMax->setText(QString::number(giac::gnuplot_tmax));
     checkAutoScale->setChecked(giac::autoscale);
-
+    checkGridAttraction->setChecked(Config::gridAttraction);
 
 }
 void GeneralPanel::apply(){
@@ -466,6 +468,7 @@ void GeneralPanel::apply(){
         giac::gnuplot_tmax=6;
     }
     giac::autoscale=checkAutoScale->isChecked();
+    Config::gridAttraction=checkGridAttraction->isChecked();
 
 }
 /**

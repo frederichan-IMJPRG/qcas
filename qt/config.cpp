@@ -22,4 +22,6 @@ Config::Config(){}
 //bool Config::ortho=false;
 //bool Config::autoscale=true;
 int Config::graph_width=400;
+bool Config::gridAttraction=true;
+
 Config::LANGUAGES Config::language=Config::FRENCH;

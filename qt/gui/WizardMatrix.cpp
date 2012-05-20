@@ -25,7 +25,6 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
-
 #include "WizardMatrix.h"
 
 WizardMatrix::WizardMatrix(MainWindow *parent)
@@ -59,7 +58,7 @@ void WizardMatrix::createGui(){
     grid->addWidget(columnSpin,1,1,Qt::AlignLeft);
 
     QPushButton* button=new QPushButton;
-    button->setText(tr("Go!"));
+    button->setIcon(QIcon(":/images/right.png"));
 
     QHBoxLayout *hLayout=new QHBoxLayout;
     hLayout->addWidget(box);
@@ -111,7 +110,8 @@ void WizardMatrix::writeMatrix(){
     for (int i=0;i<table->rowCount();++i){
         s.append("[");
         for(int j=0;j<table->columnCount();++j){
-            s.append(table->item(i,j)->text());
+            if (table->item(i,j)!=0)
+                s.append(table->item(i,j)->text());
             if (j!=table->columnCount()-1){
                 s.append(",");
             }
