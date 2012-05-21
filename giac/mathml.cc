@@ -950,7 +950,7 @@ namespace giac {
       }
       else if (mys.feuille._VECTptr->front().type==_FRAC)
 	return s_bra;
-      else if (mys.feuille._VECTptr->front().type=_CPLX){
+      else if (mys.feuille._VECTptr->front().type==_CPLX){
           if  (is_zero(im(mys.feuille._VECTptr->front(),contextptr))) return s_no_bra;
           else return s_bra;
       }
