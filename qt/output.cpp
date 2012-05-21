@@ -1035,9 +1035,9 @@ double Canvas2D::find_tick(double dx){
   }
   return res;
 }
-QSize Canvas2D::sizeHint() const{
+/*QSize Canvas2D::sizeHint() const{
     return QSize(width(),height());
-}
+}*/
 
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
@@ -1087,12 +1087,12 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     setContextMenuPolicy(Qt::NoContextMenu);
     QSizePolicy p(QSizePolicy::Minimum,QSizePolicy::Minimum);
     p.setHorizontalStretch(1);
-
     setSizePolicy(p);
 
+ //   setMinimumHeight(100);
 }
-QSize Canvas2D::minimumSizeHint(){
-    return QSize(20,20);
+QSize Canvas2D::minimumSizeHint() const{
+    return QSize(200,100);
 }
 
 void Canvas2D::createMenuAction(){
@@ -2069,6 +2069,7 @@ void Canvas2D::paintEvent(QPaintEvent * ){
     }
 }
 void Canvas2D::resizeEvent(QResizeEvent * ev){
+
     xmax=xmin+(ev->size().width()-40)/xunit;
     ymin=ymax-(ev->size().height()-40)/yunit;
     setXYUnit();

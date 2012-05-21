@@ -434,7 +434,7 @@ void MainWindow::createGui(){
     leftLayout->addStretch(1);
     leftLayout->addWidget(giacPanel);
     leftPanel->setLayout(leftLayout);
-    leftPanel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Minimum);
+    leftPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
 
 
 
@@ -465,8 +465,8 @@ void MainWindow::createGui(){
     vertSplit->addWidget(leftPanel);
     vertSplit->addWidget(rightPanel);
 
-//    vertSplit->setStretchFactor(0,1);
-//    vertSplit->setStretchFactor(1,8);
+    vertSplit->setStretchFactor(0,1);
+    vertSplit->setStretchFactor(1,8);
 
     warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
     warningFirstEvaluation->setAlignment(Qt::AlignRight);

@@ -215,7 +215,6 @@ public:
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
     void toXML();
-    QSize sizeHint() const;
     QList<MyItem*>* getPointItem();
     QList<MyItem *> *getLineItem();
     QList<MyItem*>* getFilledItem();
@@ -258,7 +257,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
     bool event(QEvent *);
     void resizeEvent(QResizeEvent *);
-    QSize minimumSizeHint();
+    virtual QSize minimumSizeHint() const;
 
 private:
     giac::context*context;

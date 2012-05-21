@@ -32,7 +32,7 @@
 #include "global.h"
 #include "plot.h"
 #include "config.h"
-#include <QDebug>;
+#include <QDebug>
 
 
 
