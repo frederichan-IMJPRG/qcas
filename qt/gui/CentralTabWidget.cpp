@@ -61,6 +61,7 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     tabBar()->setTabButton(1,QTabBar::RightSide,add);
 
     connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
+//    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
 }
 void MainTabWidget::closeTab(int id){
     MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));

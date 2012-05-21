@@ -434,7 +434,7 @@ void MainWindow::createGui(){
     leftLayout->addStretch(1);
     leftLayout->addWidget(giacPanel);
     leftPanel->setLayout(leftLayout);
-//    leftPanel->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Minimum);
+    leftPanel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Minimum);
 
 
 
@@ -446,7 +446,7 @@ void MainWindow::createGui(){
     text->setAutoIndent(true);
     text->setBraceMatching(QsciScintilla::SloppyBraceMatch);
 */
-    QWidget *rightPanel=new QWidget;
+    rightPanel=new QWidget(this);
 
     QHBoxLayout *rightLayout=new QHBoxLayout;
 
@@ -460,14 +460,13 @@ void MainWindow::createGui(){
  //  rightLayout->addStretch(1);
     rightPanel->setLayout(rightLayout);
 
+    setCentralWidget(vertSplit);
 
-
-    this->setCentralWidget(vertSplit);
     vertSplit->addWidget(leftPanel);
     vertSplit->addWidget(rightPanel);
 
-    vertSplit->setStretchFactor(0,1);
-    vertSplit->setStretchFactor(1,8);
+//    vertSplit->setStretchFactor(0,1);
+//    vertSplit->setStretchFactor(1,8);
 
     warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
     warningFirstEvaluation->setAlignment(Qt::AlignRight);

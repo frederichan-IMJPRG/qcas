@@ -1085,9 +1085,16 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 
     createMenuAction();
     setContextMenuPolicy(Qt::NoContextMenu);
-    setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    QSizePolicy p(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    p.setHorizontalStretch(1);
+
+    setSizePolicy(p);
 
 }
+QSize Canvas2D::minimumSizeHint(){
+    return QSize(20,20);
+}
+
 void Canvas2D::createMenuAction(){
     zoomIn=new QAction(tr("Zoom avant"),this);
 
@@ -1293,25 +1300,25 @@ void Canvas2D::updatePixmap(const bool &compute){
     painter.setClipRect(20,20,width()-40,height()-40);
     drawGrid(&painter);
     drawElements(filledItems,&painter,compute);
-    if (show_axes(context)) drawAxes(&painter);
+    drawAxes(&painter);
     drawElements(lineItems,&painter,compute);
     drawElements(pointItems,&painter,compute);
 }
 
 
 void Canvas2D::drawAxes(QPainter * painter){
-    if ((xmin<0)& (xmax>0)){
+
+    if ((xmin<0)& (xmax>0) && (yAxisParam.isVisible)){
         double a,b;
-
-        painter->setPen(QPen(Qt::black,1, Qt::SolidLine ,Qt::RoundCap));
-        double step=(ymax-ymin)/8;
-        double tenPower=pow(10,floor(log10(step)));
-        int first=floor(step/tenPower);
-
-
-        if (step/tenPower-first>0.5) step=(first+1)*tenPower;
-        else step=first*tenPower;
-
+        painter->setPen(QPen(yAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
+        double step=yAxisParam.tick;
+        if (!isInteractive()){
+            step=(ymax-ymin)/8;
+            double tenPower=pow(10,floor(log10(step)));
+            int first=floor(step/tenPower);
+            if (step/tenPower-first>0.5) step=(first+1)*tenPower;
+            else step=first*tenPower;
+        }
         for (int i=floor(ymin/step);i<=floor(ymax/step);i++){
             double grad=step*i;
             if (grad>ymin && grad<ymax){
@@ -1320,47 +1327,53 @@ void Canvas2D::drawAxes(QPainter * painter){
                 QPointF p2=QPointF(a+3,b);
                 painter->drawLine(p1,p2);
                 QString s=QString::number((grad));
+                if (!yAxisParam.unitSuffix.isEmpty()) s.append(" ").append(yAxisParam.unitSuffix);
                 if (i%2==0) {
                     //Problem of the origin
-                    if ((ymin<0) & (ymax>0)){
+                    if ((ymin<0) & (ymax>0) && (grad==0)){
                         //TODO
-
+                        painter->drawText(QPointF(a+6,b-painter->fontMetrics().height()+painter->fontMetrics().ascent()/2.0),s);
                     }
-                    painter->drawText(QPointF(a+6,b+painter->fontMetrics().ascent()/2.0),s);
+                    else painter->drawText(QPointF(a+6,b+painter->fontMetrics().ascent()/2.0),s);
 
                 }
             }
-            // Draw axis
-            toScreenCoord(0,ymin,a,b);
-            QPointF p1=QPointF(a,b);
-            toScreenCoord(0,ymax,a,b);
-            QPointF p2=QPointF(a,b);
-            painter->drawLine(p1,p2);
 
-            QPainterPath p;
-            p.moveTo(p2);
-            p.lineTo(p2.x()+6,p2.y()+12);
-            p.lineTo(p2.x()-6,p2.y()+12);
-            p.closeSubpath();
-            painter->setBrush(QBrush(Qt::black,Qt::SolidPattern));
-            painter->drawPath(p);
+        }
+        // Draw axis
+        toScreenCoord(0,ymin,a,b);
+        QPointF p1=QPointF(a,b);
+        toScreenCoord(0,ymax,a,b);
+        QPointF p2=QPointF(a,b);
+        painter->drawLine(p1,p2);
 
-
-
+        QPainterPath p;
+        p.moveTo(p2);
+        p.lineTo(p2.x()+6,p2.y()+12);
+        p.lineTo(p2.x()-6,p2.y()+12);
+        p.closeSubpath();
+        painter->setBrush(QBrush(yAxisParam.color,Qt::SolidPattern));
+        painter->drawPath(p);
+        // Draw Legend
+        if (!yAxisParam.legend.isEmpty()){
+            p2=QPointF(p2.x()+10,p2.y()+painter->fontMetrics().height());
+            painter->drawText(p2,yAxisParam.legend);
         }
 
 
+
     }
-    if ((ymin<0) & (ymax>0)){
+    if ((ymin<0) && (ymax>0) && (xAxisParam.isVisible)){
         double a,b;
-        painter->setPen(QPen(Qt::black,1, Qt::SolidLine ,Qt::RoundCap));
-        double step=(xmax-xmin)/8;
-        double tenPower=pow(10,floor(log10(step)));
-        int first=floor(step/tenPower);
-
-
-        if (step/tenPower-first>0.5) step=(first+1)*tenPower;
-        else step=first*tenPower;
+        painter->setPen(QPen(xAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
+        double step=yAxisParam.tick;
+        if (!isInteractive()){
+            step=(xmax-xmin)/8;
+            double tenPower=pow(10,floor(log10(step)));
+            int first=floor(step/tenPower);
+            if (step/tenPower-first>0.5) step=(first+1)*tenPower;
+            else step=first*tenPower;
+        }
 
         for (int i=floor(xmin/step);i<=floor(xmax/step);i++){
             double grad=step*i;
@@ -1370,23 +1383,36 @@ void Canvas2D::drawAxes(QPainter * painter){
                 QPointF p2=QPointF(a,b-3);
                 painter->drawLine(p1,p2);
                 QString s=QString::number((grad));
-                if (i%2==0) painter->drawText(QPointF(a-painter->fontMetrics().width(s)/2,b+6+painter->fontMetrics().height()/2),s);
+                if (!xAxisParam.unitSuffix.isEmpty()) s.append(" ").append(xAxisParam.unitSuffix);
+                if (i%2==0) {
+                    //Problem of the origin
+                    if ((xmin<0) & (xmax>0) && (grad==0)){
+                        //TODO
+                        painter->drawText(QPointF(a+5,b+6+painter->fontMetrics().height()/2),s);
 
+                    }
+                    else painter->drawText(QPointF(a-painter->fontMetrics().width(s)/2,b+6+painter->fontMetrics().height()/2),s);
+                }
             }
-            // Draw axis
-            toScreenCoord(xmin,0,a,b);
-            QPointF p1=QPointF(a,b);
-            toScreenCoord(xmax,0,a,b);
-            QPointF p2=QPointF(a,b);
-            painter->drawLine(p1,p2);
+        }
+        // Draw axis
+        toScreenCoord(xmin,0,a,b);
+        QPointF p1=QPointF(a,b);
+        toScreenCoord(xmax,0,a,b);
+        QPointF p2=QPointF(a,b);
+        painter->drawLine(p1,p2);
 
-            QPainterPath p;
-            p.moveTo(p2);
-            p.lineTo(p2.x()-12,p2.y()-6);
-            p.lineTo(p2.x()-12,p2.y()+6);
-            p.closeSubpath();
-            painter->setBrush(QBrush(Qt::black,Qt::SolidPattern));
-            painter->drawPath(p);
+        QPainterPath p;
+        p.moveTo(p2);
+        p.lineTo(p2.x()-12,p2.y()-6);
+        p.lineTo(p2.x()-12,p2.y()+6);
+        p.closeSubpath();
+        painter->setBrush(QBrush(xAxisParam.color,Qt::SolidPattern));
+        painter->drawPath(p);
+        // Draw Legend
+        if (!xAxisParam.legend.isEmpty()){
+            p2=QPointF(p2.x()-painter->fontMetrics().width(xAxisParam.legend),p2.y()-painter->fontMetrics().height()-5);
+            painter->drawText(p2,xAxisParam.legend);
         }
     }
 }
@@ -1905,46 +1931,7 @@ bool Canvas2D::addNewPoint(const QPointF & p){
         Command newCommand;
         newCommand.var=QString(varPt);
         QString s(varPt);
-        if (Config::gridAttraction&&gridParam.isVisible){
-            if (gridParam.isCartesian){
-
-
-                double xcoord,ycoord;
-                toXY(p.x(),p.y(),xcoord,ycoord);
-                double a,b;
-                int quotient=(int)(xcoord/gridParam.x);
-                double between=std::abs(xcoord-quotient*gridParam.x);
-                if (between<gridParam.x*0.15){
-                    a=quotient*gridParam.x;
-                }
-                else if (between>0.85*gridParam.x){
-                    if (xcoord>0) a=(quotient+1)*gridParam.x;
-                    else a=(quotient-1)*gridParam.x;
-
-                }
-                else a=xcoord;
-
-                quotient=(int)(ycoord/gridParam.y);
-                between=std::abs(ycoord-quotient*gridParam.y);
-                if (between<gridParam.y*0.15){
-                    b=quotient*gridParam.y;
-                }
-                else if (between>0.85*gridParam.y){
-                    if (ycoord>0) b=(quotient+1)*gridParam.y;
-                    else b=(quotient-1)*gridParam.y;
-                }
-                else b=ycoord;
-
-                s.append(":=point([");
-                s.append(QString::number(a));
-                s.append(",");
-                s.append(QString::number(b));
-                s.append("],display=0);");
-            }
-
-        }
-
-        else s.append(commandFreePoint(p,0));
+         s.append(commandFreePoint(p,0));
         newCommand.command=s;
         newCommand.attributes=0;
         newCommand.isCustom=false;
@@ -1971,16 +1958,52 @@ bool Canvas2D::addNewPoint(const QPointF & p){
 }
 
 QString  Canvas2D::commandFreePoint(const QPointF & p,const int attributes){
-    double a,b;
-    toXY(p.x(),p.y(),a,b);
-    QString newCommand(":=point([");
-    newCommand.append(QString::number(a));
-    newCommand.append(",");
-    newCommand.append(QString::number(b));
-    newCommand.append("],display=");
-    newCommand.append(QString::number(attributes));
-    newCommand.append(");");
-    return newCommand;
+     QString newCommand(":=point([");
+    if (Config::gridAttraction&&gridParam.isVisible){
+        if (gridParam.isCartesian){
+            double xcoord,ycoord;
+            toXY(p.x(),p.y(),xcoord,ycoord);
+            double a,b;
+            int quotient=(int)(xcoord/gridParam.x);
+            double between=std::abs(xcoord-quotient*gridParam.x);
+            if (between<gridParam.x*0.15){
+                a=quotient*gridParam.x;
+            }
+            else if (between>0.85*gridParam.x){
+                if (xcoord>0) a=(quotient+1)*gridParam.x;
+                else a=(quotient-1)*gridParam.x;
+
+            }
+            else a=xcoord;
+
+            quotient=(int)(ycoord/gridParam.y);
+            between=std::abs(ycoord-quotient*gridParam.y);
+            if (between<gridParam.y*0.15){
+                b=quotient*gridParam.y;
+            }
+            else if (between>0.85*gridParam.y){
+                if (ycoord>0) b=(quotient+1)*gridParam.y;
+                else b=(quotient-1)*gridParam.y;
+            }
+            else b=ycoord;
+            newCommand.append(QString::number(a));
+            newCommand.append(",");
+            newCommand.append(QString::number(b));
+            newCommand.append("],display=0);");
+        }
+
+    }
+    else{
+        double a,b;
+        toXY(p.x(),p.y(),a,b);
+        newCommand.append(QString::number(a));
+        newCommand.append(",");
+        newCommand.append(QString::number(b));
+        newCommand.append("],display=");
+        newCommand.append(QString::number(attributes));
+        newCommand.append(");");
+    }
+       return newCommand;
 }
 
 
@@ -2048,7 +2071,7 @@ void Canvas2D::paintEvent(QPaintEvent * ){
 void Canvas2D::resizeEvent(QResizeEvent * ev){
     xmax=xmin+(ev->size().width()-40)/xunit;
     ymin=ymax-(ev->size().height()-40)/yunit;
-
+    setXYUnit();
     updatePixmap(false);
     repaint();
 
@@ -2152,8 +2175,10 @@ void PanelProperties::initGui(){
     hbox->addWidget(axisGridPanel,0,Qt::AlignLeft|Qt::AlignTop);
 //    hbox->setSizeConstraint(QLayout::SetMaximumSize);
     setLayout(hbox);
-    setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Maximum);
 
+    QSizePolicy p(QSizePolicy::Fixed,QSizePolicy::Maximum);
+    p.setHorizontalStretch(1);
+    setSizePolicy(p);
     connect(tree,SIGNAL(itemSelectionChanged()),this,SLOT(updateTree()));
 }
 /*void PanelProperties::resizeEvent(QResizeEvent * e){
@@ -2847,19 +2872,24 @@ void AxisGridPanel::initGui(){
     connect(yPanel,SIGNAL(axisUpdated(AxisParam,bool)),this,SLOT(updateYAxis(AxisParam,bool)));
 }
 void AxisGridPanel::updateXAxis(AxisParam p, bool b){
-    parent->setXAxisParam(p);
-    updateCanvas(b);
+    if (p.min<p.max) {
+        parent->setXAxisParam(p);
+        parent->setBounds(parent->getXAxisParam().min,parent->getXAxisParam().max,
+                    parent->getYmin(),parent->getYmax());
+        updateCanvas(b);
+    }
 }
 void AxisGridPanel::updateYAxis(AxisParam p, bool b){
-    parent->setYAxisParam(p);
-    updateCanvas(b);
+    if (p.min<p.max) {
+        parent->setYAxisParam(p);
+        parent->setBounds(parent->getXmin(),parent->getXmax(),parent->getYAxisParam().min
+                          ,parent->getYAxisParam().max);
+        updateCanvas(b);
+    }
 }
 void AxisGridPanel::updateCanvas(const bool & b){
-    bool b1=(parent->getXAxisParam().max>parent->getXAxisParam().min);
-    bool b2=(parent->getYAxisParam().max>parent->getYAxisParam().min);
-    if (b1&& b2) parent->setBounds(parent->getXAxisParam().min,parent->getXAxisParam().max,
-                parent->getYAxisParam().min,parent->getYAxisParam().max);
-    parent->setXYUnit();
+
+    if (b) parent->setXYUnit();
     parent->updatePixmap(b);
     parent->repaint();
 }
@@ -3047,7 +3077,7 @@ void AxisPanel::initGui(){
 }
 void AxisPanel::updateCanvas(){
     QLineEdit* edit=qobject_cast<QLineEdit*>(sender());
-            bool b=false;
+    bool b=false;
     if (editMin==edit|| editMax==edit) b=true;
 
     AxisParam p;
@@ -3057,15 +3087,24 @@ void AxisPanel::updateCanvas(){
     p.isVisible=showAxis->isChecked();
     p.min=editMin->text().toDouble();
     p.max=editMax->text().toDouble();
+    p.color=color;
+
 
    emit axisUpdated(p,b);
-
-
-
 }
-
+void AxisPanel::updateColor(QColor c){
+    color=c;
+    updateCanvas();
+}
 void AxisPanel::initValue(const AxisParam& p, const double & min, const double &max){
 //    qDebug()<<min<<max;
+    disconnect(showAxis,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+    disconnect(editMin,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    disconnect(editMax,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    disconnect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    disconnect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    disconnect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
+    disconnect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
 
     editLabel->setText(p.legend);
     editUnitLabel->setText(p.unitSuffix);
@@ -3074,13 +3113,14 @@ void AxisPanel::initValue(const AxisParam& p, const double & min, const double &
     showAxis->setChecked(p.isVisible);
     editDistance->setText(QString::number(p.tick));
     colorPanel->setColor(p.color);
+    color=p.color;
     connect(showAxis,SIGNAL(clicked()),this,SLOT(updateCanvas()));
     connect(editMin,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editMax,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
-    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateCanvas()));
+    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
 }
 
 

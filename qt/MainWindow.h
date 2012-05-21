@@ -118,7 +118,7 @@ private:
     QAction *stopAction;
     QToolButton * stopButton;
 
-    QWidget* leftPanel;
+    QWidget* leftPanel; QWidget*rightPanel;
     QListWidget *wizardList;
     QStackedWidget *wizardPages;
 

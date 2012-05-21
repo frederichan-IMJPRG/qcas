@@ -258,6 +258,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
     bool event(QEvent *);
     void resizeEvent(QResizeEvent *);
+    QSize minimumSizeHint();
 
 private:
     giac::context*context;
@@ -599,9 +600,11 @@ private:
     QLineEdit* editDistance;
     QCheckBox* showAxis;
     ColorPanel* colorPanel;
+    QColor color;
     void initGui();
 private slots:
     void updateCanvas();
+    void updateColor(QColor);
 signals:
     void axisUpdated(AxisParam,bool);
 };
