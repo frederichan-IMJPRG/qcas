@@ -91,9 +91,9 @@ EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         grid->addWidget(eq,0,1);
         grid->addWidget(labelVar,1,0);
         grid->addWidget(var,1,1);
-        grid->addWidget(numeric,2,0,2,1);
-        grid->addWidget(inC,3,0,2,1);
-        grid->addWidget(button,4,1);
+        grid->addWidget(numeric,2,0,2,1,Qt::AlignTop);
+        grid->addWidget(inC,3,0,2,1,Qt::AlignTop);
+        grid->addWidget(button,4,1,Qt::AlignTop);
         this->setLayout(grid);
 
         connect(button,SIGNAL(clicked()),this,SLOT(sendEquation()));

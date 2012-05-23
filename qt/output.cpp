@@ -42,6 +42,7 @@
 #include "gui/qtmmlwidget.h"
 #include "output.h"
 #include "vecteur.h"
+#include "gui/plotfunctiondialog.h"
 using namespace giac;
 
 
@@ -67,7 +68,7 @@ void OutputWidget::setLine(Line* l){
 }
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
     formula=giac::undef;
-    context=new giac::context;
+    context=0;
     initGui();
 }
 FormulaWidget::FormulaWidget(const giac::gen &g,giac::context *c){
@@ -81,7 +82,7 @@ void FormulaWidget::initGui(){
 //    qDebug()<<"----------------------";
 
     mmlWidget=new QtMmlWidget(this);
-    updateFormula(formula,context);
+    if (context!=0)    updateFormula(formula,context);
     QPalette p=mmlWidget->palette();
     p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
     mmlWidget->setPalette(p);
@@ -114,6 +115,9 @@ void FormulaWidget::copyToLaTeX(){
 }
 void FormulaWidget::displayMenu(QPoint p){
     menu->popup(mapToGlobal(p));
+}
+void FormulaWidget::setGen(const gen & g){
+    formula=g;
 }
 void FormulaWidget::updateFormula(const QString  s){
     QString errorMsg;
@@ -229,16 +233,24 @@ void GraphWidget::initGui(){
  */
 
 void GraphWidget::createToolBar(){
+    buttonPointer=new QToolButton(this);
     buttonPt=new QToolButton(this);
     buttonLine=new QToolButton(this);
     buttonCircle=new QToolButton(this);
 
     // Menu creation
+    QMenu* menuPointer=new QMenu(buttonPointer);
     QMenu* menuPt=new QMenu(buttonPt);
     QMenu* menuLine=new QMenu(buttonLine);
     QMenu* menuCircle=new QMenu(buttonCircle);
 
-
+    // Pointer actions
+    select=new QAction(tr("Sélection"),buttonPointer);
+    select->setData(canvas->SELECT);
+    select->setIcon(QIcon(":/images/select.png"));
+    move=new QAction(tr("Déplacer"),buttonPointer);
+    move->setData(canvas->MOVE);
+    move->setIcon(QIcon(":/images/move.png"));
 
     // Point Actions
     singlept=new QAction(tr("Point"),buttonPt);
@@ -265,6 +277,12 @@ void GraphWidget::createToolBar(){
     halfline=new QAction(tr("Demie-droite"),buttonLine);
     halfline->setIcon(QIcon(":/images/halfline.png"));
     halfline->setData(canvas->HALFLINE);
+    plotFunction=new QAction(tr("Courbe représentative"),buttonLine);;
+    plotFunction->setData(canvas->PLOT_FUNCTION);
+    plotFunction->setIcon(QIcon(":/images/function.png"));
+    plotBezier=new QAction(tr("Courbe de Bézier"),buttonLine);;
+    plotBezier->setData(canvas->PLOT_BEZIER);
+    plotBezier->setIcon(QIcon(":/images/bezier.png"));
 
     // Circle Actions
     circle2pt=new QAction(tr("Cercle (centre-point)"),buttonCircle);
@@ -282,6 +300,9 @@ void GraphWidget::createToolBar(){
     buttonLine->setProperty("myAction",canvas->LINE);
     buttonCircle->setProperty("myAction",canvas->CIRCLE2PT);
 
+    menuPointer->addAction(select);
+    menuPointer->addAction(move);
+    menuPointer->setStyle(new IconSize);
 
     menuPt->addAction(singlept);
     menuPt->addAction(pointxy);
@@ -292,6 +313,8 @@ void GraphWidget::createToolBar(){
     menuLine->addAction(line);
     menuLine->addAction(segment);
     menuLine->addAction(halfline);
+    menuLine->addAction(plotFunction);
+    menuLine->addAction(plotBezier);
     menuLine->setStyle(new IconSize);
 
     menuCircle->addAction(circle2pt);
@@ -300,6 +323,13 @@ void GraphWidget::createToolBar(){
     menuCircle->setStyle(new IconSize);
 
     const QSize size(40,40);
+    buttonPointer->setIconSize(size);
+    buttonPointer->setCheckable(true);
+    buttonPointer->setPopupMode(QToolButton::MenuButtonPopup);
+    buttonPointer->setMenu(menuPointer);
+    buttonPointer->setIcon(QIcon(":/images/select.png"));
+
+
     buttonPt->setIconSize(size);
     QString s("QToolButton{margin: 8px;}"
 //              "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,"
@@ -362,6 +392,7 @@ void GraphWidget::createToolBar(){
 
 
     QButtonGroup *group=new QButtonGroup(this);
+    group->addButton(buttonPointer);
     group->addButton(buttonPt);
     group->addButton(buttonLine);
     group->addButton(buttonCircle);
@@ -369,14 +400,17 @@ void GraphWidget::createToolBar(){
     toolPanel=new QWidget(this);
     toolPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     QHBoxLayout* hbox=new QHBoxLayout(toolPanel);
+    hbox->addWidget(buttonPointer,Qt::AlignLeft);
     hbox->addWidget(buttonPt,Qt::AlignLeft);
     hbox->addWidget(buttonLine,Qt::AlignLeft);
     hbox->addWidget(buttonCircle,Qt::AlignLeft);
     toolPanel->setLayout(hbox);
 
+    connect(menuPointer,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuPt,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuLine,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuCircle,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
+    connect(buttonPointer,SIGNAL(clicked()),this,SLOT(selectAction()));
     connect(buttonPt,SIGNAL(clicked()),this,SLOT(selectAction()));
     connect(buttonLine,SIGNAL(clicked()),this,SLOT(selectAction()));
     connect(buttonCircle,SIGNAL(clicked()),this,SLOT(selectAction()));
@@ -444,7 +478,66 @@ QList<MyItem*> GraphWidget::getTreeSelectedItems(){
 void GraphWidget::clearSelection(){
     propPanel->clearSelection();
 }
+
+
+Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
+    parent=g2d;
+    context=c;
+    giac::decimal_digits(3,c);
+    ortho=true;
+    selectionRight=false;
+    selectionLeft=false;
+    focusOwner=0;
+    itemPreview=0;
+    currentActionTool=SELECT;
+    varPt="A";
+    varLine="a";
+    evaluationLevel=-1;
+
+    // Grid parameters
+    gridParam.isVisible=true;
+    gridParam.color=Qt::lightGray;
+    gridParam.isCartesian=true;
+    gridParam.line=1;
+    gridParam.x=1;gridParam.y=1;gridParam.r=1;gridParam.theta=PI_6;
+    // Axis parameters
+    xAxisParam.isVisible=true;
+    xAxisParam.color=Qt::black;
+    xAxisParam.tick=1;
+    yAxisParam.isVisible=true;
+    yAxisParam.color=Qt::black;
+    yAxisParam.tick=1;
+
+    setMouseTracking(true);
+    setBackgroundRole(QPalette::Light);
+    setAutoFillBackground(true);
+
+
+    xmin=giac::gnuplot_xmin;
+    xmax=giac::gnuplot_xmax;
+    ymin=giac::gnuplot_ymin;
+    ymax=giac::gnuplot_ymax;
+
+    giac::global_window_xmin=xmin;
+    giac::global_window_xmax=xmax;
+    giac::global_window_ymin=ymin;
+    giac::global_window_ymax=ymax;
+
+    setXYUnit();
+    make_ortho();
+
+    createMenuAction();
+    setContextMenuPolicy(Qt::NoContextMenu);
+    QSizePolicy p(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    p.setHorizontalStretch(1);
+    setSizePolicy(p);
+
+ //   setMinimumHeight(100);
+}
+
 void Canvas2D::setActionTool(action a){
+    if (itemPreview!=0) delete itemPreview;
+    itemPreview=0;
     currentActionTool=a;
     if (currentActionTool==POINT_XY){
         CoordsDialog* dialog=new CoordsDialog(this);
@@ -478,6 +571,39 @@ void Canvas2D::setActionTool(action a){
             updatePixmap(false);
             repaint();
         }
+
+    }
+        else if(currentActionTool==PLOT_FUNCTION){
+
+            PlotFunctionDialog* dialog=new PlotFunctionDialog(this);
+
+
+            if (dialog->exec()){
+                QString s=dialog->getString();
+                Command newCommand;
+                newCommand.command=s;
+                newCommand.attributes=0;
+                newCommand.isCustom=false;
+                commands.append(newCommand);
+                evaluationLevel=commands.size()-1;
+                gen g(newCommand.command.toStdString(),context);
+        //                    qDebug()<<QString::fromStdString(g.print(context));
+                QList<MyItem*> v;
+                addToVector(protecteval(g,1,context),v);
+                v.at(0)->updateScreenCoords(true);
+                lineItems.append(v.at(0));
+                parent->addToTree(v.at(0));
+                focusOwner=v.at(0);
+                v.at(0)->setMovable(false);
+                parent->updateAllCategories();
+                parent->selectInTree(focusOwner);
+                selectedItems.append(focusOwner);
+                updatePixmap(false);
+                repaint();
+
+
+            }
+
         delete(dialog);
 
     }
@@ -1039,58 +1165,6 @@ double Canvas2D::find_tick(double dx){
     return QSize(width(),height());
 }*/
 
-Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
-    parent=g2d;
-    context=c;
-    giac::decimal_digits(3,c);
-    ortho=false;
-    selectionRight=false;
-    selectionLeft=false;
-    focusOwner=0;
-    currentActionTool=SINGLEPT;
-    varPt="A";
-    varLine="a";
-    evaluationLevel=-1;
-
-    // Grid parameters
-    gridParam.isVisible=true;
-    gridParam.color=Qt::lightGray;
-    gridParam.isCartesian=true;
-    gridParam.line=1;
-    gridParam.x=1;gridParam.y=1;gridParam.r=1;gridParam.theta=PI_6;
-    // Axis parameters
-    xAxisParam.isVisible=true;
-    xAxisParam.color=Qt::black;
-    xAxisParam.tick=1;
-    yAxisParam.isVisible=true;
-    yAxisParam.color=Qt::black;
-    yAxisParam.tick=1;
-
-    setMouseTracking(true);
-    setBackgroundRole(QPalette::Light);
-    setAutoFillBackground(true);
-
-
-    xmin=giac::gnuplot_xmin;
-    xmax=giac::gnuplot_xmax;
-    ymin=giac::gnuplot_ymin;
-    ymax=giac::gnuplot_ymax;
-
-    giac::global_window_xmin=xmin;
-    giac::global_window_xmax=xmax;
-    giac::global_window_ymin=ymin;
-    giac::global_window_ymax=ymax;
-
-    setXYUnit();
-
-    createMenuAction();
-    setContextMenuPolicy(Qt::NoContextMenu);
-    QSizePolicy p(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    p.setHorizontalStretch(1);
-    setSizePolicy(p);
-
- //   setMinimumHeight(100);
-}
 QSize Canvas2D::minimumSizeHint() const{
     return QSize(200,100);
 }
@@ -1146,7 +1220,7 @@ void Canvas2D::createScene(const giac::gen & g){
     // Find the largest and lowest x/y/z in objects (except lines/plans)
     std::vector<double> vx,vy,vz;
 
-    bool ortho=giac::autoscaleg(g,vx,vy,vz,context);
+    ortho=giac::autoscaleg(g,vx,vy,vz,context);
 
 
 
@@ -1615,8 +1689,6 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
 
     for(int i=0;i<v->size();i++){
         if (v->at(i)->isUnderMouse(r)&& checkForValidAction(v->at(i))) {
-
-
             if (focusOwner!=v->at(i)){
                 focusOwner=v->at(i);
                 repaint();
@@ -1629,58 +1701,7 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
     return false;
 
 }
-/**
- * @brief Canvas2D::checkForValidAction
- * @param item
- * @return true if this item can be selected for the the current action tool
- * (Eg: If selected action tool is "Segment", it is waiting only for points. Then, we don't highlight circle for example.
- */
-bool Canvas2D::checkForValidAction(const MyItem * item){
-    if (!parent->isInteractive()) return true;
-    switch(currentActionTool){
-    case  SINGLEPT:
-        return true;
-    case SEGMENT:
-    case LINE:
-    case HALFLINE:
-    case CIRCLE2PT:
-    case CIRCLE3PT:
-    case CIRCLE_RADIUS:
-        if (item->isPoint()) return true;
-        else return false;
-    default:
-        return true;
-    }
-}
 
-void Canvas2D::mouseMoveEvent(QMouseEvent *e){
-    if (selectionRight&&!hasMouseTracking()) {
-        endSel=e->pos();
-        repaint();
-        return;
-    }
-    selectionRight=false;
-
-    QPointF mousePos(e->posF());
-    // try to move and object
-    if (parent->isInteractive()&&focusOwner!=0&& selectionLeft){
-        if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
-        return;
-    }
-    // Detects objects under mouse
-    bool objectUnderMouse=checkUnderMouse(&pointItems,mousePos) || checkUnderMouse(&lineItems,mousePos) ||   checkUnderMouse(&filledItems,mousePos);
-    // Case: No object
-    if (!objectUnderMouse){
-        if (focusOwner!=0){
-            focusOwner=0;
-            repaint();
-        }
-    }
-    else repaint();
-
-//    repaint();
-
-}
 
 bool lessThan(const MyItem* a, const MyItem*b){
     return a->getLevel()<b->getLevel();
@@ -1746,49 +1767,31 @@ void Canvas2D::refreshFromItem(MyItem * item,QList<MyItem*>& list){
 
 
 
-void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
-    Qt::MouseButton b=e->button();
-    if (b==Qt::RightButton&& selectionRight) {
-                endSel=e->pos();
-                setMouseTracking(true);
-                QRect r(startSel,endSel);
-                if (selectionRight&& std::abs(r.width())>10&& std::abs(r.height())>10){
-                    zoom_In();
-                }
-                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
-
-                selectionRight=false;
-    }
-    // Left Button
-    else if (b==Qt::LeftButton){
-        selectionLeft=false;
-        // An object is already highlighted
-        if (focusOwner!=0){
-            if (parent->isInteractive()){
-                selectedItems<<focusOwner;
-                if (checkForCompleteAction()){
-
-                      executeMyAction();
-                }
-            }
-            else parent->selectInTree(focusOwner);
-        }
-        else {
-            if (parent->isInteractive()){
-                // No focusOwner
-                // First, Does the selected action tool allow us to add a new point?
-                // If not:
-                if (!addNewPoint(e->posF())) parent->clearSelection();
-                // Else, after this point is added on drawing screen, is selectedItem full?
-                else if (checkForCompleteAction()){
-
-                    executeMyAction();
-                }
-            }
-            else  parent->clearSelection();
-        }
+/**
+ * @brief Canvas2D::checkForValidAction
+ * @param item
+ * @return true if this item can be selected for the the current action tool
+ * (Eg: If selected action tool is "Segment", it is waiting only for points. Then, we don't highlight circle for example.
+ */
+bool Canvas2D::checkForValidAction(const MyItem * item){
+    if (!parent->isInteractive()) return true;
+    switch(currentActionTool){
+    case  SINGLEPT:
+        return true;
+    case SEGMENT:
+    case LINE:
+    case HALFLINE:
+    case CIRCLE2PT:
+    case CIRCLE3PT:
+    case CIRCLE_RADIUS:
+        if (item->isPoint()) return true;
+        else return false;
+    default:
+        return true;
     }
 }
+
+
 /**
  * @brief Canvas2D::checkForCompleteAction
  * @return true if current tool has enough selected items to proceed
@@ -1803,19 +1806,80 @@ bool Canvas2D::checkForCompleteAction(){
         case CIRCLE3PT:
         return (selectedItems.size()==3);
         case CIRCLE_RADIUS:
+        case SELECT:
         return (selectedItems.size()==1);
     default:
         return false;
     }
 }
-void Canvas2D::addNewCircle(){
+/**
+ * @brief Canvas2D::checkForPointWaiting
+ * @param p
+ * @return true if the current tool is waiting for a point selection
+ *returns false otherwise
+ */
+bool Canvas2D::checkForPointWaiting(){
+    return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
+            ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS);
+}
+bool Canvas2D::checkForOneMissingPoint(){
+    switch(currentActionTool){
+        case SEGMENT:
+        case LINE:
+        case HALFLINE:
+        case CIRCLE2PT:
+        return (selectedItems.size()==1);
+        case CIRCLE3PT:
+        return (selectedItems.size()==2);
+    default:
+        return false;
+    }
+}
+/**
+ * @brief Canvas2D::addNewPoint
+ * @param p the current mouse position
+ * @return  adds this point to the canvas
+ *
+ */
+void Canvas2D::addNewPoint(const QPointF p){
+   findFreeVar(varPt);
+   Command newCommand;
+   newCommand.var=QString(varPt);
+   QString s(varPt);
+   s.append(commandFreePoint(p,0));
+   newCommand.command=s;
+   newCommand.attributes=0;
+   newCommand.isCustom=false;
+   commands.append(newCommand);
+   evaluationLevel=commands.size()-1;
+   gen g(s.toStdString(),context);
+               //    qDebug()<<QString::fromStdString(g.print(context));
+   QList<MyItem*> v;
+
+   addToVector(protecteval(g,1,context),v);
+   v.at(0)->updateScreenCoords(true);
+
+   pointItems.append(v.at(0));
+   parent->addToTree(v.at(0));
+   focusOwner=v.at(0);
+   parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+   selectedItems.append(focusOwner);
+   updatePixmap(false);
+   repaint();
+
+}
+
+
+void Canvas2D::addNewCircle(const bool & onlyForPreview){
     findFreeVar(varLine);
     Command c;
     c.var=QString(varLine);
     c.attributes=0;
     c.command=QString(c.var);
     // CIRCLE RADIUS
-    if (selectedItems.size()==1){
+
+    if (selectedItems.size()==1 && !onlyForPreview){
         RadiusDialog *dialog=new RadiusDialog(this);
         if (dialog->exec()){
             QString first(commands.at(selectedItems.at(0)->getLevel()).var);
@@ -1828,17 +1892,23 @@ void Canvas2D::addNewCircle(){
         }
         delete dialog;
     }
-    else if (selectedItems.size()==2){
+    // CENTER-POINT
+    else if (((selectedItems.size()==2) && !onlyForPreview) || (onlyForPreview&& (selectedItems.size()==1))){
         QString first(commands.at(selectedItems.at(0)->getLevel()).var);
-        QString second(commands.at(selectedItems.at(1)->getLevel()).var);
+        QString second;
+        if (onlyForPreview) second=missingPoint;
+        else  second=commands.at(selectedItems.at(1)->getLevel()).var;
         second.append("-");
         second.append(first);
         commandTwoArgs("circle",first,second,c.command);
     }
+    // CIRCLE 3 POINTS
     else{
         QString first(commands.at(selectedItems.at(0)->getLevel()).var);
         QString second(commands.at(selectedItems.at(1)->getLevel()).var);
-        QString third(commands.at(selectedItems.at(2)->getLevel()).var);
+        QString third;
+        if (onlyForPreview) third=missingPoint;
+        else third=commands.at(selectedItems.at(2)->getLevel()).var;
         c.command.append((":=circumcircle("));
         c.command.append(first);
         c.command.append(",");
@@ -1850,9 +1920,21 @@ void Canvas2D::addNewCircle(){
     c.isCustom=false;
     commands.append(c);
     evaluationLevel=commands.size()-1;
+    // If preview, removes the beginning of the string
+    // Eg: "A:=circle(1+i,3);" becomes "circle(1+i,3);"
+    if (onlyForPreview){
+        int id=c.command.indexOf(":=");
+        c.command=c.command.mid(id+2,c.command.length()-id-2);
+    }
     gen g(c.command.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
+    if (onlyForPreview) {
+        itemPreview=v.at(0);
+        itemPreview->updateScreenCoords(true);
+        return;
+    }
+
     filledItems.append(v.at(0));
     parent->addToTree(v.at(0));
     focusOwner=v.at(0);
@@ -1864,21 +1946,33 @@ void Canvas2D::addNewCircle(){
     updatePixmap(true);
     repaint();
 }
-void Canvas2D::addNewLine(const QString & type){
+void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     findFreeVar(varLine);
     Command c;
     c.var=QString(varLine);
     c.attributes=0;
     c.command=QString(c.var);
-    commandTwoArgs(type,(commands.at(selectedItems.at(0)->getLevel())).var,
-                   (commands.at(selectedItems.at(1)->getLevel())).var,c.command);
+    if (!onlyForPreview)
+        commandTwoArgs(type,(commands.at(selectedItems.at(0)->getLevel())).var,
+                       (commands.at(selectedItems.at(1)->getLevel())).var,c.command);
+    else {
+        commandTwoArgs(type,(commands.at(selectedItems.at(0)->getLevel())).var,
+                        missingPoint,c.command);
+        int id=c.command.indexOf(":=");
+        c.command=c.command.mid(id+2,c.command.length()-2);
+    }
     c.isCustom=false;
     commands.append(c);
     evaluationLevel=commands.size()-1;
     gen g(c.command.toStdString(),context);
     QList<MyItem*> v;
-
     addToVector(protecteval(g,1,context),v);
+    if (onlyForPreview){
+        itemPreview=v.at(0);
+        itemPreview->updateScreenCoords(true);
+        return;
+    }
+
     selectedItems.at(0)->addChild(v.at(0));
     selectedItems.at(1)->addChild(v.at(0));
     lineItems.append(v.at(0));
@@ -1889,23 +1983,28 @@ void Canvas2D::addNewLine(const QString & type){
     updatePixmap(true);
     repaint();
 }
-void Canvas2D::executeMyAction(){
+void Canvas2D::executeMyAction(bool onlyForPreview=false){
+    if (itemPreview!=0) delete itemPreview;
+    itemPreview=0;
     switch(currentActionTool){
-        case SEGMENT:  addNewLine("segment");
+        case SELECT:     parent->selectInTree(focusOwner);
+
         break;
-        case LINE: addNewLine("line");
+        case SEGMENT:  addNewLine("segment",onlyForPreview);
         break;
-        case HALFLINE: addNewLine("half_line");
+        case LINE: addNewLine("line",onlyForPreview);
+        break;
+        case HALFLINE: addNewLine("half_line",onlyForPreview);
         break;
         case CIRCLE2PT:
         case CIRCLE3PT:
-        case CIRCLE_RADIUS: addNewCircle();
+        case CIRCLE_RADIUS: addNewCircle(onlyForPreview);
         break;
     default:
         qDebug()<<"coucou";
     }
 
-    selectedItems.clear();
+    if (!onlyForPreview)    selectedItems.clear();
 
 }
 void Canvas2D::commandTwoArgs(const QString &command,const QString &first,const QString &second,QString  & result){
@@ -1916,45 +2015,6 @@ void Canvas2D::commandTwoArgs(const QString &command,const QString &first,const 
     result.append(",");
     result.append(second);
     result.append(");");
-}
-/**
- * @brief Canvas2D::addNewPoint
- * @param p the current mouse position
- * @return true if the current tool is waiting for a point and adds this point,
- * returns false otherwise
- */
-bool Canvas2D::addNewPoint(const QPointF & p){
-    // application is currently waiting for a point selection
-    if (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
-            ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS){
-        findFreeVar(varPt);
-        Command newCommand;
-        newCommand.var=QString(varPt);
-        QString s(varPt);
-         s.append(commandFreePoint(p,0));
-        newCommand.command=s;
-        newCommand.attributes=0;
-        newCommand.isCustom=false;
-        commands.append(newCommand);
-        evaluationLevel=commands.size()-1;
-        gen g(newCommand.command.toStdString(),context);
-               //    qDebug()<<QString::fromStdString(g.print(context));
-        QList<MyItem*> v;
-
-        addToVector(protecteval(g,1,context),v);
-        v.at(0)->updateScreenCoords(true);
-        pointItems.append(v.at(0));
-        parent->addToTree(v.at(0));
-        focusOwner=v.at(0);
-        parent->updateAllCategories();
-        parent->selectInTree(focusOwner);
-        selectedItems.append(focusOwner);
-        updatePixmap(false);
-        repaint();
-        return true;
-    }
-    return false;
-
 }
 
 QString  Canvas2D::commandFreePoint(const QPointF & p,const int attributes){
@@ -2005,7 +2065,92 @@ QString  Canvas2D::commandFreePoint(const QPointF & p,const int attributes){
     }
        return newCommand;
 }
+void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
+    Qt::MouseButton b=e->button();
+    if (b==Qt::RightButton&& selectionRight) {
+                endSel=e->pos();
+                setMouseTracking(true);
+                QRect r(startSel,endSel);
+                if (selectionRight&& std::abs(r.width())>10&& std::abs(r.height())>10){
+                    zoom_In();
+                }
+                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
 
+                selectionRight=false;
+    }
+    // Left Button
+    else if (b==Qt::LeftButton){
+        selectionLeft=false;
+        // An object is already highlighted
+        if (focusOwner!=0){
+            if (parent->isInteractive()){
+
+                selectedItems<<focusOwner;
+                if (checkForCompleteAction()){
+
+                      executeMyAction();
+                }
+            }
+            else parent->selectInTree(focusOwner);
+        }
+        else {
+            if (parent->isInteractive()){
+                // No focusOwner
+                // First, Does the selected action tool allow us to add a new point?
+                // If not:
+                if (!checkForPointWaiting()) parent->clearSelection();
+                // Else, after this point is added on drawing screen, is selectedItem full?
+                else {
+                    addNewPoint(e->pos());
+                    if (checkForCompleteAction()) executeMyAction();
+                }
+            }
+            else  parent->clearSelection();
+        }
+    }
+}
+
+void Canvas2D::mouseMoveEvent(QMouseEvent *e){
+    if (selectionRight&&!hasMouseTracking()) {
+        endSel=e->pos();
+        repaint();
+        return;
+    }
+    selectionRight=false;
+
+    QPointF mousePos(e->posF());
+    // try to move and object
+    if (parent->isInteractive()&&focusOwner!=0&& selectionLeft){
+        if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
+        return;
+    }
+
+    // Detects objects under mouse
+    bool objectUnderMouse=checkUnderMouse(&pointItems,mousePos) || checkUnderMouse(&lineItems,mousePos) ||   checkUnderMouse(&filledItems,mousePos);
+    // Case: No object
+    if (!objectUnderMouse){
+        if (focusOwner!=0){
+            focusOwner=0;
+            repaint();
+        }
+    }
+    else repaint();
+
+
+    // When a point is just missing for complete action, draws the preview
+    if (isInteractive()&&checkForOneMissingPoint()){
+        QString s=commandFreePoint(mousePos,0);
+        int id=s.indexOf(":=");
+        s=s.mid(id+2,s.length()-id-3);
+        missingPoint=s;
+        executeMyAction(true);
+        repaint();
+    }
+
+
+//    repaint();
+
+}
 
 
 void Canvas2D::mousePressEvent(QMouseEvent *e){
@@ -2051,6 +2196,13 @@ void Canvas2D::paintEvent(QPaintEvent * ){
         painter.setPen(fill);
         QBrush brush(fill,Qt::SolidPattern);
         painter.fillRect(QRect(startSel,endSel),brush);
+    }
+    // draws the preview
+    if (itemPreview!=0) {
+        itemPreview->draw(&painter);
+        // remove last point & preview
+        delete itemPreview;
+        itemPreview=0;
     }
 
      // Highlight selected objects
@@ -2338,7 +2490,9 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     listItems=l;
     if (l->count()>1) valuePanel->setVisible(false);
    else if (!QString::fromStdString(giac::print(listItems->at(0)->getValue(),parent->getContext())).trimmed().isEmpty()){
-        valuePanel->setValue(listItems->at(0)->getDisplayValue());
+        valuePanel->setGenValue(listItems->at(0)->getValue());
+        valuePanel->setDisplayValue(listItems->at(0)->getDisplayValue());
+
         valuePanel->setVisible(true);
     }
     else valuePanel->setVisible(false);
@@ -2389,7 +2543,8 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 }
 void DisplayProperties::updateValueInDisplayPanel(){
     if (!listItems->isEmpty())
-        valuePanel->setValue(listItems->at(0)->getDisplayValue());
+        valuePanel->setDisplayValue(listItems->at(0)->getDisplayValue());
+        valuePanel->setGenValue(listItems->at(0)->getValue());
         generalPanel->updateGeometry();
 }
 void DisplayProperties::initGui(){
@@ -2851,8 +3006,13 @@ void GenValuePanel::initGui(){
     layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);
 }
-void GenValuePanel::setValue(const QString  s){
+void GenValuePanel::setGenValue(const giac::gen  &g){
+    formulaWidget->setGen(g);
+}
+void GenValuePanel::setDisplayValue(const QString  s){
+
       formulaWidget->updateFormula(s);
+
 //      formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
 }

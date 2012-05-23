@@ -98,7 +98,6 @@ protected:
 private:
   bool movable;
   int level;
-
   QString command;
   QVector<MyItem*> children;
 };

@@ -57,6 +57,7 @@ QString  MyItem::getDisplayValue(){
     return QString("");
 }
 void MyItem::updateValueFrom(MyItem *){
+
 }
 
 bool MyItem::isMovable() const {

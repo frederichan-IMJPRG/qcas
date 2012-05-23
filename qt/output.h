@@ -93,6 +93,7 @@ public:
     virtual void toXML(QDomElement&);
     void updateFormula(const giac::gen &, giac::context *);
     void updateFormula(const QString );
+    void setGen(const giac::gen &);
 protected:
     QSize sizeHint();
 private:
@@ -138,9 +139,12 @@ class GraphWidget:public OutputWidget{
 
     QWidget* toolPanel;
     // The menu tool bar in interactive mode
+    QToolButton* buttonPointer;
     QToolButton* buttonPt;
     QToolButton* buttonLine;
     QToolButton* buttonCircle;
+    QAction* select;
+    QAction* move;
     QAction* singlept;
     QAction* pointxy;
     QAction * inter;
@@ -148,6 +152,8 @@ class GraphWidget:public OutputWidget{
     QAction* line;
     QAction* halfline;
     QAction* segment;
+    QAction* plotFunction;
+    QAction* plotBezier;
     QAction* circle2pt;
     QAction* circle3pt;
     QAction* circleRadius;
@@ -200,7 +206,7 @@ struct AxisParam{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
+    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,PLOT_FUNCTION,PLOT_BEZIER,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
 
     struct Command{
         QString var;
@@ -264,6 +270,11 @@ private:
 
     // Item which could be highlighted
     MyItem* focusOwner;
+    // Item for preview
+    MyItem* itemPreview;
+    // Command for missing point in preview
+    QString missingPoint;
+
     // x,y range and units
     double xmin,xmax,ymin,ymax,xunit,yunit;
     bool ortho;
@@ -324,12 +335,14 @@ private:
     void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&, const int );
     void refreshFromItem(MyItem *, QList<MyItem *> &);
-    bool addNewPoint(const QPointF &);
-    void addNewLine(const QString &);
-    void addNewCircle();
+    void addNewPoint(const QPointF );
+    void addNewLine(const QString &,const bool&);
+    void addNewCircle(const bool&);
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
-    void executeMyAction();
+    bool checkForPointWaiting();
+    bool checkForOneMissingPoint();
+    void executeMyAction(bool );
 
 
 private slots:
@@ -526,7 +539,10 @@ signals:
 class GenValuePanel:public QWidget{
 public:
     GenValuePanel(Canvas2D * );
-    void setValue(const QString);
+    void setGenValue(const giac::gen  &g);
+    void setDisplayValue(const QString);
+
+
 private:
  //   QLabel* label;
     FormulaWidget *formulaWidget;

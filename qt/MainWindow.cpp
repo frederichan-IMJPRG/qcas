@@ -61,13 +61,14 @@
 #include <giac/giac.h>
 #include "gui/prefdialog.h"
 
-
+#include "qt/gui/plotfunctiondialog.h"
 /** MainWindow constructor
 
   **/
 
 
 MainWindow::MainWindow(){
+
     displayTimeAfterProcess=true;
     time=new QTime;
 
@@ -174,6 +175,7 @@ void MainWindow::createAction(){
 
 
     prefAction=new QAction(tr("&Préférences..."),this);
+    prefAction->setIcon(QIcon(":/images/configure.png"));
     prefAction->setStatusTip(tr("Afficher la fenêtre des préférences"));
     connect(prefAction,SIGNAL(triggered()),this,SLOT(pref()));
 }

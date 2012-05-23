@@ -10,12 +10,12 @@ QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 DEPENDPATH += . \
     qt \
     giac \
@@ -115,7 +115,8 @@ HEADERS += qt/output.h \
            libtommath/tommath_class.h \
            libtommath/tommath_superclass.h\
 #    qt/gui/Interactive2d.h \
-    qt/gui/prefdialog.h
+    qt/gui/prefdialog.h \
+    qt/gui/plotfunctiondialog.h
 
 SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/MainWindow.cpp \
@@ -302,7 +303,8 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
            libtommath/bn_s_mp_sub.c \
            libtommath/bncore.c \
     qt/gui/prefdialog.cpp \
-    qt/geometry.cpp
+    qt/geometry.cpp \
+    qt/gui/plotfunctiondialog.cpp
 # -lgmp
 OTHER_FILES += \ 
     qt/images/stop.png \
@@ -350,5 +352,9 @@ OTHER_FILES += \
     qt/images/source.png \
     qt/images/tex.png \
     qt/images/circleRadius.png \
-    qt/images/right.png
+    qt/images/right.png \
+    qt/images/select.png \
+    qt/images/function.png \
+    qt/images/configure.png \
+    qt/images/bezier.png
 RESOURCES += qt/qcas.qrc
