@@ -16,9 +16,7 @@
 */
 
 
-#include "geometry.h"
-#include "giac/dispatch.h"
-#include "giac/mathml.h"
+#include "giac/giac.h"
 #include "output.h"
 #include <QPainter>
 #include <QTreeWidgetItem>
@@ -30,7 +28,8 @@ MyItem::MyItem(Canvas2D *graph){
     angleLegend=-1;
 //    value="";
     level=-1;
-    movable=true;
+    movable=false;
+    undef=false;
 }
 MyItem::~MyItem(){
 
@@ -43,11 +42,11 @@ giac::gen &MyItem::getValue(){
     return value;
 
 }
-QString MyItem::getCommand() const{
-    return command;
+QString MyItem::getVar() const{
+    return var;
 }
-void MyItem::setCommand(const QString & c){
-    command=c;
+void MyItem::setVar(const QString & c){
+    var=c;
 }
 
 void MyItem::setValue(const giac::gen & s){
@@ -59,7 +58,12 @@ QString  MyItem::getDisplayValue(){
 void MyItem::updateValueFrom(MyItem *){
 
 }
-
+bool MyItem::isUndef() const{
+    return undef;
+}
+void MyItem::setUndef(const bool& b){
+    undef=b;
+}
 bool MyItem::isMovable() const {
     return movable;
 }
@@ -75,6 +79,9 @@ void MyItem::addChild(MyItem * item){
 QVector<MyItem*> MyItem::getChildren(){
     return children;
 }
+MyItem* MyItem::getChildAt(const int& id){
+    return children.at(id);
+}
 
 bool MyItem::isPoint() const{
     return false;
@@ -85,10 +92,17 @@ bool MyItem::isLine() const{
 bool MyItem::isSegment() const{
     return false;
 }
+bool MyItem::isVector() const{
+    return false;
+}
+
 bool MyItem::isHalfLine() const{
     return false;
 }
 bool MyItem::isCurve() const{
+    return false;
+}
+bool MyItem::isInter() const{
     return false;
 }
 bool MyItem::isList() const{
@@ -387,7 +401,16 @@ int Point::getPenWidth() const{
     return ((attributes& 0x00380000) >> 19);
 }
 QString Point::getDisplayValue(){
-    giac::gen tmp(giac::makevecteur(giac::re(value,g2d->getContext()),giac::im(value,g2d->getContext())));
+    if (undef){
+        QString mml("<math mode=\"display\">\n");
+        mml.append("<text>undef</text>");
+        mml.append("\n</math>") ;
+        return mml;
+    }
+//    qDebug()<<QString::fromStdString(print(value,g2d->getContext()));
+    giac::gen re=giac::_simplify(giac::re(value,g2d->getContext()),g2d->getContext());
+    giac::gen im=giac::_simplify(giac::im(value,g2d->getContext()),g2d->getContext());
+    giac::gen tmp(giac::makevecteur(re,im));
     tmp.subtype=giac::_SEQ__VECT;
     QString mml("<math mode=\"display\">\n");
     mml.append(QString::fromStdString(giac::gen2mathml(tmp,g2d->getContext())));
@@ -409,6 +432,12 @@ QString Point::getType() const{
     return QObject::tr("Point");
 }
 void Point::updateValueFrom(MyItem * item){
+    if (item->isUndef()){
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+    undef=false;
     if (!item->isPoint()) return;
     setValue(item->getValue());
      updateScreenCoords(true);
@@ -556,6 +585,12 @@ LineItem::LineItem(const QPointF &p1, const QPointF &p2,Canvas2D *graph):MyItem(
     endPoint=p2;
 }
 void LineItem::updateValueFrom(MyItem * item){
+    if (item->isUndef()) {
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+    undef=false;
     if (!item->isLine()) return;
     LineItem*  p=dynamic_cast<LineItem*>(item);
     startPoint=p->getStartPoint();
@@ -668,6 +703,12 @@ HalfLineItem::HalfLineItem(const QPointF &p1, const QPointF &p2,Canvas2D *graph)
     endPoint=p2;
 }
 void HalfLineItem::updateValueFrom(MyItem * item){
+    if (item->isUndef()) {
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+        undef=false;
     if (!item->isHalfLine()) return;
     HalfLineItem*  p=dynamic_cast<HalfLineItem*>(item);
     startPoint=p->getStartPoint();
@@ -822,6 +863,12 @@ Curve::Curve(const QPainterPath &p,Canvas2D *graph):MyItem(graph){
     fillable=false;
 }
 void Curve::updateValueFrom(MyItem * item){
+    if (item->isUndef()) {
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+    undef=false;
     if (!item->isCurve()) return;
     Curve* curve=dynamic_cast<Curve*>(item);
     if (curve->isPolygon()) polygon=true;
@@ -861,8 +908,8 @@ void Curve::draw(QPainter *painter) const{
         painter->drawPath(pathScreen);
     }
     else {
-        painter->setBrush(QBrush(color,Qt::SolidPattern));
         painter->setPen(QPen(color,width,  Qt::SolidLine));
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
         painter->drawPath(envelop);
     }
 
@@ -973,6 +1020,12 @@ double Circle::getEndAngle() const{
     return endAngle;
 }
 void Circle::updateValueFrom(MyItem* item){
+    if (item->isUndef()) {
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+    undef=false;
     if (!item->isCircle()) return;
     Circle* circle=dynamic_cast<Circle*>(item);
     value=item->getValue();
@@ -1007,6 +1060,7 @@ void Circle::updateScreenCoords(const bool compute){
 
 
 void Circle::draw(QPainter* painter) const{
+//    qDebug()<<undef;
     if (!isVisible()) return;
     QColor color=getColor();
     int width=1;
@@ -1159,4 +1213,26 @@ bool ListItem::isList() const{
 }
 QString ListItem::getType() const{
     return QObject::tr("Liste");
+}
+UndefItem::UndefItem(Canvas2D* p):MyItem(p){
+    value=giac::undef;
+}
+bool UndefItem::isUnderMouse(const QRectF& p) const{
+    return false;
+}
+void UndefItem::updateScreenCoords(const bool){}
+void UndefItem::draw(QPainter*) const{}
+bool UndefItem::isUndef() const{
+    return true;
+}
+QString UndefItem::getType() const{
+    return QString(QObject::tr("undef"));
+}
+InterItem::InterItem( Canvas2D* p):MyItem(p){}
+bool InterItem::isUnderMouse(const QRectF& p) const{ return false;}
+void InterItem::updateScreenCoords(const bool){}
+void InterItem::draw(QPainter*) const{}
+bool InterItem::isInter() const{return true;}
+QString InterItem::getType() const{
+    return QObject::tr("Intersection");
 }

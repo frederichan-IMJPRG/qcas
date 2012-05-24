@@ -142,6 +142,8 @@ class GraphWidget:public OutputWidget{
     QToolButton* buttonPointer;
     QToolButton* buttonPt;
     QToolButton* buttonLine;
+    QToolButton* buttonTool;
+    QToolButton* buttonPlot;
     QToolButton* buttonCircle;
     QAction* select;
     QAction* move;
@@ -152,8 +154,16 @@ class GraphWidget:public OutputWidget{
     QAction* line;
     QAction* halfline;
     QAction* segment;
+    QAction* vectorAc;
+    QAction *parallel;
+    QAction *perpendicular;
+    QAction *bisector;
+    QAction *perpen_bisector;
     QAction* plotFunction;
     QAction* plotBezier;
+    QAction* openPolygon;
+    QAction* regularPolygon;
+    QAction* polygon;
     QAction* circle2pt;
     QAction* circle3pt;
     QAction* circleRadius;
@@ -206,10 +216,10 @@ struct AxisParam{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,PLOT_FUNCTION,PLOT_BEZIER,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
+    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,VECTOR,PARALLEL,PERPENDICULAR,
+                BISECTOR,PERPEN_BISECTOR,PLOT_FUNCTION,PLOT_BEZIER,OPEN_POLYGON,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
 
     struct Command{
-        QString var;
         QString command;
         int attributes;
         MyItem* item;
@@ -313,6 +323,7 @@ private:
     // Variables names for points and lines.
     QString varPt;
     QString varLine;
+
 //    QString newCommand;
 
     int evaluationLevel;
@@ -338,6 +349,9 @@ private:
     void addNewPoint(const QPointF );
     void addNewLine(const QString &,const bool&);
     void addNewCircle(const bool&);
+    void addMidpoint();
+    void addPerpenBisector(const bool &onlyForPreview);
+    void addInter();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
     bool checkForPointWaiting();
@@ -379,6 +393,7 @@ private:
     QTreeWidgetItem* nodePolygon;
     QTreeWidgetItem* nodeCircle;
     QTreeWidgetItem* nodeList;
+    QTreeWidgetItem* nodeUndef;
 
     QHash<QTreeWidgetItem*,MyItem*> nodeLinks;
     QBoxLayout*  hbox;

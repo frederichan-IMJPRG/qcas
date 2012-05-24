@@ -1018,7 +1018,7 @@ namespace giac {
 	if (e==cst_pi)
 	  return "<mi>&pi;</mi>";
 	if (e==undef)
-	  return "<mo>,</mo><mi>undef</mi>";
+      return "<mi>undef</mi>";
 	return  "<mi>"+e.print(contextptr)+"</mi>";
       case _SYMB:                        
 	return symbolic2mathml(*e._SYMBptr, svg,contextptr);

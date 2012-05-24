@@ -356,5 +356,14 @@ OTHER_FILES += \
     qt/images/select.png \
     qt/images/function.png \
     qt/images/configure.png \
-    qt/images/bezier.png
+    qt/images/bezier.png \
+    qt/images/vector.png \
+    qt/images/regularpolygon.png \
+    qt/images/polygon.png \
+    qt/images/perpenbisector.png \
+    qt/images/parallel.png \
+    qt/images/openpolygon.png \
+    qt/images/bot.png \
+    qt/images/bisector.png \
+    qt/images/perpendicular.png
 RESOURCES += qt/qcas.qrc

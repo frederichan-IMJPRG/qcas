@@ -36,13 +36,17 @@ public:
   virtual bool isPoint() const;
   virtual bool isLine() const;
   virtual bool isSegment() const;
+  virtual bool isVector() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
+  virtual bool isInter() const;
   virtual bool isList() const;
   virtual bool isCircle() const;
   virtual bool isPixel() const;
   virtual bool isFillable() const;
   virtual bool isLegendItem() const;
+  virtual bool isUndef() const;
+  void setUndef(const bool& );
   virtual void setValue(const giac::gen & ) ;
   virtual void updateValueFrom(MyItem*);
   virtual QString getDisplayValue();
@@ -63,13 +67,14 @@ public:
   virtual void setWidth(const int);
   virtual int getPenWidth() const;
   QVector<MyItem*>  getChildren();
+  MyItem* getChildAt(const int&);
   bool hasChildren() const;
   void addChild(MyItem * );
   void setHighLighted(const bool& );
   void setLegendPos(const int &);
    giac::gen &getValue();
-   void setCommand(const QString &);
-   QString getCommand() const;
+   void setVar(const QString &);
+   QString getVar() const;
 //   virtual FormulaWidget* getDisplayWidget();
 
   Qt::PenCapStyle getPenStyle();
@@ -95,10 +100,13 @@ protected:
   double angleLegend;
   QString legend;
   bool visible;
+  bool undef;
+
 private:
+
   bool movable;
   int level;
-  QString command;
+  QString var;
   QVector<MyItem*> children;
 };
 class Point:public MyItem{
@@ -184,8 +192,8 @@ public:
     virtual QString getType() const;
     void setPolygon(const bool&);
     void setVector(const bool&);
-    bool isSegment() const;
-    bool isVector() const;
+    virtual bool isSegment() const;
+    virtual bool isVector() const;
     bool isPolygon() const;
     virtual bool isFillable() const;
     void setFillable(const bool &);
@@ -265,5 +273,24 @@ public:
 private:
     QList<MyItem*> list;
 };
+class UndefItem:public MyItem{
+public:
+    UndefItem(Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual QString getType() const;
+    virtual bool isUndef() const;
 
+};
+
+class InterItem:public MyItem{
+public:
+    InterItem( Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual bool isInter() const;
+    virtual QString getType() const;
+};
 #endif // GEOMETRY_H

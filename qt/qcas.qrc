@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>images/add.png</file>
         <file>images/bezier.png</file>
+        <file>images/bisector.png</file>
         <file>images/book.png</file>
         <file>images/configure.png</file>
         <file>images/document-new.png</file>
@@ -13,10 +14,13 @@
         <file>images/edit-paste.png</file>
         <file>images/edit-redo.png</file>
         <file>images/edit-undo.png</file>
+        <file>images/english.png</file>
         <file>images/equation.png</file>
         <file>images/evaluate.png</file>
         <file>images/exit.png</file>
         <file>images/f1.png</file>
+        <file>images/french.png</file>
+        <file>images/general.png</file>
         <file>images/function.png</file>
         <file>images/formal.png</file>
         <file>images/help.png</file>
@@ -25,9 +29,15 @@
         <file>images/new.png</file>
         <file>images/next.png</file>
         <file>images/open.png</file>
+        <file>images/openpolygon.png</file>
+        <file>images/parallel.png</file>
+        <file>images/perpendicular.png</file>
+        <file>images/perpenbisector.png</file>
+        <file>images/polygon.png</file>
         <file>images/previous.png</file>
         <file>images/process-stop.png</file>
         <file>images/programming.png</file>
+        <file>images/regularpolygon.png</file>
         <file>images/spreadsheet.png</file>
         <file>images/stop.png</file>
         <file>images/point.png</file>
@@ -41,16 +51,14 @@
         <file>images/circleRadius.png</file>
         <file>images/circle3pt.png</file>
         <file>images/cas.png</file>
-        <file>images/general.png</file>
-        <file>images/french.png</file>
-        <file>images/english.png</file>
         <file>images/select.png</file>
-        <file>images/zoom-in.png</file>
-        <file>images/zoom-out.png</file>
         <file>images/ortho.png</file>
         <file>images/right.png</file>
         <file>images/source.png</file>
         <file>images/tex.png</file>
+        <file>images/vector.png</file>
+        <file>images/zoom-in.png</file>
+        <file>images/zoom-out.png</file>
         <file>aide_cas</file>
     </qresource>
 </RCC>
