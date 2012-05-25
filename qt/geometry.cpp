@@ -900,7 +900,8 @@ void Curve::draw(QPainter *painter) const{
         color.setAlpha(100);
         width=3;
     }
-    if (isFilled()&&isFillable()&&(!highLighted)){
+    // dirty fix for vector
+    if ((isFilled()&&isFillable()&&(!highLighted))||(isVector())){
         QColor f(color);
         f.setAlpha(255);
         painter->setBrush(QBrush(color,Qt::SolidPattern));

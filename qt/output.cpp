@@ -611,7 +611,6 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 }
 
 void Canvas2D::setActionTool(action a){
-    qDebug()<<a<<PERPENDICULAR;
     if (itemPreview!=0) delete itemPreview;
     itemPreview=0;
     currentActionTool=a;
@@ -1518,7 +1517,7 @@ void Canvas2D::drawAxes(QPainter * painter){
     if ((ymin<0) && (ymax>0) && (xAxisParam.isVisible)){
         double a,b;
         painter->setPen(QPen(xAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
-        double step=yAxisParam.tick;
+        double step=xAxisParam.tick;
         if (!isInteractive()){
             step=(xmax-xmin)/8;
             double tenPower=pow(10,floor(log10(step)));
@@ -1790,6 +1789,7 @@ bool lessThan(const MyItem* a, const MyItem*b){
 }
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     if (item->isPoint()){
+
 //        int eval_save=evaluationLevel;
   //      evaluationLevel=item->getLevel();
         QString s(item->getVar());
@@ -1799,20 +1799,19 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
 
         item->updateValueFrom(v.at(0));
         delete v.at(0);
-
         if (item->hasChildren()){
             v.clear();
             refreshFromItem(item,v);
             qSort(v.begin(),v.end(),lessThan);
 
             for (int i=0;i<v.size();++i){
-                //eval_save=evaluationLevel;
                 int level=v.at(i)->getLevel();
                 Command c=commands.at(level);
                 gen g(c.command.toStdString(),context);
 
                 QList<MyItem*> vv;
                 addToVector(protecteval(g,1,context),vv);
+                // Not the particular case of an intersection point
                 if (!v.at(i)->isInter()){
                     v.at(i)->updateValueFrom(vv.at(0));
                     delete vv.at(0);
@@ -1915,6 +1914,7 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
         return false;
     }
     break;
+    case OPEN_POLYGON:
     case SEGMENT:
     case LINE:
     case HALFLINE:
@@ -1953,7 +1953,18 @@ bool Canvas2D::checkForCompleteAction(){
             else if (selectedItems.size()==2 && checkForOnlyPoints(&selectedItems)) return true;
             else return false;
         }
-
+        break;
+    case OPEN_POLYGON:{
+        int size=selectedItems.size();
+        if (size>2){
+            if (selectedItems.last()==selectedItems.at(size-2)) {
+                selectedItems.removeLast();
+                return true;
+            }
+            else return false;
+        }
+        else return false;
+    }
         break;
     default:
         return false;
@@ -1973,7 +1984,8 @@ bool Canvas2D::checkForPointWaiting(){
         else return false;
     }
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
-            ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR);
+            ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
+            || (currentActionTool==OPEN_POLYGON));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -1992,6 +2004,10 @@ bool Canvas2D::checkForOneMissingPoint(){
         else if (selectedItems.at(0)->isLine()||selectedItems.at(0)->isHalfLine()||selectedItems.at(0)->isSegment()
                  ||selectedItems.at(0)->isVector()) return true;
         else  return false;
+    }
+    case OPEN_POLYGON: {
+        if (selectedItems.size()>=1) return true;
+        else return false;
     }
     default:
         return false;
@@ -2080,9 +2096,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
         c.command.append(third);
         c.command.append(");");
     }
-    c.isCustom=false;
-    commands.append(c);
-    evaluationLevel=commands.size()-1;
+    evaluationLevel=commands.size();
     // If preview, removes the beginning of the string
     // Eg: "A:=circle(1+i,3);" becomes "circle(1+i,3);"
     if (onlyForPreview){
@@ -2101,6 +2115,9 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
         }
         return;
     }
+    c.isCustom=false;
+    commands.append(c);
+
     if (v.at(0)->isUndef()){
         UndefItem* undef=new UndefItem(this);
         undef->setVar(varLine);
@@ -2131,6 +2148,7 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     if (!onlyForPreview)
         commandTwoArgs(type,selectedItems.at(0)->getVar(),
                        selectedItems.at(1)->getVar(),c.command);
+    // Preview mode
     else {
         // For this command point argument is before line argument
         // We have to swap.
@@ -2143,9 +2161,7 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
         int id=c.command.indexOf(":=");
         c.command=c.command.mid(id+2,c.command.length()-2);
     }
-    c.isCustom=false;
-    commands.append(c);
-    evaluationLevel=commands.size()-1;
+    evaluationLevel=commands.size();
     gen g(c.command.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
@@ -2159,6 +2175,63 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
         }
         return;
     }
+    c.isCustom=false;
+    commands.append(c);
+
+    if (v.at(0)->isUndef()){
+        UndefItem* undef=new UndefItem(this);
+        undef->setVar(varLine);
+        lineItems.append(undef);
+        parent->addToTree(undef);
+        parent->updateAllCategories();
+        parent->selectInTree(undef);
+        return;
+    }
+    selectedItems.at(0)->addChild(v.at(0));
+    selectedItems.at(1)->addChild(v.at(0));
+    v.at(0)->setVar(varLine);
+    v.at(0)->updateScreenCoords(true);
+    lineItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    parent->updateAllCategories();
+    parent->selectInTree(v.at(0));
+    updatePixmap(false);
+    repaint();
+}
+void Canvas2D::addNewPolygon(const bool & onlyForPreview){
+    findFreeVar(varLine);
+    Command c;
+    c.attributes=0;
+    QString s(varLine);
+    s.append(":=open_polygon(");
+    for (int i=0;i<selectedItems.size();++i){
+        s.append(selectedItems.at(i)->getVar());
+        if (i!=selectedItems.size()-1) s.append(",");
+        else if (onlyForPreview) {
+            s.append(",");
+            s.append(missingPoint);
+            int id=s.indexOf(":=");
+            s=s.mid(id+2,s.length()-2);
+        }
+    }
+    s.append(");");
+    c.command=s;
+    evaluationLevel=commands.size();
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+    if (onlyForPreview){
+        if (v.at(0)->isUndef()){
+            itemPreview=0;
+        }
+        else{
+            itemPreview=v.at(0);
+            itemPreview->updateScreenCoords(true);
+        }
+        return;
+    }
+    c.isCustom=false;
+    commands.append(c);
 
     if (v.at(0)->isUndef()){
         UndefItem* undef=new UndefItem(this);
@@ -2170,19 +2243,23 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
         return;
     }
 
-
-    selectedItems.at(0)->addChild(v.at(0));
-    selectedItems.at(1)->addChild(v.at(0));
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
     v.at(0)->setVar(varLine);
     v.at(0)->updateScreenCoords(true);
     lineItems.append(v.at(0));
     parent->addToTree(v.at(0));
-    focusOwner=v.at(0);
     parent->updateAllCategories();
-    parent->selectInTree(focusOwner);
+    parent->selectInTree(v.at(0));
     updatePixmap(false);
     repaint();
+
+
 }
+
+
+
 void Canvas2D::addMidpoint(){
     findFreeVar(varPt);
     Command newCommand;
@@ -2244,8 +2321,7 @@ void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
     }
     newCommand.isCustom=false;
     newCommand.command=s;
-    commands.append(newCommand);
-    evaluationLevel=commands.size()-1;
+    evaluationLevel=commands.size();
     gen g(newCommand.command.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
@@ -2259,7 +2335,7 @@ void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
         }
         return;
     }
-
+    commands.append(newCommand);
     if (v.at(0)->isUndef()){
         UndefItem* undef=new UndefItem(this);
         undef->setVar(varLine);
@@ -2362,8 +2438,10 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         case CIRCLE3PT:
         case CIRCLE_RADIUS: addNewCircle(onlyForPreview);
         break;
-    default:
-        qDebug()<<"coucou";
+        case OPEN_POLYGON: addNewPolygon(onlyForPreview);
+        break;
+    default:{}
+
     }
 
     if (!onlyForPreview)    selectedItems.clear();
@@ -2445,11 +2523,15 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
         selectionLeft=false;
         // An object is already highlighted
         if (focusOwner!=0){
+            // Here, a very fast clic (for example double clic) can cause problems
+            // Create a segment. First point then double clic for the second point.
+            // the segment is focused after creation, but unchecked for selection... and goes to selectedItems
             if (parent->isInteractive()){
+                // To improve (In most cases, the foolowing line is a  double check)
+                if (checkForValidAction(focusOwner)) selectedItems<<focusOwner;
 
-                selectedItems<<focusOwner;
+
                 if (checkForCompleteAction()){
-
                       executeMyAction();
                 }
             }
@@ -2767,7 +2849,7 @@ void PanelProperties::updateTree(){
        else if(nodeLinks.contains(list.at(i))) {
            MyItem * myItem=nodeLinks.value(list.at(i));
 
-           if (!myItem->isUndef())           parent->setFocusOwner(myItem);
+           if (!myItem->isUndef())     parent->setFocusOwner(myItem);
            listItems->append(myItem);
 
        }

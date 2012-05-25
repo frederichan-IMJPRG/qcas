@@ -388,7 +388,7 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-   // info(answer,0);
+    info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

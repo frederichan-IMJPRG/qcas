@@ -349,7 +349,9 @@ private:
     void addNewPoint(const QPointF );
     void addNewLine(const QString &,const bool&);
     void addNewCircle(const bool&);
+    void addNewPolygon(const bool&);
     void addMidpoint();
+
     void addPerpenBisector(const bool &onlyForPreview);
     void addInter();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
