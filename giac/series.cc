@@ -1427,13 +1427,11 @@ namespace giac {
 	  // ?? FIXME ???
 	  if (temp__SYMB.sommet!=at_abs){
 	    s.erase(s.begin()); // remove cst coeff from s
-	    for (;;){
-	      if (!s.empty()){
-		s.front().coeff=normal(s.front().coeff,contextptr);
-		if (!is_zero(s.front().coeff))
-		  break;
-		s.erase(s.begin());
-	      }
+	    for (;!s.empty();){
+	      s.front().coeff=normal(s.front().coeff,contextptr);
+	      if (!is_zero(s.front().coeff))
+		break;
+	      s.erase(s.begin());
 	    }
 	  }
 	}
@@ -1877,7 +1875,7 @@ namespace giac {
       }
       else
 	first_try = quotesubst(ratnormal(e),x,lim_point,contextptr);
-      first_try = normal(eval(first_try,eval_level(contextptr),contextptr),contextptr);
+      first_try = recursive_normal(eval(first_try,eval_level(contextptr),contextptr),contextptr);
       if (!is_undef(first_try)){
 	if (!direction) 
 	  return first_try;

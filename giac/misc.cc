@@ -4283,7 +4283,7 @@ static define_unary_function_eval (__hamdist,&_hamdist,_hamdist_s);
 		decimal_digits(3,contextptr);
 		attributs[1]=string2gen(A.print(contextptr),false);
 		decimal_digits(nd,contextptr);
-		return gen(makevecteur(pnt_attrib(res,attributs,contextptr),graph),_SEQ__VECT);
+		return gen(makevecteur(gen(makevecteur(pnt_attrib(res,attributs,contextptr),graph),_SEQ__VECT),_couleur(makevecteur(graph,_RED+_DASH_LINE+_LINE_WIDTH_3),contextptr)),_SEQ__VECT);
 	      } // end if (s>=3)
 	    } // end polyg.type==_VECT
 	  }

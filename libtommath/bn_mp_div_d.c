@@ -71,7 +71,7 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
 #endif
 
   /* no easy answer [c'est la vie].  Just division */
-  if (c && (res = mp_init_size(&q, a->used)) != MP_OKAY) {
+  if ((res = mp_init_size(&q, a->used)) != MP_OKAY) {
      return res;
   }
   
@@ -87,7 +87,7 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
       } else {
         t = 0;
       }
-     if (c) q.dp[ix] = (mp_digit)t;
+      q.dp[ix] = (mp_digit)t;
   }
   
   if (d != NULL) {
@@ -97,10 +97,10 @@ int mp_div_d (mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
   if (c != NULL) {
      mp_clamp(&q);
      mp_exch(&q, c);
-     mp_clear(&q);
   }
+  mp_clear(&q);
   
-  return MP_OKAY;
+  return res;
 }
 
 #endif

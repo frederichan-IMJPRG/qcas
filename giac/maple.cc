@@ -1223,6 +1223,20 @@ namespace giac {
   static define_unary_function_eval (__implicitplot3d,&_implicitplot3d,_implicitplot3d_s);
   define_unary_function_ptr5( at_implicitplot3d ,alias_at_implicitplot3d,&__implicitplot3d,0,true);
 
+#ifdef RTOS_THREADX
+  gen _readwav(const gen & args,GIAC_CONTEXT){
+    return undef;
+  }
+  static const char _readwav_s []="readwav";
+  static define_unary_function_eval (__readwav,&_readwav,_readwav_s);
+  define_unary_function_ptr5( at_readwav ,alias_at_readwav,&__readwav,0,true);
+
+  static const char _writewav_s []="writewav";
+  static define_unary_function_eval (__writewav,&_readwav,_writewav_s);
+  define_unary_function_ptr5( at_writewav ,alias_at_writewav,&__writewav,0,true);
+
+#else // RTOS_THREADX
+
   // http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
   static bool in_readwav(FILE * f,gen & g){
     unsigned char c,channels;
@@ -1409,6 +1423,8 @@ namespace giac {
   static const char _writewav_s []="writewav";
   static define_unary_function_eval (__writewav,&_writewav,_writewav_s);
   define_unary_function_ptr5( at_writewav ,alias_at_writewav,&__writewav,0,true);
+
+#endif // RTOS_THREADX
 
   static gen animate2d3d(const gen & g,bool dim3,GIAC_CONTEXT){
     int s=0,frames=10;

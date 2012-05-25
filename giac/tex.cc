@@ -940,7 +940,7 @@ namespace giac {
       bool ortho=false;
       const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
       for (;it!=itend;++it){
-	ortho = ortho || in_autoscale(*it,vx,vy,vz,contextptr);
+	ortho = ortho | in_autoscale(*it,vx,vy,vz,contextptr);
       }
       return ortho;
     }
@@ -985,7 +985,7 @@ namespace giac {
       bool ortho=false;
       const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
       for (;it!=itend;++it)
-    ortho = ortho | autoscaleg(*it,vx,vy,vz,contextptr);
+	ortho = ortho | autoscaleg(*it,vx,vy,vz,contextptr);
       return ortho;
     }
     if (g.is_symb_of_sommet(at_pnt)){

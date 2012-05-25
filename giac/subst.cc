@@ -664,6 +664,10 @@ namespace giac {
     const_iterateur it=v.begin(),itend=v.end();
     if (it==itend)
       return 0;
+    if (g==*it)
+      return 1;
+    if (g==*(itend-1))
+      return itend-it;
     if (islesscomplexthanf(g,*it) || islesscomplexthanf(*(itend-1),g))
       return 0;
     return findpos(it,itend,g);
@@ -1287,6 +1291,8 @@ namespace giac {
   bool is_unit(const gen & g){
     if (g.type==_INT_)
       return (g.val==1) || (g.val==-1);
+    if (g.type==_ZINT)
+      return (g==1) || (g==-1);
     if (g.type==_CPLX)
       return (g._CPLXptr->type==_INT_) && (g._CPLXptr->val==0) && ( (g._CPLXptr+1)->type==_INT_) && ( ( (g._CPLXptr+1)->val==1) || ( (g._CPLXptr+1)->val==-1) );
     if (g.type==_POLY)
@@ -1406,7 +1412,17 @@ namespace giac {
 	}
       }
       *logptr(contextptr) << "Simplification assuming " << v[i] << " near " << point << (direction==1?"+":"-") << endl;
+#ifdef NO_STDEXCEPT
       gg=limit(gg,*v[i]._IDNTptr,point,direction,contextptr);
+      if (is_undef(gg))
+	gg=0;
+#else
+      try {
+	gg=limit(gg,*v[i]._IDNTptr,point,direction,contextptr);
+      } catch (std::runtime_error &){
+	gg=0;
+      }
+#endif
     }
     return evalf(gg,1,contextptr);
   }
@@ -1591,7 +1607,7 @@ namespace giac {
       return e;
     if (e._SYMBptr->feuille.type==_VECT){
       vecteur & v=*e._SYMBptr->feuille._VECTptr;
-      if (e._SYMBptr->sommet==at_pow  && v[1].type!=_INT_)
+      if (e._SYMBptr->sommet==at_pow  && v[1].type!=_INT_ && !(v[1].type==_FRAC && is_integer(v[0])))
 	return symb_exp(pow2expln(v[1],contextptr)*symb_ln(pow2expln(v[0],contextptr)));
     }
     return e._SYMBptr->sommet(pow2expln(e._SYMBptr->feuille,contextptr),contextptr); 

@@ -3320,6 +3320,26 @@ namespace giac {
 	convert_from<gen,hashgcd_U>(pcof,di,p_simp);
 	convert_from<gen,hashgcd_U>(qcof,di,q_simp);
       }
+      // normalize gcd and cofactors
+      gen firstd=evalf_double(d.coord.front().value,1,context0);
+      if (firstd.type==_DOUBLE_ && is_positive(-firstd,context0)){
+	d *= -1;
+	if (compute_cofactors){
+	  p_simp *= -1;
+	  q_simp *= -1;
+	}
+      }
+      if (firstd.type==_CPLX && firstd._CPLXptr->type==_DOUBLE_ && (firstd._CPLXptr+1)->type==_DOUBLE_){
+	int arg=int(std::floor(atan2((firstd._CPLXptr+1)->_DOUBLE_val,firstd._CPLXptr->_DOUBLE_val)/(M_PI/2)));
+	if (arg!=0){
+	  gen mult=arg>0?(-cst_i):(arg==-1?cst_i:-1);
+	  d *= mult;
+	  if (compute_cofactors){
+	    p_simp *= mult;
+	    q_simp *= mult;
+	  }
+	}
+      }
       return true;
     }
     int Dbdeg=min(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());

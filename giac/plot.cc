@@ -952,6 +952,14 @@ namespace giac {
     return symb_pnt_name(point,attributs[0],attributs[1],contextptr);
   }
 
+  string print_DOUBLE_(double d,unsigned ndigits){
+    char s[256];
+    ndigits=ndigits<2?2:ndigits;
+    ndigits=ndigits>15?15:ndigits;
+    sprintf(s,("%."+print_INT_(ndigits)+"g").c_str(),d);
+    return s;
+  }
+
   static const int arc_en_ciel_colors=105;
 
   inline int density(double z,double fmin,double fmax){
@@ -961,14 +969,6 @@ namespace giac {
     if (z>fmax)
       return 256+arc_en_ciel_colors;
     return 256+int(arc_en_ciel_colors*(z-fmin)/(fmax-fmin));
-  }
-
-  string print_DOUBLE_(double d,unsigned ndigits){
-    char s[256];
-    ndigits=ndigits<2?2:ndigits;
-    ndigits=ndigits>15?15:ndigits;
-    sprintf(s,("%."+print_INT_(ndigits)+"g").c_str(),d);
-    return s;
   }
 
   // horizontal scale for colors
@@ -1027,6 +1027,9 @@ namespace giac {
   // to 256..256+125 from a matrix of points
   // if regular is true, m is assumed to be equidistributed in x and y
   static vecteur density(const matrice & m,double fmin,double fmax,bool regular,GIAC_CONTEXT){
+#ifdef RTOS_THREADX
+    return vecteur(1,undef);
+#else
     if (!ckmatrix(m,true))
       return vecteur(1,undef);
     int r=m.size(); // imax
@@ -1100,6 +1103,7 @@ namespace giac {
       }
       return res;
     } // end not regular
+#endif
   }
 
   void local_sto_double(double value,const identificateur & i,GIAC_CONTEXT){
@@ -1896,6 +1900,8 @@ namespace giac {
 	  it->subtype=_POINT__VECT;
       }
     }
+    if (res.size()==2 && res.front()==res.back())
+      return undef;
     e=pnt_attrib(gen(res,subtype),attributs,contextptr);
     // ofstream pict("PICT",ios::app);
     // pict << " ," << endl << e ;
@@ -3729,7 +3735,7 @@ namespace giac {
     e=remove_at_pnt(e);
     f=remove_at_pnt(f);
     e=get_point(e,0,contextptr);
-    if (f.type==_VECT && f.type!=_POINT__VECT){
+    if (f.type==_VECT && f.subtype!=_POINT__VECT){
       if (f._VECTptr->size()!=2)
 	return false; // setsizeerr(gettext("gen23points"));
       g=f._VECTptr->back();
@@ -3753,6 +3759,11 @@ namespace giac {
     vecteur attributs(1,default_color(contextptr));
     if (!gen23points(args,e,f,g,attributs,contextptr))
       return gensizeerr(contextptr);
+    if (f.type==_VECT && f._VECTptr->size()==3){
+      // projection of e on f,g
+      gen h=_projection(gen(makevecteur(_droite(gen(makevecteur(f,g),_SEQ__VECT),contextptr),e),_SEQ__VECT),contextptr);
+      return symb_segment(e,h,attributs,_LINE__VECT,contextptr);
+    }
     f=f-g;
     f=im(f,contextptr)-cst_i*re(f,contextptr);
     return symb_segment(e,e+f,attributs,_LINE__VECT,contextptr);
@@ -10629,6 +10640,11 @@ namespace giac {
     return is_zero(a);
   }
 
+#ifdef RTOS_THREADX
+  gen plotcontour(const gen & f0,bool contour,GIAC_CONTEXT){
+    return undef;
+  }
+#else
   // v is a list of polygon vertices, add [A,B] to it
   static void add_segment(vecteur & v,const gen & A,const gen & B,double dx,double dy){
     if (is_approx0(A-B,dx,dy))
@@ -11049,6 +11065,7 @@ namespace giac {
     }
     return plot_array(fij,imax,jmax,xmin,xmax,dx,ymin,ymax,dy,lz,attributs,contour,contextptr);
   }
+#endif
   gen _plotcontour(const gen & f0,GIAC_CONTEXT){
     if ( f0.type==_STRNG && f0.subtype==-1) return  f0;
     return plotcontour(f0,true,contextptr);
@@ -13778,7 +13795,8 @@ namespace giac {
     if (s!=2 && s!=3)
       return gendimerr(contextptr);
     gen a=v[0],b=v[1];
-    vecteur w=inter(a,b,contextptr);
+    vecteur ww=inter(a,b,contextptr);
+    vecteur w=remove_multiples(ww);
     if (s==3 && !w.empty()){
       int ws=w.size();
       a=w[0];

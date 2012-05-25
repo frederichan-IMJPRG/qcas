@@ -144,7 +144,14 @@ namespace giac {
   static define_unary_function_eval2_index (128,__RPN_CASE,&return_undef,_RPN_CASE_s,&printasconstant);
   define_unary_function_ptr5( at_RPN_CASE ,alias_at_RPN_CASE ,&__RPN_CASE,0,T_RPN_OP);
 
-#else
+  static const char _RPN_UNTIL_s []="RPN_UNTIL";
+  static define_unary_function_eval2 (__RPN_UNTIL,&return_undef,_RPN_UNTIL_s,&printasconstant);
+  define_unary_function_ptr( at_RPN_UNTIL ,alias_at_RPN_UNTIL ,&__RPN_UNTIL);
+
+  static const char _rpn_prog_s []="rpn_prog";
+  static define_unary_function_eval2_index (83,__rpn_prog,&return_undef,_rpn_prog_s,&printasconstant);
+  define_unary_function_ptr5( at_rpn_prog ,alias_at_rpn_prog,&__rpn_prog,_QUOTE_ARGUMENTS,0);
+#else // RTOS_THREADX
   static gen symb_rpn(const gen & args){
     return symbolic(at_rpn,args);
   }
@@ -604,7 +611,147 @@ namespace giac {
   static const char _RPN_CASE_s []="RPN_CASE";
   static define_unary_function_eval2_index (128,__RPN_CASE,&_RPN_CASE,_RPN_CASE_s,&printasRPN_CASE);
   define_unary_function_ptr5( at_RPN_CASE ,alias_at_RPN_CASE ,&__RPN_CASE,0,T_RPN_OP);
-#endif
+
+  static string printasRPN_UNTIL(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
+    if ( (feuille.type!=_VECT) && (feuille._VECTptr->size()!=2))
+      return "Invalid_RPN_UNTIL";
+    return "DO "+ printinner_VECT(*feuille._VECTptr->front()._VECTptr,_RPN_FUNC__VECT,contextptr) + " UNTIL "+printinner_VECT(*feuille._VECTptr->back()._VECTptr,_RPN_FUNC__VECT,contextptr)+ " END ";
+  }
+  gen symb_RPN_UNTIL(const gen & a,const gen & b){
+    return symbolic(at_RPN_UNTIL,makevecteur(a,b));
+  }
+  gen _RPN_UNTIL(const gen & args,const context * contextptr) {
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    // stack level 2=program
+    // level 1=condition 
+    if (args.type!=_VECT)
+      return symbolic(at_RPN_UNTIL,args);
+    int s=args._VECTptr->size();
+    if (s<2)
+      return gentoofewargs("RPN_UNTIL must have at least 2 args");
+    gen controle=args._VECTptr->back();
+    args._VECTptr->pop_back();
+    gen prog=args._VECTptr->back();
+    args._VECTptr->pop_back();
+    vecteur res;
+    for (;;){
+      res=rpn_eval(prog,*args._VECTptr,contextptr);
+      res=rpn_eval(controle,*args._VECTptr,contextptr);
+      if (args._VECTptr->empty())
+	return gentoofewargs("UNTIL");
+      gen tmp=args._VECTptr->back();
+      args._VECTptr->pop_back();
+      if (!is_zero(tmp.eval(eval_level(contextptr),contextptr).evalf(eval_level(contextptr),contextptr)))
+	break;
+    }
+    return gen(res,_RPN_STACK__VECT);
+  }
+  static const char _RPN_UNTIL_s []="RPN_UNTIL";
+  static define_unary_function_eval2 (__RPN_UNTIL,&_RPN_UNTIL,_RPN_UNTIL_s,&printasRPN_UNTIL);
+  define_unary_function_ptr( at_RPN_UNTIL ,alias_at_RPN_UNTIL ,&__RPN_UNTIL);
+
+  // RPN evaluation loop (_VECTEVAL), no return stack currently
+  vecteur rpn_eval(const vecteur & prog,vecteur & pile,const context * contextptr){
+    const_iterateur it=prog.begin(),itend=prog.end();
+    for (;it!=itend;++it){
+      if (it->type==_FUNC){
+	// test nargs with subtype
+	int nargs=it->subtype;
+	if (nargs>signed(pile.size()))
+	  return vecteur(1,gentoofewargs(it->print(contextptr)+": stack "+gen(pile).print(contextptr)));
+	if (nargs==1){
+	  pile.back()=(*it->_FUNCptr)(pile.back(),contextptr);
+	}
+	else {
+	  if (nargs){
+	    vecteur v(nargs);
+	    for (int k=nargs-1;k>=0;--k){
+	      v[k]=pile.back();
+	      pile.pop_back();
+	    }
+	    pile.push_back((*it->_FUNCptr)(v,contextptr));
+	  }
+	  else {
+	    gen res;
+	    if (*it->_FUNCptr==at_eval){ // eval stack level 1
+	      if (pile.empty())
+		return vecteur(1,gentoofewargs("EVAL"));
+	      res=pile.back();
+	      pile.pop_back();
+	      if ( (res.type==_SYMB) && (res._SYMBptr->sommet==at_rpn_prog))
+		res=res._SYMBptr->feuille;
+	      res=rpn_eval(res,pile,contextptr);
+	    }
+	    else
+	      res=(*it->_FUNCptr)(pile,contextptr);
+	    if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
+	      pile= *res._VECTptr;
+	    else
+	      pile= vecteur(1,res);
+	  }
+	}
+      }
+      else {
+	// test for special symbolic (control struct)
+	const unary_function_ptr control_op[]={*at_RPN_LOCAL,*at_RPN_FOR,*at_IFTE,*at_RPN_CASE,*at_RPN_WHILE,*at_RPN_UNTIL,0};
+	if ( (it->type==_SYMB) && equalposcomp(control_op,it->_SYMBptr->sommet)){
+	  // push args of it to the stack and call sommet on the stack
+	  if (it->_SYMBptr->feuille.type!=_VECT) // should not happen!
+	    pile.push_back(it->_SYMBptr->feuille);
+	  else
+	    pile=mergevecteur(pile,*it->_SYMBptr->feuille._VECTptr);
+	  gen res=it->_SYMBptr->sommet(pile,contextptr);
+	  if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
+	    pile= *res._VECTptr;
+	  else
+	    pile= vecteur(1,res);	  
+	}
+	else {
+	  if ( (it->type!=_VECT) 
+	       // || (it->subtype==_RPN_FUNC__VECT) 
+	       ){
+	    gen res=it->eval(1,contextptr);
+	    if ( (res.type==_VECT) && (res.subtype==_RPN_STACK__VECT))
+	      pile=*res._VECTptr;
+	    else
+	      pile.push_back(res);
+	  }
+	  else
+	    pile.push_back(*it);
+	}
+      }
+    }
+    return pile;
+  }
+
+  vecteur rpn_eval(const gen & prog,vecteur & pile,const context * contextptr){
+    if (prog.type!=_VECT)
+      return rpn_eval(vecteur(1,prog),pile,contextptr);
+    else
+      return rpn_eval(*prog._VECTptr,pile,contextptr);
+  }
+
+  static string printasrpn_prog(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
+    if (feuille.type!=_VECT)
+      return "<< "+feuille.print(contextptr)+" >>";
+    return "<< "+printinner_VECT(*feuille._VECTptr,_RPN_FUNC__VECT,contextptr)+" >>";
+  }
+  gen symb_rpn_prog(const gen & args){
+    return symbolic(at_rpn_prog,args);
+  }
+  gen _rpn_prog(const gen & args,const context * contextptr){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (!rpn_mode(contextptr) || (args.type!=_VECT))
+      return symbolic(at_rpn_prog,args);
+    vecteur pile(history_out(contextptr));
+    *logptr(contextptr) << pile << " " << args << endl;
+    return gen(rpn_eval(*args._VECTptr,pile,contextptr),_RPN_STACK__VECT);
+  }
+  static const char _rpn_prog_s []="rpn_prog";
+  static define_unary_function_eval2_index (83,__rpn_prog,&_rpn_prog,_rpn_prog_s,&printasrpn_prog);
+  define_unary_function_ptr5( at_rpn_prog ,alias_at_rpn_prog,&__rpn_prog,_QUOTE_ARGUMENTS,0);
+
+#endif // RTOS_THREADX
 
   static gen symb_RCL(const gen & a){
     return symbolic(at_RCL,a);
@@ -800,145 +947,6 @@ namespace giac {
   static const char _purge_s []="purge";
   static define_unary_function_eval_quoted (__purge,&_purge,_purge_s);
   define_unary_function_ptr5( at_purge ,alias_at_purge,&__purge,_QUOTE_ARGUMENTS,0);
-
-  static string printasRPN_UNTIL(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if ( (feuille.type!=_VECT) && (feuille._VECTptr->size()!=2))
-      return "Invalid_RPN_UNTIL";
-    return "DO "+ printinner_VECT(*feuille._VECTptr->front()._VECTptr,_RPN_FUNC__VECT,contextptr) + " UNTIL "+printinner_VECT(*feuille._VECTptr->back()._VECTptr,_RPN_FUNC__VECT,contextptr)+ " END ";
-  }
-  gen symb_RPN_UNTIL(const gen & a,const gen & b){
-    return symbolic(at_RPN_UNTIL,makevecteur(a,b));
-  }
-  gen _RPN_UNTIL(const gen & args,const context * contextptr) {
-    if ( args.type==_STRNG && args.subtype==-1) return  args;
-    // stack level 2=program
-    // level 1=condition 
-    if (args.type!=_VECT)
-      return symbolic(at_RPN_UNTIL,args);
-    int s=args._VECTptr->size();
-    if (s<2)
-      return gentoofewargs("RPN_UNTIL must have at least 2 args");
-    gen controle=args._VECTptr->back();
-    args._VECTptr->pop_back();
-    gen prog=args._VECTptr->back();
-    args._VECTptr->pop_back();
-    vecteur res;
-    for (;;){
-      res=rpn_eval(prog,*args._VECTptr,contextptr);
-      res=rpn_eval(controle,*args._VECTptr,contextptr);
-      if (args._VECTptr->empty())
-	return gentoofewargs("UNTIL");
-      gen tmp=args._VECTptr->back();
-      args._VECTptr->pop_back();
-      if (!is_zero(tmp.eval(eval_level(contextptr),contextptr).evalf(eval_level(contextptr),contextptr)))
-	break;
-    }
-    return gen(res,_RPN_STACK__VECT);
-  }
-  static const char _RPN_UNTIL_s []="RPN_UNTIL";
-  static define_unary_function_eval2 (__RPN_UNTIL,&_RPN_UNTIL,_RPN_UNTIL_s,&printasRPN_UNTIL);
-  define_unary_function_ptr( at_RPN_UNTIL ,alias_at_RPN_UNTIL ,&__RPN_UNTIL);
-
-  // RPN evaluation loop (_VECTEVAL), no return stack currently
-  vecteur rpn_eval(const vecteur & prog,vecteur & pile,const context * contextptr){
-    const_iterateur it=prog.begin(),itend=prog.end();
-    for (;it!=itend;++it){
-      if (it->type==_FUNC){
-	// test nargs with subtype
-	int nargs=it->subtype;
-	if (nargs>signed(pile.size()))
-	  return vecteur(1,gentoofewargs(it->print(contextptr)+": stack "+gen(pile).print(contextptr)));
-	if (nargs==1){
-	  pile.back()=(*it->_FUNCptr)(pile.back(),contextptr);
-	}
-	else {
-	  if (nargs){
-	    vecteur v(nargs);
-	    for (int k=nargs-1;k>=0;--k){
-	      v[k]=pile.back();
-	      pile.pop_back();
-	    }
-	    pile.push_back((*it->_FUNCptr)(v,contextptr));
-	  }
-	  else {
-	    gen res;
-	    if (*it->_FUNCptr==at_eval){ // eval stack level 1
-	      if (pile.empty())
-		return vecteur(1,gentoofewargs("EVAL"));
-	      res=pile.back();
-	      pile.pop_back();
-	      if ( (res.type==_SYMB) && (res._SYMBptr->sommet==at_rpn_prog))
-		res=res._SYMBptr->feuille;
-	      res=rpn_eval(res,pile,contextptr);
-	    }
-	    else
-	      res=(*it->_FUNCptr)(pile,contextptr);
-	    if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
-	      pile= *res._VECTptr;
-	    else
-	      pile= vecteur(1,res);
-	  }
-	}
-      }
-      else {
-	// test for special symbolic (control struct)
-	const unary_function_ptr control_op[]={*at_RPN_LOCAL,*at_RPN_FOR,*at_IFTE,*at_RPN_CASE,*at_RPN_WHILE,*at_RPN_UNTIL,0};
-	if ( (it->type==_SYMB) && equalposcomp(control_op,it->_SYMBptr->sommet)){
-	  // push args of it to the stack and call sommet on the stack
-	  if (it->_SYMBptr->feuille.type!=_VECT) // should not happen!
-	    pile.push_back(it->_SYMBptr->feuille);
-	  else
-	    pile=mergevecteur(pile,*it->_SYMBptr->feuille._VECTptr);
-	  gen res=it->_SYMBptr->sommet(pile,contextptr);
-	  if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
-	    pile= *res._VECTptr;
-	  else
-	    pile= vecteur(1,res);	  
-	}
-	else {
-	  if ( (it->type!=_VECT) 
-	       // || (it->subtype==_RPN_FUNC__VECT) 
-	       ){
-	    gen res=it->eval(1,contextptr);
-	    if ( (res.type==_VECT) && (res.subtype==_RPN_STACK__VECT))
-	      pile=*res._VECTptr;
-	    else
-	      pile.push_back(res);
-	  }
-	  else
-	    pile.push_back(*it);
-	}
-      }
-    }
-    return pile;
-  }
-
-  vecteur rpn_eval(const gen & prog,vecteur & pile,const context * contextptr){
-    if (prog.type!=_VECT)
-      return rpn_eval(vecteur(1,prog),pile,contextptr);
-    else
-      return rpn_eval(*prog._VECTptr,pile,contextptr);
-  }
-
-  static string printasrpn_prog(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if (feuille.type!=_VECT)
-      return "<< "+feuille.print(contextptr)+" >>";
-    return "<< "+printinner_VECT(*feuille._VECTptr,_RPN_FUNC__VECT,contextptr)+" >>";
-  }
-  gen symb_rpn_prog(const gen & args){
-    return symbolic(at_rpn_prog,args);
-  }
-  gen _rpn_prog(const gen & args,const context * contextptr){
-    if ( args.type==_STRNG && args.subtype==-1) return  args;
-    if (!rpn_mode(contextptr) || (args.type!=_VECT))
-      return symbolic(at_rpn_prog,args);
-    vecteur pile(history_out(contextptr));
-    *logptr(contextptr) << pile << " " << args << endl;
-    return gen(rpn_eval(*args._VECTptr,pile,contextptr),_RPN_STACK__VECT);
-  }
-  static const char _rpn_prog_s []="rpn_prog";
-  static define_unary_function_eval2_index (83,__rpn_prog,&_rpn_prog,_rpn_prog_s,&printasrpn_prog);
-  define_unary_function_ptr5( at_rpn_prog ,alias_at_rpn_prog,&__rpn_prog,_QUOTE_ARGUMENTS,0);
 
   static string printasdivision(const gen & feuille,const char * s,GIAC_CONTEXT){
     if (feuille.type!=_VECT || feuille._VECTptr->size()!=2)

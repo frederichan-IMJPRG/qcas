@@ -38,7 +38,7 @@ inline int gcdint(int a,int b){
   return a<0?-a:a;
 }
 inline int mpz_lcm(mpz_t & c,const mpz_t & a,const mpz_t & b){ return mp_lcm((mp_int *)&a,(mp_int *)&b,&c); }
-inline void mpz_mul_ui(mpz_t & c,const mpz_t & a,unsigned int B){ mp_int b; mp_init_set_int(&b,B); mp_mul((mp_int *)&a,&b,&c); mp_clear(&b); }
+inline void mpz_mul_ui(mpz_t & c,mpz_t & a,unsigned int B){ mp_mul_d(&a,B,&c); } // { mp_int b; mp_init_set_int(&b,B); mp_mul((mp_int *)&a,&b,&c); mp_clear(&b); }
 inline int mpz_mul_2exp(mpz_t & c,const mpz_t & a,unsigned int B){ return mp_mul_2d((mp_int *)&a,B,&c); }
 inline void mpz_tdiv_q_2exp(mpz_t & c,const mpz_t & a,unsigned int B){ mp_int d; mp_init(&d); mp_div_2d((mp_int *)&a,B,&c,&d); mp_clear(&d); }
 inline void mpz_tdiv_r_2exp(mpz_t & d,const mpz_t & a,unsigned int B){ mp_int c; mp_init(&c); mp_div_2d((mp_int *)&a,B,&c,&d); mp_clear(&c); }

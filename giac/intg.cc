@@ -3504,7 +3504,6 @@ namespace giac {
       }
       if (v[2].type==_INT_ && v[3].type==_INT_ && absint(v[3].val-v[2].val)<max_sum_add(contextptr))
 	return seqprod(v,2,contextptr);
-      gen res;
     }
     const_iterateur it=v.begin(),itend=v.end();
     gen f=*it;

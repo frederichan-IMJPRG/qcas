@@ -41,7 +41,7 @@ HEADERS += qt/output.h \
     qt/gui/FormalLineWidgets.h \
     qt/gui/FormalLine.h \
     qt/gui/CentralTabWidget.h \
- # qt/gui/src/qtmmlwidget.h \
+#Header for giac
            giac/alg_ext.h \
            giac/cocoa.h \
            giac/config.h \
@@ -113,8 +113,7 @@ HEADERS += qt/output.h \
 #Hearder for libtommath
            libtommath/tommath.h \
            libtommath/tommath_class.h \
-           libtommath/tommath_superclass.h\
-#    qt/gui/Interactive2d.h \
+           libtommath/tommath_superclass.h \
     qt/gui/prefdialog.h \
     qt/gui/plotfunctiondialog.h
 
@@ -133,7 +132,7 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/gui/FormalLine.cpp \
     qt/gui/CentralTabWidget.cpp \ # qt/gui/src/qtmmlwidget.cpp \
 #Sources for giac
-    giac/alg_ext.cc \
+           giac/alg_ext.cc \
            giac/cocoa.cc \
            giac/csturm.cc \
            giac/derive.cc \

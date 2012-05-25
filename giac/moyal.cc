@@ -251,8 +251,11 @@ namespace giac {
   define_unary_function_ptr5( at_normald_icdf ,alias_at_normald_icdf,&__normald_icdf,0,true);
 
   gen binomial(const gen & n,const gen & k,const gen & p,GIAC_CONTEXT){
-    if (k.type==_DOUBLE_ || k.type==_FLOAT_ || k.type==_FRAC)
+    if (k.type==_DOUBLE_ || k.type==_FLOAT_ || k.type==_FRAC){
+      if (p.type==_DOUBLE_ || p.type==_FLOAT_ || p.type==_FRAC)
+	return gensizeerr(contextptr);
       return binomial(n,p,k,contextptr);
+    }
     if (p.type==_DOUBLE_ || p.type==_FLOAT_){
 #if 0 //def VISUALC
       gen nd=evalf2bcd(n,1,contextptr);

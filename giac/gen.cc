@@ -7128,6 +7128,7 @@ namespace giac {
 	(*tmp._VECTptr)[1]=i;
 	return _program(tmp,progname,contextptr);
       }
+#ifndef RTOS_THREADX
       if (_SYMBptr->sommet==at_rpn_prog){
 	vecteur pile;
 	if (rpn_mode(contextptr))
@@ -7143,6 +7144,7 @@ namespace giac {
 	  prog=vecteur(1,_SYMBptr->feuille);
 	return gen(rpn_eval(prog,pile,contextptr),_RPN_STACK__VECT);
       }
+#endif
       if (_SYMBptr->sommet==at_compose){
 	gen tmp=_SYMBptr->feuille;
 	if (tmp.type!=_VECT)
@@ -8497,6 +8499,10 @@ namespace giac {
     mpz_clear(ur);
     mpz_clear(r);
     mpz_clear(tmp);
+    if (num.type==_ZINT && mpz_sizeinbase(*num._ZINTptr,2)<=30)
+      num=int(mpz_get_si(*num._ZINTptr));
+    if (den.type==_ZINT && mpz_sizeinbase(*den._ZINTptr,2)<=30)
+      den=int(mpz_get_si(*den._ZINTptr));
     if (is_positive(den,context0)) // ok
       res=fraction(num,den);
     else
@@ -9312,8 +9318,7 @@ namespace giac {
     if (sf || d>=1073741824 || d<=-1073741824)
       return s;
     for (int i=0;s[i];++i){
-//        if (s[i]=='.' || s[i]==',' || s[i]=='e' || s[i]=='E')
-      if (s[i]=='.' || s[i]=='e' || s[i]=='E')
+      if (s[i]=='.' || s[i]==',' || s[i]=='e' || s[i]=='E')
 	return s;
     }
     return string(s)+".0";

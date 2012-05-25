@@ -240,7 +240,7 @@ namespace giac {
 
 
 
-  // // --------------------------------- recopié de unary.cc ---------------------------------------
+  // // --------------------------------- recopi?? de unary.cc ---------------------------------------
 
   static string mathml_printsommetasoperator(const gen & feuille, const string & sommetstr,GIAC_CONTEXT){
     if (feuille.type!=_VECT)
@@ -605,7 +605,7 @@ namespace giac {
     gen x=re(A,contextptr)-right_space;
     gen y(gnuplot_ymax+gnuplot_ymin-im(A,contextptr));
     if (x==gnuplot_xmax){
-      // A traiter, la légende sort du cadre
+      // A traiter, la l??gende sort du cadre
     }
     svg_legend=svg_legend+ "<text  fill=\"" +color_string(color)+"\"  x=\""+x.print(contextptr)+"\" y=\""+y.print(contextptr)
       +"\" style=\"font-size:"+text_size.print(contextptr)+"pt; text-anchor:end;\">"
@@ -657,7 +657,7 @@ namespace giac {
   static string svg_line(gen A, gen B, int color, string legende,GIAC_CONTEXT){
     gen i=cst_i,xmin(gnuplot_xmin),ymin(gnuplot_ymin),xmax(gnuplot_xmax),ymax(gnuplot_ymax), C,D;
     A=evalf(A,1,contextptr); B=evalf(B,1,contextptr);
-    // recherche de l'équation de la droite
+    // recherche de l'??quation de la droite
     if (is_zero(eval(re(A,contextptr)-re(B,contextptr),eval_level(contextptr),contextptr))){
       gen x=re(A,contextptr);
       C=x+i*ymin; D=x+i*ymax;
@@ -673,7 +673,7 @@ namespace giac {
   static string svg_half_line(gen A, gen B, int color, string legende,GIAC_CONTEXT){
     gen i=cst_i,xmin(gnuplot_xmin),ymin(gnuplot_ymin),xmax(gnuplot_xmax),ymax(gnuplot_ymax), C,D;
     A=evalf(A,1,contextptr); B=evalf(B,1,contextptr);
-    // recherche de l'équation de la droite
+    // recherche de l'??quation de la droite
     if (is_zero(eval(re(A,contextptr)-re(B,contextptr),eval_level(contextptr),contextptr))){
       gen x=re(A,contextptr);
       if (is_positive(eval(im(B,contextptr)-im(A,contextptr),eval_level(contextptr),contextptr),contextptr))
@@ -711,8 +711,8 @@ namespace giac {
     return s;
   }
 
-  // Tracé de courbes
-  // un point sur 2 sert de point de contrôle
+  // Trac?? de courbes
+  // un point sur 2 sert de point de contr??le
   // on peut sophistiquer
   static string svg_bezier_curve(gen g, int color, string legende,GIAC_CONTEXT){ 
     string x="x", y="y";
@@ -734,8 +734,8 @@ namespace giac {
     if (i%2==1)
       s=s+re(v[i],contextptr).print(contextptr)+" "+im(v[i],contextptr).print(contextptr)+" ";
     s=s+"\" />\n ";
-    // on écrit la légende
-    //recherche d'un point dans le cadre pour ancrer la légende
+    // on ??crit la l??gende
+    //recherche d'un point dans le cadre pour ancrer la l??gende
     for (i=0 ; i<signed(v.size()) ; i++){
       if (is_positive(re(v[i],contextptr)-gnuplot_xmin,contextptr) 
 	  && is_positive(im(v[i],contextptr)-gnuplot_ymin,contextptr)
@@ -751,7 +751,7 @@ namespace giac {
 
   static string symbolic2svg(const symbolic & mys,GIAC_CONTEXT);
 
-  //fonction appelée ssi v est un vecteur
+  //fonction appel??e ssi v est un vecteur
   static string vect2svg(gen v, int color, string name,GIAC_CONTEXT){
     if (v.type != _VECT)
       return "error";
@@ -1024,7 +1024,7 @@ namespace giac {
 	return symbolic2mathml(*e._SYMBptr, svg,contextptr);
       case _VECT:                        
     if (e.subtype==_SPREAD__VECT)
-	  return spread2mathml(*e._VECTptr,1,contextptr); //----------------vérifier le 2ème paramètre
+	  return spread2mathml(*e._VECTptr,1,contextptr); //----------------v??rifier le 2??me param??tre
 	if (ckmatrix(*e._VECTptr))
 	  return matrix2mathml(*e._VECTptr,contextptr);
     else return _VECT2mathml(*e._VECTptr,e.subtype, svg,contextptr);

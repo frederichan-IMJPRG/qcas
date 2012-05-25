@@ -711,6 +711,7 @@ namespace giac {
 
   void read_config(const std::string & name,GIAC_CONTEXT,bool verbose=true);
   void protected_read_config(GIAC_CONTEXT,bool verbose=true);
+  vecteur remove_multiples(vecteur & v); // sort v and return list without multiple occurences
   int equalposcomp(const std::vector<int> v,int i);
   int equalposcomp(const std::vector<short int> v,int i);
   int equalposcomp(int tab[],int f);

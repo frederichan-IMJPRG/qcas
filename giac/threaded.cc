@@ -3113,7 +3113,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	continue;
       if (jt->g.type==_EXT){
 	if (t<3)
-	  t=3;
+	  t=t==1?3:4;
 	if (coefft.type==_EXT){ 
 	  if (*(coefft._EXTptr+1)!=*(jt->g._EXTptr+1))
 	    return 0;

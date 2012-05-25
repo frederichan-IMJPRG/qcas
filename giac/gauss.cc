@@ -630,6 +630,11 @@ namespace giac {
     return true;
   }  
 
+#ifdef RTOS_THREADX
+  bool quadrique_reduite(const gen & q,const vecteur & vxyz,gen & x,gen & y,gen & z,vecteur & u,vecteur & v,vecteur & w,vecteur & propre,gen & equation_reduite,vecteur & param_surface,vecteur & centre,bool numeric,GIAC_CONTEXT){
+    return false;
+  }
+#else
   bool quadrique_reduite(const gen & q,const vecteur & vxyz,gen & x,gen & y,gen & z,vecteur & u,vecteur & v,vecteur & w,vecteur & propre,gen & equation_reduite,vecteur & param_surface,vecteur & centre,bool numeric,GIAC_CONTEXT){
     if (vxyz.size()!=3)
       return false; // setdimerr(contextptr);
@@ -949,6 +954,7 @@ namespace giac {
     } // end if !is_zero(s1)
     return false;
   }
+#endif // RTOS_THREADX
 
   gen conique_quadrique_reduite(const gen & args,GIAC_CONTEXT,bool conique){
     vecteur v(gen2vecteur(args));

@@ -21,7 +21,7 @@ int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
   mp_digit D, r, rr;
   int     x, res;
   mp_int  t;
-  char t_used;
+
 
   /* if the shift count is <= 0 then we do no work */
   if (b <= 0) {
@@ -32,23 +32,21 @@ int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
     return res;
   }
 
-  t_used = a==d;
-
-  if (t_used && (res = mp_init (&t)) != MP_OKAY) {
+  if ((res = mp_init (&t)) != MP_OKAY) {
     return res;
   }
 
   /* get the remainder */
   if (d != NULL) {
-    if ((res = mp_mod_2d (a, b, t_used?&t:d)) != MP_OKAY) {
-      if (t_used) mp_clear (&t);
+    if ((res = mp_mod_2d (a, b, &t)) != MP_OKAY) {
+      mp_clear (&t);
       return res;
     }
   }
 
   /* copy */
   if ((res = mp_copy (a, c)) != MP_OKAY) {
-    if (t_used) mp_clear (&t);
+    mp_clear (&t);
     return res;
   }
 
@@ -86,10 +84,10 @@ int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
     }
   }
   mp_clamp (c);
-  if (t_used && d != NULL) {
+  if (d != NULL) {
     mp_exch (&t, d);
   }
-  if (t_used) mp_clear (&t);
+  mp_clear (&t);
   return MP_OKAY;
 }
 #endif

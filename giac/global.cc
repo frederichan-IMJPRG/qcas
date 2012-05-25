@@ -98,6 +98,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
   int PARENTHESIS_NWAIT=100;
 #endif
+
   // FIXME: threads allowed curently disabled
   // otherwise fermat_gcd_mod_2var crashes at puccini
   bool threads_allowed=true,mpzclass_allowed=true;
@@ -2406,6 +2407,22 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
     return !system(browser_command(file).c_str());
 #endif
+  }
+
+  vecteur remove_multiples(vecteur & ww){
+    vecteur w;
+    if (!ww.empty()){
+      sort(ww.begin(),ww.end(),islesscomplexthanf);
+      gen prec=ww[0];
+      for (int i=1;i<ww.size();++i){
+	if (ww[i]==prec)
+	  continue;
+	w.push_back(prec);
+	prec=ww[i];
+      }
+      w.push_back(prec);
+    }
+    return w;
   }
 
   int equalposcomp(const vector<int> v,int i){

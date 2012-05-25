@@ -690,6 +690,8 @@ namespace giac {
       return exp(get_double(e0._FLOAT_val),contextptr);
 #endif
     }
+    if (is_integer(e0) && is_strictly_greater(0,e0,contextptr))
+      return symb_inv(symb_exp(-e0));
     gen e=frac_neg_out(e0,contextptr);
     if (e.type==_SPOL1)
       return symb_exp(e);
@@ -945,33 +947,27 @@ namespace giac {
       return gensizeerr(contextptr);
     if (is_one(a) || is_zero(a))
       return a;
-    if (b.type==_INT_ && b.val<24000){
+    if (b.type==_INT_){
       int A=smod(a,b).val,p=b.val;
-#if 1
       if (A<0) A+=p;
-      if (A==0) return A;
+      if (A==0 || A==1) return A;
       if (isprime && p>1024 && (p+1)%4==0){
 	A=powmod(A,(unsigned long)((p+1)/4),p);
 	if (A>p-A)
 	  A=p-A;
 	return A;
       }
-      int sq=0,add=1;
-      for (;add<=p;add+=2){
-	sq+=add;
-	if (sq>=p)
-	  sq-=p;
-	if (sq==A)
-	  return add/2+1;
+      if (p<65536){
+	int sq=0,add=1;
+	for (;add<=p;add+=2){
+	  sq+=add;
+	  if (sq>=p)
+	    sq-=p;
+	  if (sq==A)
+	    return add/2+1;
+	}
+	return undef;
       }
-      return undef;
-#else
-      for (int i=0;i<b.val;++i){
-	if ((i*i-A)%b.val==0)
-	  return i;
-      }
-      return undef;
-#endif
     }
     int l=legendre(a,b);
     if (l==-1)
@@ -4794,6 +4790,8 @@ namespace giac {
     if (args.type==_FLOAT_)
       return fceil(args._FLOAT_val);
 #endif
+    return -_floor(-args,contextptr);
+#if 0
     if (args.type==_FRAC){
       gen n=args._FRACptr->num,d=args._FRACptr->den;
       if ( ((n.type==_INT_) || (n.type==_ZINT)) && ( (d.type==_INT_) || (d.type==_ZINT)) )
@@ -4807,6 +4805,7 @@ namespace giac {
     if (tmp.type!=_DOUBLE_)
       return symb_ceil(args);
     return double2gen(giac_ceil(tmp._DOUBLE_val));
+#endif
   }
   static gen taylor_ceil (const gen & lim_point,const int ordre,const unary_function_ptr & f, int direction,gen & shift_coeff,GIAC_CONTEXT){
     if (ordre<0)

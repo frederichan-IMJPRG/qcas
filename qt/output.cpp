@@ -2032,9 +2032,7 @@ void Canvas2D::addNewPoint(const QPointF p){
    gen g(s.toStdString(),context);
                //    qDebug()<<QString::fromStdString(g.print(context));
    QList<MyItem*> v;
-
    addToVector(protecteval(g,1,context),v);
-
 
    v.at(0)->updateScreenCoords(true);
    v.at(0)->setVar(varPt);
@@ -2043,10 +2041,19 @@ void Canvas2D::addNewPoint(const QPointF p){
    parent->addToTree(v.at(0));
    focusOwner=v.at(0);
    parent->updateAllCategories();
-    parent->selectInTree(focusOwner);
+   parent->selectInTree(focusOwner);
    selectedItems.append(focusOwner);
    updatePixmap(false);
-   repaint();
+   // In case of open polygon, we have to redraw the preview before repaint (else itemPreview=0)
+   if (currentActionTool==OPEN_POLYGON) {
+       QString s=commandFreePoint(p,0);
+       int id=s.indexOf(":=");
+       s=s.mid(id+2,s.length()-id-3);
+       missingPoint=s;
+      addNewPolygon(true);
+      repaint();
+   }
+   else repaint();
 
 }
 
@@ -2403,8 +2410,9 @@ void Canvas2D::addInter(){
     repaint();
 }
 void Canvas2D::executeMyAction(bool onlyForPreview=false){
-    if (itemPreview!=0) delete itemPreview;
-    itemPreview=0;
+        if (itemPreview!=0) delete itemPreview;
+         itemPreview=0;
+
     switch(currentActionTool){
         case SELECT: parent->selectInTree(focusOwner);
         break;
