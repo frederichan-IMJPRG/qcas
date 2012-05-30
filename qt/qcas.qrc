@@ -5,6 +5,7 @@
         <file>images/bisector.png</file>
         <file>images/book.png</file>
         <file>images/configure.png</file>
+        <file>images/delete.png</file>
         <file>images/document-new.png</file>
         <file>images/document-save-as.png</file>
         <file>images/document-save.png</file>
@@ -45,6 +46,8 @@
         <file>images/midpoint.png</file>
         <file>images/inter.png</file>
         <file>images/line.png</file>
+        <file>images/point-symmetry.png</file>
+        <file>images/reflection.png</file>
         <file>images/segment.png</file>
         <file>images/halfline.png</file>
         <file>images/circle2pt.png</file>
@@ -56,6 +59,7 @@
         <file>images/right.png</file>
         <file>images/source.png</file>
         <file>images/tex.png</file>
+        <file>images/translation.png</file>
         <file>images/vector.png</file>
         <file>images/zoom-in.png</file>
         <file>images/zoom-out.png</file>

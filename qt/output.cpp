@@ -284,6 +284,12 @@ void GraphWidget::createToolBar(){
     vectorAc=new QAction(tr("Vecteur"),buttonLine);
     vectorAc->setIcon(QIcon(":/images/vector.png"));
     vectorAc->setData(canvas->VECTOR);
+    perpen_bisector=new QAction(tr("Médiatrice d'un segment"),buttonLine);
+    perpen_bisector->setIcon(QIcon(":/images/perpenbisector.png"));
+    perpen_bisector->setData(canvas->PERPEN_BISECTOR);
+    bisector=new QAction(tr("Bissectrice d'un angle"),buttonLine);
+    bisector->setIcon(QIcon(":/images/bisector.png"));
+    bisector->setData(canvas->BISECTOR);
 
     // Tool Actions
     parallel=new QAction(tr("Droite parallèle"),buttonTool);
@@ -292,13 +298,15 @@ void GraphWidget::createToolBar(){
     perpendicular=new QAction(tr("Droite perpendiculaire"),buttonTool);
     perpendicular->setIcon(QIcon(":/images/perpendicular.png"));
     perpendicular->setData(canvas->PERPENDICULAR);
-    perpen_bisector=new QAction(tr("Médiatrice d'un segment"),buttonTool);
-    perpen_bisector->setIcon(QIcon(":/images/perpenbisector.png"));
-    perpen_bisector->setData(canvas->PERPEN_BISECTOR);
-    bisector=new QAction(tr("Bissectrice d'un angle"),buttonTool);
-    bisector->setIcon(QIcon(":/images/bisector.png"));
-    bisector->setData(canvas->BISECTOR);
-
+    reflection=new QAction(tr("Symétrie axiale"),buttonTool);
+    reflection->setIcon(QIcon(":/images/reflection.png"));
+    reflection->setData(canvas->REFLECTION);
+    pointSymmetry=new QAction(tr("Symétrie centrale"),buttonTool);
+    pointSymmetry->setIcon(QIcon(":/images/point-symmetry.png"));
+    pointSymmetry->setData(canvas->POINT_SYMMETRY);
+    translation=new QAction(tr("Translation"),buttonTool);
+    translation->setIcon(QIcon(":/images/translation.png"));
+    translation->setData(canvas->TRANSLATION);
 
     // Plot and polygon actions
      plotFunction=new QAction(tr("Courbe représentative"),buttonPlot);;
@@ -307,12 +315,9 @@ void GraphWidget::createToolBar(){
      plotBezier=new QAction(tr("Courbe de Bézier"),buttonPlot);;
      plotBezier->setData(canvas->PLOT_BEZIER);
      plotBezier->setIcon(QIcon(":/images/bezier.png"));
-     polygon=new QAction(tr("Polygône"),buttonPlot);;
+     polygon=new QAction(tr("Polygône/Ligne brisée"),buttonPlot);;
      polygon->setData(canvas->POLYGON);
      polygon->setIcon(QIcon(":/images/polygon.png"));
-     openPolygon=new QAction(tr("Ligne brisée"),buttonPlot);;
-     openPolygon->setData(canvas->OPEN_POLYGON);
-     openPolygon->setIcon(QIcon(":/images/openpolygon.png"));
      regularPolygon=new QAction(tr("Polygône régulier"),buttonPlot);;
      regularPolygon->setData(canvas->REGULAR_POLYGON);
      regularPolygon->setIcon(QIcon(":/images/regularpolygon.png"));
@@ -353,18 +358,20 @@ void GraphWidget::createToolBar(){
     menuLine->addAction(line);
     menuLine->addAction(segment);
     menuLine->addAction(halfline);
+    menuLine->addAction(bisector);
+    menuLine->addAction(perpen_bisector);
     menuLine->addAction(vectorAc);
     menuLine->setStyle(new IconSize);
 
     menuTool->addAction(parallel);
     menuTool->addAction(perpendicular);
-    menuTool->addAction(bisector);
-    menuTool->addAction(perpen_bisector);
+    menuTool->addAction(reflection);
+    menuTool->addAction(pointSymmetry);
+    menuTool->addAction(translation);
     menuTool->setStyle(new IconSize);
 
     menuPlot->addAction(plotFunction);
     menuPlot->addAction(plotBezier);
-    menuPlot->addAction(openPolygon);
     menuPlot->addAction(polygon);
     menuPlot->addAction(regularPolygon);
     menuPlot->setStyle(new IconSize);
@@ -609,6 +616,81 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 
  //   setMinimumHeight(100);
 }
+void Canvas2D::createMenuAction(){
+
+    gridAction=new QAction(tr("Afficher la grille"),this);
+    gridAction->setCheckable(true);
+    gridAction->setChecked(gridParam.isVisible);
+    connect(gridAction,SIGNAL(toggled(bool)),this,SLOT(displayGrid(bool)));
+
+    axisAction=new QAction(tr("Afficher les axes"),this);
+    axisAction->setCheckable(true);
+    axisAction->setChecked(xAxisParam.isVisible||yAxisParam.isVisible);
+    connect(axisAction,SIGNAL(toggled(bool)),this,SLOT(displayAxis(bool)));
+
+
+    zoomIn=new QAction(tr("Zoom avant"),this);
+    zoomIn->setIcon(QIcon(":/images/zoom-in.png"));
+   connect(zoomIn,SIGNAL(triggered()),this,SLOT(zoom_In()));
+
+    zoomOut=new QAction(tr("Zoom arrière"),this);
+    zoomOut->setIcon(QIcon(":/images/zoom-out.png"));
+    connect(zoomOut,SIGNAL(triggered()),this,SLOT(zoom_Out()));
+
+    orthoAction=new QAction(tr("Orthonormé"),this);
+    orthoAction->setIcon(QIcon(":/images/ortho.png"));
+    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
+
+    if (isInteractive()) {
+        sourceAction=new QAction(tr("Code de la figure"),this);
+        sourceAction->setIcon(QIcon(":/images/source.png"));
+        connect(sourceAction,SIGNAL(triggered()),this,SLOT(displaySource()));
+    }
+    orthoAction->setIcon(QIcon(":/images/ortho.png"));
+    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
+
+   QAction* title=new QAction(tr("Graphique"),this);
+   QFont font;
+   font.setWeight(QFont::Bold);
+   title->setFont(font);
+
+
+   // create contextual menu
+    menuGeneral=new QMenu(this);
+    menuGeneral->addAction(title);
+    menuGeneral->addSeparator();
+    menuGeneral->addAction(gridAction);
+    menuGeneral->addAction(axisAction);
+    menuGeneral->addAction(zoomIn);
+    menuGeneral->addAction(zoomOut);
+    menuGeneral->addAction(orthoAction);
+    if (isInteractive()){
+        menuGeneral->addSeparator();
+        menuGeneral->addAction(sourceAction);
+    }
+    objectTitleAction=new QAction(this);
+    objectTitleAction->setFont(font);
+
+    displayObjectAction=new QAction(tr("Afficher l'objet"),this);
+    displayObjectAction->setCheckable(true);
+    connect(displayObjectAction,SIGNAL(triggered(bool)),this,SLOT(displayObject(bool)));
+
+    displayLegendAction=new QAction(tr("Afficher la légende"),this);
+    displayLegendAction->setCheckable(true);
+    connect(displayLegendAction,SIGNAL(triggered(bool)),this,SLOT(displayLegend(bool)));
+
+    deleteAction=new QAction(tr("Supprimer l'objet"),this);
+    deleteAction->setIcon(QIcon(":/images/delete.png"));
+    connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteObject()));
+
+    menuObject=new QMenu(this);
+    menuObject->addAction(objectTitleAction);
+    menuObject->addSeparator();
+    menuObject->addAction(displayObjectAction);
+    menuObject->addAction(displayLegendAction);
+    menuObject->addAction(deleteAction);
+
+}
 
 void Canvas2D::setActionTool(action a){
     if (itemPreview!=0) delete itemPreview;
@@ -653,7 +735,10 @@ void Canvas2D::setActionTool(action a){
 
 
             if (dialog->exec()){
-                QString s=dialog->getString();
+                findFreeVar(varLine);
+                QString s(varLine);
+                s.append(":=");
+                s.append(dialog->getString());
                 Command newCommand;
                 newCommand.command=s;
                 newCommand.attributes=0;
@@ -664,6 +749,7 @@ void Canvas2D::setActionTool(action a){
         //                    qDebug()<<QString::fromStdString(g.print(context));
                 QList<MyItem*> v;
                 addToVector(protecteval(g,1,context),v);
+                v.at(0)->setVar(varLine);
                 v.at(0)->updateScreenCoords(true);
                 lineItems.append(v.at(0));
                 parent->addToTree(v.at(0));
@@ -1034,8 +1120,9 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
            j0=f1._DOUBLE_val;
        }
         bool fillable=false;
+
         // Cas d'un polygon fermé
-         if (fill_polygon && *jt==*(jtend-1)){
+         if ( *jt==*(jtend-1)){
              fillable=true;
 /*        const_iterateur jtsave=jt;
         gen e,f0,f1;
@@ -1066,6 +1153,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
 //      i0save=i0;
 //      j0save=j0;
       ++jt;
+
       if (jt==jtend){
        // if (i0>0 && i0<width && j0>0 && j0<myw)
             Point* pt=new Point(save,this);
@@ -1138,6 +1226,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                    path.lineTo(QPointF(i0,j0));
                }
         ++jt;
+
         if (jt==jtend){ // label of line at midpoint
         /*  if (point.subtype==_LINE__VECT){
             i0=(6*i1-i0)/5-8;
@@ -1246,48 +1335,6 @@ QSize Canvas2D::minimumSizeHint() const{
     return QSize(200,100);
 }
 
-void Canvas2D::createMenuAction(){
-    zoomIn=new QAction(tr("Zoom avant"),this);
-
-//   zoomIn->setShortcut(tr("Ctrl++"));
-   zoomIn->setIcon(QIcon(":/images/zoom-in.png"));
-   connect(zoomIn,SIGNAL(triggered()),this,SLOT(zoom_In()));
-
-    zoomOut=new QAction(tr("Zoom arrière"),this);
-    zoomOut->setIcon(QIcon(":/images/zoom-out.png"));
-    connect(zoomOut,SIGNAL(triggered()),this,SLOT(zoom_Out()));
-
-    orthoAction=new QAction(tr("Orthonormé"),this);
-    orthoAction->setIcon(QIcon(":/images/ortho.png"));
-    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
-
-    if (isInteractive()) {
-        sourceAction=new QAction(tr("Code de la figure"),this);
-        sourceAction->setIcon(QIcon(":/images/source.png"));
-        connect(sourceAction,SIGNAL(triggered()),this,SLOT(displaySource()));
-    }
-    orthoAction->setIcon(QIcon(":/images/ortho.png"));
-    connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
-
-   QAction* title=new QAction(tr("Graphique"),this);
-   QFont font;
-   font.setWeight(QFont::Bold);
-   title->setFont(font);
-
-
-   // create contextual menu
-    menuGeneral=new QMenu(this);
-    menuGeneral->addAction(title);
-    menuGeneral->addSeparator();
-    menuGeneral->addAction(zoomIn);
-    menuGeneral->addAction(zoomOut);
-    menuGeneral->addAction(orthoAction);
-    if (isInteractive()){
-        menuGeneral->addSeparator();
-        menuGeneral->addAction(sourceAction);
-    }
-
-}
 
 
 
@@ -1429,6 +1476,35 @@ void Canvas2D::zoom_Out(){
     setXYUnit();
     updatePixmap(true);
     this->repaint();
+
+}
+void Canvas2D::displayAxis(bool b){
+    xAxisParam.isVisible=b;
+    yAxisParam.isVisible=b;
+//    parent->updateValueInDisplayPanel();
+    updatePixmap(false);
+    repaint();
+
+
+}
+void Canvas2D::displayGrid(bool b){
+    gridParam.isVisible=b;
+ //   parent->updateValueInDisplayPanel();
+     updatePixmap(false);
+    repaint();
+}
+void Canvas2D::deleteObject(){}
+
+void Canvas2D::displayLegend(bool b){
+    focusOwner->setLegendVisible(b);
+//    parent->updateValueInDisplayPanel();
+     updatePixmap(false);
+     repaint();
+}
+void Canvas2D::displayObject(bool b){
+    focusOwner->setVisible(b);
+     updatePixmap(false);
+     repaint();
 
 }
 void Canvas2D::displaySource(){
@@ -1788,21 +1864,27 @@ bool lessThan(const MyItem* a, const MyItem*b){
     return a->getLevel()<b->getLevel();
 }
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
-    if (item->isPoint()){
+    QString s(item->getVar());
+    if (item->isPointElement()){
+        PointElement* pe=dynamic_cast<PointElement*>(item);
 
-//        int eval_save=evaluationLevel;
-  //      evaluationLevel=item->getLevel();
-        QString s(item->getVar());
-        gen g(s.append(commandFreePoint(p,0)).toStdString(),context);
-        QList<MyItem*> v;
-        addToVector(protecteval(g,1,context),v);
-
-        item->updateValueFrom(v.at(0));
+        s=(commands.at(item->getLevel())).command;
+        s.append("+");
+        s.append(pe->getTranslation(p));
+    }
+    else if (item->isPoint()){
+        s.append(commandFreePoint(p,0));
+    }
+    gen g(s.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+    item->updateValueFrom(v.at(0));
         delete v.at(0);
         if (item->hasChildren()){
             v.clear();
             refreshFromItem(item,v);
             qSort(v.begin(),v.end(),lessThan);
+
 
             for (int i=0;i<v.size();++i){
                 int level=v.at(i)->getLevel();
@@ -1822,6 +1904,8 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
                         // an intersection point already exists
                         if (children.size()>j){
                             children.at(j)->updateValueFrom(vv.at(j));
+                            // Update value tored in giac
+                            giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
                             delete vv.at(j);
                         }
                         // There are not enough points
@@ -1838,6 +1922,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
                      }
                     // All older points become undef
                     for (int j=vv.size();j<children.size();++j){
+                        giac::sto(giac::undef,giac::gen(QString(v.at(i)->getChildAt(j)->getVar()).toStdString(),context),context);
                         v.at(i)->getChildAt(j)->setUndef(true);
                     }
 
@@ -1847,7 +1932,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
         updatePixmap(false);
         parent->updateValueInDisplayPanel();
         repaint();
-    }
+
 }
 
 /**
@@ -1860,9 +1945,10 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
 void Canvas2D::refreshFromItem(MyItem * item,QList<MyItem*>& list){
     QVector<MyItem*> v=item->getChildren();
     for (int i=0;i<v.size();++i){
+//        qDebug()<<v.at(i)->getVar()<<v.at(i)->hasChildren();
         if (!list.contains(v.at(i))){
-            list.append(v.at(i));
-            if (v.at(i)->hasChildren() && (!v.at(i)->isInter())) refreshFromItem(v.at(i),list);
+            if (!item->isInter()) list.append(v.at(i));
+            if (v.at(i)->hasChildren()) refreshFromItem(v.at(i),list);
         }
     }
 }
@@ -1914,13 +2000,16 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
         return false;
     }
     break;
-    case OPEN_POLYGON:
+
     case SEGMENT:
     case LINE:
     case HALFLINE:
     case CIRCLE2PT:
     case CIRCLE3PT:
     case CIRCLE_RADIUS:
+    case VECTOR:
+    case BISECTOR:
+    case POLYGON:
         return item->isPoint();
     default:
         return true;
@@ -1941,8 +2030,10 @@ bool Canvas2D::checkForCompleteAction(){
         case INTER:
         case PARALLEL:
         case PERPENDICULAR:
+        case VECTOR:
         return (selectedItems.size()==2);
         case CIRCLE3PT:
+        case BISECTOR:
         return (selectedItems.size()==3);
         case CIRCLE_RADIUS:
         case SELECT:
@@ -1954,7 +2045,7 @@ bool Canvas2D::checkForCompleteAction(){
             else return false;
         }
         break;
-    case OPEN_POLYGON:{
+    case POLYGON:{
         int size=selectedItems.size();
         if (size>2){
             if (selectedItems.last()==selectedItems.at(size-2)) {
@@ -1985,7 +2076,7 @@ bool Canvas2D::checkForPointWaiting(){
     }
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
-            || (currentActionTool==OPEN_POLYGON));
+            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -1995,8 +2086,10 @@ bool Canvas2D::checkForOneMissingPoint(){
         case HALFLINE:
         case CIRCLE2PT:
         case PERPEN_BISECTOR:
+        case VECTOR:
         return (selectedItems.size()==1);
         case CIRCLE3PT:
+        case BISECTOR:
         return (selectedItems.size()==2);
         case PARALLEL:
         case PERPENDICULAR:
@@ -2005,7 +2098,7 @@ bool Canvas2D::checkForOneMissingPoint(){
                  ||selectedItems.at(0)->isVector()) return true;
         else  return false;
     }
-    case OPEN_POLYGON: {
+    case POLYGON: {
         if (selectedItems.size()>=1) return true;
         else return false;
     }
@@ -2045,7 +2138,7 @@ void Canvas2D::addNewPoint(const QPointF p){
    selectedItems.append(focusOwner);
    updatePixmap(false);
    // In case of open polygon, we have to redraw the preview before repaint (else itemPreview=0)
-   if (currentActionTool==OPEN_POLYGON) {
+   if (currentActionTool==POLYGON) {
        QString s=commandFreePoint(p,0);
        int id=s.indexOf(":=");
        s=s.mid(id+2,s.length()-id-3);
@@ -2303,6 +2396,126 @@ void Canvas2D::addMidpoint(){
     updatePixmap(false);
     repaint();
 }
+void Canvas2D::addBisector(const bool & onlyForPreview){
+    findFreeVar(varLine);
+    Command c;
+    c.attributes=0;
+    c.command=QString(varLine);
+    QString first(selectedItems.at(0)->getVar());
+    QString second(selectedItems.at(1)->getVar());
+    c.command.append(":=bisector(");
+    c.command.append(first);
+    c.command.append(",");
+    c.command.append(second);
+    c.command.append(",");
+    if (selectedItems.size()==2)
+        c.command.append(missingPoint);
+    else c.command.append(selectedItems.at(2)->getVar());
+    c.command.append(");");
+    evaluationLevel=commands.size();
+    // If preview, removes the beginning of the string
+    // Eg: "A:=circle(1+i,3);" becomes "circle(1+i,3);"
+    if (onlyForPreview){
+        int id=c.command.indexOf(":=");
+        c.command=c.command.mid(id+2,c.command.length()-id-2);
+    }
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+
+    if (onlyForPreview) {
+        if (v.at(0)->isUndef()) itemPreview=0;
+        else {
+            itemPreview=v.at(0);
+            itemPreview->updateScreenCoords(true);
+        }
+        return;
+    }
+    c.isCustom=false;
+    commands.append(c);
+
+    if (v.at(0)->isUndef()){
+        UndefItem* undef=new UndefItem(this);
+        undef->setVar(varLine);
+        filledItems.append(undef);
+        parent->addToTree(undef);
+        parent->updateAllCategories();
+        parent->selectInTree(undef);
+        return;
+    }
+    v.at(0)->updateScreenCoords(true);
+    v.at(0)->setVar(varLine);
+    lineItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    focusOwner=v.at(0);
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(false);
+    repaint();
+}
+void Canvas2D::addNewPointElement(const QPointF &pos){
+//    if (focusOwner->isLine()|| focusOwner->isHalfLine()){
+        findFreeVar(varPt);
+        Command newCommand;
+        QString s(varPt);        
+        s.append(":=element(");
+        s.append(focusOwner->getVar());
+        s.append(")");
+        gen g(s.toStdString(),context);
+        QList<MyItem*> v;
+        addToVector(protecteval(g,1,context),v);
+
+        PointElement* p=0;
+        Point* origin=dynamic_cast<Point*>(v.at(0));
+
+        if (origin !=0){
+            p=new PointElement(origin,this);
+//            qDebug()<<"origine"<<origin->x()<<origin->y();
+        }
+        delete origin;
+        if (p==0) return;
+        newCommand.command=s;
+        newCommand.attributes=0;
+        newCommand.isCustom=false;
+        commands.append(newCommand);
+
+        s.append("+");
+        s.append(p->getTranslation(pos));
+
+
+        evaluationLevel=commands.size()-1;
+        g=giac::gen(s.toStdString(),context);
+        v.clear();
+        addToVector(protecteval(g,1,context),v);
+
+
+        p->updateValueFrom(v.at(0));
+        p->setLevel(evaluationLevel);
+        p->setLegend(v.at(0)->getLegend());
+        p->updateScreenCoords(true);
+        p->setVar(varPt);
+        p->setMovable(true);
+
+
+        pointItems.append(p);
+        parent->addToTree(p);
+        focusOwner=p;
+        parent->updateAllCategories();
+        parent->selectInTree(focusOwner);
+        selectedItems.append(focusOwner);
+        updatePixmap(false);
+         repaint();
+
+
+ //   }
+
+
+
+
+}
 void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
 
 
@@ -2428,6 +2641,8 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         break;
         case HALFLINE: addNewLine("half_line",onlyForPreview);
         break;
+        case VECTOR: addNewLine("vector",onlyForPreview);
+        break;
         case PERPENDICULAR:
         case PARALLEL:{
         if ((!selectedItems.at(0)->isPoint())&&(!onlyForPreview)){
@@ -2446,7 +2661,9 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         case CIRCLE3PT:
         case CIRCLE_RADIUS: addNewCircle(onlyForPreview);
         break;
-        case OPEN_POLYGON: addNewPolygon(onlyForPreview);
+        case BISECTOR: addBisector(onlyForPreview);
+        break;
+        case POLYGON: addNewPolygon(onlyForPreview);
         break;
     default:{}
 
@@ -2522,7 +2739,19 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 if (selectionRight&& std::abs(r.width())>10&& std::abs(r.height())>10){
                     zoom_In();
                 }
-                else     menuGeneral->popup(this->mapToGlobal(e->pos()));
+                else  {
+                    if (focusOwner!=0){
+
+                        QString s=focusOwner->getType();
+                        s.append(" ");
+                        s.append(focusOwner->getVar());
+                        objectTitleAction->setText(s);
+                        displayObjectAction->setChecked(focusOwner->isVisible());
+                        displayLegendAction->setChecked(focusOwner->legendVisible());
+                        menuObject->popup(this->mapToGlobal(e->pos()));
+                    }
+                    else menuGeneral->popup(this->mapToGlobal(e->pos()));
+                }
 
                 selectionRight=false;
     }
@@ -2536,7 +2765,10 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
             // the segment is focused after creation, but unchecked for selection... and goes to selectedItems
             if (parent->isInteractive()){
                 // To improve (In most cases, the foolowing line is a  double check)
-                if (checkForValidAction(focusOwner)) selectedItems<<focusOwner;
+                if (checkForValidAction(focusOwner)) {
+                    selectedItems<<focusOwner;
+                    if (currentActionTool==SINGLEPT) addNewPointElement(e->posF());
+                }
 
 
                 if (checkForCompleteAction()){
@@ -2943,7 +3175,7 @@ void PanelProperties::updateValueInDisplayPanel(){
 DisplayProperties::DisplayProperties(Canvas2D *canvas):QTabWidget(canvas){
     parent=canvas;
     initGui();
-    listItems=new QList<MyItem*>;
+    listItems=0;
 }
 void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 
@@ -3004,6 +3236,7 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
     else alphaFillPanel->setVisible(false);
 }
 void DisplayProperties::updateValueInDisplayPanel(){
+    if (listItems==0) return;
     if (!listItems->isEmpty())
         valuePanel->setDisplayValue(listItems->at(0)->getDisplayValue());
         valuePanel->setGenValue(listItems->at(0)->getValue());

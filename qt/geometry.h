@@ -34,6 +34,7 @@ public:
   MyItem(Canvas2D*);
   virtual ~MyItem();
   virtual bool isPoint() const;
+  virtual bool isPointElement() const;
   virtual bool isLine() const;
   virtual bool isSegment() const;
   virtual bool isVector() const;
@@ -70,6 +71,13 @@ public:
   MyItem* getChildAt(const int&);
   bool hasChildren() const;
   void addChild(MyItem * );
+
+  QVector<MyItem*>  getParents();
+  MyItem* getParentAt(const int&);
+  bool hasParents() const;
+  void addParent(MyItem * );
+
+
   void setHighLighted(const bool& );
   void setLegendPos(const int &);
    giac::gen &getValue();
@@ -108,9 +116,11 @@ private:
   int level;
   QString var;
   QVector<MyItem*> children;
+  QVector<MyItem*> parents;
 };
 class Point:public MyItem{
 public:
+    Point(Canvas2D*);
     Point(const giac::gen &,Canvas2D *graph );
    virtual void updateValueFrom(MyItem *);
     virtual bool isPoint() const;
@@ -123,13 +133,25 @@ public:
     virtual int getPenWidth() const;
     virtual void setValue(const giac::gen & );
     virtual QString  getDisplayValue();
-
-
+protected:
+    double x,y;
 
 private:
     QRectF recSel;
-    double x,y;
     double xScreen,yScreen;
+
+    friend class PointElement;
+};
+class PointElement:public Point{
+public:
+    PointElement(Point*,Canvas2D *graph );
+    QPointF getOrigin() const;
+    void setorigin(const QPointF &);
+    QString getTranslation(const QPointF &);
+    virtual bool isPointElement() const;
+
+private:
+    QPointF origin;
 };
 
 class LineItem:public MyItem{

@@ -154,14 +154,20 @@ class GraphWidget:public OutputWidget{
     QAction* line;
     QAction* halfline;
     QAction* segment;
+    QAction *bisector;
+    QAction *perpen_bisector;
     QAction* vectorAc;
     QAction *parallel;
     QAction *perpendicular;
-    QAction *bisector;
-    QAction *perpen_bisector;
+    QAction *pointSymmetry;
+    QAction *reflection;
+    QAction *rotation;
+    QAction *translation;
+    QAction* homothety;
+    QAction* similarity;
+
     QAction* plotFunction;
     QAction* plotBezier;
-    QAction* openPolygon;
     QAction* regularPolygon;
     QAction* polygon;
     QAction* circle2pt;
@@ -216,8 +222,8 @@ struct AxisParam{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,VECTOR,PARALLEL,PERPENDICULAR,
-                BISECTOR,PERPEN_BISECTOR,PLOT_FUNCTION,PLOT_BEZIER,OPEN_POLYGON,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
+    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,PARALLEL,PERPENDICULAR,
+                REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
 
     struct Command{
         QString command;
@@ -304,11 +310,19 @@ private:
     action currentActionTool;
     QList<MyItem*> selectedItems;
 
+
     QMenu * menuGeneral;
     QAction* zoomIn;
     QAction* zoomOut;
     QAction* orthoAction;
+    QAction* axisAction;
+    QAction* gridAction;
     QAction* sourceAction;
+    QMenu* menuObject;
+    QAction* objectTitleAction;
+    QAction* displayObjectAction;
+    QAction* displayLegendAction;
+    QAction* deleteAction;
 
     GraphWidget *parent;
 
@@ -351,8 +365,9 @@ private:
     void addNewCircle(const bool&);
     void addNewPolygon(const bool&);
     void addMidpoint();
-
-    void addPerpenBisector(const bool &onlyForPreview);
+    void addBisector(const bool &);
+    void addPerpenBisector(const bool &);
+    void addNewPointElement(const QPointF &pos);
     void addInter();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
@@ -365,7 +380,12 @@ private slots:
     void zoom_In();
     void zoom_Out();
     void make_ortho();
+    void displayGrid(bool);
+    void displayAxis(bool);
     void displaySource();
+    void displayObject(bool);
+    void displayLegend(bool);
+    void deleteObject();
     //    void zoom_Factor(const int&);
 };
 

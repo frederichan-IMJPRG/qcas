@@ -82,8 +82,23 @@ QVector<MyItem*> MyItem::getChildren(){
 MyItem* MyItem::getChildAt(const int& id){
     return children.at(id);
 }
+bool MyItem::hasParents() const{
+    return !parents.isEmpty();
+}
+void MyItem::addParent(MyItem * item){
+    parents.append(item);
+}
+QVector<MyItem*> MyItem::getParents(){
+    return parents;
+}
+MyItem* MyItem::getParentAt(const int& id){
+    return parents.at(id);
+}
 
 bool MyItem::isPoint() const{
+    return false;
+}
+bool MyItem::isPointElement() const{
     return false;
 }
 bool MyItem::isLine() const{
@@ -394,6 +409,10 @@ QColor MyItem::getColor() const{
     int alpha=((color& 0x7000)>>12)*36; //(color&0x000f)*16;
     return QColor(r,g,b,alpha);
 }
+Point::Point(Canvas2D* graph):MyItem(graph){
+
+}
+
 Point::Point(const giac::gen & g,Canvas2D* graph):MyItem(graph){
     setValue(g);
 }
@@ -432,6 +451,7 @@ QString Point::getType() const{
     return QObject::tr("Point");
 }
 void Point::updateValueFrom(MyItem * item){
+
     if (item->isUndef()){
         value=giac::undef;
         undef=true;
@@ -1236,4 +1256,34 @@ void InterItem::draw(QPainter*) const{}
 bool InterItem::isInter() const{return true;}
 QString InterItem::getType() const{
     return QObject::tr("Intersection");
+}
+
+QPointF PointElement::getOrigin() const{
+    return origin;
+}
+void PointElement::setorigin(const QPointF & p){
+    origin=p;
+}
+PointElement::PointElement(Point *p, Canvas2D *graph ):Point(graph){
+    double a,b;
+    g2d->toScreenCoord(p->x,p->y,a,b);
+    origin=QPointF(a,b);
+//    qDebug()<<"origine"<<a<<b<<p->x<<p->y;
+
+}
+QString PointElement::getTranslation(const QPointF& p){
+    double a,b;
+    double xO,yO;
+    g2d->toScreenCoord(0,0,xO,yO);
+//    qDebug()<<"translation"<<p.x()<<p.y()<<origin.x()<<origin.y();
+//    qDebug()<<"translation"<<p.x()-origin.x()<<origin.y()-p.y()<<p.x()-origin.x()+xO<<p.y()-origin.y()+yO;
+    g2d->toXY(p.x()-origin.x()+xO,p.y()-origin.y()+yO,a,b);
+    QString s;
+    s.append(QString::number(a));
+    s.append("+i*");
+    s.append(QString::number(b));
+    return s;
+}
+bool PointElement::isPointElement() const{
+    return true;
 }

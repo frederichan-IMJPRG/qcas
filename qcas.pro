@@ -364,5 +364,9 @@ OTHER_FILES += \
     qt/images/openpolygon.png \
     qt/images/bot.png \
     qt/images/bisector.png \
-    qt/images/perpendicular.png
+    qt/images/perpendicular.png \
+    qt/images/move.png \
+    qt/images/translation.png \
+    qt/images/reflection.png \
+    qt/images/point-symmetry.png
 RESOURCES += qt/qcas.qrc
