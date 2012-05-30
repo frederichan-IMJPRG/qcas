@@ -363,7 +363,8 @@ private:
     void addNewPoint(const QPointF );
     void addNewLine(const QString &,const bool&);
     void addNewCircle(const bool&);
-    void addNewPolygon(const bool&);
+    void addNewPolygon(const bool&, const bool &iso=false);
+    void addTransformObject(const QString &);
     void addMidpoint();
     void addBisector(const bool &);
     void addPerpenBisector(const bool &);
@@ -686,9 +687,10 @@ private:
 };
 class RadiusDialog:public QDialog{
 public:
-    RadiusDialog(Canvas2D*);
+    RadiusDialog(Canvas2D*,const QString &);
     QLineEdit* editRadius;
 private:
+    QString type;
     void initGui();
     QPushButton* ok;
     QPushButton* cancel;

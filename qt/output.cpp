@@ -1979,7 +1979,6 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
         else return false;
     }
         break;
-
     case MIDPOINT:{
         if (item->isPoint()||item->isSegment()||item->isCircle()) return true;
         else return false;
@@ -2010,7 +2009,22 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
     case VECTOR:
     case BISECTOR:
     case POLYGON:
+    case REGULAR_POLYGON:
         return item->isPoint();
+    case TRANSLATION:{
+        if (selectedItems.isEmpty()) return item->isVector();
+        else return true;
+    }
+    case REFLECTION:{
+        if (selectedItems.isEmpty()) return (item->isLine()||item->isHalfLine()||item->isSegment());
+        else return true;
+    }
+    case POINT_SYMMETRY:{
+        if (selectedItems.isEmpty()) return (item->isPoint());
+        else return true;
+    }
+
+
     default:
         return true;
     }
@@ -2031,6 +2045,10 @@ bool Canvas2D::checkForCompleteAction(){
         case PARALLEL:
         case PERPENDICULAR:
         case VECTOR:
+        case REFLECTION:
+        case POINT_SYMMETRY:
+        case TRANSLATION:
+        case REGULAR_POLYGON:
         return (selectedItems.size()==2);
         case CIRCLE3PT:
         case BISECTOR:
@@ -2074,9 +2092,10 @@ bool Canvas2D::checkForPointWaiting(){
                  ||selectedItems.at(0)->isVector()) return true;
         else return false;
     }
+
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
-            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR));
+            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -2159,7 +2178,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
     // CIRCLE RADIUS
 
     if (selectedItems.size()==1 && !onlyForPreview){
-        RadiusDialog *dialog=new RadiusDialog(this);
+        RadiusDialog *dialog=new RadiusDialog(this,tr("Rayon:"));
         if (dialog->exec()){
             QString first(selectedItems.at(0)->getVar());
             commandTwoArgs("circle",first,dialog->editRadius->text(),c.command);
@@ -2298,12 +2317,14 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     updatePixmap(false);
     repaint();
 }
-void Canvas2D::addNewPolygon(const bool & onlyForPreview){
+void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso=false){
     findFreeVar(varLine);
     Command c;
     c.attributes=0;
     QString s(varLine);
-    s.append(":=open_polygon(");
+    if (iso) s.append(":=isopolygon(");
+    else if (selectedItems.at(0)==selectedItems.at(selectedItems.size()-1)) s.append(":=polygon(");
+    else  s.append(":=open_polygon(");
     for (int i=0;i<selectedItems.size();++i){
         s.append(selectedItems.at(i)->getVar());
         if (i!=selectedItems.size()-1) s.append(",");
@@ -2314,7 +2335,22 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview){
             s=s.mid(id+2,s.length()-2);
         }
     }
+    if (iso){
+        RadiusDialog* dialog=new RadiusDialog(this, tr("Nombre de côtés:"));
+        if (dialog->exec()){
+            s.append(",");
+            s.append(dialog->editRadius->text());
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+
+    }
+
     s.append(");");
+
     c.command=s;
     evaluationLevel=commands.size();
     gen g(c.command.toStdString(),context);
@@ -2456,6 +2492,65 @@ void Canvas2D::addBisector(const bool & onlyForPreview){
     updatePixmap(false);
     repaint();
 }
+void Canvas2D::addTransformObject(const QString & type){
+    QString s;
+    if (selectedItems.at(1)->isPoint()) {
+        findFreeVar(varPt);
+        s=varPt;
+    }
+    else {
+        findFreeVar(varLine);
+        s=varLine;
+    }
+    QString first(selectedItems.at(0)->getVar());
+    QString second(selectedItems.at(1)->getVar());
+    commandTwoArgs(type,first,second,s);
+    Command c;
+    c.attributes=0;
+    c.command=s;
+    evaluationLevel=commands.size();
+
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+
+    c.isCustom=false;
+    commands.append(c);
+
+    if (v.at(0)->isUndef()){
+        UndefItem* undef=new UndefItem(this);
+        undef->setVar(varLine);
+        filledItems.append(undef);
+        parent->addToTree(undef);
+        parent->updateAllCategories();
+        parent->selectInTree(undef);
+        return;
+    }
+    v.at(0)->updateScreenCoords(true);
+    if (selectedItems.at(1)->isPoint()) {
+        v.at(0)->setVar(varPt);
+        pointItems.append(v.at(0));
+    }
+    else {
+        v.at(0)->setVar(varLine);
+        lineItems.append(v.at(0));
+    }
+
+    parent->addToTree(v.at(0));
+    focusOwner=v.at(0);
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(false);
+    repaint();
+
+}
+
+
+
+
 void Canvas2D::addNewPointElement(const QPointF &pos){
 //    if (focusOwner->isLine()|| focusOwner->isHalfLine()){
         findFreeVar(varPt);
@@ -2664,6 +2759,13 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         case BISECTOR: addBisector(onlyForPreview);
         break;
         case POLYGON: addNewPolygon(onlyForPreview);
+        break;
+        case TRANSLATION: addTransformObject("translation");
+        break;
+        case POINT_SYMMETRY:
+        case REFLECTION: addTransformObject("reflection");
+        break;
+        case REGULAR_POLYGON: addNewPolygon(false,true);
         break;
     default:{}
 
@@ -4045,14 +4147,15 @@ void CoordsDialog::initGui(){
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
 }
-RadiusDialog::RadiusDialog(Canvas2D* p):QDialog (p){
+RadiusDialog::RadiusDialog(Canvas2D* p, const QString & t):QDialog (p){
+    type=t;
     initGui();
 }
 
 
 void RadiusDialog::initGui(){
     QGridLayout* grid=new QGridLayout(this);
-    QLabel* labelRadius=new QLabel(tr("Rayon:"),this);
+    QLabel* labelRadius=new QLabel(type,this);
     editRadius=new QLineEdit(this);
     ok=new QPushButton(tr("Ok"),this);
     cancel=new QPushButton(tr("Annuler"),this);
