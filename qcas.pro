@@ -370,5 +370,6 @@ OTHER_FILES += \
     qt/images/reflection.png \
     qt/images/point-symmetry.png \
     qt/images/arc3pt.png \
-    qt/images/rotation.png
+    qt/images/rotation.png \
+    qt/images/delete.png
 RESOURCES += qt/qcas.qrc
