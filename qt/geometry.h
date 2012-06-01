@@ -53,6 +53,9 @@ public:
   virtual QString getDisplayValue();
   bool isMovable() const;
   void setMovable(const bool &);
+  bool isFromInter() const;
+  void setFromInter(const bool &);
+
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
   virtual QString getType()const =0 ;
@@ -71,6 +74,7 @@ public:
   MyItem* getChildAt(const int&);
   bool hasChildren() const;
   void addChild(MyItem * );
+  void deleteChild(MyItem*);
 
   QVector<MyItem*>  getParents();
   MyItem* getParentAt(const int&);
@@ -111,7 +115,7 @@ protected:
   bool undef;
 
 private:
-
+  bool fromInter;
   bool movable;
   int level;
   QString var;

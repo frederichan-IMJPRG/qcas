@@ -29,6 +29,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QSpinBox>
+#include <QMessageBox>
 #include <QToolButton>
 #include <QButtonGroup>
 #include <QToolTip>
@@ -562,6 +563,11 @@ void GraphWidget::selectInTree(MyItem * item){
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
 }
+void GraphWidget::removeFromTree(MyItem * item){
+    propPanel->removeFromTree(item);
+}
+
+
 /**
   * clear all selected items in the tree
   */
@@ -1508,7 +1514,113 @@ void Canvas2D::displayGrid(bool b){
      updatePixmap(false);
     repaint();
 }
-void Canvas2D::deleteObject(){}
+bool lessThan(const MyItem* a, const MyItem*b){
+    return a->getLevel()<b->getLevel();
+}
+void Canvas2D::deleteObject(){
+    deleteObject(focusOwner);
+}
+void Canvas2D::deleteObject(MyItem * focus){
+    // Display warning about deleting objects
+    if (focus->hasChildren()){
+        int r=QMessageBox::warning(this,tr("Confirmation"),tr("Vous allez supprimer cet objet ainsi \n"
+                                            "que toutes ses dépendances. \n Voulez-vous poursuivre?"),QMessageBox::Yes|QMessageBox::Default,QMessageBox::Cancel|QMessageBox::Escape);
+        if (r!=QMessageBox::Yes) return;
+    }
+
+    int start=focus->getLevel();
+
+   // First, find if this item comes from an intersection
+    if (focus->isFromInter()){
+        for (int i=0;i<pointItems.size();++i){
+            MyItem * item=pointItems.at(i);
+            if (item->isInter()&&item->getChildren().contains(focus)){
+                // Only one child, we delete the intersection point too
+                if (item->getChildren().size()==1) {
+                        for (int i=0;i<start;++i){
+                            MyItem* tmp=commands.at(i).item;
+                            tmp->deleteChild(item);
+                        }
+                        pointItems.removeAt(pointItems.indexOf(item));
+//                        commands.removeAt(start);
+                        delete item;
+                 }
+                // Several childs, only delete this point
+                  else{
+
+                    item->deleteChild(focus);
+                }
+                break;
+                // End only one child
+            }
+        }
+    }
+
+
+    // Find all children and delete them
+    QList<MyItem*> v;
+
+    v.append(focus);
+    refreshFromItem(focus,v,true);
+    qSort(v.begin(),v.end(),lessThan);
+
+    for (int i=v.size()-1;i>=0;--i){
+        int level=v.at(i)->getLevel();
+        // First, disconnect object from all its potential parents
+        for (int j=0;j<level;++j){
+                MyItem* item=commands.at(j).item;
+                item->deleteChild(v.at(i));
+         }
+
+        // delete the command
+        if (!v.at(i)->isFromInter())
+            commands.removeAt(level);
+        // delete from tree
+        parent->removeFromTree(v.at(i));
+
+        //delete from pointItems, lineItems, vectorItems
+        if (v.at(i)->isPoint()){
+            int id=pointItems.indexOf(v.at(i));
+            if (id!=-1)  pointItems.removeAt(id);
+        }
+        else {
+            int id=lineItems.indexOf(v.at(i));
+            if (id!=-1)  lineItems.removeAt(id);
+            id=filledItems.indexOf(v.at(i));
+            if (id!=-1)  filledItems.removeAt(id);
+
+        }
+        // delete from giac memory
+
+        giac::_purge(gen(v.at(i)->getVar().toStdString(),context),context);
+
+        // And then delete the pointer
+        delete v.at(i);
+    }
+
+    // Finally, updates all level
+    for (int i=start;i<commands.size();++i){
+        MyItem *item=commands.at(i).item;
+        item->setLevel(i);
+        if (item->isInter()){
+            for (int j=0;j<item->getChildren().size();++j){
+                item->getChildAt(j)->setLevel(i);
+            }
+        }
+    }
+
+    selectedItems.clear();
+    focusOwner=0;
+    updatePixmap(false);
+    repaint();
+    varPt="A";
+    varLine="a";
+    findFreeVar(varPt);
+    findFreeVar(varLine);
+}
+
+
+
 
 void Canvas2D::displayLegend(bool b){
     focusOwner->setLegendVisible(b);
@@ -1860,7 +1972,19 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
     r.adjust(-2.5,-2.5,-2.5,-2.5);
 
     for(int i=0;i<v->size();i++){
-        if ((!v->at(i)->isUndef())&&v->at(i)->isUnderMouse(r)&& checkForValidAction(v->at(i))) {
+        if (v->at(i)->isInter()){
+            for (int j=0;j<v->at(i)->getChildren().size();j++){
+                MyItem* tmp=v->at(i)->getChildAt(j);
+                if ((!tmp->isUndef())&&(tmp->isUnderMouse(r))){
+                    if (focusOwner!=tmp){
+                        focusOwner=tmp;
+                        repaint();
+                    }
+                    return true;
+                }
+            }
+        }
+        else if ((!v->at(i)->isUndef())&&v->at(i)->isUnderMouse(r)&& checkForValidAction(v->at(i))) {
             if (focusOwner!=v->at(i)){
                 focusOwner=v->at(i);
                 repaint();
@@ -1875,9 +1999,6 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
 }
 
 
-bool lessThan(const MyItem* a, const MyItem*b){
-    return a->getLevel()<b->getLevel();
-}
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     QString s(item->getVar());
     if (item->isPointElement()){
@@ -1957,12 +2078,13 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
  *
  * Record int the list all the children from a root element.
  */
-void Canvas2D::refreshFromItem(MyItem * item,QList<MyItem*>& list){
+void Canvas2D::refreshFromItem(MyItem * item, QList<MyItem*>& list, bool evenInter){
     QVector<MyItem*> v=item->getChildren();
     for (int i=0;i<v.size();++i){
 //        qDebug()<<v.at(i)->getVar()<<v.at(i)->hasChildren();
         if (!list.contains(v.at(i))){
-            if (!item->isInter()) list.append(v.at(i));
+            if (evenInter) list.append(v.at(i));
+            else if (!item->isInter()) list.append(v.at(i));
             if (v.at(i)->hasChildren()) refreshFromItem(v.at(i),list);
         }
     }
@@ -2159,8 +2281,7 @@ void Canvas2D::addNewPoint(const QPointF p){
    newCommand.command=s;
    newCommand.attributes=0;
    newCommand.isCustom=false;
-   commands.append(newCommand);
-   evaluationLevel=commands.size()-1;
+   evaluationLevel=commands.size();
    gen g(s.toStdString(),context);
                //    qDebug()<<QString::fromStdString(g.print(context));
    QList<MyItem*> v;
@@ -2170,6 +2291,10 @@ void Canvas2D::addNewPoint(const QPointF p){
    v.at(0)->setVar(varPt);
    v.at(0)->setMovable(true);
    pointItems.append(v.at(0));
+   newCommand.item=v.at(0);
+   commands.append(newCommand);
+
+
    parent->addToTree(v.at(0));
    focusOwner=v.at(0);
    parent->updateAllCategories();
@@ -2255,6 +2380,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
         return;
     }
     c.isCustom=false;
+    c.item=v.at(0);
     commands.append(c);
 
     if (v.at(0)->isUndef()){
@@ -2315,6 +2441,7 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
         return;
     }
     c.isCustom=false;
+    c.item=v.at(0);
     commands.append(c);
 
     if (v.at(0)->isUndef()){
@@ -2337,7 +2464,7 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     updatePixmap(false);
     repaint();
 }
-void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso=false){
+void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso){
     findFreeVar(varLine);
     Command c;
     c.attributes=0;
@@ -2387,6 +2514,7 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso=false)
         return;
     }
     c.isCustom=false;
+    c.item=v.at(0);
     commands.append(c);
 
     if (v.at(0)->isUndef()){
@@ -2563,11 +2691,13 @@ void Canvas2D::addMidpoint(){
     newCommand.isCustom=false;
     newCommand.command=s;
 
-    commands.append(newCommand);
-    evaluationLevel=commands.size()-1;
+    evaluationLevel=commands.size();
     gen g(newCommand.command.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
+    newCommand.item=v.at(0);
+    commands.append(newCommand);
+
     selectedItems.at(0)->addChild(v.at(0));
     if (selectedItems.size()==2) selectedItems.at(1)->addChild(v.at(0));
     v.at(0)->setVar(varPt);
@@ -2616,6 +2746,7 @@ void Canvas2D::addBisector(const bool & onlyForPreview){
         return;
     }
     c.isCustom=false;
+    c.item=v.at(0);
     commands.append(c);
 
     if (v.at(0)->isUndef()){
@@ -2682,6 +2813,7 @@ void Canvas2D::addTransformObject(const QString & type){
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
 
+    c.item=v.at(0);
     c.isCustom=false;
     commands.append(c);
 
@@ -2743,17 +2875,18 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         newCommand.command=s;
         newCommand.attributes=0;
         newCommand.isCustom=false;
-        commands.append(newCommand);
 
         s.append("+");
         s.append(p->getTranslation(pos));
 
 
-        evaluationLevel=commands.size()-1;
+        evaluationLevel=commands.size();
         g=giac::gen(s.toStdString(),context);
         v.clear();
         addToVector(protecteval(g,1,context),v);
 
+        newCommand.item=v.at(0);
+        commands.append(newCommand);
 
         p->updateValueFrom(v.at(0));
         p->setLevel(evaluationLevel);
@@ -2818,6 +2951,7 @@ void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
         }
         return;
     }
+    newCommand.item=v.at(0);
     commands.append(newCommand);
     if (v.at(0)->isUndef()){
         UndefItem* undef=new UndefItem(this);
@@ -2858,19 +2992,23 @@ void Canvas2D::addInter(){
     s=s.right(s.length()-2);
     newCommand.isCustom=false;
     newCommand.command=s;
-    commands.append(newCommand);
-    evaluationLevel=commands.size()-1;
+    evaluationLevel=commands.size();
     gen g(newCommand.command.toStdString(),context);
     InterItem* inter=new InterItem(this);
     inter->setLevel(evaluationLevel);
+    newCommand.item=inter;
+    commands.append(newCommand);
+
     pointItems.append(inter);
     QList<MyItem*> v;
 
     addToVector(protecteval(g,1,context),v);
+
     for (int i=0;i<v.size();++i){
         findFreeVar(varPt);
         v.at(i)->setLegend(varPt);
         v.at(i)->setVar(varPt);
+        v.at(i)->setFromInter(true);
        giac::sto(giac::_point(v.at(i)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
         pointItems.append(v.at(i));
         v.at(i)->updateScreenCoords(true);
@@ -3226,8 +3364,29 @@ bool Canvas2D::checkForOnlyLines(const QList<MyItem *> *list) const{
     return true;
 
 }
+void Canvas2D::getDisplayCommands(QStringList & list){
+    QString tmp;
+    for (int i=0;i<commands.size();++i){
+        QString s=commands.at(i).command;
+        MyItem* item=commands.at(i).item;
+        if (item->isUndef()) continue;
+        if (item->isInter()){
+            tmp.clear();
+            for (int j=0;j<item->getChildren().size();++j){
+                if (!item->getChildAt(j)->isUndef()) {
+                    tmp.append(item->getChildAt(j)->getVar());
+                    tmp.append(",");
+                }
+            }
+            tmp.remove(tmp.length()-1,1);
+            tmp.append(":=");
+            s.prepend(tmp);
+        }
+        list.append(s);
+    }
+    return list;
 
-
+}
 PanelProperties::PanelProperties(Canvas2D* c){
     parent=c;
     initGui();
@@ -3383,7 +3542,13 @@ void PanelProperties::updateTree(){
 
 }
 
-
+void PanelProperties::removeFromTree(MyItem * item){
+    QTreeWidgetItem* treeWidgetItem=nodeLinks.key(item);
+    nodeLinks.remove(treeWidgetItem);
+    delete treeWidgetItem;
+    updateAllCategories();
+    tree->collapseAll();
+}
 QList<MyItem*> PanelProperties::getTreeSelectedItems(){
     QList<QTreeWidgetItem*> list=tree->selectedItems();
     QList<MyItem*> listItems=QList<MyItem*>();
@@ -3398,10 +3563,9 @@ QList<MyItem*> PanelProperties::getTreeSelectedItems(){
 }
 bool PanelProperties::updateCategory(QTreeWidgetItem* node,const int & id){
     if (tree->indexOfTopLevelItem(node)!=-1){
-
         if (node->childCount()>0) return true;
         else {
-            tree->removeItemWidget(node,0);
+            tree->takeTopLevelItem(tree->indexOfTopLevelItem(node));
             return false;
         }
     }
@@ -4265,10 +4429,7 @@ void SourceDialog::initGui(){
     listWidget=new QListWidget(this);
     QList<Canvas2D::Command> commands=parent->getCommands();
     QStringList list;
-    for (int i=0;i<commands.size();++i){
-        list.append(commands.at(i).command);
-    }
-
+    parent->getDisplayCommands(list);
     listWidget->addItems(list);
     listWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     deleteButton=new QPushButton(tr("Supprimer"),this);
@@ -4280,10 +4441,12 @@ void SourceDialog::initGui(){
 }
 void SourceDialog::updateCanvas(){
     int id=listWidget->currentRow();
-    delete listWidget->item(id);
-    parent->getCommands().removeAt(id);
-    parent->updatePixmap(true);
-    parent->repaint();
+    parent->deleteObject(parent->getCommands().at(id).item);
+    listWidget->clear();
+    QStringList list;
+    parent->getDisplayCommands(list);
+    listWidget->addItems(list);
+
 
 }
 CoordsDialog::CoordsDialog(Canvas2D* p):QDialog (p){

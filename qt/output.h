@@ -125,6 +125,7 @@ class GraphWidget:public OutputWidget{
     GraphWidget( giac::context*,bool );
     GraphWidget(const  giac::gen &, giac::context*,bool );
     QList<MyItem*> getTreeSelectedItems();
+    void removeFromTree(MyItem * );
     void clearSelection();
     bool isInteractive() const;
     void addToTree(MyItem*);
@@ -249,7 +250,7 @@ public:
     bool checkForOnlyPoints(const QList<MyItem *> *) const;
     bool checkForOnlyLines(const QList<MyItem *> *) const;
     bool checkForOnlyFillables(const QList<MyItem *> *) const;
-
+    void getDisplayCommands(QStringList & );
 
     // Getter & Setter
     bool isInteractive() const;
@@ -271,7 +272,7 @@ public:
     double getYmin() const;
     double getYmax() const;
     QList<Command>& getCommands();
-
+    void deleteObject(MyItem*);
 
 
 protected:
@@ -361,7 +362,7 @@ private:
     void incrementVariable(QString &);
     void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&, const int );
-    void refreshFromItem(MyItem *, QList<MyItem *> &);
+    void refreshFromItem(MyItem *, QList<MyItem *> &,bool evenInter=false);
     void addNewPoint(const QPointF );
     void addNewLine(const QString &,const bool&);
     void addNewCircle(const bool&);
@@ -397,6 +398,7 @@ class PanelProperties:public QWidget{
     Q_OBJECT
 public:
     PanelProperties(Canvas2D *);
+    void removeFromTree(MyItem * item);
     QList<MyItem*> getTreeSelectedItems();
     void clearSelection();
     void addToTree(MyItem* );

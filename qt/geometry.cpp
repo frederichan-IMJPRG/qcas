@@ -26,12 +26,13 @@ MyItem::MyItem(Canvas2D *graph){
     visible=true;
     highLighted=false;
     angleLegend=-1;
-//    value="";
+    fromInter=false;
     level=-1;
     movable=false;
     undef=false;
 }
 MyItem::~MyItem(){
+//    qDebug()<<var<<"MyItem deleted";
 
 }
 
@@ -67,9 +68,18 @@ void MyItem::setUndef(const bool& b){
 bool MyItem::isMovable() const {
     return movable;
 }
+
+
 void MyItem::setMovable(const bool & b){
     movable=b;
 }
+bool MyItem::isFromInter() const {
+    return fromInter;
+}
+void MyItem::setFromInter(const bool & b){
+    fromInter=b;
+}
+
 bool MyItem::hasChildren() const{
     return !children.isEmpty();
 }
@@ -81,6 +91,10 @@ QVector<MyItem*> MyItem::getChildren(){
 }
 MyItem* MyItem::getChildAt(const int& id){
     return children.at(id);
+}
+void MyItem::deleteChild(MyItem* item){
+    int index=children.indexOf(item);
+    if (index!=-1) children.remove(index);
 }
 bool MyItem::hasParents() const{
     return !parents.isEmpty();
@@ -1259,7 +1273,10 @@ QString UndefItem::getType() const{
     return QString(QObject::tr("undef"));
 }
 InterItem::InterItem( Canvas2D* p):MyItem(p){}
-bool InterItem::isUnderMouse(const QRectF& p) const{ return false;}
+bool InterItem::isUnderMouse(const QRectF& p) const{
+    return false;
+
+}
 void InterItem::updateScreenCoords(const bool){}
 void InterItem::draw(QPainter*) const{}
 bool InterItem::isInter() const{return true;}
