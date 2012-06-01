@@ -304,6 +304,9 @@ void GraphWidget::createToolBar(){
     pointSymmetry=new QAction(tr("Symétrie centrale"),buttonTool);
     pointSymmetry->setIcon(QIcon(":/images/point-symmetry.png"));
     pointSymmetry->setData(canvas->POINT_SYMMETRY);
+    rotation=new QAction(tr("Rotation"),buttonTool);
+    rotation->setIcon(QIcon(":/images/rotation.png"));
+    rotation->setData(canvas->ROTATION);
     translation=new QAction(tr("Translation"),buttonTool);
     translation->setIcon(QIcon(":/images/translation.png"));
     translation->setData(canvas->TRANSLATION);
@@ -335,6 +338,9 @@ void GraphWidget::createToolBar(){
     circle3pt=new QAction(tr("Cercle (3 points)"),buttonCircle);
     circle3pt->setIcon(QIcon(":/images/circle3pt.png"));
     circle3pt->setData(canvas->CIRCLE3PT);
+    arc3pt=new QAction(tr("Arc de cercle (3 points)"),buttonCircle);
+    arc3pt->setIcon(QIcon(":/images/arc3pt.png"));
+    arc3pt->setData(canvas->ARC3PT);
 
     // Set default actions
     buttonPointer->setProperty("myAction",canvas->SELECT);
@@ -367,6 +373,7 @@ void GraphWidget::createToolBar(){
     menuTool->addAction(perpendicular);
     menuTool->addAction(reflection);
     menuTool->addAction(pointSymmetry);
+    menuTool->addAction(rotation);
     menuTool->addAction(translation);
     menuTool->setStyle(new IconSize);
 
@@ -379,6 +386,7 @@ void GraphWidget::createToolBar(){
     menuCircle->addAction(circle2pt);
     menuCircle->addAction(circleRadius);
     menuCircle->addAction(circle3pt);
+    menuCircle->addAction(arc3pt);
     menuCircle->setStyle(new IconSize);
 
     const QSize size(40,40);
@@ -749,6 +757,13 @@ void Canvas2D::setActionTool(action a){
         //                    qDebug()<<QString::fromStdString(g.print(context));
                 QList<MyItem*> v;
                 addToVector(protecteval(g,1,context),v);
+                if (v.isEmpty()){
+                    giac::_purge(gen(varLine.toStdString(),context),context);
+
+                    return;
+                }
+
+
                 v.at(0)->setVar(varLine);
                 v.at(0)->updateScreenCoords(true);
                 lineItems.append(v.at(0));
@@ -924,7 +939,6 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               a1d=a2d;
               a2d=tmp;
             }
-
             QPointF c(evalf_double(re(centre,context),1,context)._DOUBLE_val, evalf_double(im(centre,context),1,context)._DOUBLE_val);
 
             Circle* circle=new Circle(c,diam._DOUBLE_val,angled+a1d,angled+a2d,this);
@@ -1243,9 +1257,10 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       }
 
       Curve *curve=new Curve(path,this);
+      // For a segment
      if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2)){
 
-           curve->setValue(giac::abs(save2-save,context));
+           curve->setValue(giac::_simplify(giac::abs(save2-save,context),context));
     }
        // no legend for segment
       else {
@@ -2005,6 +2020,7 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
     case HALFLINE:
     case CIRCLE2PT:
     case CIRCLE3PT:
+    case ARC3PT:
     case CIRCLE_RADIUS:
     case VECTOR:
     case BISECTOR:
@@ -2019,6 +2035,7 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
         if (selectedItems.isEmpty()) return (item->isLine()||item->isHalfLine()||item->isSegment());
         else return true;
     }
+    case ROTATION:
     case POINT_SYMMETRY:{
         if (selectedItems.isEmpty()) return (item->isPoint());
         else return true;
@@ -2048,9 +2065,11 @@ bool Canvas2D::checkForCompleteAction(){
         case REFLECTION:
         case POINT_SYMMETRY:
         case TRANSLATION:
+        case ROTATION:
         case REGULAR_POLYGON:
         return (selectedItems.size()==2);
         case CIRCLE3PT:
+        case ARC3PT:
         case BISECTOR:
         return (selectedItems.size()==3);
         case CIRCLE_RADIUS:
@@ -2095,7 +2114,7 @@ bool Canvas2D::checkForPointWaiting(){
 
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
-            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON));
+            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)||(currentActionTool==ARC3PT));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -2109,6 +2128,7 @@ bool Canvas2D::checkForOneMissingPoint(){
         return (selectedItems.size()==1);
         case CIRCLE3PT:
         case BISECTOR:
+        case ARC3PT:
         return (selectedItems.size()==2);
         case PARALLEL:
         case PERPENDICULAR:
@@ -2178,7 +2198,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
     // CIRCLE RADIUS
 
     if (selectedItems.size()==1 && !onlyForPreview){
-        RadiusDialog *dialog=new RadiusDialog(this,tr("Rayon:"));
+        OneArgDialog *dialog=new OneArgDialog(this,tr("Rayon:"));
         if (dialog->exec()){
             QString first(selectedItems.at(0)->getVar());
             commandTwoArgs("circle",first,dialog->editRadius->text(),c.command);
@@ -2336,7 +2356,7 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso=false)
         }
     }
     if (iso){
-        RadiusDialog* dialog=new RadiusDialog(this, tr("Nombre de côtés:"));
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Nombre de côtés:"));
         if (dialog->exec()){
             s.append(",");
             s.append(dialog->editRadius->text());
@@ -2393,7 +2413,135 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso=false)
 
 
 }
+void Canvas2D::addNewArc(const bool & onlyForPreview){
 
+    findFreeVar(varLine);
+    Command c;
+    c.attributes=0;
+    c.command=QString(varLine);
+
+
+    QString first(selectedItems.at(0)->getVar());
+    QString second(selectedItems.at(1)->getVar());
+    QString third;
+    if (onlyForPreview) third=missingPoint;
+    else third=selectedItems.at(2)->getVar();
+
+    QString test("is_collinear(");
+    test.append(first);
+    test.append(",");
+    test.append(second);
+    test.append(",");
+    test.append(third);
+    test.append("))");
+
+    gen g(test.toStdString(),context);
+    gen answer=protecteval(g,1,context);
+
+   // 3 points on a same line
+    if (answer==gen(1)) {
+        if (onlyForPreview) {
+            itemPreview=0;
+            return;
+        }
+        else {
+            UndefItem* undef=new UndefItem(this);
+            undef->setVar(varLine);
+            filledItems.append(undef);
+            parent->addToTree(undef);
+            parent->updateAllCategories();
+            parent->selectInTree(undef);
+            return;
+        }
+
+    }
+    test=QString("center(circumcircle(");
+    test.append(first);
+    test.append(",");
+    test.append(second);
+    test.append(",");
+    test.append(third);
+    test.append("))");
+
+    qDebug()<<QString::fromStdString(g.print(context));
+    g=gen(test.toStdString(),context);
+    answer=giac::_evalf(g,context);
+
+    qDebug()<<QString::fromStdString(answer.print(context));
+
+
+    c.command.append(":=arc(");
+    c.command.append(first);
+    c.command.append(",");
+    c.command.append(third);
+    c.command.append(",");
+    c.command.append("angle(center(circumcircle(");
+    c.command.append(first);
+    c.command.append(",");
+    c.command.append(second);
+    c.command.append(",");
+    c.command.append(third);
+    c.command.append(")),");
+    c.command.append(first);
+    c.command.append(",");
+    c.command.append(third);
+    c.command.append("));");
+    evaluationLevel=commands.size();
+
+    if (onlyForPreview){
+        int id=c.command.indexOf(":=");
+        c.command=c.command.mid(id+2,c.command.length()-id-2);
+    }
+  //  qDebug()<<c.command;
+
+    g=gen(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+
+
+    // Circumcircle exists
+    if (onlyForPreview) {
+        // Two points are equal, thus circumcircle is undef
+        if (v.size()==0) {
+            itemPreview=0;
+            return;
+
+        }
+
+
+        if (v.at(0)->isUndef()) itemPreview=0;
+        else {
+            itemPreview=v.at(0);
+            itemPreview->updateScreenCoords(true);
+        }
+        return;
+    }
+    c.isCustom=false;
+    commands.append(c);
+
+    if (v.at(0)->isUndef()){
+        UndefItem* undef=new UndefItem(this);
+        undef->setVar(varLine);
+        filledItems.append(undef);
+        parent->addToTree(undef);
+        parent->updateAllCategories();
+        parent->selectInTree(undef);
+        return;
+    }
+    v.at(0)->updateScreenCoords(true);
+    v.at(0)->setVar(varLine);
+    lineItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    focusOwner=v.at(0);
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(false);
+    repaint();
+
+}
 
 
 void Canvas2D::addMidpoint(){
@@ -2504,7 +2652,27 @@ void Canvas2D::addTransformObject(const QString & type){
     }
     QString first(selectedItems.at(0)->getVar());
     QString second(selectedItems.at(1)->getVar());
-    commandTwoArgs(type,first,second,s);
+
+    if (type=="rotation"){
+        s.append(":=rotation(");
+        s.append(first);
+        s.append(",");
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Angle:"));
+        if (dialog->exec()){
+            s.append(dialog->editRadius->text());
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+        s.append(",");
+        s.append(second);
+        s.append(");");
+    }
+    else{
+        commandTwoArgs(type,first,second,s);
+    }
     Command c;
     c.attributes=0;
     c.command=s;
@@ -2762,10 +2930,14 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         break;
         case TRANSLATION: addTransformObject("translation");
         break;
+        case ROTATION:  addTransformObject("rotation");
+        break;
         case POINT_SYMMETRY:
         case REFLECTION: addTransformObject("reflection");
         break;
         case REGULAR_POLYGON: addNewPolygon(false,true);
+        break;
+    case ARC3PT: addNewArc(onlyForPreview);
         break;
     default:{}
 
@@ -4147,13 +4319,13 @@ void CoordsDialog::initGui(){
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
 }
-RadiusDialog::RadiusDialog(Canvas2D* p, const QString & t):QDialog (p){
+OneArgDialog::OneArgDialog(Canvas2D* p, const QString & t):QDialog (p){
     type=t;
     initGui();
 }
 
 
-void RadiusDialog::initGui(){
+void OneArgDialog::initGui(){
     QGridLayout* grid=new QGridLayout(this);
     QLabel* labelRadius=new QLabel(type,this);
     editRadius=new QLineEdit(this);

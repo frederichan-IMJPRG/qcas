@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>images/add.png</file>
+        <file>images/arc3pt.png</file>
         <file>images/bezier.png</file>
         <file>images/bisector.png</file>
         <file>images/book.png</file>
@@ -47,6 +48,7 @@
         <file>images/line.png</file>
         <file>images/point-symmetry.png</file>
         <file>images/reflection.png</file>
+        <file>images/rotation.png</file>
         <file>images/segment.png</file>
         <file>images/halfline.png</file>
         <file>images/circle2pt.png</file>

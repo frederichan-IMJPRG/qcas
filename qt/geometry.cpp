@@ -920,8 +920,8 @@ void Curve::draw(QPainter *painter) const{
         color.setAlpha(100);
         width=3;
     }
-    // dirty fix for vector
-    if ((isFilled()&&isFillable()&&(!highLighted))||(isVector())){
+
+    if ((isFilled()&&isFillable()&&(!highLighted))){
         QColor f(color);
         f.setAlpha(255);
         painter->setBrush(QBrush(color,Qt::SolidPattern));
@@ -929,9 +929,15 @@ void Curve::draw(QPainter *painter) const{
         painter->drawPath(pathScreen);
     }
     else {
+        if (vector){
+            painter->setBrush(QBrush(color,Qt::SolidPattern));
+            painter->setPen(QPen(color,getPenWidth(),  Qt::SolidLine,Qt::FlatCap,Qt::MiterJoin));
+            painter->drawPath(pathArrow);
+        }
         painter->setPen(QPen(color,width,  Qt::SolidLine));
         painter->setBrush(QBrush(color,Qt::SolidPattern));
         painter->drawPath(envelop);
+
     }
 
 }
@@ -956,6 +962,8 @@ void Curve::updateScreenCoords(const bool compute){
             else pathScreen.lineTo(xtmp,ytmp);
         }
         if (vector){
+            pathArrow=QPainterPath();
+
             double x1=pathScreen.elementAt(0).x;
             double y1=pathScreen.elementAt(0).y;
 
@@ -969,9 +977,10 @@ void Curve::updateScreenCoords(const bool compute){
             QPointF second(x2+(x1-x2)*h/l+(y2-y1)*w/l,y2+(y1-y2)*h/l+(x1-x2)*w/l);
             QPointF third(x2+(x1-x2)*h/l-(y2-y1)*w/l,y2+(y1-y2)*h/l-(x1-x2)*w/l);
 
-            pathScreen.lineTo(second);
-            pathScreen.lineTo(third);
-            pathScreen.lineTo(x2,y2);
+            pathArrow.moveTo(x2,y2);
+            pathArrow.lineTo(second);
+            pathArrow.lineTo(third);
+            pathArrow.lineTo(x2,y2);
         }
     }
     int width=getPenWidth()+1;

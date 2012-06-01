@@ -230,6 +230,7 @@ private:
     QPainterPath pathScreen;
     QPainterPath path;
     QPainterPath envelop;
+    QPainterPath pathArrow;
 };
 
 

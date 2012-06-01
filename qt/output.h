@@ -173,6 +173,7 @@ class GraphWidget:public OutputWidget{
     QAction* circle2pt;
     QAction* circle3pt;
     QAction* circleRadius;
+    QAction* arc3pt;
 
 
     void initGui();
@@ -223,7 +224,8 @@ class Canvas2D:public QWidget{
     Q_OBJECT
 public:
     enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,PARALLEL,PERPENDICULAR,
-                REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS,CIRCLE3PT};
+                REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS
+                ,CIRCLE3PT,ARC3PT};
 
     struct Command{
         QString command;
@@ -364,6 +366,7 @@ private:
     void addNewLine(const QString &,const bool&);
     void addNewCircle(const bool&);
     void addNewPolygon(const bool&, const bool &iso=false);
+    void addNewArc(const bool&);
     void addTransformObject(const QString &);
     void addMidpoint();
     void addBisector(const bool &);
@@ -685,9 +688,9 @@ private:
     QPushButton* ok;
     QPushButton* cancel;
 };
-class RadiusDialog:public QDialog{
+class OneArgDialog:public QDialog{
 public:
-    RadiusDialog(Canvas2D*,const QString &);
+    OneArgDialog(Canvas2D*,const QString &);
     QLineEdit* editRadius;
 private:
     QString type;
