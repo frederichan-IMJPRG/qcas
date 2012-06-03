@@ -46,7 +46,7 @@ public:
   virtual bool isPixel() const;
   virtual bool isFillable() const;
   virtual bool isLegendItem() const;
-  virtual bool isUndef() const;
+  virtual bool isUndef() const; 
   void setUndef(const bool& );
   virtual void setValue(const giac::gen & ) ;
   virtual void updateValueFrom(MyItem*);
@@ -55,6 +55,8 @@ public:
   void setMovable(const bool &);
   bool isFromInter() const;
   void setFromInter(const bool &);
+  bool isTraceActive() const;
+  void setTraceActive(const bool &);
 
   virtual void draw(QPainter*) const =0 ;
   virtual void updateScreenCoords(const bool)=0;
@@ -116,6 +118,7 @@ protected:
 
 private:
   bool fromInter;
+  bool traceActive;
   bool movable;
   int level;
   QString var;

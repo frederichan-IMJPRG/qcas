@@ -33,6 +33,7 @@
 #include <QPoint>
 class QMenu;
 //class QLabel;
+class MainWindow;
 class QBoxLayout;
 class Line;
 class QComboBox;
@@ -122,18 +123,20 @@ class GraphWidget:public OutputWidget{
     Q_OBJECT
 
   public:
-    GraphWidget( giac::context*,bool );
+    GraphWidget(giac::context*, bool , MainWindow *main);
     GraphWidget(const  giac::gen &, giac::context*,bool );
     QList<MyItem*> getTreeSelectedItems();
     void removeFromTree(MyItem * );
     void clearSelection();
     bool isInteractive() const;
     void addToTree(MyItem*);
+    void renameInTree(MyItem * );
     void updateAllCategories();
     void updateValueInDisplayPanel();
     void selectInTree(MyItem *);
 
  private:
+    MainWindow* mainWindow;
     bool isInteractiveWidget;
     Canvas2D* canvas;
     PanelProperties * propPanel;
@@ -156,6 +159,7 @@ class GraphWidget:public OutputWidget{
     QAction* halfline;
     QAction* segment;
     QAction *bisector;
+    QAction *tangent;
     QAction *perpen_bisector;
     QAction* vectorAc;
     QAction *parallel;
@@ -224,7 +228,7 @@ struct AxisParam{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,PARALLEL,PERPENDICULAR,
+    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,TANGENT,PARALLEL,PERPENDICULAR,
                 REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS
                 ,CIRCLE3PT,ARC3PT};
 
@@ -326,6 +330,8 @@ private:
     QAction* displayObjectAction;
     QAction* displayLegendAction;
     QAction* deleteAction;
+    QAction* renameAction;
+    QAction* traceAction;
 
     GraphWidget *parent;
 
@@ -357,7 +363,7 @@ private:
 //    int findPolarInter(const double &,double & , double & , double &,double &);
     void drawElements(QList<MyItem *> &, QPainter*, const bool&);
     bool checkUnderMouse(QList<MyItem *> *v, const QPointF &);
-    bool checkForValidAction(const MyItem*);
+    bool checkForValidAction(MyItem *);
     void findFreeVar(QString &);
     void incrementVariable(QString &);
     void moveItem(MyItem*, const QPointF & );
@@ -379,7 +385,8 @@ private:
     bool checkForPointWaiting();
     bool checkForOneMissingPoint();
     void executeMyAction(bool );
-
+    void renameObject(MyItem*,const QString&);
+    int findItemFromVar(const QString&,QList<MyItem*>*);
 
 private slots:
     void zoom_In();
@@ -391,6 +398,8 @@ private slots:
     void displayObject(bool);
     void displayLegend(bool);
     void deleteObject();
+    void trace(bool);
+    void renameObject();
     //    void zoom_Factor(const int&);
 };
 
@@ -402,6 +411,8 @@ public:
     QList<MyItem*> getTreeSelectedItems();
     void clearSelection();
     void addToTree(MyItem* );
+    void renameInTree(MyItem * );
+
     void updateAllCategories();
     void selectInTree(MyItem * );
     void updateValueInDisplayPanel();

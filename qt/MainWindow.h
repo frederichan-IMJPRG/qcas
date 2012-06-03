@@ -65,6 +65,7 @@ class MainWindow :public QMainWindow {
     QToolButton* getStopButton() const;
     giac::context * getContext() const;
     void displayStopWarning();
+    void displayInStatusBar(const QString &,const QString&);
 
 
 protected:
@@ -92,6 +93,8 @@ private:
     enum{MaxRecentFiles=5};
     QAction* recentFileActions[MaxRecentFiles];
     QAction* separatorAction;
+    QLabel* labelStatus;
+
 
     QMenu *fileMenu;
     QMenu *editMenu;
@@ -126,8 +129,8 @@ private:
     MainTabWidget *tabPages;
     QPlainTextEdit* giacMessages;
     QToolBar* toolBar;
-    QLabel* warningFirstEvaluation;
-    QLabel* warningStop;
+//    QLabel* warningFirstEvaluation;
+//    QLabel* warningStop;
     CasManager* cas;
     TaskProperties taskProperties;
     CommandInfo* commandInfo;

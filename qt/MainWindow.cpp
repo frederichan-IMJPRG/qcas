@@ -470,8 +470,17 @@ void MainWindow::createGui(){
     vertSplit->setStretchFactor(0,1);
     vertSplit->setStretchFactor(1,8);
 
-    warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
-    warningFirstEvaluation->setAlignment(Qt::AlignRight);
+    labelStatus=new QLabel;
+    labelStatus->setAlignment(Qt::AlignRight);
+    labelStatus->setIndent(20);
+    labelStatus->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+    displayInStatusBar(tr("Shift+Entrée pour évaluer"),"red");
+    statusBar()->addWidget(labelStatus,1);
+    labelStatus->show();
+
+
+
+ /*   warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
     warningFirstEvaluation->setIndent(20);
     warningFirstEvaluation->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     statusBar()->addWidget(warningFirstEvaluation,1);
@@ -483,7 +492,7 @@ void MainWindow::createGui(){
     warningStop->setIndent(20);
     warningStop->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     warningStop->setParent(0);
-
+*/
 
     prefDialog=new PrefDialog(this);
     cas=new CasManager(this);
@@ -499,6 +508,10 @@ void MainWindow::printHeader(){
     }
 
 }
+void MainWindow::displayInStatusBar(const QString & text, const QString & color){
+    labelStatus->setText(QString("<b><font color=\"%1\">%2</font></b>").arg(color,text));
+}
+
 
 void MainWindow::displayGiacMessages(){
     printHeader();
@@ -643,11 +656,12 @@ void MainWindow::killThread(){
     cas->killThread();
 }
 void MainWindow::evaluate(const QString &formula){
-    if (warningFirstEvaluation!=NULL) {
+/*    if (warningFirstEvaluation!=NULL) {
         statusBar()->removeWidget(warningFirstEvaluation);
         delete warningFirstEvaluation;
         warningFirstEvaluation=NULL;
-    }
+    }*/
+    displayInStatusBar("","black");
 
     taskProperties.firstPrintMessage=true;
     taskProperties.currentSheet=tabPages->currentIndex();
@@ -744,14 +758,17 @@ CommandInfo* MainWindow::getCommandInfo()const{
 return commandInfo;
 }
 void MainWindow::displayStopWarning(){
-   statusBar()->addWidget(warningStop,1);
-   warningStop->show();
+
+        displayInStatusBar(tr("Tentative d'interruption..."),"red");
+//    statusBar()->addWidget(warningStop,1);
+//   warningStop->show();
 }
 void MainWindow::removeStopWarning(){
-    if (warningStop->parent()!=0){
+    displayInStatusBar("","black");
+/*    if (warningStop->parent()!=0){
        statusBar()->removeWidget(warningStop);
         warningStop->setParent(0);
-    }
+    }*/
 }
 void MainWindow::displayCrashWarning(){
     QMessageBox::warning(this,tr("Avertissement!"),tr("Risque de crash important lors de l'interruption requise."),QMessageBox::Ok,QMessageBox::NoButton);

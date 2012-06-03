@@ -30,6 +30,7 @@ MyItem::MyItem(Canvas2D *graph){
     level=-1;
     movable=false;
     undef=false;
+    traceActive=false;
 }
 MyItem::~MyItem(){
 //    qDebug()<<var<<"MyItem deleted";
@@ -78,6 +79,12 @@ bool MyItem::isFromInter() const {
 }
 void MyItem::setFromInter(const bool & b){
     fromInter=b;
+}
+bool MyItem::isTraceActive() const {
+    return traceActive;
+}
+void MyItem::setTraceActive(const bool & b){
+    traceActive=b;
 }
 
 bool MyItem::hasChildren() const{

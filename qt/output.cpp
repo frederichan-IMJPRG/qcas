@@ -43,6 +43,7 @@
 #include "gui/qtmmlwidget.h"
 #include "output.h"
 #include "vecteur.h"
+#include "MainWindow.h"
 #include "gui/plotfunctiondialog.h"
 using namespace giac;
 
@@ -161,7 +162,8 @@ void FormulaWidget::toXML(QDomElement& d){
 }
 
 
-GraphWidget::GraphWidget(giac::context * context,bool b){
+GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
+        mainWindow=main;
         isInteractiveWidget=b;
         canvas=new Canvas2D(this,context);
         canvas->updatePixmap(true);
@@ -253,103 +255,147 @@ void GraphWidget::createToolBar(){
     select=new QAction(tr("Sélection"),buttonPointer);
     select->setData(canvas->SELECT);
     select->setIcon(QIcon(":/images/select.png"));
+    select->setProperty("comment","");
     move=new QAction(tr("Déplacer"),buttonPointer);
     move->setData(canvas->MOVE);
     move->setIcon(QIcon(":/images/move.png"));
+    move->setProperty("comment","");
 
     // Point Actions
     singlept=new QAction(tr("Point"),buttonPt);
     singlept->setData(canvas->SINGLEPT);
     singlept->setIcon(QIcon(":/images/point.png"));
+    singlept->setProperty("comment","");
     inter=new QAction(tr("Intersection entre deux objets"),buttonPt);
     inter->setIcon(QIcon(":/images/inter.png"));
     inter->setData(canvas->INTER);
+    inter->setProperty("comment",tr("2 objets (points exclus)"));
     midpoint=new QAction(tr("Milieu ou centre"),buttonPt);
     midpoint->setIcon(QIcon(":/images/midpoint.png"));
     midpoint->setData(canvas->MIDPOINT);
+    midpoint->setProperty("comment",tr("Segment || Deux points||Cercle"));
     pointxy=new QAction(tr("Point repéré"),buttonPt);
     pointxy->setData(canvas->POINT_XY);
     pointxy->setIcon(QIcon(":/images/pointxy.png"));
-
+    pointxy->setProperty("comment","");
 
     // Line Actions
     line=new QAction(tr("Droite"),buttonLine);
     line->setIcon(QIcon(":/images/line.png"));
     line->setData(canvas->LINE);
+    line->setProperty("comment",tr("Deux points"));
     segment=new QAction(tr("Segment"),buttonLine);
     segment->setIcon(QIcon(":/images/segment.png"));
     segment->setData(canvas->SEGMENT);
+    segment->setProperty("comment",tr("Deux points"));
     halfline=new QAction(tr("Demie-droite"),buttonLine);
     halfline->setIcon(QIcon(":/images/halfline.png"));
     halfline->setData(canvas->HALFLINE);
+    halfline->setProperty("comment",tr("Deux points"));
     vectorAc=new QAction(tr("Vecteur"),buttonLine);
     vectorAc->setIcon(QIcon(":/images/vector.png"));
     vectorAc->setData(canvas->VECTOR);
+    vectorAc->setProperty("comment",tr("Origine puis extrémité"));
     perpen_bisector=new QAction(tr("Médiatrice d'un segment"),buttonLine);
     perpen_bisector->setIcon(QIcon(":/images/perpenbisector.png"));
     perpen_bisector->setData(canvas->PERPEN_BISECTOR);
+    perpen_bisector->setProperty("comment",tr("Segment || Deux points"));
     bisector=new QAction(tr("Bissectrice d'un angle"),buttonLine);
     bisector->setIcon(QIcon(":/images/bisector.png"));
     bisector->setData(canvas->BISECTOR);
+    bisector->setProperty("comment",tr("Sommet puis 2 points"));
+    tangent=new QAction(tr("Tangente à une courbe ou un cercle"),buttonLine);
+    tangent->setIcon(QIcon(":/images/tangent.png"));
+    tangent->setData(canvas->TANGENT);
+    tangent->setProperty("comment",tr("(Courbe|| Cercle) puis point de contact"));
+
 
     // Tool Actions
     parallel=new QAction(tr("Droite parallèle"),buttonTool);
     parallel->setIcon(QIcon(":/images/parallel.png"));
     parallel->setData(canvas->PARALLEL);
+    parallel->setProperty("comment",tr("Droite puis point"));
     perpendicular=new QAction(tr("Droite perpendiculaire"),buttonTool);
     perpendicular->setIcon(QIcon(":/images/perpendicular.png"));
     perpendicular->setData(canvas->PERPENDICULAR);
+    perpendicular->setProperty("comment",tr("Droite puis point"));
     reflection=new QAction(tr("Symétrie axiale"),buttonTool);
     reflection->setIcon(QIcon(":/images/reflection.png"));
     reflection->setData(canvas->REFLECTION);
+    reflection->setProperty("comment",tr("Droite puis objet"));
     pointSymmetry=new QAction(tr("Symétrie centrale"),buttonTool);
     pointSymmetry->setIcon(QIcon(":/images/point-symmetry.png"));
     pointSymmetry->setData(canvas->POINT_SYMMETRY);
+    pointSymmetry->setProperty("comment",tr("Centre puis objet"));
     rotation=new QAction(tr("Rotation"),buttonTool);
     rotation->setIcon(QIcon(":/images/rotation.png"));
     rotation->setData(canvas->ROTATION);
+    rotation->setProperty("comment",tr("Centre puis objet"));
     translation=new QAction(tr("Translation"),buttonTool);
     translation->setIcon(QIcon(":/images/translation.png"));
     translation->setData(canvas->TRANSLATION);
+    translation->setProperty("comment",tr("Vecteur puis objet"));
+    homothety=new QAction(tr("Homothétie"),buttonTool);
+    homothety->setIcon(QIcon(":/images/homothety.png"));
+    homothety->setData(canvas->HOMOTHETY);
+    homothety->setProperty("comment",tr("Centre puis objet"));
+    similarity=new QAction(tr("Similitude"),buttonTool);
+    similarity->setIcon(QIcon(":/images/similarity.png"));
+    similarity->setData(canvas->SIMILARITY);
+    similarity->setProperty("comment",tr("Centre puis objet"));
 
     // Plot and polygon actions
      plotFunction=new QAction(tr("Courbe représentative"),buttonPlot);;
      plotFunction->setData(canvas->PLOT_FUNCTION);
      plotFunction->setIcon(QIcon(":/images/function.png"));
+     plotFunction->setProperty("comment","");
      plotBezier=new QAction(tr("Courbe de Bézier"),buttonPlot);;
      plotBezier->setData(canvas->PLOT_BEZIER);
      plotBezier->setIcon(QIcon(":/images/bezier.png"));
+     plotBezier->setProperty("comment",tr("Points de contrôle puis deux fois le même point pour terminer"));
      polygon=new QAction(tr("Polygône/Ligne brisée"),buttonPlot);;
      polygon->setData(canvas->POLYGON);
      polygon->setIcon(QIcon(":/images/polygon.png"));
+     polygon->setProperty("comment",tr("Sommets puis deux fois le même point pour terminer"));
      regularPolygon=new QAction(tr("Polygône régulier"),buttonPlot);;
      regularPolygon->setData(canvas->REGULAR_POLYGON);
      regularPolygon->setIcon(QIcon(":/images/regularpolygon.png"));
-
-
-
+     regularPolygon->setProperty("comment",tr("Deux points"));
 
     // Circle Actions
     circle2pt=new QAction(tr("Cercle (centre-point)"),buttonCircle);
     circle2pt->setIcon(QIcon(":/images/circle2pt.png"));
     circle2pt->setData(canvas->CIRCLE2PT);
+    circle2pt->setProperty("comment","Centre puis point");
+
     circleRadius=new QAction(tr("Cercle (centre-rayon)"),buttonCircle);
     circleRadius->setIcon(QIcon(":/images/circleRadius.png"));
     circleRadius->setData(canvas->CIRCLE_RADIUS);
+    circleRadius->setProperty("comment","Centre");
+
     circle3pt=new QAction(tr("Cercle (3 points)"),buttonCircle);
     circle3pt->setIcon(QIcon(":/images/circle3pt.png"));
     circle3pt->setData(canvas->CIRCLE3PT);
+    circle3pt->setProperty("comment","Trois points");
+
     arc3pt=new QAction(tr("Arc de cercle (3 points)"),buttonCircle);
     arc3pt->setIcon(QIcon(":/images/arc3pt.png"));
     arc3pt->setData(canvas->ARC3PT);
+    arc3pt->setProperty("comment","Trois points");
 
     // Set default actions
     buttonPointer->setProperty("myAction",canvas->SELECT);
+    buttonPointer->setProperty("comment","");
     buttonPt->setProperty("myAction",canvas->SINGLEPT);
+    buttonPt->setProperty("comment","");
     buttonLine->setProperty("myAction",canvas->LINE);
+    buttonLine->setProperty("comment",tr("Deux points"));
     buttonTool->setProperty("myAction",canvas->PARALLEL);
+    buttonTool->setProperty("comment",tr("Droite puis point"));
     buttonPlot->setProperty("myAction",canvas->PLOT_FUNCTION);
+    buttonTool->setProperty("comment","");
     buttonCircle->setProperty("myAction",canvas->CIRCLE2PT);
+    buttonCircle->setProperty("comment",tr("Centre puis point"));
 
 
     menuPointer->addAction(select);
@@ -365,9 +411,10 @@ void GraphWidget::createToolBar(){
     menuLine->addAction(line);
     menuLine->addAction(segment);
     menuLine->addAction(halfline);
+    menuLine->addAction(vectorAc);
     menuLine->addAction(bisector);
     menuLine->addAction(perpen_bisector);
-    menuLine->addAction(vectorAc);
+    menuLine->addAction(tangent);
     menuLine->setStyle(new IconSize);
 
     menuTool->addAction(parallel);
@@ -376,6 +423,8 @@ void GraphWidget::createToolBar(){
     menuTool->addAction(pointSymmetry);
     menuTool->addAction(rotation);
     menuTool->addAction(translation);
+    menuTool->addAction(homothety);
+    menuTool->addAction(similarity);
     menuTool->setStyle(new IconSize);
 
     menuPlot->addAction(plotFunction);
@@ -508,7 +557,7 @@ void GraphWidget::createToolBar(){
 
 
 }
-/** When the user select a button, it propagates action to the canvas
+/** When the user clicks a button, it propagates action to the canvas
   *
   */
 void GraphWidget::selectAction(){
@@ -516,6 +565,8 @@ void GraphWidget::selectAction(){
     QToolButton* b=qobject_cast<QToolButton*>(sender());
     b->setChecked(true);
     canvas->setActionTool((Canvas2D::action)(b->property("myAction").toInt()));
+    mainWindow->displayInStatusBar(b->property("comment").toString(),"blue");
+
 }
 
 
@@ -531,6 +582,8 @@ void GraphWidget::selectButtonIcon(QAction * ac){
    b->setIcon(ac->icon());
 
    b->setProperty("myAction",ac->data().toInt());
+   b->setProperty("comment",ac->property("comment").toString());
+   mainWindow->displayInStatusBar(ac->property("comment").toString(),"blue");
 
    canvas->setActionTool((Canvas2D::action)ac->data().toInt());
 }
@@ -549,6 +602,10 @@ bool GraphWidget::isInteractive() const{
 
 void GraphWidget::addToTree(MyItem * item){
     propPanel->addToTree(item);
+}
+
+void GraphWidget::renameInTree(MyItem * item){
+    propPanel->renameInTree(item);
 }
 
 void GraphWidget::updateAllCategories(){
@@ -693,16 +750,29 @@ void Canvas2D::createMenuAction(){
     displayLegendAction->setCheckable(true);
     connect(displayLegendAction,SIGNAL(triggered(bool)),this,SLOT(displayLegend(bool)));
 
+    traceAction=new QAction(tr("Trace activée"),this);
+    traceAction->setCheckable(true);
+    traceAction->setChecked(false);
+    connect(traceAction,SIGNAL(triggered(bool)),this,SLOT(trace(bool)));
+
+
     deleteAction=new QAction(tr("Supprimer l'objet"),this);
     deleteAction->setIcon(QIcon(":/images/delete.png"));
     connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteObject()));
+
+    renameAction=new QAction(tr("Renommer l'objet"),this);
+    connect(renameAction,SIGNAL(triggered()),this,SLOT(renameObject()));
+
 
     menuObject=new QMenu(this);
     menuObject->addAction(objectTitleAction);
     menuObject->addSeparator();
     menuObject->addAction(displayObjectAction);
     menuObject->addAction(displayLegendAction);
+    menuObject->addAction(traceAction);
+    menuObject->addAction(renameAction);
     menuObject->addAction(deleteAction);
+
 
 }
 
@@ -1278,7 +1348,8 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       curve->setLegend(QString::fromStdString(the_legend));
       curve->setLevel(evaluationLevel);
       if (point.subtype==_VECTOR__VECT){
-              curve->setVector(true);              
+              curve->setVector(true);
+              curve->setValue(giac::_coordonnees(save2-save,context));
       }
       if (!isCurve&&path.elementCount()!=2){
           curve->setPolygon(true);
@@ -1517,6 +1588,123 @@ void Canvas2D::displayGrid(bool b){
 bool lessThan(const MyItem* a, const MyItem*b){
     return a->getLevel()<b->getLevel();
 }
+int Canvas2D::findItemFromVar(const QString& var,QList<MyItem*>* list){
+    for (int i=0;i<list->size();++i){
+        if (list->at(i)->getVar()==var) return i;
+    }
+    return -1;
+}
+
+
+void Canvas2D::renameObject(MyItem * item, const QString & var){
+    QString copy(var);
+    gen newName(var.toStdString(),context);
+    gen value=eval(newName,1,context);
+    // If the variable is already busy
+    if (value!=newName){
+        copy.append("1");
+        findFreeVar(copy);
+        int id=findItemFromVar(var,&pointItems);
+        if (id!=-1){
+            renameObject(pointItems.at(id),copy);
+        }
+        else {
+            id=findItemFromVar(var,&lineItems);
+            if (id!=-1){
+               renameObject(lineItems.at(id),copy);
+            }
+            else {
+                id=findItemFromVar(var,&filledItems);
+                if (id!=-1){
+                   renameObject(filledItems.at(id),copy);
+                }
+                else {
+                    QMessageBox::warning(this,tr("Impossible de renommer le point"),tr("Le nom de variable choisi est actuellement indisponible.\n"
+                                                          "La variable est déjà utilisée pour un objet externe à cette feuille de géométrie."),QMessageBox::Ok,QMessageBox::NoButton);
+                    return;
+                }
+            }
+        }
+
+      }
+    // modify all references in commands
+    Command c=commands.at(item->getLevel());
+    QString s(c.command);
+    int id=s.indexOf(":=");
+    if (id!=-1){
+        s=QString(var).append(s.right(s.length()-id));
+        c.command=s;
+        commands.replace(item->getLevel(),c);
+    }
+    for (int i=0;i<item->getChildren().size();++i){
+        int level=item->getChildAt(i)->getLevel();
+         c=commands.at(level);
+        s=c.command;
+        int id=s.indexOf("(");
+        if (id!=-1){
+            id=s.indexOf(item->getVar(),id);
+            while (id!=-1){
+                QChar c=s.at(id+item->getVar().length());
+                if (c==')'||c==',') {
+                    s.remove(id,item->getVar().length());
+                    s.insert(id,var);
+                }
+                id=s.indexOf(item->getVar(),id+var.length());
+
+            }
+           c.command=s;
+           commands.replace(item->getChildAt(i)->getLevel(),c);
+        }
+    }
+
+
+
+
+    // modify var in giac
+    gen oldName(item->getVar().toStdString(),context);
+    giac::sto(eval(oldName,1,context),newName,context);
+    giac::_purge(oldName,context);
+
+    // modify var and Legend
+    item->setVar(var);
+    item->setLegend(var);
+
+
+    // Initialize var to first available letter
+    if (item->isPoint()){
+        varPt="A";
+        findFreeVar(varPt);
+    }
+    else{
+        varLine="A";
+        findFreeVar(varLine);
+
+
+    }
+
+
+    parent->renameInTree(item);
+    updatePixmap(false);
+    repaint();
+
+
+}
+
+
+
+void Canvas2D::renameObject(){
+    OneArgDialog *dialog=new OneArgDialog(this,tr("Nouveau nom:"));
+    if (dialog->exec()){
+        renameObject(focusOwner,dialog->editRadius->text());
+
+    }
+    delete dialog;
+}
+void Canvas2D::trace(bool b) {
+
+
+}
+
 void Canvas2D::deleteObject(){
     deleteObject(focusOwner);
 }
@@ -1617,6 +1805,7 @@ void Canvas2D::deleteObject(MyItem * focus){
     varLine="a";
     findFreeVar(varPt);
     findFreeVar(varLine);
+    parent->updateValueInDisplayPanel();
 }
 
 
@@ -2103,7 +2292,7 @@ void Canvas2D::refreshFromItem(MyItem * item, QList<MyItem*>& list, bool evenInt
  * @return true if this item can be selected for the the current action tool
  * (Eg: If selected action tool is "Segment", it is waiting only for points. Then, we don't highlight circle for example.
  */
-bool Canvas2D::checkForValidAction(const MyItem * item){
+bool Canvas2D::checkForValidAction(MyItem * item){
     if (!parent->isInteractive()) return true;
     switch(currentActionTool){
     case  SINGLEPT:
@@ -2157,11 +2346,30 @@ bool Canvas2D::checkForValidAction(const MyItem * item){
         if (selectedItems.isEmpty()) return (item->isLine()||item->isHalfLine()||item->isSegment());
         else return true;
     }
+    case HOMOTHETY:
+    case SIMILARITY:
     case ROTATION:
     case POINT_SYMMETRY:{
         if (selectedItems.isEmpty()) return (item->isPoint());
         else return true;
     }
+    case TANGENT:{
+        if (selectedItems.isEmpty()) {
+            if (item->isCircle()) return true;
+            else if (item->isCurve()){
+                if (item->isSegment()||item->isVector()) return false;
+                Curve* c=dynamic_cast<Curve*>(item);
+                if (c->isPolygon()) return false;
+                return true;
+            }
+            else return false;
+        }
+        else {
+            return item->isPoint();
+        }
+    }
+        break;
+
 
 
     default:
@@ -2187,8 +2395,11 @@ bool Canvas2D::checkForCompleteAction(){
         case REFLECTION:
         case POINT_SYMMETRY:
         case TRANSLATION:
+        case HOMOTHETY:
+        case SIMILARITY:
         case ROTATION:
         case REGULAR_POLYGON:
+        case TANGENT:
         return (selectedItems.size()==2);
         case CIRCLE3PT:
         case ARC3PT:
@@ -2233,7 +2444,7 @@ bool Canvas2D::checkForPointWaiting(){
                  ||selectedItems.at(0)->isVector()) return true;
         else return false;
     }
-
+    if (currentActionTool==TANGENT&& selectedItems.size()==1) return true;
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
             || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)||(currentActionTool==ARC3PT));
@@ -2797,9 +3008,59 @@ void Canvas2D::addTransformObject(const QString & type){
             delete dialog;
             return;
         }
+        delete dialog;
         s.append(",");
         s.append(second);
         s.append(");");
+    }
+    else if (type=="homothety"){
+        s.append(":=homothety(");
+        s.append(first);
+        s.append(",");
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"));
+        if (dialog->exec()){
+            s.append(dialog->editRadius->text());
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+        delete dialog;
+        s.append(",");
+        s.append(second);
+        s.append(");");
+    }
+    else if (type=="similarity"){
+        s.append(":=similarity(");
+        s.append(first);
+        s.append(",");
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"));
+        if (dialog->exec()){
+            s.append(dialog->editRadius->text());
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+        delete dialog;
+        s.append(",");
+
+        dialog=new OneArgDialog(this, tr("Angle:"));
+        if (dialog->exec()){
+            s.append(dialog->editRadius->text());
+        }
+        else {
+            selectedItems.clear();
+            delete dialog;
+            return;
+        }
+        delete dialog;
+        s.append(",");
+        s.append(second);
+        s.append(");");
+
     }
     else{
         commandTwoArgs(type,first,second,s);
@@ -2894,7 +3155,7 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         p->updateScreenCoords(true);
         p->setVar(varPt);
         p->setMovable(true);
-
+        selectedItems.at(0)->addChild(p);
 
         pointItems.append(p);
         parent->addToTree(p);
@@ -3073,9 +3334,15 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         case POINT_SYMMETRY:
         case REFLECTION: addTransformObject("reflection");
         break;
+        case HOMOTHETY: addTransformObject("homothety");
+        break;
+        case SIMILARITY: addTransformObject("similarity");
+        break;
         case REGULAR_POLYGON: addNewPolygon(false,true);
         break;
-    case ARC3PT: addNewArc(onlyForPreview);
+        case ARC3PT: addNewArc(onlyForPreview);
+        break;
+        case TANGENT: //TODO
         break;
     default:{}
 
@@ -3160,6 +3427,12 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                         objectTitleAction->setText(s);
                         displayObjectAction->setChecked(focusOwner->isVisible());
                         displayLegendAction->setChecked(focusOwner->legendVisible());
+                        if (focusOwner->isPoint()){
+                            traceAction->setChecked(focusOwner->isTraceActive());
+                            traceAction->setVisible(true);
+                        }
+                        else traceAction->setVisible(false);
+
                         menuObject->popup(this->mapToGlobal(e->pos()));
                     }
                     else menuGeneral->popup(this->mapToGlobal(e->pos()));
@@ -3456,6 +3729,14 @@ void PanelProperties::initGui(){
     displayPanel->setMaximumWidth(tree->width());
     displayPanel->updateGeometry();
 }*/
+void PanelProperties::renameInTree(MyItem * item){
+    QTreeWidgetItem* treeItem=nodeLinks.key(item);
+    treeItem->setText(0,item->getLegend());
+    updateTree();
+}
+
+
+
 void PanelProperties::addToTree( MyItem * item){
     QTreeWidgetItem* treeItem=new QTreeWidgetItem;
 
@@ -3543,6 +3824,13 @@ void PanelProperties::updateTree(){
 }
 
 void PanelProperties::removeFromTree(MyItem * item){
+    // Remove from listItem (if it appears)
+    int id=displayPanel->getListItems()->indexOf(item);
+    if (id!=-1) displayPanel->getListItems()->removeAt(id);
+
+
+
+
     QTreeWidgetItem* treeWidgetItem=nodeLinks.key(item);
     nodeLinks.remove(treeWidgetItem);
     delete treeWidgetItem;
@@ -3675,7 +3963,8 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 }
 void DisplayProperties::updateValueInDisplayPanel(){
     if (listItems==0) return;
-    if (!listItems->isEmpty())
+    if (listItems->isEmpty()) {setVisible(false);return;}
+        if (!listItems->isEmpty())
         valuePanel->setDisplayValue(listItems->at(0)->getDisplayValue());
         valuePanel->setGenValue(listItems->at(0)->getValue());
         generalPanel->updateGeometry();
