@@ -1279,7 +1279,9 @@ bool UndefItem::isUndef() const{
 QString UndefItem::getType() const{
     return QString(QObject::tr("undef"));
 }
-InterItem::InterItem( Canvas2D* p):MyItem(p){}
+InterItem::InterItem(const bool &isTangent, Canvas2D* p):MyItem(p){
+tangent=isTangent;
+}
 bool InterItem::isUnderMouse(const QRectF& p) const{
     return false;
 
@@ -1288,7 +1290,8 @@ void InterItem::updateScreenCoords(const bool){}
 void InterItem::draw(QPainter*) const{}
 bool InterItem::isInter() const{return true;}
 QString InterItem::getType() const{
-    return QObject::tr("Intersection");
+    if (tangent) return QString("Tangente");
+    return QString("Intersection");
 }
 
 QPointF PointElement::getOrigin() const{

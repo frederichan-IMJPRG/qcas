@@ -180,6 +180,7 @@ namespace giac {
   gen _REDIM(const gen & args,GIAC_CONTEXT);
   gen _REPLACE(const gen & args,GIAC_CONTEXT);
   gen _EIGENVAL(const gen & args,GIAC_CONTEXT);
+  gen _EIGENVV(const gen & args,GIAC_CONTEXT);
   gen _SIZE(const gen& args,GIAC_CONTEXT);
   gen _INT(const gen & g,GIAC_CONTEXT);
   gen _HPDIFF(const gen & args,GIAC_CONTEXT);
@@ -193,8 +194,11 @@ namespace giac {
   gen _SPECRAD(const gen & args0,GIAC_CONTEXT);
   gen _SPECNORM(const gen & args0,GIAC_CONTEXT);
   gen _COND(const gen & args0,GIAC_CONTEXT);
+  gen _rank(const gen & args,GIAC_CONTEXT);
   gen _SCHUR(const gen & args,GIAC_CONTEXT);
   gen _LQ(const gen & args0,GIAC_CONTEXT);
+  gen _LU(const gen & args0,GIAC_CONTEXT);
+  gen _QR(const gen & args0,GIAC_CONTEXT);
   gen _XPON(const gen & g,GIAC_CONTEXT);
   gen _MANT(const gen & g,GIAC_CONTEXT);
   gen _HMSX(const gen & g0,GIAC_CONTEXT);
@@ -208,6 +212,16 @@ namespace giac {
 //  gen _RECURSE(const gen & args,GIAC_CONTEXT);
   gen _MAKEMAT(const gen & args,GIAC_CONTEXT);
   gen _LSQ(const gen & args,GIAC_CONTEXT);
+  gen _idivis(const gen & args0,GIAC_CONTEXT);
+  gen _isprime(const gen & args0,GIAC_CONTEXT);
+  gen _ithprime(const gen & args0,GIAC_CONTEXT);
+  gen _euler(const gen & args0,GIAC_CONTEXT);
+  gen _numer(const gen & args0,GIAC_CONTEXT);
+  gen _denom(const gen & args0,GIAC_CONTEXT);
+  gen _ifactors(const gen & args0,GIAC_CONTEXT);
+  gen _binomial_icdf(const gen & args0,GIAC_CONTEXT);
+  gen _poisson_icdf(const gen & args0,GIAC_CONTEXT);
+
   gen symb_RPN_LOCAL(const gen & a,const gen & b);
   gen symb_RPN_FOR(const gen & a,const gen & b);
   gen symb_RPN_WHILE(const gen & a,const gen & b);

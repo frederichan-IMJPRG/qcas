@@ -316,11 +316,14 @@ public:
 
 class InterItem:public MyItem{
 public:
-    InterItem( Canvas2D*);
+    InterItem(const bool &, Canvas2D*);
     virtual bool isUnderMouse(const QRectF& p) const;
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;
     virtual bool isInter() const;
     virtual QString getType() const;
+
+private:
+    bool tangent;
 };
 #endif // GEOMETRY_H

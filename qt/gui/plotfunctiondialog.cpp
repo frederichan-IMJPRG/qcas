@@ -102,6 +102,7 @@ void PlotFunctionDialog::initGui(){
     vbox->setSizeConstraint(QLayout::SetFixedSize);
     connect(ok,SIGNAL(clicked()),this,SLOT(closeDialog()));
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
+    editF->setFocus();
 }
 QString PlotFunctionDialog::getString()const{
     return command;

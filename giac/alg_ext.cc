@@ -715,6 +715,8 @@ namespace giac {
       return gendimerr(gettext("rootof"));
     if (has_num_coeff(e))
       return approx_rootof(e,contextptr);
+    if (!lop(lvar(e),at_pow).empty())
+      return gensizeerr(gettext("Algebraic extensions not allowed in a rootof"));
     // should call factor before returning unevaluated rootof
     return symbolic(at_rootof,e);
   }

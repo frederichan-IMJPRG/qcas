@@ -1943,8 +1943,13 @@ namespace giac {
       if (is_zero(directeur))
 	return gensizeerr(gettext("Parallel plans"));
       if (is_zero(directeur[2])){ // z is constant on the line
-	if (is_zero(directeur[1]))
-	  A=gen(vecteur(3),_POINT__VECT);
+	if (is_zero(directeur[1])){ // fix x=0 and solve for y and z
+	  gen sol=solve(makevecteur(subst(eq,x,0,false,contextptr),subst(eq1,x,0,false,contextptr)),makevecteur(y,z),0,contextptr);
+	  if (sol.type!=_VECT || sol._VECTptr->size()!=1)
+	    return gensizeerr(contextptr);
+	  sol=sol._VECTptr->front();
+	  A=gen(makevecteur(0,sol._VECTptr->front(),sol._VECTptr->back()),_POINT__VECT);
+	}
 	else {
 	  // fix y=0 for A, solve
 	  gen sol=solve(makevecteur(subst(eq,y,0,false,contextptr),subst(eq1,y,0,false,contextptr)),makevecteur(x,z),0,contextptr);
@@ -4270,6 +4275,12 @@ namespace giac {
 	gen a=(*sur._VECTptr)[i];
 	gen b=(*sur._VECTptr)[i+1];
 	gen c=projection(a,b,p,contextptr);
+	if (s>2){
+	  if (is_positive(-c,contextptr))
+	    c=0;
+	  if (is_positive(c-1,contextptr))
+	    c=1;
+	}
 	gen cur_proj=a+c*(b-a),cur_dist;
 	if (!is_undef(c) && (i==0 || is_strictly_greater(dist,(cur_dist=distance2pp(p,cur_proj,contextptr)),contextptr))){
 	  res=i?makevecteur(i,c):c;
@@ -7638,7 +7649,7 @@ namespace giac {
     if (is_undef(t))
       return vecteur(1,t);
     gen pr(t*a2+(1-t)*a1);
-    gen a_pr(pr-centre);
+    gen a_pr(recursive_normal(pr-centre,contextptr));
     gen delta(abs_norm(a_pr,contextptr));
     if (ck_is_strictly_greater(delta,rayon,contextptr))
       return vecteur(0);
@@ -12502,10 +12513,28 @@ namespace giac {
     gen e=remove_at_pnt(eval(v[0],contextptr));
     gen f=remove_at_pnt(eval(v[1],contextptr));
     gen g=eval(v[2],contextptr);
-    if (evalf_double(g,eval_level(contextptr),contextptr).type!=_DOUBLE_)
-      return gensizeerr(contextptr);
-    gen c=normal((e+f)/2+cst_i*(f-e)/(2*tan(g/2,contextptr)),contextptr);
-    gen diametre=gen(makevecteur(2*c-e,e),_GROUP__VECT);
+    gen c,diametre;
+    if (g.is_symb_of_sommet(at_pnt)){
+      g=remove_at_pnt(g);
+      gen tmp=_circonscrit(gen(makevecteur(e,f,g),_SEQ__VECT),contextptr),tmp2,r;
+      centre_rayon(tmp,c,r,false,contextptr);
+      tmp=arg((f-c)/(e-c),contextptr);
+      if (is_positive(tmp,contextptr))
+	tmp2=tmp-cst_two_pi;
+      else
+	tmp2=tmp+cst_two_pi;
+      r=arg((g-c)/(e-c),contextptr);
+      if (is_positive(tmp*r,contextptr)&& is_greater(tmp/r,1,contextptr))
+	g=tmp;
+      else
+	g=tmp2;
+    }
+    else {
+      if (evalf_double(g,eval_level(contextptr),contextptr).type!=_DOUBLE_)
+	return gensizeerr(contextptr);
+      c=normal((e+f)/2+cst_i*(f-e)/(2*tan(g/2,contextptr)),contextptr);
+    }
+    diametre=gen(makevecteur(2*c-e,e),_GROUP__VECT);
     gen res=pnt_attrib(symbolic(at_cercle,gen(makevecteur(diametre,zero,g),_PNT__VECT)),attributs,contextptr);
     gen h=abs_norm(c-e,contextptr);
     if (s==3)
@@ -13817,6 +13846,14 @@ namespace giac {
   static const char _inter_s []="inter";
   static define_unary_function_eval (__inter,&_inter,_inter_s);
   define_unary_function_ptr5( at_inter ,alias_at_inter,&__inter,0,true);
+
+  extern const unary_function_ptr * const  at_Bezier;
+  gen _Bezier(const gen & args,GIAC_CONTEXT){
+    return symbolic(at_Bezier,args);
+  }
+  static const char _Bezier_s []="Bezier";
+  static define_unary_function_eval (__Bezier,&_Bezier,_Bezier_s);
+  define_unary_function_ptr5( at_Bezier ,alias_at_Bezier,&__Bezier,0,true);
 
 #if defined(GIAC_GENERIC_CONSTANTS) || (defined(VISUALC) && !defined(RTOS_THREADX)) || defined(__x86_64__)
   unary_function_ptr plot_sommets[]={*at_pnt,*at_parameter,*at_cercle,*at_curve,*at_animation,0};

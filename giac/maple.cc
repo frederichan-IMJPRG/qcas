@@ -311,6 +311,12 @@ namespace giac {
     double delta;
     int ntimes=1,i=0;
     int level=eval_level(contextptr);
+#ifdef __APPLE__
+    unsigned u1=clock();
+    eval(a,level,contextptr);
+    u1=clock()-u1;
+    return double(u1)/CLOCKS_PER_SEC;
+#endif
 #ifdef GIAC_HAS_STO_38
     int t1=AspenGetNow(),t2;
 #endif
@@ -1755,7 +1761,7 @@ namespace giac {
       remains=e;
       return 0;
     }
-    gen a=r2e(Q/R,v,contextptr);
+    gen a=r2e(Q,v,contextptr)/r2e(R,v,contextptr);
     gen P0=r2e(P,v,contextptr);
     if (is_zero(P0))
       return 0;

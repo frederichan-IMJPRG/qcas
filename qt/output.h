@@ -379,7 +379,7 @@ private:
     void addBisector(const bool &);
     void addPerpenBisector(const bool &);
     void addNewPointElement(const QPointF &pos);
-    void addInter();
+    void addInter(const QString &);
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
     bool checkForPointWaiting();

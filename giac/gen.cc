@@ -5305,7 +5305,11 @@ namespace giac {
 	return base;
       if (is_squarematrix(base) && (exponent.type==_REAL || exponent.type==_DOUBLE_ || exponent.type==_FLOAT_))
 	return matpow(*base._VECTptr,exponent,contextptr);
-      if (base.type==_REAL || base.type==_DOUBLE_ || base.type==_FLOAT_ || ( (base.type<_POLY || base.type==_FLOAT_) && (exponent.type==_REAL || exponent.type==_DOUBLE_ || exponent.type==_FLOAT_)))
+      if (base.type==_REAL || base.type==_DOUBLE_ || 
+	  (base.type==_CPLX 
+	   // && base.subtype==3
+	   ) 
+	  || base.type==_FLOAT_ || ( (base.type<_POLY || base.type==_FLOAT_) && (exponent.type==_REAL || exponent.type==_DOUBLE_ || exponent.type==_FLOAT_)))
 	return exp(exponent*log(base,contextptr),contextptr);
       /* 
 	 if (base.is_symb_of_sommet(at_neg))
@@ -8588,7 +8592,7 @@ namespace giac {
   // hence a + A*amod = b + B*bmod
   // or A*amod -B*bmod = b - a
   gen ichinrem(const gen & a,const gen &b,const gen & amod, const gen & bmod){
-    if (a.type==_INT_ && b.type==_INT_ && amod.type==_INT_ && bmod.type==_INT_){
+    if (a.type==_INT_ && b.type==_INT_ && amod.type==_INT_ && bmod.type==_INT_ && gcd(amod.val,bmod.val)==1){
       int amodinv=invmod(amod.val,bmod.val);
       longlong res=a.val+((longlong(amodinv)*(b.val-a.val))%bmod.val)*amod.val;
       return res;

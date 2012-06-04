@@ -2946,6 +2946,10 @@ static define_unary_function_eval (__parabolic_interpolate,&_parabolic_interpola
   matrice effectifs(const vecteur & data,double class_minimum,double class_size,GIAC_CONTEXT){
     if (data.empty())
       return data;
+    if (class_size<=0){
+      *logptr(contextptr) << "Invalid class size (replaced by 1) " << class_size << endl;
+      class_size=1;
+    }
     vector<double>  w1;
     if (ckmatrix(data)){
       if (!data.empty() && data.front()._VECTptr->size()>1){

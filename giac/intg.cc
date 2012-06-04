@@ -1012,7 +1012,7 @@ namespace giac {
 	    identificateur id_m(" m");
 	    gen m(id_m);
 	    tmpe=eval(rdiv(complex_subst(e*sqrt(argument,contextptr),argument,pow(m+sqrta*gen_x,2),contextptr),b-plus_two*sqrta*m),1,contextptr);
-	    tmpe=complex_subst(tmpe,gen_x,rdiv(m*m-c,b-plus_two*sqrta*m),contextptr);
+	    tmpe=ratnormal(complex_subst(tmpe,gen_x,rdiv(m*m-c,b-plus_two*sqrta*m),contextptr));
 	    tmpres=linear_integrate(tmpe,m,tmprem,contextptr);
 	    remains_to_integrate=remains_to_integrate+complex_subst(plus_two*tmprem,m,sqrt(argument,contextptr)-sqrta*gen_x,contextptr);
 	    res= alpha+complex_subst(plus_two*tmpres,m,sqrt(argument,contextptr)-sqrta*gen_x,contextptr);

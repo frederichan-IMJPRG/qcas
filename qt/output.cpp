@@ -891,11 +891,15 @@ giac::context* Canvas2D::getContext() const{
 
 
 void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
+//    std::cout<<print(g,context)<<std::endl;
     if (giac::is_undef(g)) {
         scene.append(new UndefItem(this));
         return;
     }
     if (g.type==giac::_VECT){
+
+
+
       giac::vecteur & v =*g._VECTptr;
       const_iterateur it=v.begin(),itend=v.end();
       for (;it!=itend;++it){
@@ -972,6 +976,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       // f[1] -> style
       // f[2] optional=label
       gen point=f[0];
+
       if (point.type==_VECT && point.subtype==_POINT__VECT)
         return;
       bool isCurve=false;
@@ -1165,7 +1170,6 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
                scene.append(pt);
           }
 
-
 /*        Mon_image.findij(point,x_scale,y_scale,i0,j0,context);
         if (i0>0 && i0<mxw && j0>0 && j0<myw)
           fltk_point(deltax,deltay,round(i0),round(j0),epaisseur_point,type_point);
@@ -1245,7 +1249,9 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       ++jt;
 
       if (jt==jtend){
-       // if (i0>0 && i0<width && j0>0 && j0<myw)
+
+
+          // if (i0>0 && i0<width && j0>0 && j0<myw)
             Point* pt=new Point(save,this);
             pt->setAttributes(ensemble_attributs);
             pt->setLegend(QString::fromStdString(the_legend));
@@ -1277,7 +1283,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               line->setAttributes(ensemble_attributs);
               line->setLegend(QString::fromStdString(the_legend));
               line->setLevel(evaluationLevel);
-                scene.append(line);
+              scene.append(line);
           }
           else {
               HalfLineItem* line=new HalfLineItem(startPoint,endPoint,this);
@@ -2218,7 +2224,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
 
                 QList<MyItem*> vv;
                 addToVector(protecteval(g,1,context),vv);
-                // Not the particular case of an intersection point
+                // Not the particular case of an intersection point or tangent lines
                 if (!v.at(i)->isInter()){
                     v.at(i)->updateValueFrom(vv.at(0));
                     delete vv.at(0);
@@ -2229,8 +2235,10 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
                         // an intersection point already exists
                         if (children.size()>j){
                             children.at(j)->updateValueFrom(vv.at(j));
-                            // Update value tored in giac
-                            giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                            // Update value stored in giac
+                            if (v.at(i)->getType()=="Intersection")
+                                giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                            else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
                             delete vv.at(j);
                         }
                         // There are not enough points
@@ -2238,7 +2246,9 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
                             findFreeVar(varPt);
                             vv.at(j)->setLegend(varPt);
                             vv.at(j)->setVar(varPt);
-                            giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
+                            if (v.at(i)->getType()=="Intersection")
+                                giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
+                            else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
                             pointItems.append(vv.at(j));
                             v.at(j)->updateScreenCoords(true);
                             parent->addToTree(vv.at(j));
@@ -2640,7 +2650,10 @@ void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     evaluationLevel=commands.size();
     gen g(c.command.toStdString(),context);
     QList<MyItem*> v;
+
     addToVector(protecteval(g,1,context),v);
+
+
     if (onlyForPreview){
         if (v.at(0)->isUndef()){
             itemPreview=0;
@@ -2794,60 +2807,23 @@ void Canvas2D::addNewArc(const bool & onlyForPreview){
         }
 
     }
-    test=QString("center(circumcircle(");
-    test.append(first);
-    test.append(",");
-    test.append(second);
-    test.append(",");
-    test.append(third);
-    test.append("))");
-
-    qDebug()<<QString::fromStdString(g.print(context));
-    g=gen(test.toStdString(),context);
-    answer=giac::_evalf(g,context);
-
-    qDebug()<<QString::fromStdString(answer.print(context));
-
-
     c.command.append(":=arc(");
-    c.command.append(first);
-    c.command.append(",");
-    c.command.append(third);
-    c.command.append(",");
-    c.command.append("angle(center(circumcircle(");
     c.command.append(first);
     c.command.append(",");
     c.command.append(second);
     c.command.append(",");
     c.command.append(third);
-    c.command.append(")),");
-    c.command.append(first);
-    c.command.append(",");
-    c.command.append(third);
-    c.command.append("));");
+    c.command.append(");");
     evaluationLevel=commands.size();
 
     if (onlyForPreview){
         int id=c.command.indexOf(":=");
         c.command=c.command.mid(id+2,c.command.length()-id-2);
     }
-  //  qDebug()<<c.command;
-
     g=gen(c.command.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
-
-
-    // Circumcircle exists
     if (onlyForPreview) {
-        // Two points are equal, thus circumcircle is undef
-        if (v.size()==0) {
-            itemPreview=0;
-            return;
-
-        }
-
-
         if (v.at(0)->isUndef()) itemPreview=0;
         else {
             itemPreview=v.at(0);
@@ -3116,7 +3092,7 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
 //    if (focusOwner->isLine()|| focusOwner->isHalfLine()){
         findFreeVar(varPt);
         Command newCommand;
-        QString s(varPt);        
+        QString s(varPt);
         s.append(":=element(");
         s.append(focusOwner->getVar());
         s.append(")");
@@ -3126,7 +3102,6 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
 
         PointElement* p=0;
         Point* origin=dynamic_cast<Point*>(v.at(0));
-
         if (origin !=0){
             p=new PointElement(origin,this);
 //            qDebug()<<"origine"<<origin->x()<<origin->y();
@@ -3136,10 +3111,8 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         newCommand.command=s;
         newCommand.attributes=0;
         newCommand.isCustom=false;
-
         s.append("+");
         s.append(p->getTranslation(pos));
-
 
         evaluationLevel=commands.size();
         g=giac::gen(s.toStdString(),context);
@@ -3148,7 +3121,7 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
 
         newCommand.item=v.at(0);
         commands.append(newCommand);
-
+        p->setAttributes(0);
         p->updateValueFrom(v.at(0));
         p->setLevel(evaluationLevel);
         p->setLegend(v.at(0)->getLegend());
@@ -3244,34 +3217,53 @@ void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
 
 }
 
-void Canvas2D::addInter(){
+void Canvas2D::addInter(const QString & type){
     Command newCommand;
     newCommand.attributes=0;
     QString s;
-    commandTwoArgs(QString("inter"),selectedItems.at(0)->getVar(),
+    commandTwoArgs(type,selectedItems.at(0)->getVar(),
                 selectedItems.at(1)->getVar(),s);
     s=s.right(s.length()-2);
     newCommand.isCustom=false;
     newCommand.command=s;
     evaluationLevel=commands.size();
     gen g(newCommand.command.toStdString(),context);
-    InterItem* inter=new InterItem(this);
+    InterItem* inter=0;
+    if (type=="inter")
+        inter=new InterItem(false,this);
+    else inter=new InterItem(true,this);
     inter->setLevel(evaluationLevel);
     newCommand.item=inter;
     commands.append(newCommand);
+    // inter command
+    if (type=="inter")
+        pointItems.append(inter);
+    // tangent command
+    else lineItems.append(inter);
 
-    pointItems.append(inter);
     QList<MyItem*> v;
-
     addToVector(protecteval(g,1,context),v);
 
     for (int i=0;i<v.size();++i){
-        findFreeVar(varPt);
-        v.at(i)->setLegend(varPt);
-        v.at(i)->setVar(varPt);
+        if (type=="inter"){
+            findFreeVar(varPt);
+            v.at(i)->setLegend(varPt);
+            v.at(i)->setVar(varPt);
+            giac::sto(giac::_point(v.at(i)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
+        }
+        else{
+            findFreeVar(varLine);
+            v.at(i)->setLegend(varLine);
+            v.at(i)->setVar(varLine);
+
+
+            giac::sto(giac::_droite(v.at(i)->getValue(),context),giac::gen(QString(varLine).toStdString(),context),context);
+        }
         v.at(i)->setFromInter(true);
-       giac::sto(giac::_point(v.at(i)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
-        pointItems.append(v.at(i));
+        if (type=="inter")
+            pointItems.append(v.at(i));
+        else lineItems.append(v.at(i));
+
         v.at(i)->updateScreenCoords(true);
         parent->addToTree(v.at(i));
         selectedItems.append(v.at(i));
@@ -3291,7 +3283,7 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
     switch(currentActionTool){
         case SELECT: parent->selectInTree(focusOwner);
         break;
-        case INTER: addInter();
+        case INTER: addInter("inter");
         break;
         case PERPEN_BISECTOR: addPerpenBisector(onlyForPreview);
         break;
@@ -3342,7 +3334,7 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         break;
         case ARC3PT: addNewArc(onlyForPreview);
         break;
-        case TANGENT: //TODO
+    case TANGENT: addInter("tangent");
         break;
     default:{}
 
@@ -3490,6 +3482,7 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
     QPointF mousePos(e->posF());
     // try to move and object
     if (parent->isInteractive()&&focusOwner!=0&& selectionLeft){
+
         if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
         return;
     }

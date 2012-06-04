@@ -684,7 +684,7 @@ namespace giac {
 	    }
 	    else
 	      res=(*it->_FUNCptr)(pile,contextptr);
-	    if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
+	    if ( (res.type==_VECT) && (res.subtype==_RPN_STACK__VECT) )
 	      pile= *res._VECTptr;
 	    else
 	      pile= vecteur(1,res);
@@ -701,7 +701,7 @@ namespace giac {
 	  else
 	    pile=mergevecteur(pile,*it->_SYMBptr->feuille._VECTptr);
 	  gen res=it->_SYMBptr->sommet(pile,contextptr);
-	  if ( (res.type==_VECT) && (res.subtype=_RPN_STACK__VECT) )
+	  if ( (res.type==_VECT) && (res.subtype==_RPN_STACK__VECT) )
 	    pile= *res._VECTptr;
 	  else
 	    pile= vecteur(1,res);	  

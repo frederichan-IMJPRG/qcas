@@ -2615,14 +2615,21 @@ namespace giac {
 	return symb_remove(args);
     }
     gen f(args._VECTptr->front());
+    bool prog=f.is_symb_of_sommet(at_program);
     vecteur otherargs(args._VECTptr->begin()+1,args._VECTptr->end());
     const_iterateur it=v._VECTptr->begin(),itend=v._VECTptr->end();
     vecteur res;
     res.reserve(itend-it);
     if (otherargs.size()==1){
       for (;it!=itend;++it){
-	if (is_zero(f(*it,contextptr))!=selecting)
-	  res.push_back(*it);
+	if (prog){
+	  if (is_zero(f(*it,contextptr))!=selecting)
+	    res.push_back(*it);
+	}
+	else {
+	  if ((*it==f)==selecting )
+	    res.push_back(*it);
+	}
       }
     }
     else {

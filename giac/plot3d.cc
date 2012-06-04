@@ -122,6 +122,22 @@ namespace giac {
     if (s>1)
       v[1]=remove_at_pnt(v[1]);
     if (s==2){
+      if (v[0].type==_VECT && v[0]._VECTptr->size()==2 && v[1].type==_VECT && v[1]._VECTptr->size()==2){
+	// plane in space defined by 2 lines: must be parallel or secant
+	gen A=v[0]._VECTptr->front(),B=v[0]._VECTptr->back(),
+	  C=v[1]._VECTptr->front(),D=v[1]._VECTptr->back();
+	if (!check3dpoint(A) || !check3dpoint(B) || !check3dpoint(C) || !check3dpoint(D))
+	  return gensizeerr(contextptr);
+	vecteur v1(subvecteur(*B._VECTptr,*A._VECTptr));
+	vecteur v2(subvecteur(*D._VECTptr,*C._VECTptr));
+	gen M,N,coeff;
+	vecteur n;
+	if (est_parallele_vecteur(v1,v2,coeff,contextptr))
+	  return _plan(gen(makevecteur(A,B,C),_SEQ__VECT),contextptr);
+	if (perpendiculaire_commune(v[0],v[1],M,N,n,contextptr) && is_zero(M-N))
+	  return pnt_attrib(symbolic(at_hyperplan,gen(makevecteur(n,M),_SEQ__VECT)),attributs,contextptr);
+	return gensizeerr(contextptr);
+      }
       if (v[1].type==_VECT && v[1]._VECTptr->size()>=2){
 	s++;
 	v.push_back(v[1]._VECTptr->back());

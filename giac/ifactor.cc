@@ -1,13 +1,20 @@
 // -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c ifactor.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "giacPCH.h"
 #define GIAC_MPQS // define if you want to use giac for sieving (currently only 1 poly, maybe more later)
-#ifdef USE_GMP_REPLACEMENTS
+#ifdef RTOS_THREADX
 #define GIAC_ADDITIONAL_PRIMES 16// if defined, additional primes are used in sieve
 #else
 #define GIAC_ADDITIONAL_PRIMES 32// if defined, additional primes are used in sieve
 #endif
-// #define GIAC_RECIPROQUES // if defined % is done with multiplication
-#define MP_RADIX 4294967296.0
+
+// Thanks to Jason Papadopoulos, author of msieve
+#if defined(__GNUC__) && __GNUC__ >= 3
+	#define PREFETCH(addr) __builtin_prefetch(addr) 
+#elif defined(_MSC_VER) && _MSC_VER >= 1400
+	#define PREFETCH(addr) PreFetchCacheLine(PF_TEMPORAL_LEVEL_1, addr)
+#else
+	#define PREFETCH(addr) /* nothing */
+#endif
 
 #include "path.h"
 /*
@@ -155,7 +162,6 @@ namespace giac {
   const unsigned QS_SIZE=65536; // number of slicetype in a sieve slice
   typedef unsigned char slicetype; // define to unsigned char if not enough
 #endif
-  const unsigned char BITSHIFT=40; // shift so that we can safely use unsigned char for slicetype
 
   static void printbool(ostream & os,const vector<unsigned> & v,int C=1){
     if (C)
@@ -187,16 +193,56 @@ namespace giac {
     ptr2=tmp;
   }
 
+#ifdef __x86_64__
 #define GIAC_RREF_UNROLL 4
+#else
+#define GIAC_RREF_UNROLL 4
+#endif
 
-  void rref(vector< unsigned * > & m,int C32){
-    int i,l=0,c=0,L=m.size(),C=C32*32;
+  // #define RREF_SORT
+#ifdef RREF_SORT
+  struct line_t {
+    unsigned * tab;
+    unsigned count;
+  };
+
+  bool operator < (const line_t & l1,const line_t & l2){
+    if (!l1.count)
+      return false;
+    if (!l2.count)
+      return true;
+    return l1.count<l2.count;
+  }
+
+  unsigned count_ones(unsigned * tab,int C32){
+    register unsigned r=0;
+    register unsigned * tabend=tab+C32;
+    for (;tab!=tabend;++tab){
+      register unsigned u=*tab;
+      while (u){
+	r += u & 1;
+	u >>= 1;
+      }
+    }
+    return r;
+  }
+
+#else
+  struct line_t {
+    unsigned * tab;
+  };
+#endif
+  
+
+  // mode=0: full reduction, 1 subreduction, 2 finish full reduction from subreduction
+  void rref(vector< line_t > & m,int L,int C32,int mode){
+    int i,l=0,c=0,C=C32*32;
     for (;l<L && c<C;){
       // printbool(cerr,m);
       int c1=c/32,c2=c%32;
       // find first non-0 pivot in col c starting at row l
       for (i=l;i<L;++i){
-	if ((m[i][c1] >> c2) & 1)
+	if ((m[i].tab[c1] >> c2) & 1)
 	  break;
       }
       if (i==L){ // none found in this column
@@ -204,30 +250,46 @@ namespace giac {
 	continue;
       }
       if (i!=l) 
-	swap(m[i],m[l]);
-      for (i=0;i<L;++i){
-	if (i==l || ( (m[i][c1] >> c2) & 1)!=1) 
+	swap(m[i].tab,m[l].tab); // don't care about count...
+      int start=mode==1?l+1:0, end=mode==2?l:L;
+#ifdef __x86_64__
+      ulonglong * pivend, * pivbeg;
+      pivbeg = (ulonglong *) (m[l].tab+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL);
+      pivend = (ulonglong *) (m[l].tab+C32);
+#else
+      unsigned * pivbeg = m[l].tab+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL, * pivend = m[l].tab+C32;
+#endif
+      for (i=start;i<end;++i){
+	if (i==l || ( (m[i].tab[c1] >> c2) & 1)!=1) 
 	  continue;
 	// line combination l and i
-#if 1
-	ulonglong * pivptr = (ulonglong *) (m[l]+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL), * pivend = (ulonglong *) (m[l]+C32), * curptr=(ulonglong *) (m[i]+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL);
-	for (;pivptr!=pivend;){
+#ifdef __x86_64__
+	ulonglong * curptr=(ulonglong *) (m[i].tab+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL);
+	for (ulonglong * pivptr=pivbeg;pivptr!=pivend;curptr += GIAC_RREF_UNROLL/2,pivptr += GIAC_RREF_UNROLL/2){
 	  // small optimization (loop unroll), assumes mult of 4(*32) columns
+	  // PREFETCH(curptr+8);
 	  *curptr ^= *pivptr;
 	  curptr[1] ^= pivptr[1];
-	  curptr += GIAC_RREF_UNROLL/2;
-	  pivptr += GIAC_RREF_UNROLL/2;
+#if GIAC_RREF_UNROLL==8
+	  curptr[2] ^= pivptr[2];
+	  curptr[3] ^= pivptr[3];
+#endif
 	}
 #else
-	unsigned * pivptr = m[l]+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL, * pivend = m[l]+C32, * curptr=m[i]+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL;
-	for (;pivptr!=pivend;){
+	unsigned * curptr=m[i].tab+(c1/GIAC_RREF_UNROLL)*GIAC_RREF_UNROLL;
+	for (unsigned * pivptr=pivbeg;pivptr!=pivend;curptr += GIAC_RREF_UNROLL,pivptr += GIAC_RREF_UNROLL){
 	  // small optimization (loop unroll), assumes mult of 4(*32) columns
+	  // PREFETCH(curptr+16);
 	  *curptr ^= *pivptr;
 	  curptr[1] ^= pivptr[1];
 	  curptr[2] ^= pivptr[2];
 	  curptr[3] ^= pivptr[3];
-	  curptr += GIAC_RREF_UNROLL;
-	  pivptr += GIAC_RREF_UNROLL;
+#if GIAC_RREF_UNROLL==8
+	  curptr[4] ^= pivptr[4];
+	  curptr[5] ^= pivptr[5];
+	  curptr[6] ^= pivptr[6];
+	  curptr[7] ^= pivptr[7];
+#endif
 	}
 #endif
       }
@@ -245,6 +307,12 @@ namespace giac {
 
 #ifdef USE_GMP_REPLACEMENTS
   int modulo(const mpz_t & a,unsigned b){
+    if (mpz_cmp_ui(a,0)==-1){
+      mpz_neg(*(mpz_t *)&a,a);
+      int res=modulo(a,b);
+      mpz_neg(*(mpz_t *)&a,a);
+      return b-res;
+    }
     mp_digit C; 
     mp_mod_d((mp_int *)&a,b,&C);
     return C;
@@ -315,6 +383,35 @@ namespace giac {
 #endif
 #endif
 
+#ifndef RTOS_THREADX
+  // #define WITH_INVA
+#if defined(__APPLE__) || defined(__x86_64__)
+#define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
+  //  #define LP_SMALL_PRIMES
+#define LP_TAB_TOGETHER
+#define USE_MORE_PRIMES
+#else
+#define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
+#endif // APPLE or 64 bits
+#endif
+
+#ifdef LP_TAB_SIZE
+#define LP_MASK ((1<<LP_TAB_SIZE)-1)
+  struct lp_entry_t {
+    ushort_t pos;
+    ushort_t p;
+    lp_entry_t():p(0),pos(0) {};
+    lp_entry_t(ushort_t pos_,ushort_t p_):pos(pos_),p(p_) {};
+  };
+  typedef vector<lp_entry_t> lp_tab_t;
+#endif
+
+#ifdef LP_TAB_SIZE
+#define LP_BIT_LIMIT 15
+#else
+#define LP_BIT_LIMIT 15
+#endif
+
 #if GIAC_ADDITIONAL_PRIMES==16
   typedef unsigned short additional_t;
 #else
@@ -332,63 +429,6 @@ namespace giac {
     return 0;
   }
 
-  struct basis_t {
-    unsigned root1; // first root position in slice
-    unsigned root2; // second root position
-    ushort_t p; // the prime p
-    ushort_t inva; // inverse of a mod p
-    ushort_t sqrtmod;
-    basis_t():root1(0),root2(0),p(2),inva(0),sqrtmod(0) {}
-    basis_t(ushort_t _p):root1(0),root2(0),p(_p),inva(0),sqrtmod(0) {}
-    basis_t(ushort_t _p,ushort_t _sqrtmod):root1(0),root2(0),p(_p),inva(0),sqrtmod(_sqrtmod) {}
-  } ;
-
-  static inline void core_sieve(slicetype * slice,int ss,basis_t * bit,basis_t * bitend,int nbits0,int next)  {
-    register unsigned char nbits=nbits0;
-    for (;bit!=bitend;++bit){
-      register ushort_t p=bit->p;
-      if (p>next){
-	++nbits;
-#ifndef RTOS_THREADX
-	if (nbits==16)
-	  break;
-#endif
-	next *=2;
-      }
-      // first root is at bit->root1
-      register unsigned pos=bit->root1;
-      for (;pos<ss; pos += p){
-	slice[pos] -= nbits;
-      }
-      bit->root1 = pos-ss; // save for next slice
-      if (bit->inva){
-	// second root, if polynomial has 2 roots
-	pos=bit->root2;
-	for (;pos<ss;pos += p){
-	  slice[pos] -= nbits;
-	}
-      }
-      bit->root2 = pos-ss;
-    }
-#ifndef RTOS_THREADX
-    for (;bit!=bitend;++bit){
-      // same as above but we are sieving with primes >2^15, no need to check for nbits increase
-      register ushort_t p=bit->p;
-      register unsigned pos=bit->root1;
-      for (;pos<ss; pos += p){
-	slice[pos] -= nbits;
-      }
-      bit->root1 = pos-ss; // save for next slice
-      // if (sameroot) continue;
-      pos=bit->root2;
-      for (;pos<ss;pos += p){
-	slice[pos] -= nbits;
-      }
-      bit->root2 = pos-ss;
-    }
-#endif
-  }
-
   static inline unsigned sizeinbase2(unsigned n){
     unsigned i=0;
     for (;n;++i){
@@ -397,11 +437,160 @@ namespace giac {
     return i;
   }
 
+  // #define SQRTMOD_OUTSIDE
+#define WITH_LOGP // if defined primes should not exceed 2^24 (perhaps 2^25, choice of sqrt)
+
+  struct small_basis_t {
+    unsigned short root1;
+    unsigned short root2;
+    unsigned short p;
+    unsigned short logp;
+  };
+
+  struct basis_t {
+    unsigned root1; // first root position in slice
+    unsigned root2; // second root position
+    ushort_t p; // the prime p
+#ifndef SQRTMOD_OUTSIDE
+    ushort_t sqrtmod:24;
+#endif
+#ifdef WITH_LOGP
+    unsigned char logp:8; // could be unsigned char
+#endif
+#ifdef SQRTMOD_OUTSIDE
+    basis_t():root1(0),root2(0),p(2) {
+#ifdef WITH_LOGP
+      logp=sizeinbase2(p);
+#endif
+    }
+    basis_t(ushort_t _p):root1(0),root2(0),p(_p) {
+#ifdef WITH_LOGP
+      logp=sizeinbase2(p);
+#endif
+    }
+#else // SQRTMOD_OUTSIDE
+    basis_t():root1(0),root2(0),p(2),sqrtmod(0) {
+#ifdef WITH_LOGP
+      logp=sizeinbase2(p);
+#endif
+    }
+    basis_t(ushort_t _p):root1(0),root2(0),p(_p),sqrtmod(0) {
+#ifdef WITH_LOGP
+      logp=sizeinbase2(p);
+#endif
+    }
+    basis_t(ushort_t _p,ushort_t _sqrtmod):root1(0),root2(0),p(_p),sqrtmod(_sqrtmod) {
+#ifdef WITH_LOGP
+      logp=sizeinbase2(p);
+#endif
+}
+#endif // SQRTMOD_OUTSIDE
+  } ;
+
+#ifdef LP_SMALL_PRIMES 
+  static inline void core_sieve(slicetype * slice,small_basis_t * bit,small_basis_t * bitend)  {
+    for (;bit!=bitend;++bit){
+      // first root is at bit->root1
+      register unsigned p=bit->p;
+      register unsigned char nbits=bit->logp;
+      register unsigned pos=bit->root1,pos2=bit->root2;
+      if (pos==pos2){
+	for (;pos<32768; pos += p){
+	  slice[pos] -= nbits;
+	}
+	bit->root2=bit->root1 = pos-32768; // save for next slice
+      }
+      else {
+	for (;pos<32768; pos += p){
+	  slice[pos] -= nbits;
+	}
+	bit->root1 = pos-32768; // save for next slice
+	// second root, polynomial has 2 distinct roots
+	for (;pos2<32768;pos2 += p){
+	  slice[pos2] -= nbits;
+	}
+	bit->root2 = pos2-32768;
+      }
+    }
+  }
+
+#else // LP_SMALL_PRIMES
+
+#ifdef LP_TAB_SIZE
+#define SLICEEND (1<<LP_TAB_SIZE)
+#else
+#define SLICEEND ss
+#endif
+
+  // return position of last prime sieved (useful when large prime hashtable is enabled
+  static inline basis_t * core_sieve(slicetype * slice,int ss,basis_t * bit,basis_t * bitend)  {
+    register unsigned char nbits=sizeinbase2(bit->p);
+    int next=1 << nbits;
+    for (;bit!=bitend;++bit){
+      // first root is at bit->root1
+      register ushort_t p=bit->p;
+#ifdef WITH_LOGP
+      nbits=bit->logp;
+#else
+      if (p>next){
+	++nbits;
+#ifndef RTOS_THREADX
+	if (nbits==LP_BIT_LIMIT+1)
+	  break;
+#endif
+	next *=2;
+      }
+#endif
+      register unsigned pos=bit->root1,pos2=bit->root2;
+      if (pos==pos2){
+	for (;pos<SLICEEND; pos += p){
+	  slice[pos] -= nbits;
+	}
+	bit->root2=bit->root1 = pos-SLICEEND; // save for next slice
+      }
+      else {
+	for (;pos<SLICEEND; pos += p){
+	  slice[pos] -= nbits;
+	}
+	bit->root1 = pos-SLICEEND; // save for next slice
+	// second root, polynomial has 2 distinct roots
+	for (;pos2<SLICEEND;pos2 += p){
+	  slice[pos2] -= nbits;
+	}
+	bit->root2 = pos2-SLICEEND;
+      }
+    }
+#ifndef RTOS_THREADX
+#ifndef LP_TAB_SIZE
+    for (;bit!=bitend;++bit){
+      // same as above but we are sieving with primes >2^15, no need to check for nbits increase
+      register ushort_t p=bit->p;
+      register unsigned pos=bit->root1;
+      for (;pos<ss; pos += p){
+	slice[pos] -= LP_BIT_LIMIT+1;
+      }
+      bit->root1 = pos-ss; // save for next slice
+      // if (sameroot) continue;
+      pos=bit->root2;
+      for (;pos<ss;pos += p){
+	slice[pos] -= LP_BIT_LIMIT+1;
+      }
+      bit->root2 = pos-ss;
+    }
+#endif
+#endif
+    return bit;
+  }
+#endif // LP_SMALL_PRIMES
+
   // sieve in [sqrtN+shift,sqrtN+shift+slice.size()-1]
   // return -1 if memory problem, or the number of relations
   int msieve(const gen & a,const vecteur & sqrtavals,
 	     const vecteur &bvals,const mpz_t& c,
-	     vector<basis_t> & basis,
+	     vector<basis_t> & basis,unsigned lp_basis_pos,
+#ifdef LP_SMALL_PRIMES
+	     vector<small_basis_t> & small_basis,
+#endif
 	     unsigned maxadditional,
 #ifdef ADDITIONAL_PRIMES_HASHMAP
 	     additional_map_t & additional_primes_map,
@@ -409,17 +598,19 @@ namespace giac {
 	     vector<additional_t> & additional_primes,vector<bool> & additional_primes_twice,
 #endif
 	     const gen & N,const gen & isqrtN,
-	     slicetype * slice,int shift,
+	     slicetype * slice,int ss,int shift,
 	     ushort_t * puissancesbegin,ushort_t* & puissancesptr,ushort_t * puissancesend,    
 	     vector<ushort_t> & curpuissances,vector<ushort_t> &recheck,
 	     vector<axbinv> & axbmodn,
 	     mpz_t & z1,mpz_t & z2,mpz_t & z3,mpz_t & alloc1,mpz_t & alloc2,mpz_t & alloc3,mpz_t & alloc4,mpz_t & alloc5,
+#ifdef LP_TAB_SIZE
+	     const lp_tab_t & lp_tab,
+#endif
 	     GIAC_CONTEXT){
     int nrelations=0;
     // first fill slice with expected number of bits of 
     // (isqrtN+shift)^2-N = 2*shift*isqrtN + negl.
     // -> log(2*isqrtN)+log(shift)
-    int ss=QS_SIZE; // slice.size();
     int shiftss=absint(shift+ss),absshift=absint(shift);
     int nbits=mpz_sizeinbase(*isqrtN._ZINTptr,2)+sizeinbase2(absshift>shiftss?absshift:shiftss);
     // int nbits1=int(0.5+std::log(evalf_double(isqrtN,1,context0)._DOUBLE_val/2.*(absshift>shiftss?absshift:shiftss))/std::log(2.));
@@ -435,19 +626,32 @@ namespace giac {
     if (debug_infolevel>6)
       *logptr(contextptr) << clock() << " reset" << endl;
     // assumes slice type is size 1 byte and multiple of 32
+#ifdef __x86_64__
+    ulonglong * ptr=(ulonglong *) &slice[0];
+    ulonglong * ptrend=ptr+ss/8;
+    ulonglong pattern=(logB <<24)|(logB<<16)|(logB<<8) | logB;
+    pattern = (pattern << 32) | pattern;
+    for (;ptr!=ptrend;++ptr){
+      *ptr=pattern;
+    }
+#else
     unsigned * ptr=(unsigned *) &slice[0];
     unsigned * ptrend=ptr+ss/4;
     unsigned pattern=(logB <<24)|(logB<<16)|(logB<<8) | logB;
     for (;ptr!=ptrend;++ptr){
       *ptr=pattern;
     }
-    if (debug_infolevel>6)
+#endif
+    if (debug_infolevel>8)
       *logptr(contextptr) << clock() << " end reset, nbits " << nbits << endl;
     // now for all primes p in basis move in slice from p to p
     // decrease slice[] by number of bits in p
     // determines the first prime used in basis
-#if 0
-    nbits = 4;
+#if 0 // def WITH_LOGP
+    nbits=2*mpz_sizeinbase(*isqrtN._ZINTptr,2);
+    int next=50; 
+    // note that msieve leaves 20 to 22 primes for normal range, and 15 for large 
+    nbits = sizeinbase2(next);
 #else
     if (nbits>120)
       nbits = 7;
@@ -461,13 +665,28 @@ namespace giac {
 	  nbits = 4;
       }
     }
-#endif
     int next = 1 << (nbits-1);
+#endif
     unsigned bstart;
     for (bstart=0;bstart<basis.size();++bstart){
       int p=basis[bstart].p;
-      if (p>next)
+      if (p>next){
+	if (debug_infolevel>7)
+	  *logptr(contextptr) << "Sieve first prime " << p << " nbits " << nbits << endl;
 	break;
+      }
+#ifdef LP_SMALL_PRIMES 
+      int pos=small_basis[bstart].root1;
+      pos=(pos-ss)%p;
+      if (pos<0)
+	pos+=p;
+      small_basis[bstart].root1=pos;
+      pos=small_basis[bstart].root2;
+      pos=(pos-ss)%p;
+      if (pos<0)
+	pos+=p;
+      small_basis[bstart].root2=pos;
+#else
       // update pos_root_mod for later check
       int pos=basis[bstart].root1;
       pos=(pos-ss)%p;
@@ -479,24 +698,74 @@ namespace giac {
       if (pos<0)
 	pos+=p;
       basis[bstart].root2=pos;
+#endif
     }
     next *= 2;
-    if (debug_infolevel>6)
+    if (debug_infolevel>8)
       *logptr(contextptr) << clock() << " sieve begin " << endl;
-    slicetype * st=slice, * stend=slice+ss;
     // bool sameroot; // Should be there to avoid counting twice the same root but it's faster to ignore it..;
+#ifdef LP_SMALL_PRIMES
+    small_basis_t * bit=&small_basis[bstart], * bitend=&small_basis[0]+small_basis.size();
+    core_sieve(slice,bit,bitend);
+#else
     basis_t * bit=&basis[bstart], * bitend=&basis[0]+bs;
-    core_sieve(slice,ss,bit,bitend,nbits,next);
+#ifdef LP_TAB_SIZE
+    bitend=core_sieve(slice,ss,bit,&basis[0]+lp_basis_pos);
+#else
+    bitend=core_sieve(slice,ss,bit,bitend);
+#endif
+#endif
+    slicetype * st=slice, * stend=slice+ss;
+#ifdef LP_TAB_SIZE
+    // sieve for large prime using saved position
+    if (!lp_tab.empty()){
+      const lp_entry_t * lpit=&lp_tab[0],*lpitend=lpit+lp_tab.size(),*lpitend1=lpitend-8;
+      if (lpitend-lpit>8){
+	for (;lpit<lpitend1;lpit+=8){
+	  PREFETCH(lpit + 16);
+	  slice[lpit->pos] -= 16;
+	  slice[lpit[1].pos] -= 16;
+	  slice[lpit[2].pos] -= 16;
+	  slice[lpit[3].pos] -= 16;
+	  slice[lpit[4].pos] -= 16;
+	  slice[lpit[5].pos] -= 16;
+	  slice[lpit[6].pos] -= 16;
+	  slice[lpit[7].pos] -= 16;
+	}
+      }
+      for (;lpit<lpitend;++lpit)
+	slice[lpit->pos] -= 16;
+    }
+#endif
+    unsigned cl;
     if (debug_infolevel>6)
-      *logptr(contextptr) << clock() << "relations " << endl;
+      cl=clock();
+    if (debug_infolevel>8)
+      *logptr(contextptr) << cl << "relations " << endl;
     // now find relations
     st=slice; stend=slice+ss;
+#ifdef __x86_64__
+    ulonglong * st8=(ulonglong *) &slice[0],*st8end=st8+ss/8;
+#else
     unsigned * st4=(unsigned *) &slice[0],*st4end=st4+ss/4;
-    for (;st4<st4end;st4+=8){
+#endif
+    for (
+#ifdef __x86_64__
+	 ;st8!=st8end;st8+=4
+#else
+	 ;st4<st4end;st4+=8
+#endif
+	 ){
       // compare slice[pos] to boundary
+#ifdef __x86_64__
+      if ( !( (*st8  | st8[1] | st8[2] | st8[3] ) & 0x8080808080808080) )
+	continue;
+      int pos=((slicetype*)st8)-slice;
+#else
       if ( !( (*st4  | st4[1] | st4[2] | st4[3] | st4[4] | st4[5] | st4[6] | st4[7]) & 0x80808080) )
 	continue;
       int pos=((slicetype*)st4)-slice;
+#endif
       st = slice+pos;
       for (int stpos=0;stpos<32;++st,++pos,++stpos){
 	if (!(*st&0x80))
@@ -522,30 +791,39 @@ namespace giac {
 	  mpz_neg(z1,z1); // tmp=-tmp;
 	}
 	bool done=false;
+#ifdef LP_TAB_SIZE
+#ifdef LP_SMALL_PRIMES
+	small_basis_t * basisptr=&small_basis[0], * basisend=basisptr+(bitend-bit);
+#else
+	basis_t * basisptr=&basis[0], * basisend=basisptr+(bitend-bit);
+#endif
+#else // LP_TAB_SIZE
 	basis_t * basisptr=&basis[0], * basisend=basisptr+bs;
+#endif
 	// we have modified pos_root_mod1 and pos_root_mod2 -> posss
 	int posss=ss-pos; // always positive
 	for (;basisptr!=basisend;++basisptr){
 	  register int bi=basisptr->p;
 	  // check if we have a root 
-#ifdef USE_GMP_REPLACEMENTS
-	  if (basisptr->inva==0){ // is 2*b*shiftpos+c==0 mod p?
-	    mpz_set_si(z2,2*(shift+pos));
-	    mpz_mul(z2,z2,*bvals.back()._ZINTptr);
-	    mpz_add(z2,z2,c);
-	    if (modulo(z2,bi))
-	      continue;
-	  }
-	  else
-#endif
-	    {
-	      register int check=bi-(posss%bi); 
-	      if ( (check!=bi && check!=basisptr->root1 && check!=basisptr->root2) ||
-		   (check==bi && basisptr->root1 && basisptr->root2) )
-		continue;
-	    }
+	  register int check=bi-(posss%bi); 
+	  if (check!=bi && check!=basisptr->root1 && check!=basisptr->root2)
+	    continue;
+	  if (check==bi && basisptr->root1 && basisptr->root2)
+	    continue;
 	  recheck.push_back(bi);
-	} // end for on primes
+	} // end for on (small) primes
+#ifdef LP_TAB_SIZE
+	// add primes from large prime hashtable
+	lp_tab_t::const_iterator lpit=lp_tab.begin(),lpend=lp_tab.end();
+	int hash_pos=recheck.size();
+	for (;lpit!=lpend;++lpit){
+	  if (pos==lpit->pos){
+	    recheck.push_back(lpit->p);
+	  }
+	}
+	if (recheck.size()>hash_pos+1)
+	  sort(recheck.begin(),recheck.end());
+#endif
 	// now divide first by product of elements of recheck
 	double prod=1,nextprod=1;
 	for (int k=0;k<recheck.size();++k){
@@ -742,12 +1020,14 @@ namespace giac {
 	}
       }
     } // end for loop on slice array
-    if (debug_infolevel>6)
-      *logptr(contextptr) << clock() << " end relations " << endl;
+    if (debug_infolevel>6){
+      unsigned cl2=clock();
+      *logptr(contextptr) << cl2 << " end relations " << cl2-cl << endl;
+    }
     return nrelations;
   }
 
-  //#define MP_MODINV_1
+  // #define MP_MODINV_1
 #ifdef MP_MODINV_1
   static inline unsigned mp_modinv_1(unsigned a, unsigned p) {
   
@@ -797,38 +1077,77 @@ namespace giac {
   }
 #endif
 
-#if defined __i386__ && !defined PIC && !defined __APPLE__ && !defined _I386_
-  //#define _I386_
+#if (defined __i386__ || defined __x86_64__) && !defined PIC && !defined _I386_ && !defined __APPLE__ 
+  #define _I386_
 #endif
 
+#ifdef _I386_
+  // a->a+b*c mod m
+  inline void addmultmod(int & a,int b,int c,int m){
+    asm volatile("testl %%ebx,%%ebx\n\t" /* sign bit=1 if negative */
+		 "jns .Lok%=\n\t"
+		 "addl %%edi,%%ebx\n" /* a+=m*/
+		 ".Lok%=:\t"
+		 "imull %%ecx; \n\t" /* b*c in edx:eax */
+		 "addl %%ebx,%%eax; \n\t" /* b*c+a */
+		 "adcl $0x0,%%edx; \n\t" /* b*c+a carry */
+		 "idivl %%edi; \n\t"
+		 :"=d"(a)
+		 :"a"(b),"b"(a),"c"(c),"D"(m)
+		 );
+  }
+#endif
+
+  inline 
+  int modmult(int a,int b,unsigned p){
+#ifdef _I386_
+    register int res;
+    asm volatile("imull %%edx\n\t" /* a*b-> edx:eax */ 
+		 "idivl %%ecx\n\t" /* edx:eax div p -> quotient=eax, remainder=edx */
+		 :"=d"(res)
+		 :"a"(a),"d"(b),"c"(p)
+		 :
+		 );
+    return res;
+#else
+    return a*longlong(b) % p;
+#endif
+  }
+
   // assumes b>0 and |a|<b
-  int invmodnoerr(int a,ushort_t b){
+  int invmodnoerr(int a,int b){
     if (a==1 || a==-1 || a==0)
       return a;
     if (a<0) // insure a>0 so that all remainders below are >=0
       a+=b;
 #ifdef _I386_ // works only for ushort_t == unsigned short
     // int res=mp_modinv_1(a,b),p=b;
-    asm volatile("movw $0,%%di\n\t"
-		 "movw $1,%%cx\n\t"
-		 "movw $0,%%dx\n\t" 
-		 "xorl $0x80000000,%%edi\n\t" /* parity indicator for sign */
+    /* GDB: si will step in assembly, info registers show register content, x/i $pc show next ins */
+    asm volatile("movl $0,%%edi\n\t" 
+		 "movl $1,%%ecx\n\t"
+		 "movl $0,%%edx\n\t" 
 		 ".Lloop%=:\t"
-		 "xorl $0x80000000,%%edi\n\t" /* parity indicator for sign */
-		 "movw %%si,%%ax\n\t" 
-		 "divw %%bx\n\t" /* divide si by bx, ax=quotient, dx=rem */
-		 "movw %%bx,%%si\n\t" 
-		 "movw %%dx,%%bx\n\t" /* si now contains bx and bx the remainder */
-		 "mulw %%cx\n\t" /* quotient*cx is in ax (dx=0) */
-		 "addw %%ax,%%di\n\t" /* di <- di+q*cx*/
-		 "xchgw %%di,%%cx\n\t" /* cx <- origi di+q*cx, di <- orig cx */
-		 "testw %%bx,%%bx\n\t"
+		 "movl %%esi,%%eax\n\t" 
+		 "andl $0x80000000,%%esi\n\t"
+		 "xorl $0x80000000,%%esi\n\t" /* parity indicator for sign */
+		 "andl $0x7fffffff,%%eax\n\t" /* clear high bit of ax */
+		 "divl %%ebx\n\t" /* divide si by bx, ax=quotient, dx=rem */
+		 "orl %%ebx,%%esi\n\t"  /* copy bx in si but keep high bit of si */
+		 "movl %%edx,%%ebx\n\t" /* si now contains bx and bx the remainder */
+		 "mull %%ecx\n\t" /* quotient*cx is in ax (dx=0) */
+		 "addl %%eax,%%edi\n\t" /* di <- di+q*cx*/
+		 "xchgl %%edi,%%ecx\n\t" /* cx <- origi di+q*cx, di <- orig cx */
+		 "testl %%ebx,%%ebx\n\t"
 		 "jne .Lloop%=\n\t" 
 		 :"=D"(a),"=S"(b)
 		 :"S"(b),"b"(a)
 		 :"%eax","%ecx","%edx"
 		 );
-    a=(b==1)?(a<0?-(a&0x7fffffff):a):0;
+    if (b<0)
+      b=b&0x7fffffff;
+    else
+      a=-a;
+    a=(b==1)?a:0;
     // if ((a-res)%p)
     //  cerr << "error" << endl;
     return a;
@@ -901,13 +1220,6 @@ namespace giac {
   }
 #endif
 
-#if 0 // def RTOS_THREADX
-  inline int find_multiplier(const gen & n,double & delta,GIAC_CONTEXT){
-    delta=0;
-    return 1;
-  }
-#else
-
   static int find_multiplier(const gen & n,double & delta,GIAC_CONTEXT){
     delta=0;
     if (n.type!=_ZINT)
@@ -971,9 +1283,8 @@ namespace giac {
     }
     return mult[pos];
   }
-#endif
 
-  void add_relation(vector<unsigned *> relations,unsigned j,ushort_t * curpui,ushort_t * curpuiend,const vector<basis_t> & basis,const vector<additional_t> & additional_primes){
+  void add_relation(vector<line_t> relations,unsigned j,ushort_t * curpui,ushort_t * curpuiend,const vector<basis_t> & basis,const vector<additional_t> & additional_primes){
     int curpuisize=curpuiend-curpui;
     bool done=false;
     int i=0; // position in basis
@@ -983,7 +1294,7 @@ namespace giac {
     for (;k<curpuisize;++k){
       p=curpui[k];
       if (p==0xffff){
-	relations[0][j/32] ^= (1 << (j%32));
+	relations[0].tab[j/32] ^= (1 << (j%32));
 	continue;
       }
       if (p==0){
@@ -1003,7 +1314,7 @@ namespace giac {
 	// find p in additional_primes and position
 	int Ppos=_equalposcomp(additional_primes,p);
 	// *logptr(contextptr) << p << " " << Ppos+bs << " " << relations.size() << endl;
-	relations[bs+Ppos][j/32] |= (1 << (j %32));	  
+	relations[bs+Ppos].tab[j/32] |= (1 << (j %32));	  
 #endif
 	break;
       }
@@ -1030,7 +1341,7 @@ namespace giac {
       }
       if (i<bs){
 	++i;
-	relations[i][j/32] ^= (1 << (j %32));
+	relations[i].tab[j/32] ^= (1 << (j %32));
       }
       else {
 	// ERROR
@@ -1120,6 +1431,332 @@ namespace giac {
     }
   }
 
+  void find_bv_be(int tmp,int & bv,int &be){
+    bv=1; be=-1;
+    while (tmp%2==0){
+      ++bv;
+      tmp /= 2;
+    }
+    tmp /= 2;
+    if (tmp%2)
+      be=1;
+    else
+      be=-1;
+  }
+
+
+#ifdef PRIMES32
+  // Change b coeff of polynomial: update roots for small primes
+  // for large primes do it depending on LP_TAB_TOGETHER
+#ifdef LP_SMALL_PRIMES
+  void copy(vector<basis_t> & basis,vector<small_basis_t> & small_basis){
+    small_basis_t * small_basisptr=&small_basis[0], * small_basisend=small_basisptr+small_basis.size();
+    basis_t * basisptr=&basis[0];
+    unsigned next=2,logp=1;
+    if (small_basis[0].p==0){
+      for (;small_basisptr<small_basisend;++basisptr,++small_basisptr){
+	small_basisptr->root1=basisptr->root1;
+	small_basisptr->root2=basisptr->root2;
+	register unsigned short p =basisptr->p;
+	small_basisptr->p = p;
+	small_basisptr->logp=logp;
+	if (p>next){
+	  ++logp;
+	  next *= 2;
+	}
+      }
+    }
+    else {
+      for (;small_basisptr<small_basisend;++basisptr,++small_basisptr){
+	small_basisptr->root1=basisptr->root1;
+	small_basisptr->root2=basisptr->root2;
+      }
+    }
+  }
+
+  void switch_roots(const vector<int> & bainv2,vector<basis_t> & basis,vector<small_basis_t> & small_basis,unsigned lp_basis_pos,unsigned nslices,unsigned slicesize,unsigned bv,int be,int afact,const vector<ushort_t> & pos,gen b,mpz_t & zq,int M){
+    unsigned bs=basis.size();
+    const int * bvpos=&bainv2[(bv-1)*bs];
+#ifdef LP_TAB_TOGETHER
+    const int * bvposend=bvpos+lp_basis_pos;
+#else
+    const int * bvposend=bvpos+bs;
+#endif
+    basis_t * basisptr=&basis[0];
+    if (be>0){
+      for (;bvpos<bvposend;++basisptr,++bvpos){
+	// PREFETCH(basisptr+4);
+	// PREFETCH(bvpos+4);
+	register unsigned p=basisptr->p;
+	register int r=basisptr->root1-(*bvpos);
+	if (r<0)
+	  r+=p;
+	basisptr->root1=r;
+	r=basisptr->root2-(*bvpos);
+	if (r<0)
+	  r+=p;
+	basisptr->root2=r;
+      }
+    }
+    else {
+      for (;bvpos<bvposend;++basisptr,++bvpos){
+	// PREFETCH(basisptr+4);
+	// PREFETCH(bvpos+4);
+	register unsigned p=basisptr->p;
+	register int r=basisptr->root1+(*bvpos);
+	if (r>p)
+	  r-=p;
+	basisptr->root1=r;
+	r=basisptr->root2+(*bvpos);
+	if (r>p)
+	  r-=p;
+	basisptr->root2=r;
+      }
+    }
+    // adjust sieve position for prime factors of a, 
+    for (int j=0;j<afact;++j){
+      int pj=pos[j];
+      ushort_t p=basis[pj].p; 
+      int q,bmodp=p-modulo(*b._ZINTptr,p);
+      int cmodp=modulo(zq,p);
+      q=(M+longlong(cmodp)*invmodnoerr((2*bmodp)%p,p))%p;
+      if (q<0)
+	q+=p;
+      basis[pj].root1=q;
+      basis[pj].root2=q;
+    }
+    // set small primes position for sieving
+    copy(basis,small_basis);
+  }
+
+#else // LP_SMALL_PRIMES
+
+  void switch_roots(const vector<int> & bainv2,vector<basis_t> & basis,unsigned lp_basis_pos,unsigned nslices,unsigned slicesize,unsigned bv,int be,int afact,const vector<ushort_t> & pos,gen b,mpz_t & zq,int M){
+    unsigned bs=basis.size();
+#ifdef LP_TAB_SIZE
+    const int * bvpos=&bainv2[(bv-1)*bs],* bvposend=bvpos+lp_basis_pos;
+#else
+    const int * bvpos=&bainv2[(bv-1)*bs],* bvposend=bvpos+bs;
+#endif
+    basis_t * basisptr=&basis[0];
+    unsigned decal0=nslices*slicesize;
+    if (decal0>=basis.back().p){
+      if (be<0){
+	for (;bvpos<bvposend;++basisptr,++bvpos){
+	  register unsigned p=basisptr->p;
+	  register unsigned decal = (decal0+(*bvpos))% p;
+	  register unsigned r=basisptr->root1+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root1 = r;
+	  r = basisptr->root2+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root2 = r;
+	}
+      }
+      else {
+	for (;bvpos<bvposend;++basisptr,++bvpos){
+	  register unsigned p=basisptr->p;
+	  register unsigned decal = (decal0-(*bvpos))% p;
+	  register unsigned r=basisptr->root1+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root1 = r;
+	  r = basisptr->root2+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root2 = r;
+	}
+      }
+    }
+    else 
+      { // should not be reached since Mtarget is about basis.back()
+	for (;bvpos<bvposend;++basisptr,++bvpos){
+	  register unsigned p=basisptr->p;
+	  register unsigned decal = (decal0+p-be*(*bvpos))% p;
+	  register unsigned r=basisptr->root1+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root1 = r;
+	  r = basisptr->root2+decal;
+	  if (r>p)
+	    r -= p;
+	  basisptr->root2 = r;
+	}
+      }
+    // adjust sieve position for prime factors of a, 
+    for (int j=0;j<afact;++j){
+      int pj=pos[j];
+      ushort_t p=basis[pj].p; 
+      int q,bmodp=p-modulo(*b._ZINTptr,p);
+      int cmodp=modulo(zq,p);
+      q=(M+longlong(cmodp)*invmodnoerr((2*bmodp)%p,p))%p;
+      if (q<0)
+	q+=p;
+      basis[pj].root1=q;
+      basis[pj].root2=q;
+    }
+#if defined(LP_TAB_SIZE) && !defined(LP_TAB_TOGETHER)
+    bvposend += bs-lp_basis_pos;
+    if (be>0){
+      for (;bvpos<bvposend;++basisptr,++bvpos){
+	// PREFETCH(basisptr+4);
+	// PREFETCH(bvpos+4);
+	register unsigned p=basisptr->p;
+	register int r=basisptr->root1-(*bvpos);
+	if (r<0)
+	  r+=p;
+	basisptr->root1=r;
+	r=basisptr->root2-(*bvpos);
+	if (r<0)
+	  r+=p;
+	basisptr->root2=r;
+      }
+    }
+    else {
+      for (;bvpos<bvposend;++basisptr,++bvpos){
+	// PREFETCH(basisptr+4);
+	// PREFETCH(bvpos+4);
+	register unsigned p=basisptr->p;
+	register int r=basisptr->root1+(*bvpos);
+	if (r>p)
+	  r-=p;
+	basisptr->root1=r;
+	r=basisptr->root2+(*bvpos);
+	if (r>p)
+	  r-=p;
+	basisptr->root2=r;
+      }
+    }
+#endif
+  }
+#endif // LP_SMALL_PRIMES
+#endif // PRIMES32
+
+  // Change a, the leading coeff of polynomial: initialize all roots (small and large primes)
+  void init_roots(vector<basis_t> & basis,
+#ifdef LP_SMALL_PRIMES
+		  vector<small_basis_t> & small_basis,
+#endif
+#ifdef WITH_INVA
+		  vector<ushort_t> & Inva,
+#endif
+#ifdef SQRTMOD_OUTSIDE
+		  const vector<ushort_t> & sqrtmod,
+#endif
+#ifdef PRIMES32
+		  vector<int> & bainv2,int afact,int afact0,
+#else
+		  ulonglong usqrta,
+#endif
+		  const gen & a,const gen & b,const vecteur & bvalues,mpz_t & zq,unsigned M){
+    unsigned bs=basis.size();
+    basis_t * basisptr=&basis.front(),*basisend=basisptr+bs; 
+#ifdef SQRTMOD_OUTSIDE
+    vector<ushort_t>::const_iterator sqrtmodit=sqrtmod.begin();
+#endif
+    for (int i=0;basisptr!=basisend;++i,++basisptr){
+      ushort_t p=basisptr->p;
+      // find inverse of a mod p
+#ifdef PRIMES32
+      int j=invmodnoerr(modulo(*a._ZINTptr,p),p);
+      // deltar[i]=((2*ulonglong(basis[i].sqrtmod))*j)%p;
+#else // PRIMES32
+      unsigned modu=usqrta%p;
+      modu=(modu*modu)%p;
+      int j=invmodnoerr(modu,p);	
+#endif // PRIMES32
+      if (j<0) 
+	j += p;
+      unsigned inva=j;
+#ifdef WITH_INVA
+      Inva[i]=inva;
+#else
+#ifdef PRIMES32
+      // set roots change values for all b coeffs for this a
+      if (afact>afact0){
+	int * ptr=&bainv2[i];
+	for (int j=1;j<afact;ptr+=bs,++j){
+	  // PREFETCH(ptr+bs);
+	  *ptr=modmult(modulo(*bvalues[j]._ZINTptr,p),2*inva,p);
+	}
+      }
+#endif // PRIMES32
+#endif // WITH_INVA
+      // compute roots mod p
+#ifdef SQRTMOD_OUTSIDE
+      ushort_t sqrtm=*sqrtmodit;
+      ++sqrtmodit; 
+#else
+      ushort_t sqrtm=basisptr->sqrtmod;
+#endif
+      int bmodp=p-modulo(*b._ZINTptr,p);
+      if (inva){
+	if (p<=37000){
+	  // sqrtm<=p/2, bmodp<p, inva<p hence (bmodp+sqrtm)*inva<=(3p/2-1)*(p-1)
+	  // this leaves M up to about 203 millions
+	  basisptr->root1=(M+(bmodp+sqrtm)*inva) % p;
+	  basisptr->root2=(M+(bmodp+p-sqrtm)*inva) % p;
+	  continue;
+	}
+#ifdef _I386_
+	register int q=M;
+	addmultmod(q,bmodp+sqrtm,inva,p);
+	basisptr->root1=q;
+	q=M;
+	addmultmod(q,bmodp+p-sqrtm,inva,p);
+	basisptr->root2=q;
+#else
+	basisptr->root1=(M+longlong(bmodp+sqrtm)*inva) % p;
+	basisptr->root2=(M+longlong(bmodp+p-sqrtm)*inva) % p;
+#endif
+	continue;
+      }
+      int cmodp=modulo(zq,p);
+      int q=(M+longlong(cmodp)*invmodnoerr((2*bmodp)%p,p))%p;
+      if (q<0)
+	q+=p;
+      basisptr->root2=q;
+      basisptr->root1=q;
+    }
+#ifdef WITH_INVA
+#ifdef PRIMES32
+    if (afact>afact0){
+      int * bainv2ptr=&bainv2.front();
+      basis_t * basisptr,*basisend=&basis.front()+bs; 
+      for (int j=1;j<afact;++j){
+	if (bvalues[j].type==_INT_){
+	  int bjj=bvalues[j].val;
+	  vector<ushort_t>::const_iterator invait=Inva.begin();
+	  for (basisptr=&basis.front();basisptr<basisend;++invait,++bainv2ptr,++basisptr){
+	    register int r=(bjj*longlong(2*(*invait))) % basisptr->p;
+	    if (r<0)
+	      r += basisptr->p;
+	    *bainv2ptr=r;
+	  }
+	}
+	else {
+	    // longlong up1=up1tmp[2*j]; 
+	    // longlong tmp=up1tmp[2*j+1];
+	    // tmp is <= P^2 where P is the largest factor of a
+	  mpz_t & bz=*bvalues[j]._ZINTptr;
+	  vector<ushort_t>::const_iterator invait=Inva.begin();
+	  for (basisptr=&basis.front();basisptr<basisend;++invait,++bainv2ptr,++basisptr){
+	    register int p=basisptr->p;
+	    *bainv2ptr=((modulo(bz,p))*longlong(2*(*invait))) % p;
+	  }
+	}
+      }
+    }
+#endif // PRIMES32
+#endif // WITH_INVA
+    
+#ifdef LP_SMALL_PRIMES // copy primes<2^16 into small_basis
+    copy(basis,small_basis);
+#endif
+  }
+
   // find relations using (a*x+b)^2=a*(a*x^2+b*x+c) mod n where
   // we sieve on [-M,M] for as many polynomials as required
   // a is a square, approx sqrt(2*n)/M, and n is a square modulo all primes dividing a
@@ -1137,13 +1774,18 @@ namespace giac {
     if (Nd>1e40) return false;
 #else
 #ifdef PRIMES32
-    if (Nd>1e73) return false;
+    if (Nd>1e76) return false;
 #else
     if (Nd>1e63) return false;
 #endif
 #endif
-    int Ndl=int(std::log10(Nd)+.5); // -std::log10(multiplier)+2*delta);
-    double B=std::exp(std::sqrt(2.0)/4*std::sqrt(std::log(Nd)*std::log(std::log(Nd))))*0.5;
+    int Ndl=int(std::log10(Nd)-std::log10(double(multiplier))+.5); // +2*delta);
+#ifdef LP_TAB_SIZE
+    int slicesize=(1 << LP_TAB_SIZE);
+#else
+    int slicesize=(QS_SIZE>=65536 && Ndl<61)?32768:QS_SIZE;
+#endif
+    double B=std::exp(std::sqrt(2.0)/4*std::sqrt(std::log(Nd)*std::log(std::log(Nd))))*0.45;
     if (B<100) B=100;
     int pos1=100,pos0=23,afact=2,afixed=0; // pos position in the basis, afact number of factors
     // FIXME Will always include the 3 first primes of the basis
@@ -1154,19 +1796,22 @@ namespace giac {
       Mtarget=1.2e5;
 #else
     double Mtarget=0.55e5;
-#if 1 // ndef PRIMES32
+#ifndef USE_MORE_PRIMES // FIXME improve! in fact use more primes on Core, less on Opteron
     if (Ndl>=50){
       Ndl-=50;
       short int Btab[]={ 
 	// 50
-	1900,2000,2100,2200,2350,2500,2650,2800,2950,3100,
+	1900,2100,2300,2500,2700,2900,3100,3400,3700,4000,
 	// 60
 	4300,4600,4900,5300,5700,6200,6800,7500,8300,9200,
 	// 70
 	10000,11000,12000,13000,14000,15000,16000
       };
-      B=Btab[Ndl];
-      Mtarget=0.95e5;
+      if (Ndl<sizeof(Btab)/sizeof(short int))
+	B=Btab[Ndl];
+      Mtarget=0.66e5;
+      if (Ndl>7)
+	Mtarget=0.95e5;
       if (Ndl>11) 
 	Mtarget=1.3e5;
       if (Ndl>15) 
@@ -1186,7 +1831,14 @@ namespace giac {
     // first compute the prime basis and sqrt(N) mod p, p in basis
     vector<basis_t> basis;
     basis.reserve(unsigned(B));
+#ifdef SQRTMOD_OUTSIDE
+    vector<ushort_t> sqrtmod;
+    sqrtmod.reserve(basis.capacity());
+    basis.push_back(2);
+    sqrtmod.push_back(1);
+#else
     basis.push_back(basis_t(2,1)); // I assume that N is odd... hence has sqrt 1 mod 2
+#endif
     N.uncoerce();
     // vector<ushort_t> N256;
     int i;
@@ -1208,26 +1860,38 @@ namespace giac {
       if (n<0)
 	n+=j;
       if (n==0){
+#ifdef SQRTMOD_OUTSIDE
+	basis.push_back(j);
+	sqrtmod.push_back(0);
+#else
 	basis.push_back(basis_t(j,0));
+#endif
       }
       else {
 	if (powmod(n,(unsigned long)((j-1)/2),(int)j)==1){
 	  s=sqrt_mod(n,int(j),true,contextptr).val;
 	  if (s<0)
 	    s+=j;
+#ifdef SQRTMOD_OUTSIDE
+	  basis.push_back(j);
+	  sqrtmod.push_back(s);
+#else
 	  basis.push_back(basis_t(j,s));
+#endif
 	}
       }
-      if (basis.size()>B)
+      if (basis.size()>=B)
 	break;
     }
     int jp=nextprime(int(basis.back().p+1)).val;
+    unsigned lp_basis_pos=0; // position of first prime > 2^16 in the basis
     for (;basis.size()<B;++i){
       if (ctrl_c)
 	break; 
 #ifndef PRIMES32
-      if (jp>65535) // FIXME ushort_t
+      if (jp>65535){ 
 	break;
+      }
 #endif
       if (debug_infolevel>6 && (i%500==99))
 	*logptr(contextptr) << clock() << " sieve current basis size " << basis.size() << endl;
@@ -1243,17 +1907,33 @@ namespace giac {
 	s=sqrt_mod(n,jp,true,contextptr).val;
 	if (s<0)
 	  s += jp;
+#ifdef LP_TAB_SIZE
+	if (!lp_basis_pos && jp> (1<<LP_BIT_LIMIT))
+	  lp_basis_pos=basis.size();
+#endif
+#ifdef SQRTMOD_OUTSIDE
+	basis.push_back(jp);
+	sqrtmod.push_back(s);
+#else
 	basis.push_back(basis_t(jp,s));
+#endif
       }
       jp=nextprime(jp+1).val;
     }
+    if (!lp_basis_pos)
+      lp_basis_pos=basis.size();
+#ifdef LP_SMALL_PRIMES
+    vector<small_basis_t> small_basis(lp_basis_pos); // will be filled by primes<2^16
+#endif
     if (ctrl_c){
       mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
       return false;
     }
-    if (Mtarget<basis.back().p*1.1)
-      Mtarget=basis.back().p*1.1;
-    unsigned maxadditional=unsigned(3*basis.back().p*std::log(double(basis.back().p))/std::log(2.));
+    if (Mtarget<basis.back().p*1.1){
+      Mtarget=(int(basis.back().p*1.1)/slicesize)*slicesize;
+    }
+    unsigned ps=sizeinbase2(basis.back().p);
+    unsigned maxadditional=(2+(basis.back().p>>16))*basis.back().p*ps;
     if (debug_infolevel)
       *logptr(contextptr) << clock() << " sieve basis OK, size " << basis.size() << " largest prime in basis " << basis.back().p << " large prime " << maxadditional << " Mtarget " << Mtarget << endl ;
     int bs=basis.size();
@@ -1262,6 +1942,7 @@ namespace giac {
     // now compare isqrtN to a^2 for a in the basis
     double seuil=1.414*evalf_double(isqrtN,1,contextptr)._DOUBLE_val/Mtarget; // should be a
     seuil=std::sqrt(seuil); // should be product of primes of the basis
+#if 0 // def OLD_AFACT
     double dfactors=std::log10(seuil)/3;
     // fixed primes are choosen at basis[pos0], variables are choosen around 2000
     afact=int(dfactors+.5);
@@ -1292,7 +1973,9 @@ namespace giac {
 	}
 	else {
 	  dfactors -= 2; // 2 large primes
-	  afixed = dfactors/.8; 
+	  afixed = dfactors/.8;
+	  if (afixed==0)
+	    afixed=1;
 	  afact = 2 +afixed;
 	}
 	for (int i=0;i<afixed;++i){
@@ -1307,6 +1990,38 @@ namespace giac {
 	}
       }
     }
+#else // OLD_AFACT
+    double logprod=std::log10(seuil);
+    if (logprod<8){  
+      afixed=0; afact=2;
+    }
+    else {
+      double logfixed=std::log10(double(basis[pos0].p));
+      int maxfixed=logprod/logfixed-2;
+      if (maxfixed==0) maxfixed=1;
+      double curseuil=1e10;
+      afact=0;
+      for (int i=1;i<=maxfixed;++i){
+	double variable=(logprod-i*logfixed)/3; // we want variable primes to be around 1000
+	int ivariable=int(variable);
+	double seuiltest=variable/ivariable;
+	if (i+ivariable>afact){
+	  afixed=i;
+	  afact=i+ivariable;
+	  curseuil=seuiltest;
+	}
+      }
+    }
+    for (int i=0;i<afixed;++i)
+      seuil=seuil/basis[pos0+i].p;
+    seuil=std::pow(seuil,1./(afact-afixed));
+    for (int i=pos0+afixed+10;i<3*bs/4;++i){
+      if (seuil<basis[i].p){
+	pos1=i;
+	break;
+      }
+    }
+#endif // OLD_AFACT
     if (debug_infolevel){
       *logptr(contextptr) << "Using " << afact << " square factors per a coefficient in polynomials" << endl;
       *logptr(contextptr) << afixed << " fixed begin at " << basis[pos0].p << " and " << afact-afixed << " variables at " << basis[pos1].p << endl; 
@@ -1325,7 +2040,7 @@ namespace giac {
 #ifdef RTOS_THREADX
     unsigned puissancestablength=10000;
 #else
-    unsigned puissancestablength=bs*80;
+    unsigned puissancestablength=bs*(80+bs/500);
 #endif
     ushort_t * puissancestab=new ushort_t[puissancestablength];
     ushort_t * puissancesptr=puissancestab;
@@ -1342,6 +2057,9 @@ namespace giac {
     vector<additional_t> additional_primes;
 #ifndef ADDITIONAL_PRIMES_HASHMAP
     vector<bool> additional_primes_twice;
+#endif
+#ifdef LP_TAB_SIZE
+    vector<lp_tab_t> lp_map(128); // at most 128 slices in a sieve
 #endif
     vecteur sqrtavals,bvals;
 #ifdef GIAC_ADDITIONAL_PRIMES
@@ -1373,26 +2091,41 @@ namespace giac {
     mpz_init(alloc1); mpz_init(alloc2); mpz_init(alloc3); mpz_init(alloc4); mpz_init(alloc5);
     // vector<ushort_t> a256,b256,tmpv;
     vector<ushort_t> curpuissances,recheck,pos(afact);
+#ifdef WITH_INVA
+    vector<ushort_t> Inva(bs);
+#endif
     vecteur bvalues; // will contain values of b if afact<=afact0 or components of b if afact>afact0
     // array for efficient polynomial switch (same a change b) when at least afact0 factors/a
 #ifdef PRIMES32
     const unsigned afact0=3;
     vector<int> bainv2((afact-1)*bs);
     vector<longlong> up1tmp;
-#else
-    vector<ushort_t> deltar(bs);
 #endif
-    Mtarget=0;
     for (int i=0;i<afixed;++i)
       pos[i]=pos0+i;
     for (int i=afixed;i<afact;++i)
       pos[i]=pos1+i;
+    double Mval=1;
+    for (int i=0;i<afact;++i)
+      Mval=Mval*basis[pos[i]].p;
+    Mval=std::sqrt(2*Nd)/(Mval*Mval);
+    if (debug_infolevel)
+      *logptr(contextptr) << "First M " << Mval << endl;
+    Mtarget=Mval;
+    int avar=afact-afixed;
+    int end_pos1=2*pos1;
+    if (avar>1)
+      end_pos1=pos1+100;
+    if (avar>2)
+      end_pos1=pos1+30;
+    if (lp_basis_pos<end_pos1)
+      end_pos1=lp_basis_pos;
     for (;puissancesptr<puissancesend;++pos.back()){
       double bpos2=1;
-      if (pos.back()>=bs || basis[pos.back()].p>=45000){
+      if (pos.back()>=end_pos1 || basis[pos.back()].p>=45000){
 	int i=afact-2;
 	for (;i>afixed;--i){
-	  if (pos[i]!=bs-(afact-i)){
+	  if (pos[i]<end_pos1-(afact-i)){
 	    ++pos[i];
 	    for (int j=i+1;j<afact;++j)
 	      pos[j]=pos[i]+(j-i);
@@ -1407,6 +2140,7 @@ namespace giac {
 	    delete [] puissancestab;
 	    return false;
 	  }
+	  // reset fixed factors
 	  for (i=0;i<afixed;++i)
 	    pos[i]=pos0+i;
 	  for (i=afixed;i<afact;++i)
@@ -1415,13 +2149,55 @@ namespace giac {
       }
       for (int i=0;i<afact;++i)
 	bpos2=bpos2*basis[pos[i]].p;
-      bpos2=std::sqrt(2*Nd)/(bpos2*bpos2);
-      if (Mtarget==0)
-	Mtarget=bpos2;
-      if ( bpos2 < 0.7*Mtarget ){
-	if (pos1>pos0+afixed+5 || bpos2<32768){
-	  pos.back()=bs;
-	  continue;
+      Mval=std::sqrt(2*Nd)/(bpos2*bpos2);
+      if (afixed){
+	// move "fixed" factors so that Mval becomes closer to Mtarget
+	// NB: for later threads, afixed should be >=3, so that we can move pos[1] by thread
+	while (Mval>1.1*Mtarget && pos[afixed-1]<pos1-10){
+	  // Mval is too large, hence one factor of a is too small, increase it
+	  if (pos[0]<pos0){
+	    ++pos[0];
+	    double coeff=basis[pos[0]].p/double(basis[pos[0]-1].p);
+	    Mval=Mval/(coeff*coeff);
+	  }
+	  else {
+	    ++pos[afixed-1];
+	    double coeff=basis[pos[afixed-1]].p/double(basis[pos[afixed-1]-1].p);
+	    Mval=Mval/(coeff*coeff);	    
+	  }
+	}
+	while (Mval<0.9*Mtarget && pos[0]>10){
+	  // Mval is too small, decrease one factor of a
+	  --pos[0];
+	  if (pos[0]<=10){
+	    Mval=0;
+	    break;
+	  }
+	  double coeff=basis[pos[0]].p/double(basis[pos[0]+1].p);
+	  Mval=Mval/(coeff*coeff);
+	}
+      }
+      if ( Mval <0.7*Mtarget ){
+	if (pos1>pos0+afixed+5 || Mval<32768){
+	  // cerr << pos ;
+	  int i=afact-1;
+	  for (;i>afixed+1;--i){
+	    if (pos[i]>pos[i-1]+5)
+	      break;
+	  }
+	  if (i==afixed+1){
+	    --pos1;
+	    for (i=0;i<afixed;++i)
+	      pos[i]=pos0+i;
+	    for (i=afixed;i<afact;++i)
+	      pos[i]=pos1+i;
+	  }
+	  else {
+	    ++pos[i-1];
+	    for (;i<afact;++i)
+	      pos[i]=pos[i-1]+1;
+	  }
+	  // cerr << pos << endl;
 	}
       }
       // finished?
@@ -1451,12 +2227,16 @@ namespace giac {
       int M=int(std::floor(std::sqrt(Nd*2)/evalf_double(a,1,contextptr)._DOUBLE_val));
       if (debug_infolevel>6)
 	*logptr(contextptr) << clock() << " initial value for M= " << M << endl;
-      int nslices=int(std::ceil((2.*M)/QS_SIZE));
-      M=(nslices*QS_SIZE)/2;
+      int nslices=int(std::ceil((2.*M)/slicesize));
+      M=(nslices*slicesize)/2;
       bvalues.clear();
       gen curprod=1;
       for (int i=0;;){
+#ifdef SQRTMOD_OUTSIDE
+	int s=sqrtmod[pos[i]]; 
+#else
 	int s=basis[pos[i]].sqrtmod; 
+#endif
 	int p=basis[pos[i]].p;
 	longlong p2=p*longlong(p); 
 	// Hensel lift s to be a sqrt of n mod p^2: (s+p*r)^2=s^2+2p*r*s=n => r=(n-s^2)/p*inv(2*s mod p)
@@ -1479,6 +2259,7 @@ namespace giac {
 	  if (is_greater(0,tmp,contextptr)) tmp=-tmp;
 	  gen gup1(up1);
 	  bvalues.push_back(gup1*gup1*tmp);
+	  bvalues.back().uncoerce();
 	}
 	else 
 #endif
@@ -1502,52 +2283,6 @@ namespace giac {
       if (debug_infolevel>6)
 	*logptr(contextptr) << clock() << " Computing inverses mod p of the basis " << endl;
       // fastsmod_prepare(a,zx,zy,zr,a256);
-      for (int i=0;i<bs;++i){
-	ushort_t p=basis[i].p;
-#ifdef PRIMES32
-	int j=invmodnoerr(modulo(*a._ZINTptr,p),p);
-	if (j<0) 
-	  j += p;
-	basis[i].inva=j;
-	// deltar[i]=((2*ulonglong(basis[i].sqrtmod))*j)%p;
-#else
-	unsigned modu=usqrta%p;
-	modu=(modu*modu)%p;
-	int j=invmodnoerr(modu,p);	
-	if (j<0) 
-	  j += p;
-	basis[i].inva=j;
-	deltar[i]=((2*unsigned(basis[i].sqrtmod))*unsigned(j))%p;
-#endif
-      }
-#ifdef PRIMES32
-      if (afact>afact0){
-	int * bainv2ptr=&bainv2.front();
-	basis_t * basisptr,*basisend=&basis.front()+bs; 
-	for (int j=1;j<afact;++j){
-	  if (bvalues[j].type==_INT_){
-	    int bjj=bvalues[j].val;
-	    for (basisptr=&basis.front();basisptr<basisend;++bainv2ptr,++basisptr){
-	      *bainv2ptr=(bjj*longlong(2*basisptr->inva)) % basisptr->p;
-	    }
-	  }
-	  else {
-	    // longlong up1=up1tmp[2*j]; 
-	    // longlong tmp=up1tmp[2*j+1];
-	    // tmp is <= P^2 where P is the largest factor of a
-	    mpz_t & bz=*bvalues[j]._ZINTptr;
-	    for (basisptr=&basis.front();basisptr<basisend;++bainv2ptr,++basisptr){
-#if 1
-	      *bainv2ptr=(modulo(bz,basisptr->p)*longlong(2*basisptr->inva)) % basisptr->p;
-#else
-	      mpz_mul_ui(alloc1,bz,2*basisptr->inva);
-	      *bainv2ptr=modulo(alloc1,basisptr->p);
-#endif
-	    }
-	  }
-	}
-      }
-#endif
       gen b;
       for (int i=0;i< (1<<(afact-1));++i){
 	if (ctrl_c)
@@ -1570,16 +2305,7 @@ namespace giac {
 	      b += bvalues[j];
 	  }
 	  else {
-	    int tmp=i;
-	    while (tmp%2==0){
-	      ++bv;
-	      tmp /= 2;
-	    }
-	    tmp /= 2;
-	    if (tmp%2)
-	      be=1;
-	    else
-	      be=-1;
+	    find_bv_be(i,bv,be);
 	    b += (2*be)*bvalues[bv];
 	  }
 	}
@@ -1599,7 +2325,7 @@ namespace giac {
 	mpz_set(alloc3,*a._ZINTptr);
 	alloc_mp_div(&zy,a._ZINTptr,&zq,&zr,&alloc1,&alloc2,&alloc3,&alloc4,&alloc5);
 #else
-	mpz_fdiv_qr(zq,zr,zy,*a._ZINTptr);
+	mpz_divexact(zq,zy,*a._ZINTptr);
 #endif
 	// gen c=zq; // gen c=(b*b-N)/a;
 	// c.uncoerce();
@@ -1616,117 +2342,136 @@ namespace giac {
 	  *logptr(contextptr) << clock() << " Computing roots mod the basis " << endl;
 	// fastsmod_prepare(b,zx,zy,zr,b256);
 #ifdef PRIMES32 
-	if (i && afact>afact0){ 
-	  int * bvpos=&bainv2[(bv-1)*bs],* bvposend=bvpos+bs;
-	  basis_t * basisptr=&basis[0];
-#if 1
-	  unsigned decal0=nslices*QS_SIZE;
-	  if (decal0>=basis.back().p){
-	    if (be<0){
-	      for (;bvpos<bvposend;++basisptr,++bvpos){
-		register unsigned p=basisptr->p;
-		register unsigned decal = (decal0+(*bvpos))% p;
-		register ushort_t * ptr = &basisptr->root1;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
-		++ptr;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
+	if (i && afact>afact0)
+	  switch_roots(bainv2,basis,
+#ifdef LP_SMALL_PRIMES
+		       small_basis,
+#endif
+		       lp_basis_pos,nslices,slicesize,bv,be,afact,pos,b,zq,M);
+	else {
+	  init_roots(basis,
+#ifdef LP_SMALL_PRIMES
+		     small_basis,
+#endif
+#ifdef WITH_INVA
+		     Inva,
+#endif
+#ifdef SQRTMOD_OUTSIDE
+		     sqrtmod,
+#endif
+		     bainv2,afact,afact0,
+		     a,b,bvalues,zq,M);
+#ifdef LP_TAB_TOGETHER
+	  // init all hashtable for large primes at once
+	  unsigned cl;
+	  if (debug_infolevel>3){
+	    cl=clock();
+	    *logptr(contextptr) << cl << " Init large prime hashtables " << endl;
+	  }
+	  int total=(nslices << (afact-1));
+	  if (lp_map.size() < total)
+	    lp_map.resize(total);
+	  for (int k=0;k< total;++k)
+	    lp_map[k].clear();
+	  if (lp_basis_pos){
+	    for (int k=0;;){
+	      basis_t * bit=&basis[lp_basis_pos], * bitend=&basis[0]+bs;
+	      unsigned endpos=nslices*slicesize;
+	      lp_tab_t * ptr=&lp_map[0]+k*nslices;
+	      for (;bit!=bitend;++bit){
+		register ushort_t p=bit->p;
+		register unsigned pos=bit->root1;
+		for (;pos<endpos; pos += p){
+		  (ptr+(pos >> LP_TAB_SIZE))->push_back(lp_entry_t((pos & LP_MASK),p));
+		}
+		pos=bit->root2;
+		for (;pos<endpos; pos += p){
+		  (ptr+(pos >> LP_TAB_SIZE))->push_back(lp_entry_t((pos & LP_MASK),p));
+		}
 	      }
-	    }
-	    else {
-	      for (;bvpos<bvposend;++basisptr,++bvpos){
-		register unsigned p=basisptr->p;
-		register unsigned decal = (decal0-(*bvpos))% p;
-		register ushort_t * ptr = &basisptr->root1;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
-		++ptr;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
+	      ++k;
+	      if (k== (1 << (afact-1))){
+		if (debug_infolevel>3){
+		  unsigned cl2=clock();
+		  *logptr(contextptr) << cl2 << " End large prime hashtables " << cl2-cl << endl;
+		}
+		break;
+	      }
+	      find_bv_be(k,bv,be);
+	      // switch roots to next polynomial
+	      int * bvpos=&bainv2[(bv-1)*bs],* bvposend=bvpos+bs;
+	      bvpos += lp_basis_pos;
+	      basis_t * basisptr=&basis[lp_basis_pos];
+	      if (be>0){
+		for (;bvpos<bvposend;++basisptr,++bvpos){
+		  register unsigned p=basisptr->p;
+		  register int r=basisptr->root1-(*bvpos);
+		  if (r<0)
+		    r+=p;
+		  basisptr->root1=r;
+		  r=basisptr->root2-(*bvpos);
+		  if (r<0)
+		    r+=p;
+		  basisptr->root2=r;
+		}
+	      }
+	      else {
+		for (;bvpos<bvposend;++basisptr,++bvpos){
+		  register unsigned p=basisptr->p;
+		  register int r=basisptr->root1+(*bvpos);
+		  if (r>p)
+		    r-=p;
+		  basisptr->root1=r;
+		  r=basisptr->root2+(*bvpos);
+		  if (r>p)
+		    r-=p;
+		  basisptr->root2=r;
+		}
 	      }
 	    }
 	  }
-	  else 
-#endif
-	    { // should not be reached since Mtarget is about basis.back()
-	      for (;bvpos<bvposend;++basisptr,++bvpos){
-		register unsigned p=basisptr->p;
-		register unsigned decal = (decal0+p-be*(*bvpos))% p;
-		register ushort_t * ptr = &basisptr->root1;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
-		++ptr;
-		*ptr += decal;
-		if (*ptr>=p)
-		  *ptr -= p;
-	      }
+#endif // LP_TAB_TOGETHER
+	} // end else of if i==0
+#if defined(LP_TAB_SIZE) && !defined(LP_TAB_TOGETHER)
+	if (lp_map.size() < nslices)
+	  lp_map.resize(nslices);
+	for (int k=0;k< nslices;++k)
+	  lp_map[k].clear();
+	if (lp_basis_pos){
+	  basis_t * bit=&basis[lp_basis_pos], * bitend=&basis[0]+bs;
+	  unsigned endpos=nslices*slicesize;
+	  for (;bit!=bitend;++bit){
+	    register ushort_t p=bit->p;
+	    register unsigned pos=bit->root1;
+	    for (;pos<endpos; pos += p){
+	      lp_map[pos >> LP_TAB_SIZE].push_back(lp_entry_t((pos & LP_MASK),p));
 	    }
-	  // adjust sieve position for prime factors of a, 
-	  for (int j=0;j<afact;++j){
-	    int pj=pos[j];
-	    ushort_t p=basis[pj].p; 
-	    int q,bmodp=p-modulo(*b._ZINTptr,p);
-	    int cmodp=modulo(zq,p);
-	    q=(M+longlong(cmodp)*invmodnoerr((2*bmodp)%p,p))%p;
-	    if (q<0)
-	      q+=p;
-	    basis[pj].root1=q;
-	    basis[pj].root2=q;
+	    pos=bit->root2;
+	    for (;pos<endpos; pos += p){
+	      lp_map[pos >> LP_TAB_SIZE].push_back(lp_entry_t((pos & LP_MASK),p));
+	    }
 	  }
 	}
-	else
+#endif // LP_TAB_SIZE && !LP_TAB_TOGETHER
+#else // PRIMES32
+	init_roots(basis,inva,
+#ifdef WITH_INVA
+		     Inva,
 #endif
-	  {
-	    basis_t * basisptr=&basis[0], * basisend=basisptr+bs;
-	    for (;basisptr<basisend;++basisptr){
-	      ushort_t sqrtm=basisptr->sqrtmod,inva=basisptr->inva,p=basisptr->p; 
-	      int q,bmodp=p-modulo(*b._ZINTptr,p);
-	      if (inva){
-		if (p<=37000){
-		  // sqrtm<=p/2, bmodp<p, inva<p hence (bmodp+sqrtm)*inva<=(3p/2-1)*(p-1)
-		  // this leaves M up to about 203 millions
-		  q=(M+(bmodp+sqrtm)*inva) % p;
-		  basisptr->root1=q;
-#ifdef PRIMES32
-		  basisptr->root2=(M+(bmodp+p-sqrtm)*inva) % p;
+#ifdef SQRTMOD_OUTSIDE
+		   sqrtmod,
 #endif
-		}
-		else {
-		  q=(M+longlong(bmodp+sqrtm)*inva) % p;
-		  basisptr->root1=q;
-#ifdef PRIMES32
-		  basisptr->root2=(M+longlong(bmodp+p-sqrtm)*inva) % p;
-#endif
-		}
-#ifndef PRIMES32
-		q -= deltar[j];
-		if (q<0)
-		  q += p;
-		basisptr->root2=q;
-#endif
-		continue;
-	      }
-	      int cmodp=modulo(zq,p);
-	      q=(M+longlong(cmodp)*invmodnoerr((2*bmodp)%p,p))%p;
-	      if (q<0)
-		q+=p;
-	      basisptr->root2=q;
-	      basisptr->root1=q;
-	    }
-	  }
-	// we can now sieve in [-M,M[ by slice of size QS_SIZE
+		   usqrta,a,b,bvalues,zq,M);
+#endif // PRIMES32
+	// we can now sieve in [-M,M[ by slice of size slicesize
 	if (debug_infolevel>5){
 	  *logptr(contextptr) << clock();
 	  *logptr(contextptr) << " Polynomial a,b,M=" << a << "," << b << "," << M << " (" << pos << ")" ;
 	  *logptr(contextptr) << clock() << endl;
 	}
 	int nrelationsb=0;
+#ifdef LP_TAB_SIZE
+#endif
 	for (int l=0;l<nslices;l++){
 	  if (ctrl_c)
 	    break;
@@ -1737,9 +2482,12 @@ namespace giac {
 #endif
 	  if (axbmodn.size()>=todo_rel)
 	    break;
-	  int shift=-M+l*QS_SIZE;
+	  int shift=-M+l*slicesize;
 	  int slicerelations=msieve(a,sqrtavals,
-				    bvals,zq,basis,
+				    bvals,zq,basis,lp_basis_pos,
+#ifdef LP_SMALL_PRIMES
+				    small_basis,
+#endif
 				    maxadditional,
 #ifdef ADDITIONAL_PRIMES_HASHMAP
 				    additional_primes_map,
@@ -1747,9 +2495,17 @@ namespace giac {
 				    additional_primes,additional_primes_twice,
 #endif
 				    N,isqrtN,
-				    slice,shift,puissancestab,puissancesptr,puissancesend,curpuissances,recheck,
+				    slice,slicesize,shift,puissancestab,puissancesptr,puissancesend,curpuissances,recheck,
 				    axbmodn,
-				    zx,zy,zr,alloc1,alloc2,alloc3,alloc4,alloc5,contextptr);
+				    zx,zy,zr,alloc1,alloc2,alloc3,alloc4,alloc5,
+#ifdef LP_TAB_SIZE
+#ifdef LP_TAB_TOGETHER
+				    lp_map[l+nslices*i],
+#else
+				    lp_map[l],
+#endif
+#endif
+				    contextptr);
 	  if (slicerelations==-1){
 	    *logptr(contextptr) << "Sieve error: Not enough memory " << endl;
 	    break;
@@ -1858,9 +2614,9 @@ namespace giac {
     for (unsigned * ptr=tab;ptr!=tabend;++ptr)
       *ptr=0;
     int l32=C32*32;
-    vector< unsigned* > relations(axbmodn.size());
+    vector< line_t > relations(axbmodn.size());
     for (int i=0;i<axbmodn.size();++i){
-      relations[i]=tab+i*C32;
+      relations[i].tab=tab+i*C32;
     }
     for (unsigned j=0;j<axbmodn.size();j++){
       ushort_t * curpui=puissancestab+axbmodn[j].first, * curpuiend=puissancestab+axbmodn[j].second;
@@ -1874,11 +2630,50 @@ namespace giac {
       }
 #endif
     } // end loop on j in puissances
-    // now reduce relations
-    // printbool(*logptr(contextptr),relations);
+#ifdef RREF_SORT // seems slower
+    unsigned count0=0,count1=0;
+    for (int i=0;i<relations.size();++i){
+      int c=relations[i].count=count_ones(relations[i].tab,C32);
+      if (c==0)
+	++count0;
+      if (c==1)
+	++count1;
+      if (debug_infolevel>2){
+	cout << i << ", p=";
+	if (i==0) 
+	  cout << "-1";
+	else {
+	  if (i<=bs)
+	    cout << basis[i-1].p << " " << relations[i].count << endl;
+	  else
+	    cout << endl;
+	}
+      }
+    }
+    if (debug_infolevel)
+      *logptr(contextptr) << clock() << " begin rref size " << relations.size() << "x" << l32 << " K " << 0.004*relations.size()*C32 << ", " << count0 << " null lines, " << count1 << " 1-line" << endl;
+#if 0 // debug only
+    for (int i=0;i<relations.size();++i){
+      cout << i << ", p=";
+      if (i==0) 
+	cout << "-1";
+      else {
+	if (i<=bs)
+	  cout << basis[i-1].p << " " << relations[i].count << endl;
+	else
+	  cout << endl;
+      }
+    }
+#endif
+    sort(relations.begin(),relations.end()); // put 0 lines at end, otherwise asc. sort
+#else // RREF_SORT
     if (debug_infolevel)
       *logptr(contextptr) << clock() << " begin rref size " << relations.size() << "x" << l32 << " K " << 0.004*relations.size()*C32 << endl;
-    rref(relations,C32);
+    reverse(relations.begin(),relations.end());
+#endif // RREF_SORT
+    // rref(relations,relations.size(),C32,0);
+    rref(relations,relations.size(),C32,1);
+    rref(relations,relations.size(),C32,2);
     if (debug_infolevel)
       *logptr(contextptr) << clock() << " end rref" << endl;
     // printbool(*logptr(contextptr),relations);
@@ -1887,8 +2682,8 @@ namespace giac {
     i=0;
     int j=0,rs=relations.size();
     for (;i<rs && j<l32;++j){
-      if (relations[i][j/32] & (1 << j%32)){
-	swap(relations2[j],relations[i]);
+      if (relations[i].tab[j/32] & (1 << j%32)){
+	swap(relations2[j],relations[i].tab);
 	++i;
       }
     }
@@ -2393,9 +3188,9 @@ namespace giac {
     return b;
   }
   static gen pollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
-#ifdef GIAC_HAS_STO38
+#ifdef GIAC_HAS_STO_38
     int debug_infolevel_=debug_infolevel;
-    debug_infolevel=1;
+    debug_infolevel=2;
     if (do_pollard)
       *logptr(contextptr) << "Pollard-rho on " << a << endl; 
 #endif

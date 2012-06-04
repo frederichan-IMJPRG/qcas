@@ -24,7 +24,6 @@
 class QLineEdit;
 class Canvas2D;
 class QTabWidget;
-class giac::context;
 class PlotFunctionDialog : public QDialog
 {
     Q_OBJECT
