@@ -56,12 +56,15 @@ public:
   bool isFromInter() const;
   void setFromInter(const bool &);
   bool isTraceActive() const;
-  void setTraceActive(const bool &);
+  virtual void setTraceActive(const bool &);
 
   virtual void draw(QPainter*) const =0 ;
+
   virtual void updateScreenCoords(const bool)=0;
   virtual QString getType()const =0 ;
   virtual bool isUnderMouse(const QRectF &p) const;
+  virtual void drawTrace(QPainter*);
+
   void setColor(const QColor &) ;
   void setPointStyle(const int );
   void setStyle(const int);
@@ -117,8 +120,8 @@ protected:
   bool undef;
 
 private:
-  bool fromInter;
   bool traceActive;
+  bool fromInter;
   bool movable;
   int level;
   QString var;
@@ -135,7 +138,9 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual bool isUnderMouse(const QRectF & p) const;
     virtual void setWidth(const int);
+    virtual void setTraceActive(const bool &);
     virtual QString getType() const;
+    virtual void drawTrace(QPainter *);
     int getPointStyle() const;
     virtual int getPenWidth() const;
     virtual void setValue(const giac::gen & );
@@ -146,6 +151,8 @@ protected:
 private:
     QRectF recSel;
     double xScreen,yScreen;
+    // To store trace
+    QList<QPointF> tracePoints;
 
     friend class PointElement;
 };

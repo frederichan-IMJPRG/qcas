@@ -5,6 +5,10 @@
         <file>images/bezier.png</file>
         <file>images/bisector.png</file>
         <file>images/book.png</file>
+        <file>images/cas.png</file>
+        <file>images/circle2pt.png</file>
+        <file>images/circleRadius.png</file>
+        <file>images/circle3pt.png</file>
         <file>images/configure.png</file>
         <file>images/delete.png</file>
         <file>images/document-new.png</file>
@@ -36,6 +40,7 @@
         <file>images/perpendicular.png</file>
         <file>images/perpenbisector.png</file>
         <file>images/polygon.png</file>
+        <file>images/png.png</file>
         <file>images/previous.png</file>
         <file>images/process-stop.png</file>
         <file>images/programming.png</file>
@@ -47,16 +52,14 @@
         <file>images/midpoint.png</file>
         <file>images/inter.png</file>
         <file>images/line.png</file>
+        <file>images/linebyequation.png</file>
         <file>images/point-symmetry.png</file>
         <file>images/reflection.png</file>
         <file>images/rotation.png</file>
         <file>images/segment.png</file>
         <file>images/halfline.png</file>
-        <file>images/circle2pt.png</file>
-        <file>images/circleRadius.png</file>
-        <file>images/circle3pt.png</file>
-        <file>images/cas.png</file>
         <file>images/select.png</file>
+        <file>images/svg.png</file>
         <file>images/ortho.png</file>
         <file>images/right.png</file>
         <file>images/similarity.png</file>

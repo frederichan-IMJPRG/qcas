@@ -192,6 +192,9 @@ void MyItem::setPointStyle(const int c){
 bool MyItem::isUnderMouse(const QRectF& p) const{
     return false;
 }
+void MyItem::drawTrace(QPainter *){
+}
+
 void MyItem::setStyle(const int c) {
     attributes=(attributes& 0xfe3fffff)+(c<<22);
 
@@ -471,6 +474,19 @@ bool Point::isUnderMouse(const QRectF& p) const{
 QString Point::getType() const{
     return QObject::tr("Point");
 }
+void Point::setTraceActive(const bool & b){
+    MyItem::setTraceActive(b);
+    if (!b) tracePoints.clear();
+}
+void Point::drawTrace(QPainter * painter){
+    for (int i=0;i<tracePoints.size();++i){
+        painter->setPen(Qt::blue);
+        painter->setBrush(QBrush(Qt::blue,Qt::SolidPattern));
+        double a,b;
+        g2d->toScreenCoord(tracePoints.at(i).x(),tracePoints.at(i).y(),a,b);
+        painter->drawEllipse(QPointF(a,b),2,2);
+    }
+}
 void Point::updateValueFrom(MyItem * item){
 
     if (item->isUndef()){
@@ -489,10 +505,17 @@ bool Point::isPoint()  const{
 }
 
 void Point::updateScreenCoords(const bool compute){
-    if (compute) g2d->toScreenCoord(x,y,xScreen,yScreen);
+    if (compute) {
+        g2d->toScreenCoord(x,y,xScreen,yScreen);
+
+    }
     int width=getPenWidth()+3;
     recSel=QRectF(xScreen,yScreen,width,width);
     recSel.adjust(-width/2,-width/2,-width/2,-width/2);
+    if (isTraceActive()){
+         QPointF p(x,y);
+        tracePoints.append(p);
+    }
 
 }
 
@@ -507,6 +530,7 @@ void Point::draw(QPainter * painter) const{
     }
 //    qDebug()<<attributes <<legend;
     painter->setPen(QPen(color,width/2.0,Qt::SolidLine,Qt::RoundCap));
+
 
     switch(getPointStyle()){
     case giac::_POINT_LOSANGE:
@@ -575,8 +599,8 @@ void Point::draw(QPainter * painter) const{
         break;
         // CROSS_POINT
     default:
-       {         painter->setBrush(QBrush());
-
+       {
+        painter->setBrush(QBrush());
         width*=0.707;
         painter->drawLine(QPointF(xScreen+width,yScreen+width),QPointF(xScreen-width,yScreen-width));
         painter->drawLine(QPointF(xScreen-width,yScreen+width),QPointF(xScreen+width,yScreen-width));

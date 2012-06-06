@@ -22,6 +22,8 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <giac/giac.h>
+#include <QFileDialog>
+#include <QFile>
 #include <QTreeWidget>
 #include <QLineEdit>
 #include <QVBoxLayout>
@@ -284,6 +286,10 @@ void GraphWidget::createToolBar(){
     line->setIcon(QIcon(":/images/line.png"));
     line->setData(canvas->LINE);
     line->setProperty("comment",tr("Deux points"));
+    linebyequation=new QAction(tr("Droite par équation"),buttonLine);
+    linebyequation->setIcon(QIcon(":/images/linebyequation.png"));
+    linebyequation->setData(canvas->LINEBYEQUATION);
+    linebyequation->setProperty("comment","");
     segment=new QAction(tr("Segment"),buttonLine);
     segment->setIcon(QIcon(":/images/segment.png"));
     segment->setData(canvas->SEGMENT);
@@ -409,6 +415,7 @@ void GraphWidget::createToolBar(){
     menuPt->setStyle(new IconSize);
 
     menuLine->addAction(line);
+    menuLine->addAction(linebyequation);
     menuLine->addAction(segment);
     menuLine->addAction(halfline);
     menuLine->addAction(vectorAc);
@@ -625,6 +632,9 @@ void GraphWidget::removeFromTree(MyItem * item){
 }
 
 
+
+
+
 /**
   * clear all selected items in the tree
   */
@@ -720,10 +730,21 @@ void Canvas2D::createMenuAction(){
     orthoAction->setIcon(QIcon(":/images/ortho.png"));
     connect(orthoAction,SIGNAL(triggered()),this,SLOT(make_ortho()));
 
+    exportPNG=new QAction(tr("image au format PNG, JPG ou BMP"),this);
+    exportPNG->setIcon(QIcon(":/images/png.png"));
+    connect(exportPNG,SIGNAL(triggered()),this,SLOT(exportToPNG()));
+    exportSVG=new QAction(tr("image *.svg"),this);
+    exportSVG->setIcon(QIcon(":/images/svg.png"));
+    exportLatex=new QAction(tr("format PSTricks (LaTeX)"),this);
+    exportLatex->setIcon(QIcon(":/images/tex.png"));
+
+
    QAction* title=new QAction(tr("Graphique"),this);
    QFont font;
    font.setWeight(QFont::Bold);
    title->setFont(font);
+
+
 
 
    // create contextual menu
@@ -735,8 +756,14 @@ void Canvas2D::createMenuAction(){
     menuGeneral->addAction(zoomIn);
     menuGeneral->addAction(zoomOut);
     menuGeneral->addAction(orthoAction);
+    menuGeneral->addSeparator();
+
+    menuExport=new QMenu(tr("Export vers..."),this);
+    menuExport->addAction(exportLatex);
+    menuExport->addAction(exportPNG);
+    menuExport->addAction(exportSVG);
+    menuGeneral->addMenu(menuExport);
     if (isInteractive()){
-        menuGeneral->addSeparator();
         menuGeneral->addAction(sourceAction);
     }
     objectTitleAction=new QAction(this);
@@ -797,9 +824,10 @@ void Canvas2D::setActionTool(action a){
             commands.append(newCommand);
             evaluationLevel=commands.size()-1;
             gen g(newCommand.command.toStdString(),context);
-    //                    qDebug()<<QString::fromStdString(g.print(context));
             QList<MyItem*> v;
             addToVector(protecteval(g,1,context),v);
+
+            findIDNT(g,v.at(0));
             v.at(0)->updateScreenCoords(true);
             v.at(0)->setVar(varPt);
             pointItems.append(v.at(0));
@@ -838,7 +866,7 @@ void Canvas2D::setActionTool(action a){
 
                     return;
                 }
-
+                findIDNT(g,v.at(0));
 
                 v.at(0)->setVar(varLine);
                 v.at(0)->updateScreenCoords(true);
@@ -857,8 +885,93 @@ void Canvas2D::setActionTool(action a){
         delete(dialog);
 
     }
+    else if(currentActionTool==LINEBYEQUATION){
+        OneArgDialog* dialog=new OneArgDialog(this,tr("Equation"));
+        if (dialog->exec()){
+            findFreeVar(varLine);
+            QString s(varLine);
+            s.append(":=line(");
+            s.append(dialog->editRadius->text());
+            s.append(");");
+            Command newCommand;
+            newCommand.command=s;
+            newCommand.attributes=0;
+            newCommand.isCustom=false;
+            commands.append(newCommand);
+            evaluationLevel=commands.size()-1;
+            gen g(newCommand.command.toStdString(),context);
+
+            QList<MyItem*> v;
+            addToVector(protecteval(g,1,context),v);
+            if (v.isEmpty()){
+                giac::_purge(gen(varLine.toStdString(),context),context);
+
+                return;
+            }
+            findIDNT(g,v.at(0));
+
+            v.at(0)->setVar(varLine);
+            v.at(0)->updateScreenCoords(true);
+            lineItems.append(v.at(0));
+            parent->addToTree(v.at(0));
+            focusOwner=v.at(0);
+            parent->updateAllCategories();
+            parent->selectInTree(focusOwner);
+            selectedItems.append(focusOwner);
+            updatePixmap(false);
+            repaint();
+
+
+        }
+
+    delete(dialog);
+
+}
     selectedItems.clear();
 }
+/**
+ * @brief Canvas2D::findIDNT Looks for all sub gen of type IDNT in expression
+ *                           If this IDNT is a variable name for a geometry MyItem
+ *                           then adds as Child
+ * @param expression The expression to parse
+ * @param item The child created from expression
+ */
+void Canvas2D::findIDNT(gen &expression,MyItem* item){
+    if (expression.type==giac::_SYMB){
+        giac::gen g=expression._SYMBptr->feuille;
+        findIDNT(g,item);
+    }
+    else if (expression.type==giac::_VECT){
+        giac::vecteur *v=expression._VECTptr;
+        vecteur::iterator it;
+        for(it=v->begin();it<v->end();it++){
+            findIDNT(*it,item);
+        }
+    }
+    else if(expression.type==giac::_IDNT){
+        QString s=QString::fromStdString(expression._IDNTptr->name());
+        int id=findItemFromVar(s,&pointItems);
+        if (id!=-1){
+            pointItems.at(id)->addChild(item);
+        }
+        else {
+            id=findItemFromVar(s,&lineItems);
+            if (id!=-1){
+                lineItems.at(id)->addChild(item);
+            }
+            else {
+                id=findItemFromVar(s,&filledItems);
+                if (id!=-1){
+                    filledItems.at(id)->addChild(item);
+                }
+            }
+        }
+    }
+}
+
+
+
+
 
 void Canvas2D::setBounds(const double & xMin, const double &xMax, const double & yMin, const double & yMax){
     xmin=xMin;
@@ -889,7 +1002,6 @@ giac::context* Canvas2D::getContext() const{
     return context;
 }
 
-
 void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
 //    std::cout<<print(g,context)<<std::endl;
     if (giac::is_undef(g)) {
@@ -897,9 +1009,6 @@ void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
         return;
     }
     if (g.type==giac::_VECT){
-
-
-
       giac::vecteur & v =*g._VECTptr;
       const_iterateur it=v.begin(),itend=v.end();
       for (;it!=itend;++it){
@@ -1707,8 +1816,15 @@ void Canvas2D::renameObject(){
     delete dialog;
 }
 void Canvas2D::trace(bool b) {
-
-
+    focusOwner->setTraceActive(b);
+    if (b)
+        traceVector.append(focusOwner);
+    else {
+        int id=traceVector.indexOf(focusOwner);
+        if (id!=-1)
+            traceVector.remove(id);
+       repaint();
+    }
 }
 
 void Canvas2D::deleteObject(){
@@ -1822,6 +1938,14 @@ void Canvas2D::displayLegend(bool b){
 //    parent->updateValueInDisplayPanel();
      updatePixmap(false);
      repaint();
+}
+void Canvas2D::exportToPNG(){
+    QString fileName=QFileDialog::getSaveFileName(this,tr("Enregistrer sous..."),".png");
+    if (fileName.isEmpty()){
+        return;
+    }
+    pixmap.save(fileName);
+
 }
 void Canvas2D::displayObject(bool b){
     focusOwner->setVisible(b);
@@ -3552,6 +3676,15 @@ void Canvas2D::paintEvent(QPaintEvent * ){
     painter.drawPixmap(0,0,pixmap);
     painter.setClipRect(20,20,width()-40,height()-40);
 
+    // Draw eventual traces
+    if (!traceVector.isEmpty()) {
+        for (int i=0;i<traceVector.size();++i){
+            traceVector.at(i)->drawTrace(&painter);
+        }
+
+    }
+
+
     // draw selection
     if (selectionRight){
         QColor fill=QColor(50,0,255,50);
@@ -3581,6 +3714,10 @@ void Canvas2D::paintEvent(QPaintEvent * ){
         focusOwner->draw(&painter);
         focusOwner->setHighLighted(false);
     }
+    for (int i=0;i<pointItems.size();++i){
+        if (pointItems.at(i)->isTraceActive()) pointItems.at(i)->draw(&painter);
+    }
+
 }
 void Canvas2D::resizeEvent(QResizeEvent * ev){
 
@@ -3650,7 +3787,6 @@ void Canvas2D::getDisplayCommands(QStringList & list){
         }
         list.append(s);
     }
-    return list;
 
 }
 PanelProperties::PanelProperties(Canvas2D* c){

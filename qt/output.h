@@ -24,6 +24,7 @@
 #include <QVector>
 #include <QDomElement>
 #include <QPixmap>
+#include <QPainterPath>
 #include <QScrollArea>
 #include <QHash>
 #include <QGroupBox>
@@ -156,6 +157,7 @@ class GraphWidget:public OutputWidget{
     QAction * inter;
     QAction* midpoint;
     QAction* line;
+    QAction* linebyequation;
     QAction* halfline;
     QAction* segment;
     QAction *bisector;
@@ -222,13 +224,12 @@ struct AxisParam{
     QString unitSuffix;
     double tick,min,max;
 };
-
 // The canvas to draw 2D graphics
 
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,TANGENT,PARALLEL,PERPENDICULAR,
+    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,LINEBYEQUATION,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,TANGENT,PARALLEL,PERPENDICULAR,
                 REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS
                 ,CIRCLE3PT,ARC3PT};
 
@@ -255,6 +256,7 @@ public:
     bool checkForOnlyLines(const QList<MyItem *> *) const;
     bool checkForOnlyFillables(const QList<MyItem *> *) const;
     void getDisplayCommands(QStringList & );
+
 
     // Getter & Setter
     bool isInteractive() const;
@@ -295,6 +297,8 @@ private:
     MyItem* focusOwner;
     // Item for preview
     MyItem* itemPreview;
+    // vector to store Trace points
+    QVector<MyItem*> traceVector;
     // Command for missing point in preview
     QString missingPoint;
 
@@ -319,6 +323,10 @@ private:
 
 
     QMenu * menuGeneral;
+    QAction* exportPNG;
+    QAction* exportSVG;
+    QAction* exportLatex;
+    QMenu* menuExport;
     QAction* zoomIn;
     QAction* zoomOut;
     QAction* orthoAction;
@@ -387,7 +395,7 @@ private:
     void executeMyAction(bool );
     void renameObject(MyItem*,const QString&);
     int findItemFromVar(const QString&,QList<MyItem*>*);
-
+    void findIDNT(giac::gen &, MyItem *);
 private slots:
     void zoom_In();
     void zoom_Out();
@@ -396,6 +404,7 @@ private slots:
     void displayAxis(bool);
     void displaySource();
     void displayObject(bool);
+    void exportToPNG();
     void displayLegend(bool);
     void deleteObject();
     void trace(bool);
