@@ -152,6 +152,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
       int errorColumn;
       bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
       if (!ok) {
+
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
@@ -328,11 +329,11 @@ void GraphWidget::createToolBar(){
     reflection=new QAction(tr("Symétrie axiale"),buttonTool);
     reflection->setIcon(QIcon(":/images/reflection.png"));
     reflection->setData(canvas->REFLECTION);
-    reflection->setProperty("comment",tr("Droite puis objet"));
+    reflection->setProperty("comment",tr("Axe de symétrie puis objet"));
     pointSymmetry=new QAction(tr("Symétrie centrale"),buttonTool);
     pointSymmetry->setIcon(QIcon(":/images/point-symmetry.png"));
     pointSymmetry->setData(canvas->POINT_SYMMETRY);
-    pointSymmetry->setProperty("comment",tr("Centre puis objet"));
+    pointSymmetry->setProperty("comment",tr("Centre de symétrie puis objet"));
     rotation=new QAction(tr("Rotation"),buttonTool);
     rotation->setIcon(QIcon(":/images/rotation.png"));
     rotation->setData(canvas->ROTATION);
@@ -358,11 +359,11 @@ void GraphWidget::createToolBar(){
      plotBezier=new QAction(tr("Courbe de Bézier"),buttonPlot);;
      plotBezier->setData(canvas->PLOT_BEZIER);
      plotBezier->setIcon(QIcon(":/images/bezier.png"));
-     plotBezier->setProperty("comment",tr("Points de contrôle puis deux fois le même point pour terminer"));
+     plotBezier->setProperty("comment",tr("Points de contrôle puis clic droit pour le dernier point"));
      polygon=new QAction(tr("Polygône/Ligne brisée"),buttonPlot);;
      polygon->setData(canvas->POLYGON);
      polygon->setIcon(QIcon(":/images/polygon.png"));
-     polygon->setProperty("comment",tr("Sommets puis deux fois le même point pour terminer"));
+     polygon->setProperty("comment",tr("Sommets puis clic droit pour le dernier sommet"));
      regularPolygon=new QAction(tr("Polygône régulier"),buttonPlot);;
      regularPolygon->setData(canvas->REGULAR_POLYGON);
      regularPolygon->setIcon(QIcon(":/images/regularpolygon.png"));
@@ -1081,6 +1082,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
 */
 
     if (s==at_pnt){
+        bool isBezier=false;
       // f[0]=complex pnt or vector of complex pnts or symbolic
       // f[1] -> style
       // f[2] optional=label
@@ -1105,12 +1107,54 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       if (point.type==_SYMB) {
         if (point._SYMBptr->sommet==at_hyperplan || point._SYMBptr->sommet==at_hypersphere)
           return;
+        /****  Bezier curve *************
+         *
+         ********************************/
+        if (point._SYMBptr->sommet==at_Bezier){
+          point=point._SYMBptr->feuille;
+              const_iterateur jt=point._VECTptr->begin(),jtend=point._VECTptr->end();
 
+                bool fillable=false;
+                // Cas d'un polygon fermé
+                 if ( *jt==*(jtend-1)){
+                     fillable=true;
+                 }
+
+              if (jt==jtend) return;
+              // rest of the path
+              QList<QPointF> path;
+            gen save2;
+
+              for (;;){
+          //      Mon_image.findij(*jt,x_scale,y_scale,i1,j1,context);
+                  // segment
+                      gen e,f0,f1;
+                      evalfdouble2reim(*jt,e,f0,f1,context);
+                      // For segment
+                      save2=*jt;
+                      if ((f0.type==_DOUBLE_) && (f1.type==_DOUBLE_)){
+                           i0=f0._DOUBLE_val;
+                           j0=f1._DOUBLE_val;
+                            path.append(QPointF(i0,j0));
+                       }
+                ++jt;
+                      if (jt==jtend) break;
+          }
+
+              BezierCurve* curve=new BezierCurve(path,this);
+              curve->setLevel(evaluationLevel);
+              curve->setAttributes(ensemble_attributs);
+              scene.append(curve);
+            return;
+
+
+          }
         /*
         *    Circle figures (arc, circle ...)
         *
         */
-        if (point._SYMBptr->sommet==at_cercle){
+
+        else if (point._SYMBptr->sommet==at_cercle){
           vecteur v=*point._SYMBptr->feuille._VECTptr;
           gen diametre=remove_at_pnt(v[0]);
           gen e1=diametre._VECTptr->front().evalf_double(1,context);
@@ -1447,7 +1491,10 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
         j0=j1;
       }
 
+
       Curve *curve=new Curve(path,this);
+
+
       // For a segment
      if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2)){
 
@@ -2470,6 +2517,7 @@ bool Canvas2D::checkForValidAction(MyItem * item){
     case VECTOR:
     case BISECTOR:
     case POLYGON:
+    case PLOT_BEZIER:
     case REGULAR_POLYGON:
         return item->isPoint();
     case TRANSLATION:{
@@ -2549,6 +2597,7 @@ bool Canvas2D::checkForCompleteAction(){
             else return false;
         }
         break;
+/*    case PLOT_BEZIER:
     case POLYGON:{
         int size=selectedItems.size();
         if (size>2){
@@ -2560,7 +2609,7 @@ bool Canvas2D::checkForCompleteAction(){
         }
         else return false;
     }
-        break;
+        break;*/
     default:
         return false;
     }
@@ -2581,7 +2630,7 @@ bool Canvas2D::checkForPointWaiting(){
     if (currentActionTool==TANGENT&& selectedItems.size()==1) return true;
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
-            || (currentActionTool==POLYGON)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)||(currentActionTool==ARC3PT));
+            || (currentActionTool==POLYGON)|| (currentActionTool==PLOT_BEZIER)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)||(currentActionTool==ARC3PT));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -2604,6 +2653,7 @@ bool Canvas2D::checkForOneMissingPoint(){
                  ||selectedItems.at(0)->isVector()) return true;
         else  return false;
     }
+    case PLOT_BEZIER:
     case POLYGON: {
         if (selectedItems.size()>=1) return true;
         else return false;
@@ -2886,6 +2936,67 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso){
     parent->selectInTree(v.at(0));
     updatePixmap(false);
     repaint();
+
+
+}
+void Canvas2D::addNewBezier(const bool & onlyForPreview){
+    findFreeVar(varLine);
+    Command c;
+    c.attributes=0;
+    QString s(varLine);
+    s.append(":=bezier(");
+    for (int i=0;i<selectedItems.size();++i){
+        s.append(selectedItems.at(i)->getVar());
+        if (i!=selectedItems.size()-1) s.append(",");
+        else if (onlyForPreview) {
+            s.append(",");
+            s.append(missingPoint);
+            int id=s.indexOf(":=");
+            s=s.mid(id+2,s.length()-2);
+        }
+    }
+    s.append(");");
+
+    c.command=s;
+    evaluationLevel=commands.size();
+    gen g(c.command.toStdString(),context);
+    QList<MyItem*> v;
+    addToVector(protecteval(g,1,context),v);
+    if (onlyForPreview){
+        if (v.at(0)->isUndef()){
+            itemPreview=0;
+        }
+        else{
+            itemPreview=v.at(0);
+            itemPreview->updateScreenCoords(true);
+        }
+        return;
+    }
+    c.isCustom=false;
+    c.item=v.at(0);
+    commands.append(c);
+
+    if (v.at(0)->isUndef()){
+        UndefItem* undef=new UndefItem(this);
+        undef->setVar(varLine);
+        lineItems.append(undef);
+        parent->addToTree(undef);
+        parent->updateAllCategories();
+        parent->selectInTree(undef);
+        return;
+    }
+    v.at(0)->setVar(varLine);
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(v.at(0));
+    }
+    v.at(0)->updateScreenCoords(true);
+    lineItems.append(v.at(0));
+    parent->addToTree(v.at(0));
+    parent->updateAllCategories();
+    parent->selectInTree(v.at(0));
+    updatePixmap(false);
+    repaint();
+
 
 
 }
@@ -3458,6 +3569,8 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         break;
         case ARC3PT: addNewArc(onlyForPreview);
         break;
+    case PLOT_BEZIER:   addNewBezier(onlyForPreview);
+        break;
     case TANGENT: addInter("tangent");
         break;
     default:{}
@@ -3531,11 +3644,21 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 endSel=e->pos();
                 setMouseTracking(true);
                 QRect r(startSel,endSel);
+
                 if (selectionRight&& std::abs(r.width())>10&& std::abs(r.height())>10){
                     zoom_In();
                 }
                 else  {
-                    if (focusOwner!=0){
+                    // defining the last point for a polygon or a bezier curve:
+                    if ((currentActionTool==POLYGON)||(currentActionTool==PLOT_BEZIER)){
+                        if (focusOwner!=0) selectedItems<<focusOwner;
+                        else{
+                            addNewPoint(e->pos());
+                        }
+                        executeMyAction();
+                    }
+                    // Display context menu for Objects
+                    else if (focusOwner!=0) {
 
                         QString s=focusOwner->getType();
                         s.append(" ");
@@ -3551,9 +3674,9 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
 
                         menuObject->popup(this->mapToGlobal(e->pos()));
                     }
+                    // display classic context menu
                     else menuGeneral->popup(this->mapToGlobal(e->pos()));
                 }
-
                 selectionRight=false;
     }
     // Left Button
@@ -3568,7 +3691,10 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 // To improve (In most cases, the foolowing line is a  double check)
                 if (checkForValidAction(focusOwner)) {
                     selectedItems<<focusOwner;
-                    if (currentActionTool==SINGLEPT) addNewPointElement(e->posF());
+                    if (currentActionTool==PLOT_BEZIER){
+                        addNewBezierControlPoint();
+                    }
+                    else if (currentActionTool==SINGLEPT) addNewPointElement(e->posF());
                 }
 
 
@@ -3588,13 +3714,62 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 else {
                     addNewPoint(e->pos());
                     if (checkForCompleteAction()) executeMyAction();
+                    if (currentActionTool==PLOT_BEZIER) addNewBezierControlPoint();
                 }
             }
             else  parent->clearSelection();
         }
     }
 }
+void Canvas2D::addNewBezierControlPoint(){
+    int size=selectedItems.size();
+    if ((size>1) && ((size-1)%3==0)) {
+        QString center=selectedItems.last()->getVar();
+        QString pt=selectedItems.at(size-2)->getVar();
 
+         findFreeVar(varPt);
+         QString s(varPt);
+         commandTwoArgs("reflection",center,pt,s);
+        Command c;
+        c.attributes=0;
+        c.command=s;
+        evaluationLevel=commands.size();
+
+        gen g(c.command.toStdString(),context);
+        QList<MyItem*> v;
+        addToVector(protecteval(g,1,context),v);
+
+        c.item=v.at(0);
+        c.isCustom=false;
+        commands.append(c);
+
+        if (v.at(0)->isUndef()){
+            UndefItem* undef=new UndefItem(this);
+            undef->setVar(varLine);
+            filledItems.append(undef);
+            parent->addToTree(undef);
+            parent->updateAllCategories();
+            parent->selectInTree(undef);
+            return;
+        }
+        v.at(0)->updateScreenCoords(true);
+        v.at(0)->setVar(varPt);
+        pointItems.append(v.at(0));
+
+        parent->addToTree(v.at(0));
+        focusOwner=v.at(0);
+
+        selectedItems.at(size-1)->addChild(v.at(0));
+        selectedItems.at(size-2)->addChild(v.at(0));
+        selectedItems.append(v.at(0));
+        parent->updateAllCategories();
+        parent->selectInTree(focusOwner);
+        updatePixmap(false);
+        repaint();
+
+    }
+
+}
 void Canvas2D::mouseMoveEvent(QMouseEvent *e){
     if (selectionRight&&!hasMouseTracking()) {
         endSel=e->pos();
@@ -3891,6 +4066,9 @@ void PanelProperties::addToTree( MyItem * item){
         else if (c->isPolygon())
             nodePolygon->addChild(treeItem);
         else
+            nodeCurve->addChild(treeItem);
+    }
+    else if(item->isBezierCurve()){
             nodeCurve->addChild(treeItem);
     }
     else if(item->isCircle()){

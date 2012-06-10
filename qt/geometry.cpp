@@ -138,6 +138,10 @@ bool MyItem::isHalfLine() const{
 bool MyItem::isCurve() const{
     return false;
 }
+bool MyItem::isBezierCurve() const{
+    return false;
+}
+
 bool MyItem::isInter() const{
     return false;
 }
@@ -1066,6 +1070,118 @@ void Curve::setFillable(const bool & b){
 void Curve::setPolygon(const bool & b){
     polygon=b;
 }
+BezierCurve::BezierCurve(const QList<QPointF> &p,Canvas2D *graph):MyItem(graph){
+    points=p;
+    int rem=(points.size()-1)%3;
+    for (int i=0;i<rem;++i){
+        points.append(points.last());
+    }
+    fillable=false;
+
+}
+QList<QPointF> BezierCurve::getControlPoints() const{
+    return points;
+}
+void BezierCurve::updateValueFrom(MyItem * item){
+/*    if (item->isUndef()) {
+        value=giac::undef;
+        undef=true;
+        return;
+    }*/
+    undef=false;
+
+    if (!item->isBezierCurve()) return;
+    BezierCurve* curve=dynamic_cast<BezierCurve*>(item);
+    if (curve->isFillable()) fillable=true;
+    points=curve->getControlPoints();
+    updateScreenCoords(true);
+}
+/*QPainterPath Curve::getPath() const{
+    return path;
+}*/
+
+QString BezierCurve::getDisplayValue(){
+        QString mml("<math mode=\"display\">\n");
+        mml.append("<text>");
+        mml.append(QObject::tr("Courbe de bézier"));
+        mml.append("</text>");
+        mml.append("</math>");
+        return mml;
+}
+void BezierCurve::draw(QPainter *painter) const{
+    if (!isVisible()) return;
+
+    int width=1;
+    QColor color=getColor();
+    if (highLighted){
+        color.setAlpha(100);
+        width=3;
+    }
+
+    if ((isFilled()&&isFillable()&&(!highLighted))){
+        QColor f(color);
+        f.setAlpha(255);
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->setPen(QPen(f,getPenWidth(),  Qt::SolidLine));
+//        painter->drawPath(pointsScreen);
+    }
+    else {
+
+        painter->setPen(QPen(color,width,  Qt::SolidLine));
+        painter->setBrush(QBrush(color,Qt::SolidPattern));
+        painter->drawPath(envelop);
+
+    }
+
+}
+bool BezierCurve::isBezierCurve() const{
+    return true;
+}
+
+bool BezierCurve::isUnderMouse(const QRectF &p) const{
+    return false;
+}
+
+
+void BezierCurve::updateScreenCoords(const bool compute){
+    if (compute){
+        double xtmp,ytmp;
+        pointsScreen.clear();
+        for (int i=0;i<points.size();++i){
+            g2d->toScreenCoord(points.at(i).x(),points.at(i).y(),xtmp,ytmp);
+            pointsScreen.append(QPointF(xtmp,ytmp));
+        }
+        bezierCurve=QPainterPath();
+        QList<QPointF> v;
+        if (pointsScreen.size()==0) return;
+        bezierCurve.moveTo(pointsScreen.at(0));
+        for(int i=1;i<pointsScreen.size();++i){
+            v.append(pointsScreen.at(i));
+            if (v.size()==3){
+                bezierCurve.cubicTo(v.at(0),v.at(1),v.at(2));
+                v.clear();
+            }
+        }
+    }
+//    qDebug()<<points;
+    int width=getPenWidth()+1;
+    stroke.setCapStyle(Qt::FlatCap);
+    stroke.setDashPattern(getLineType());
+    stroke.setWidth(width);
+    envelop=stroke.createStroke(bezierCurve);
+
+}
+
+QString BezierCurve::getType() const{
+    return QObject::tr("Courbe de Bézier");
+}
+bool BezierCurve::isFillable() const{
+    return (fillable);
+}
+void BezierCurve::setFillable(const bool & b){
+    fillable=b;
+}
+
 
 Circle::Circle(const QPointF &p, const double &d, const double &st, const double &end, Canvas2D *graph):MyItem(graph){
     center=p;

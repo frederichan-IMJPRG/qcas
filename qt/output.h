@@ -382,8 +382,10 @@ private:
     void addNewCircle(const bool&);
     void addNewPolygon(const bool&, const bool &iso=false);
     void addNewArc(const bool&);
+    void addNewBezier(const bool&);
     void addTransformObject(const QString &);
     void addMidpoint();
+    void addNewBezierControlPoint();
     void addBisector(const bool &);
     void addPerpenBisector(const bool &);
     void addNewPointElement(const QPointF &pos);

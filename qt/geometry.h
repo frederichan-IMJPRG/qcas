@@ -40,6 +40,7 @@ public:
   virtual bool isVector() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
+  virtual bool isBezierCurve() const;
   virtual bool isInter() const;
   virtual bool isList() const;
   virtual bool isCircle() const;
@@ -245,6 +246,31 @@ private:
     QPainterPath path;
     QPainterPath envelop;
     QPainterPath pathArrow;
+};
+class BezierCurve:public MyItem{
+public:
+    BezierCurve(const QList<QPointF> & , Canvas2D*);
+//    void addPath();
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual bool isBezierCurve() const;
+    virtual void draw(QPainter*) const;
+    virtual QString getType() const;
+    virtual bool isFillable() const;
+    void setFillable(const bool &);
+    virtual QString getDisplayValue();
+    virtual void updateValueFrom(MyItem *);
+    QList <QPointF> getControlPoints() const;
+//    QPainterPath getPath() const;
+private:
+    bool fillable;
+    QPainterPathStroker stroke;
+    QList<QPointF> pointsScreen;
+    QList<QPointF> points;
+
+    QPainterPath bezierCurve;
+    QPainterPath envelop;
+//    QPainterPath pathArrow;
 };
 
 

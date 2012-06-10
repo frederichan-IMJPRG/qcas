@@ -13851,6 +13851,21 @@ namespace giac {
   gen _Bezier(const gen & args,GIAC_CONTEXT){
     return symbolic(at_Bezier,args);
   }
+  gen _bezier(const gen & args,GIAC_CONTEXT){
+      if (is_undef(args)) return args;
+      vecteur v(gen2vecteur(args));
+      if (v.empty())
+        return gensizeerr(contextptr);
+      vecteur attributs(1,default_color(contextptr));
+      int s=read_attributs(v,attributs,contextptr);
+      for (int i=0;i<s;++i)
+        v[i]=remove_at_pnt(v[i]);
+      return pnt_attrib(symbolic(at_Bezier,gen(vecteur(v.begin(),v.begin()+s),_GROUP__VECT)),attributs,contextptr);
+    }
+  static const char _bezier_s []="bezier";
+    static define_unary_function_eval (__bezier,&_bezier,_bezier_s);
+    define_unary_function_ptr5( at_bezier ,alias_at_bezier,&__bezier,0,true);
+
   static const char _Bezier_s []="Bezier";
   static define_unary_function_eval (__Bezier,&_Bezier,_Bezier_s);
   define_unary_function_ptr5( at_Bezier ,alias_at_Bezier,&__Bezier,0,true);
