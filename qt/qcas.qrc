@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>images/add.png</file>
+        <file>images/angle.png</file>
         <file>images/arc3pt.png</file>
         <file>images/bezier.png</file>
         <file>images/bisector.png</file>

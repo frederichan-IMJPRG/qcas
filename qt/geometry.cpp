@@ -148,6 +148,9 @@ bool MyItem::isInter() const{
 bool MyItem::isList() const{
     return false;
 }
+bool MyItem::isAngleItem() const{
+    return false;
+}
 bool MyItem::isCircle() const{
     return false;
 }
@@ -1462,4 +1465,42 @@ QString PointElement::getTranslation(const QPointF& p){
 }
 bool PointElement::isPointElement() const{
     return true;
+}
+AngleItem::AngleItem( Canvas2D* g2d):MyItem(g2d){
+    arc=0;
+    curve=0;
+ }
+bool AngleItem::isUnderMouse(const QRectF& p) const{
+    return arc->isUnderMouse(p)||curve->isUnderMouse(p);
+}
+void AngleItem::updateScreenCoords(const bool b){
+    arc->updateScreenCoords(b);
+    curve->updateScreenCoords(b);
+}
+void AngleItem::draw(QPainter* painter) const{
+    arc->setAttributes(attributes);
+    curve->setAttributes(attributes);
+    arc->draw(painter);
+    curve->draw(painter);
+}
+bool AngleItem::isAngleItem() const{
+    return true;
+}
+QString AngleItem::getType() const{
+    return QObject::tr("Angle");
+}
+void AngleItem::setCurve(MyItem *c){
+    curve=c;
+}
+void AngleItem::setCircle(MyItem * c){
+    arc=c;
+}
+MyItem* AngleItem::getCircle(){
+    return arc;
+}
+MyItem* AngleItem::getCurve(){
+    return curve;
+}
+QString AngleItem::getDisplayValue(){
+   return QString::fromStdString(giac::gen2mathml(value,g2d->getContext()));
 }

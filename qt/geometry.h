@@ -43,6 +43,7 @@ public:
   virtual bool isBezierCurve() const;
   virtual bool isInter() const;
   virtual bool isList() const;
+  virtual bool isAngleItem() const;
   virtual bool isCircle() const;
   virtual bool isPixel() const;
   virtual bool isFillable() const;
@@ -359,4 +360,24 @@ public:
 private:
     bool tangent;
 };
+
+class AngleItem:public MyItem{
+public:
+    AngleItem(Canvas2D*);
+    virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual bool isAngleItem() const;
+    virtual QString getType() const;
+    void setCircle(MyItem*);
+    void setCurve(MyItem*);
+    MyItem* getCircle();
+    MyItem* getCurve();
+    virtual QString getDisplayValue();
+private:
+    MyItem* arc;
+    MyItem* curve;
+
+};
+
 #endif // GEOMETRY_H

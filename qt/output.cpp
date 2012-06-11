@@ -124,11 +124,13 @@ void FormulaWidget::setGen(const gen & g){
     formula=g;
 }
 void FormulaWidget::updateFormula(const QString  s){
+//    qDebug()<<s;
     QString errorMsg;
       int errorLine;
       int errorColumn;
       bool ok = mmlWidget->setContent(s, &errorMsg, &errorLine, &errorColumn);
       if (!ok) {
+
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
@@ -258,11 +260,15 @@ void GraphWidget::createToolBar(){
     select=new QAction(tr("Sélection"),buttonPointer);
     select->setData(canvas->SELECT);
     select->setIcon(QIcon(":/images/select.png"));
-    select->setProperty("comment","");
-    move=new QAction(tr("Déplacer"),buttonPointer);
-    move->setData(canvas->MOVE);
-    move->setIcon(QIcon(":/images/move.png"));
-    move->setProperty("comment","");
+    select->setProperty("comment",tr("Sélection || Déplacement"));
+    zoomIn=new QAction(tr("Zoom Avant"),buttonPointer);
+    zoomIn->setData(canvas->ZOOM_IN);
+    zoomIn->setIcon(QIcon(":/images/zoom-in.png"));
+    zoomIn->setProperty("comment","");
+    zoomOut=new QAction(tr("Zoom Arrière"),buttonPointer);
+    zoomOut->setData(canvas->ZOOM_OUT);
+    zoomOut->setIcon(QIcon(":/images/zoom-out.png"));
+    zoomOut->setProperty("comment","");
 
     // Point Actions
     singlept=new QAction(tr("Point"),buttonPt);
@@ -369,6 +375,15 @@ void GraphWidget::createToolBar(){
      regularPolygon->setIcon(QIcon(":/images/regularpolygon.png"));
      regularPolygon->setProperty("comment",tr("Deux points"));
 
+     numericCursor=new QAction(tr("Curseur numérique"),buttonPlot);
+ //    numericCursor->setIcon(QIcon(":/images/numericCursor.png"));
+     numericCursor->setData(canvas->NUMERIC_CURSOR);
+     numericCursor->setProperty("comment","");
+     formalCursor=new QAction(tr("Curseur symbolique"),buttonPlot);
+//     formalCursor->setIcon(QIcon(":/images/formalCursor.png"));
+     formalCursor->setData(canvas->FORMAL_CURSOR);
+     formalCursor->setProperty("comment","");
+
     // Circle Actions
     circle2pt=new QAction(tr("Cercle (centre-point)"),buttonCircle);
     circle2pt->setIcon(QIcon(":/images/circle2pt.png"));
@@ -384,17 +399,28 @@ void GraphWidget::createToolBar(){
     circle3pt->setIcon(QIcon(":/images/circle3pt.png"));
     circle3pt->setData(canvas->CIRCLE3PT);
     circle3pt->setProperty("comment","Trois points");
-
     arc3pt=new QAction(tr("Arc de cercle (3 points)"),buttonCircle);
     arc3pt->setIcon(QIcon(":/images/arc3pt.png"));
     arc3pt->setData(canvas->ARC3PT);
     arc3pt->setProperty("comment","Trois points");
+/*    arcCenter=new QAction(tr(" (3 points)"),buttonCircle);
+    arcCenter->setIcon(QIcon(":/images/arc3pt.png"));
+    arcCenter->setData(canvas->ARC3PT);
+    arcCenter->setProperty("comment","Trois points");*/
+    angle=new QAction(tr("Angle"),buttonCircle);
+    angle->setIcon(QIcon(":/images/angle.png"));
+    angle->setData(canvas->ANGLE);
+    angle->setProperty("comment",tr("Sommet de l'angle puis deux points"));
+
+
+
+
 
     // Set default actions
     buttonPointer->setProperty("myAction",canvas->SELECT);
     buttonPointer->setProperty("comment","");
     buttonPt->setProperty("myAction",canvas->SINGLEPT);
-    buttonPt->setProperty("comment","");
+    buttonPt->setProperty("comment",tr("Sélection || Déplacement"));
     buttonLine->setProperty("myAction",canvas->LINE);
     buttonLine->setProperty("comment",tr("Deux points"));
     buttonTool->setProperty("myAction",canvas->PARALLEL);
@@ -406,7 +432,8 @@ void GraphWidget::createToolBar(){
 
 
     menuPointer->addAction(select);
-    menuPointer->addAction(move);
+    menuPointer->addAction(zoomIn);
+    menuPointer->addAction(zoomOut);
     menuPointer->setStyle(new IconSize);
 
     menuPt->addAction(singlept);
@@ -439,12 +466,15 @@ void GraphWidget::createToolBar(){
     menuPlot->addAction(plotBezier);
     menuPlot->addAction(polygon);
     menuPlot->addAction(regularPolygon);
+    menuPlot->addAction(numericCursor);
+    menuPlot->addAction(formalCursor);
     menuPlot->setStyle(new IconSize);
 
     menuCircle->addAction(circle2pt);
     menuCircle->addAction(circleRadius);
     menuCircle->addAction(circle3pt);
     menuCircle->addAction(arc3pt);
+    menuCircle->addAction(angle);
     menuCircle->setStyle(new IconSize);
 
     const QSize size(40,40);
@@ -1082,7 +1112,6 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
 */
 
     if (s==at_pnt){
-        bool isBezier=false;
       // f[0]=complex pnt or vector of complex pnts or symbolic
       // f[1] -> style
       // f[2] optional=label
@@ -2393,8 +2422,26 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
                 Command c=commands.at(level);
                 gen g(c.command.toStdString(),context);
 
+                gen answer=protecteval(g,1,context);
+                if (v.at(i)->isAngleItem()){
+                    AngleItem* angle=dynamic_cast<AngleItem*>(v.at(i));
+                    if (answer.type!=giac::_VECT) return;
+                    //AngleItem* angle=new AngleItem(this);
+                    vecteur* vect=answer._VECTptr;
+                    vecteur::iterator it=vect->begin();
+                    angle->setValue(giac::simplify(*it,context));
+                    QList<MyItem*> vv;
+                    ++it;
+                    addToVector(*it,vv);
+                    angle->getCircle()->updateValueFrom(vv.at(0));
+                    vv.clear();
+                    ++it;
+                    addToVector(*it,vv);
+                    angle->getCurve()->updateValueFrom(vv.at(0));
+                    continue;
+                }
                 QList<MyItem*> vv;
-                addToVector(protecteval(g,1,context),vv);
+                addToVector(answer,vv);
                 // Not the particular case of an intersection point or tangent lines
                 if (!v.at(i)->isInter()){
                     v.at(i)->updateValueFrom(vv.at(0));
@@ -2519,6 +2566,7 @@ bool Canvas2D::checkForValidAction(MyItem * item){
     case POLYGON:
     case PLOT_BEZIER:
     case REGULAR_POLYGON:
+    case ANGLE:
         return item->isPoint();
     case TRANSLATION:{
         if (selectedItems.isEmpty()) return item->isVector();
@@ -2586,6 +2634,7 @@ bool Canvas2D::checkForCompleteAction(){
         case CIRCLE3PT:
         case ARC3PT:
         case BISECTOR:
+        case ANGLE:
         return (selectedItems.size()==3);
         case CIRCLE_RADIUS:
         case SELECT:
@@ -2630,7 +2679,8 @@ bool Canvas2D::checkForPointWaiting(){
     if (currentActionTool==TANGENT&& selectedItems.size()==1) return true;
     return (currentActionTool==SINGLEPT||currentActionTool==SEGMENT||currentActionTool==HALFLINE||currentActionTool==LINE||currentActionTool==POINT_XY
             ||currentActionTool==CIRCLE2PT||currentActionTool==CIRCLE3PT||currentActionTool==CIRCLE_RADIUS||currentActionTool==PERPEN_BISECTOR
-            || (currentActionTool==POLYGON)|| (currentActionTool==PLOT_BEZIER)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)||(currentActionTool==ARC3PT));
+            || (currentActionTool==POLYGON)|| (currentActionTool==PLOT_BEZIER)||(currentActionTool==BISECTOR)||(currentActionTool==VECTOR)||(currentActionTool==REGULAR_POLYGON)
+            ||(currentActionTool==ARC3PT)||(currentActionTool==ANGLE));
 }
 
 bool Canvas2D::checkForOneMissingPoint(){
@@ -2930,7 +2980,7 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso){
     }
     v.at(0)->setVar(varLine);
     v.at(0)->updateScreenCoords(true);
-    lineItems.append(v.at(0));
+    filledItems.append(v.at(0));
     parent->addToTree(v.at(0));
     parent->updateAllCategories();
     parent->selectInTree(v.at(0));
@@ -3080,7 +3130,7 @@ void Canvas2D::addNewArc(const bool & onlyForPreview){
     }
     v.at(0)->updateScreenCoords(true);
     v.at(0)->setVar(varLine);
-    lineItems.append(v.at(0));
+    filledItems.append(v.at(0));
     parent->addToTree(v.at(0));
     focusOwner=v.at(0);
     for (int i=0;i<selectedItems.size();++i){
@@ -3452,6 +3502,73 @@ void Canvas2D::addPerpenBisector(const bool &onlyForPreview){
 
 }
 
+void Canvas2D::addNewAngle(){
+    findFreeVar(varLine);
+    Command c;
+    c.attributes=0;
+    c.command=QString(varLine);
+
+    QString first(selectedItems.at(0)->getVar());
+    QString second(selectedItems.at(1)->getVar());
+    QString third=selectedItems.at(2)->getVar();
+
+    c.command.append(":=angle(");
+    c.command.append(first);
+    c.command.append(",");
+    c.command.append(second);
+    c.command.append(",");
+    c.command.append(third);
+    c.command.append(",\"\");");
+    evaluationLevel=commands.size();
+    gen g(c.command.toStdString(),context);
+
+    gen answer=protecteval(g,1,context);
+
+    if (answer.type!=giac::_VECT) return;
+    AngleItem* angle=new AngleItem(this);
+
+    vecteur* vect=answer._VECTptr;
+
+    vecteur::iterator it=vect->begin();
+    vecteur::iterator itend=vect->end();
+
+
+
+
+
+    angle->setValue(*it);
+//    qDebug()<<QString::fromStdString(print(*it,context));
+    QList<MyItem*> v;
+    ++it;
+    addToVector(*it,v);
+    angle->setCircle(v.at(0));
+    v.clear();
+    ++it;
+    addToVector(*it,v);
+    angle->setCurve(v.at(0));
+
+    angle->setLevel(evaluationLevel);
+    c.isCustom=false;
+    commands.append(c);
+
+    angle->updateScreenCoords(true);
+    angle->setVar(varLine);
+    filledItems.append(angle);
+    parent->addToTree(angle);
+    focusOwner=angle;
+    for (int i=0;i<selectedItems.size();++i){
+        selectedItems.at(i)->addChild(angle);
+    }
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    updatePixmap(false);
+    repaint();
+
+
+
+}
+
+
 void Canvas2D::addInter(const QString & type){
     Command newCommand;
     newCommand.attributes=0;
@@ -3573,6 +3690,7 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
         break;
     case TANGENT: addInter("tangent");
         break;
+    case ANGLE: addNewAngle();
     default:{}
 
     }
@@ -3780,7 +3898,7 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
 
     QPointF mousePos(e->posF());
     // try to move and object
-    if (parent->isInteractive()&&focusOwner!=0&& selectionLeft){
+    if (parent->isInteractive()&&focusOwner!=0&& selectionLeft&&(currentActionTool==SELECT)){
 
         if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
         return;
@@ -3991,6 +4109,7 @@ void PanelProperties::initGui(){
     nodeHalfLine=new QTreeWidgetItem;
     nodeCircle=new QTreeWidgetItem;
     nodePolygon=new QTreeWidgetItem;
+    nodeAngle=new QTreeWidgetItem;
     nodeList=new QTreeWidgetItem;
     nodeUndef=new QTreeWidgetItem;
 
@@ -4002,7 +4121,8 @@ void PanelProperties::initGui(){
     nodeSegment->setText(0,tr("Segment"));
     nodeHalfLine->setText(0,tr("Demie-droite"));
     nodePolygon->setText(0,tr("Polygône"));
-    nodeCircle->setText(0,tr("Cercle"));
+    nodeCircle->setText(0,tr("Cercle ou arc"));
+    nodeAngle->setText(0,tr("Angle"));
     nodeList->setText(0,tr("Liste"));
     nodeUndef->setText(0,tr("Objets indéfinis"));
 
@@ -4073,7 +4193,9 @@ void PanelProperties::addToTree( MyItem * item){
     }
     else if(item->isCircle()){
         nodeCircle->addChild(treeItem);
-
+    }
+    else if (item->isAngleItem()){
+        nodeAngle->addChild(treeItem);
     }
     else if (item->isUndef()){
         nodeUndef->addChild(treeItem);
@@ -4182,6 +4304,7 @@ void PanelProperties::updateAllCategories(){
     if (updateCategory(nodeCurve,id)) id++;
     if (updateCategory(nodePolygon,id)) id++;
     if (updateCategory(nodeVector,id)) id++;
+    if (updateCategory(nodeAngle,id)) id++;
     if (updateCategory(nodeHalfLine,id)) id++;
     if (updateCategory(nodeList,id)) id++;
     if (updateCategory(nodeUndef,id)) id++;

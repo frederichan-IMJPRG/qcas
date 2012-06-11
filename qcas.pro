@@ -374,5 +374,6 @@ OTHER_FILES += \
     qt/images/delete.png \
     qt/images/tangent.png \
     qt/images/similarity.png \
-    qt/images/linebyequation.png
+    qt/images/linebyequation.png \
+    qt/images/angle.png
 RESOURCES += qt/qcas.qrc

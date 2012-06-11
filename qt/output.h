@@ -150,8 +150,10 @@ class GraphWidget:public OutputWidget{
     QToolButton* buttonTool;
     QToolButton* buttonPlot;
     QToolButton* buttonCircle;
+
     QAction* select;
-    QAction* move;
+    QAction* zoomIn;
+    QAction* zoomOut;
     QAction* singlept;
     QAction* pointxy;
     QAction * inter;
@@ -172,7 +174,6 @@ class GraphWidget:public OutputWidget{
     QAction *translation;
     QAction* homothety;
     QAction* similarity;
-
     QAction* plotFunction;
     QAction* plotBezier;
     QAction* regularPolygon;
@@ -181,7 +182,9 @@ class GraphWidget:public OutputWidget{
     QAction* circle3pt;
     QAction* circleRadius;
     QAction* arc3pt;
-
+    QAction* angle;
+    QAction* numericCursor;
+    QAction* formalCursor;
 
     void initGui();
     void createToolBar();
@@ -229,9 +232,9 @@ struct AxisParam{
 class Canvas2D:public QWidget{
     Q_OBJECT
 public:
-    enum action{SELECT,MOVE,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,LINEBYEQUATION,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,TANGENT,PARALLEL,PERPENDICULAR,
+    enum action{SELECT,ZOOM_IN,ZOOM_OUT,SINGLEPT,POINT_XY,MIDPOINT,INTER,LINE,LINEBYEQUATION,HALFLINE,SEGMENT,BISECTOR,PERPEN_BISECTOR,VECTOR,TANGENT,PARALLEL,PERPENDICULAR,
                 REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS
-                ,CIRCLE3PT,ARC3PT};
+                ,CIRCLE3PT,ARC3PT,ANGLE,NUMERIC_CURSOR,FORMAL_CURSOR};
 
     struct Command{
         QString command;
@@ -390,6 +393,7 @@ private:
     void addPerpenBisector(const bool &);
     void addNewPointElement(const QPointF &pos);
     void addInter(const QString &);
+    void addNewAngle();
     void commandTwoArgs(const QString &,const QString &,const QString &,QString  & );
     bool checkForCompleteAction();
     bool checkForPointWaiting();
@@ -442,6 +446,7 @@ private:
     QTreeWidgetItem* nodeHalfLine;
     QTreeWidgetItem* nodePolygon;
     QTreeWidgetItem* nodeCircle;
+    QTreeWidgetItem* nodeAngle;
     QTreeWidgetItem* nodeList;
     QTreeWidgetItem* nodeUndef;
 
