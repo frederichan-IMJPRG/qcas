@@ -165,7 +165,56 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
 void FormulaWidget::toXML(QDomElement& d){
 
 }
+CursorPanel::CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, QWidget * p):QWidget(p){
+    name=Name;
+    min=Min;
+    max=Max;
+    step=Step;
+    defaultValue=Default;
+    initGui();
+}
+void CursorPanel::initGui(){
+    QGridLayout* layout=new QGridLayout(this);
+    labMin=new QLabel;
+    labMin->setText(QString::number(min));
+    labMax=new QLabel;
+    labMax->setText(QString::number(max));
+    labName=new QLabel;
+    labName->setText(QString("<b>%1:</b>").arg(name));
+    labValue=new QLabel;
+    labValue->setText(QString::number(defaultValue));
+    slider=new QSlider(Qt::Horizontal,this);
+    slider->setMinimum(0);
+    slider->setSingleStep(1);
+    double tickNumber=(max-min)/step;
+    if (((int)tickNumber)==tickNumber) slider->setMaximum(tickNumber);
+    else slider->setMaximum(tickNumber+1);
 
+    slider->setValue((int)((defaultValue-min)/step));
+
+    deleteButton=new QPushButton;
+    deleteButton->setIcon(QIcon(":/images/delete.png"));
+    layout->addWidget(labName,0,0);
+    layout->addWidget(labValue,0,1);
+    layout->addWidget(deleteButton,0,2);
+    layout->addWidget(labMin,1,0,Qt::AlignRight);
+    layout->addWidget(slider,1,1,Qt::AlignCenter);
+    layout->addWidget(labMax,1,2,Qt::AlignLeft);
+
+    setLayout(layout);
+    connect(deleteButton,SIGNAL(clicked()),this,SIGNAL(deletePanel()));
+    connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateValue(int)));
+//    connect(slider,SIGNAL(valueChanged()),this,);
+}
+void CursorPanel::updateValue(int c){
+    labValue->setText(QString::number(getValue()));
+}
+double CursorPanel::getValue() const{
+    return min+slider->value()*step;
+}
+void CursorPanel::addChild(MyItem* item){
+    children.append(item);
+}
 
 GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
         mainWindow=main;
@@ -223,7 +272,14 @@ void GraphWidget::initGui(){
         createToolBar();
         vbox->addWidget(toolPanel);//,Qt::AlignLeft|Qt::AlignTop);
     }
+
     vbox->addWidget(canvas);//,1,Qt::AlignLeft|Qt::AlignTop);
+    if (isInteractiveWidget){
+        sliderPanel=new QWidget(canvasWidget);
+        sliderPanel->setLayout(new QHBoxLayout);
+        sliderPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+        vbox->addWidget(sliderPanel);
+    }
     vbox->setSizeConstraint(QLayout::SetMinimumSize);
     canvasWidget->setLayout(vbox);
     canvasWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
@@ -411,9 +467,6 @@ void GraphWidget::createToolBar(){
     angle->setIcon(QIcon(":/images/angle.png"));
     angle->setData(canvas->ANGLE);
     angle->setProperty("comment",tr("Sommet de l'angle puis deux points"));
-
-
-
 
 
     // Set default actions
@@ -655,6 +708,11 @@ void GraphWidget::updateValueInDisplayPanel(){
 void GraphWidget::selectInTree(MyItem * item){
     propPanel->selectInTree(item);
 }
+void GraphWidget::addCursorPanel(CursorPanel * c){
+    sliderPanel->layout()->addWidget(c);
+
+}
+
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
 }
@@ -951,13 +1009,52 @@ void Canvas2D::setActionTool(action a){
             selectedItems.append(focusOwner);
             updatePixmap(false);
             repaint();
-
-
         }
-
     delete(dialog);
-
-}
+    }
+    else if ((currentActionTool==FORMAL_CURSOR) ||(currentActionTool==NUMERIC_CURSOR)){
+        CursorDialog* dialog=new CursorDialog(this);
+        if (dialog->exec()){
+            findFreeVar(varLine);
+            QString s(varLine);
+            if (currentActionTool==FORMAL_CURSOR) {
+                s.append(":=assume(");
+                s.append(dialog->getVar());
+                s.append("=[");
+                s.append(dialog->getDefault());
+                s.append(",");
+                s.append(dialog->getMin());
+                s.append(",");
+                s.append(dialog->getMax());
+                s.append(",");
+                s.append(dialog->getStep());
+                s.append("]);");
+            }
+            else{
+                s.append(":=element(");
+                s.append(dialog->getMin());
+                s.append("..");
+                s.append(dialog->getMax());
+                s.append(",");
+                s.append(dialog->getDefault());
+                s.append(",");
+                s.append(dialog->getStep());
+                s.append(");");
+            }
+            Command newCommand;
+            newCommand.command=s;
+            newCommand.attributes=0;
+            newCommand.isCustom=false;
+            commands.append(newCommand);
+            evaluationLevel=commands.size()-1;
+            gen g(newCommand.command.toStdString(),context);
+            protecteval(g,1,context);
+            CursorPanel* cp=new CursorPanel(varLine,dialog->getMin().toDouble(),dialog->getMax().toDouble(),
+                                            dialog->getStep().toDouble(),dialog->getDefault().toDouble(),this);
+            parent->addCursorPanel(cp);
+        }
+        delete dialog;
+    }
     selectedItems.clear();
 }
 /**
@@ -994,6 +1091,11 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
                 id=findItemFromVar(s,&filledItems);
                 if (id!=-1){
                     filledItems.at(id)->addChild(item);
+                }
+                else{
+                    // Look into sliders
+
+
                 }
             }
         }
@@ -5228,6 +5330,60 @@ void OneArgDialog::initGui(){
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
 }
+CursorDialog::CursorDialog(Canvas2D * p):QDialog(p){
+    initGui();
+}
+void CursorDialog::initGui(){
+    QGridLayout* grid=new QGridLayout(this);
+    QLabel * labVar=new QLabel(tr("Nom:"));
+    editVar=new QLineEdit;
+    QLabel * labMin=new QLabel(tr("Min:"));
+    editMin=new QLineEdit("-5");
+    QLabel * labMax=new QLabel(tr("Max:"));
+    editMax=new QLineEdit("5");
+    QLabel * labStep=new QLabel(tr("Pas:"));
+    editStep=new QLineEdit("0.1");
+    QLabel * labDefault=new QLabel(tr("Défaut:"));
+    editDefault=new QLineEdit("1");
+
+    ok=new QPushButton(tr("Ok"));
+    cancel=new QPushButton(tr("Annuler"));
+    grid->addWidget(labVar,0,0,Qt::AlignCenter);
+    grid->addWidget(editVar,0,1);
+    grid->addWidget(labMin,1,0,Qt::AlignCenter);
+    grid->addWidget(editMin,1,1);
+    grid->addWidget(labMax,2,0,Qt::AlignCenter);
+    grid->addWidget(editMax,2,1);
+    grid->addWidget(labStep,3,0,Qt::AlignCenter);
+    grid->addWidget(editStep,3,1);
+    grid->addWidget(labDefault,4,0,Qt::AlignCenter);
+    grid->addWidget(editDefault,4,1);
+    grid->addWidget(ok,5,0);
+    grid->addWidget(cancel,5,1);
+    setLayout(grid);
+    editVar->setFocus();
+    grid->setSizeConstraint(QLayout::SetFixedSize);
+    connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
+    connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
+
+}
+QString CursorDialog::getDefault() const{
+    return editDefault->text();
+}
+
+QString CursorDialog::getMax() const{
+    return editMax->text();
+}
+QString CursorDialog::getMin() const{
+    return editMin->text();
+}
+QString CursorDialog::getStep() const{
+    return editStep->text();
+}
+QString CursorDialog::getVar() const{
+    return editVar->text();
+}
+
 
 /*
   void Graph2d3d::update_infos(const gen & g,GIAC_CONTEXT){

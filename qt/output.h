@@ -49,6 +49,7 @@ class PanelProperties;
 class DisplayProperties;
 class DisplayObjectPanel;
 class AxisPanel;
+class QLabel;
 class GridPanel;
 class AxisGridPanel;
 class GenValuePanel;
@@ -62,7 +63,7 @@ class TypeLinePanel;
 class ColorPanel;
 class LegendPanel;
 class AlphaFillPanel;
-
+class CursorPanel;
 
 
 class IconSize : public QWindowsStyle
@@ -135,6 +136,7 @@ class GraphWidget:public OutputWidget{
     void updateAllCategories();
     void updateValueInDisplayPanel();
     void selectInTree(MyItem *);
+    void addCursorPanel(CursorPanel* );
 
  private:
     MainWindow* mainWindow;
@@ -142,6 +144,7 @@ class GraphWidget:public OutputWidget{
     Canvas2D* canvas;
     PanelProperties * propPanel;
 
+    QWidget* sliderPanel;
     QWidget* toolPanel;
     // The menu tool bar in interactive mode
     QToolButton* buttonPointer;
@@ -728,4 +731,50 @@ private:
     QPushButton* cancel;
 };
 
+class CursorDialog:public QDialog{
+public:
+    CursorDialog(Canvas2D*);
+    QString getVar() const;
+    QString getMin() const;
+    QString getMax() const;
+    QString getStep() const;
+    QString getDefault() const;
+private:
+    void initGui();
+    QLineEdit* editMin;
+    QLineEdit* editMax;
+    QLineEdit* editVar;
+    QLineEdit* editDefault;
+    QLineEdit* editStep;
+    QPushButton* ok;
+    QPushButton* cancel;
+};
+class CursorPanel:public QWidget{
+    Q_OBJECT
+public:
+    CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, QWidget * p);
+
+    QList<MyItem*>* getChildren();
+    void addChild(MyItem*);
+    double getValue() const;
+private:
+    double min;
+    double max;
+    double step;
+    double defaultValue;
+    QString name;
+    QPushButton* deleteButton;
+    QSlider*  slider;
+    QLabel* labMin;
+    QLabel* labValue;
+    QLabel* labMax;
+    QLabel* labName;
+    QList<MyItem*> children;
+    void initGui();
+private slots:
+    void updateValue(int);
+signals:
+    valueChanged(double);
+    deletePanel();
+};
 #endif // OUTPUT_H
