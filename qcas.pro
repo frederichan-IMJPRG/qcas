@@ -375,5 +375,10 @@ OTHER_FILES += \
     qt/images/tangent.png \
     qt/images/similarity.png \
     qt/images/linebyequation.png \
-    qt/images/angle.png
+    qt/images/angle.png \
+    qt/images/numericcursor.png \
+    qt/images/formalcursor.png \
+    qt/images/svg.png \
+    qt/images/png.png \
+    qt/images/homothety.png
 RESOURCES += qt/qcas.qrc

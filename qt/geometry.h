@@ -26,6 +26,7 @@
 class QPainter;
 class Canvas2D;
 class QTreeWidgetItem ;
+class CursorPanel;
 //class FormulaWidget;
 
 
@@ -378,6 +379,20 @@ private:
     MyItem* arc;
     MyItem* curve;
 
+};
+class CursorItem:public MyItem{
+public:
+    ~CursorItem();
+    CursorItem(const bool &,Canvas2D*);
+    virtual void updateScreenCoords(const bool);
+    virtual void draw(QPainter*) const;
+    virtual QString getType() const;
+    CursorPanel* getCursorPanel();
+    void setCursorPanel(CursorPanel*);
+    bool isFormal();
+private:
+        bool isNumeric;
+        CursorPanel* cursorPanel;
 };
 
 #endif // GEOMETRY_H

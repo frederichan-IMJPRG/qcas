@@ -165,13 +165,17 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
 void FormulaWidget::toXML(QDomElement& d){
 
 }
-CursorPanel::CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, QWidget * p):QWidget(p){
+CursorPanel::CursorPanel(const QString &Name, const double &Min, const double & Max, const double & Step, const double & Default, CursorItem *p){
+    owner=p;
     name=Name;
     min=Min;
     max=Max;
     step=Step;
     defaultValue=Default;
     initGui();
+}
+CursorItem* CursorPanel::getOwner(){
+    return owner;
 }
 void CursorPanel::initGui(){
     QGridLayout* layout=new QGridLayout(this);
@@ -204,7 +208,7 @@ void CursorPanel::initGui(){
     setLayout(layout);
     connect(deleteButton,SIGNAL(clicked()),this,SIGNAL(deletePanel()));
     connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateValue(int)));
-//    connect(slider,SIGNAL(valueChanged()),this,);
+    connect(slider,SIGNAL(valueChanged(int)),this,SIGNAL(valueChanged()));
 }
 void CursorPanel::updateValue(int c){
     labValue->setText(QString::number(getValue()));
@@ -212,9 +216,7 @@ void CursorPanel::updateValue(int c){
 double CursorPanel::getValue() const{
     return min+slider->value()*step;
 }
-void CursorPanel::addChild(MyItem* item){
-    children.append(item);
-}
+
 
 GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
         mainWindow=main;
@@ -432,11 +434,11 @@ void GraphWidget::createToolBar(){
      regularPolygon->setProperty("comment",tr("Deux points"));
 
      numericCursor=new QAction(tr("Curseur numérique"),buttonPlot);
- //    numericCursor->setIcon(QIcon(":/images/numericCursor.png"));
+     numericCursor->setIcon(QIcon(":/images/numericcursor.png"));
      numericCursor->setData(canvas->NUMERIC_CURSOR);
      numericCursor->setProperty("comment","");
      formalCursor=new QAction(tr("Curseur symbolique"),buttonPlot);
-//     formalCursor->setIcon(QIcon(":/images/formalCursor.png"));
+     formalCursor->setIcon(QIcon(":/images/formalcursor.png"));
      formalCursor->setData(canvas->FORMAL_CURSOR);
      formalCursor->setProperty("comment","");
 
@@ -712,7 +714,11 @@ void GraphWidget::addCursorPanel(CursorPanel * c){
     sliderPanel->layout()->addWidget(c);
 
 }
+void GraphWidget::deleteCursorPanel(CursorPanel * cp){
+    sliderPanel->layout()->removeWidget(cp);
 
+
+}
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
     return propPanel->getTreeSelectedItems();
 }
@@ -910,15 +916,20 @@ void Canvas2D::setActionTool(action a){
             newCommand.command=s;
             newCommand.attributes=0;
             newCommand.isCustom=false;
-            commands.append(newCommand);
-            evaluationLevel=commands.size()-1;
+            evaluationLevel=commands.size();
             gen g(newCommand.command.toStdString(),context);
             QList<MyItem*> v;
             addToVector(protecteval(g,1,context),v);
-
+            if (v.isEmpty()) {
+                giac::_purge(gen(varPt.toStdString(),context),context);
+                return;
+            }
             findIDNT(g,v.at(0));
             v.at(0)->updateScreenCoords(true);
             v.at(0)->setVar(varPt);
+            newCommand.item=v.at(0);
+            commands.append(newCommand);
+
             pointItems.append(v.at(0));
             parent->addToTree(v.at(0));
             focusOwner=v.at(0);
@@ -1015,11 +1026,17 @@ void Canvas2D::setActionTool(action a){
     else if ((currentActionTool==FORMAL_CURSOR) ||(currentActionTool==NUMERIC_CURSOR)){
         CursorDialog* dialog=new CursorDialog(this);
         if (dialog->exec()){
-            findFreeVar(varLine);
-            QString s(varLine);
+            QString var=dialog->getVar();
+            bool ok=false;
+            var.toDouble(&ok);
+            if (var.isEmpty()||ok){
+                var=varLine;
+            }
+            findFreeVar(var);
+            QString s;
             if (currentActionTool==FORMAL_CURSOR) {
-                s.append(":=assume(");
-                s.append(dialog->getVar());
+                s.append("assume(");
+                s.append(var);
                 s.append("=[");
                 s.append(dialog->getDefault());
                 s.append(",");
@@ -1031,6 +1048,7 @@ void Canvas2D::setActionTool(action a){
                 s.append("]);");
             }
             else{
+                s.append(var);
                 s.append(":=element(");
                 s.append(dialog->getMin());
                 s.append("..");
@@ -1049,14 +1067,77 @@ void Canvas2D::setActionTool(action a){
             evaluationLevel=commands.size()-1;
             gen g(newCommand.command.toStdString(),context);
             protecteval(g,1,context);
-            CursorPanel* cp=new CursorPanel(varLine,dialog->getMin().toDouble(),dialog->getMax().toDouble(),
-                                            dialog->getStep().toDouble(),dialog->getDefault().toDouble(),this);
+
+            CursorItem* cursor;
+           if (currentActionTool==FORMAL_CURSOR){
+               cursor=new CursorItem(false,this);
+           }
+           else cursor=new CursorItem(true,this);
+           cursor->setVar(var);
+           cursor->setLevel(evaluationLevel);
+            commands.last().item=cursor;
+            CursorPanel* cp=new CursorPanel(var,dialog->getMin().toDouble(),dialog->getMax().toDouble(),
+                                            dialog->getStep().toDouble(),dialog->getDefault().toDouble(),cursor);
+            cursor->setCursorPanel(cp);
+            cursorItems.append(cursor);
             parent->addCursorPanel(cp);
+            // Init to first free var
+            varLine="a";
+            findFreeVar(varLine);
+            connect (cp,SIGNAL(valueChanged()),this,SLOT(updateAllChildrenFrom()));
+            connect(cp,SIGNAL(deletePanel()),this,SLOT(deleteCursorPanel()));
         }
         delete dialog;
     }
+
     selectedItems.clear();
 }
+void Canvas2D::deleteCursorPanel(){
+    CursorPanel* cp=dynamic_cast<CursorPanel*>(sender());
+
+    // Remove from cursorItems
+    int id=findItemFromVar(cp->getOwner()->getVar(),&cursorItems);
+    cursorItems.removeAt(id);
+
+    // init to the first free Var
+    varLine="a";
+    findFreeVar(varLine);
+
+    // delete from screen
+    parent->deleteCursorPanel(cp);
+
+    deleteObject(cp->getOwner());
+
+}
+
+/**
+ * @brief Canvas2D::updateAllChildrenFrom
+ *                  This method is called when the value from a cursor (numeric or formal)
+ *                  has changed, it updates all children from the slider on screen.
+ */
+void Canvas2D::updateAllChildrenFrom(){
+    CursorPanel* cp=dynamic_cast<CursorPanel*>(sender());
+    QString s=commands.at(cp->getOwner()->getLevel()).command;
+    if (cp->getOwner()->isFormal()){
+        int id=s.indexOf("[");
+        int id2=s.indexOf(",");
+        s.replace(id+1,id2-id-1,QString::number(cp->getValue()));
+        gen g(s.toStdString(),context);
+        protecteval(g,1,context);
+    }
+    else{
+        int id=s.indexOf(",");
+        int id2=s.indexOf(",",id+1);
+        s.replace(id+1,id2-id-1,QString::number(cp->getValue()));
+        gen g(s.toStdString(),context);
+        protecteval(g,1,context);
+    }
+    updateAllChildrenFrom(cp->getOwner());
+    updatePixmap(false);
+    parent->updateValueInDisplayPanel();
+    repaint();
+}
+
 /**
  * @brief Canvas2D::findIDNT Looks for all sub gen of type IDNT in expression
  *                           If this IDNT is a variable name for a geometry MyItem
@@ -1094,7 +1175,10 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
                 }
                 else{
                     // Look into sliders
-
+                    id=findItemFromVar(s,&cursorItems);
+                    if (id!=-1){
+                        cursorItems.at(id)->addChild(item);
+                    }
 
                 }
             }
@@ -2000,7 +2084,7 @@ void Canvas2D::trace(bool b) {
     else {
         int id=traceVector.indexOf(focusOwner);
         if (id!=-1)
-            traceVector.remove(id);
+            traceVector.removeAt(id);
        repaint();
     }
 }
@@ -2070,6 +2154,9 @@ void Canvas2D::deleteObject(MyItem * focus){
         if (v.at(i)->isPoint()){
             int id=pointItems.indexOf(v.at(i));
             if (id!=-1)  pointItems.removeAt(id);
+            id= traceVector.indexOf(v.at(i));
+            if (id!=-1)  traceVector.removeAt(id);
+
         }
         else {
             int id=lineItems.indexOf(v.at(i));
@@ -2385,8 +2472,6 @@ bool Canvas2D::isInScene(const double & x,const double & y){
 }
 
 
-
-
 void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &compute){
 //    painter->setClipping(true);
 //    painter->setClipRect(20,20,width()-20,height()-20);
@@ -2396,12 +2481,8 @@ void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &com
         {
             v.at(i)->updateScreenCoords(compute);
             v.at(i)->draw(painter);
-
         }
-
     }
-
-
 }
 /**
   Convert pixel screen coords (xscreen,yscreen) into coord (x,y)
@@ -2434,7 +2515,7 @@ void Canvas2D::setXYUnit(){
   **/
 void Canvas2D::findFreeVar(QString & var){
     gen g(var.toStdString(),context);
-    while (eval(g,1,context)!=g){
+    while ((eval(g,1,context)!=g)||(findItemFromVar(var,&cursorItems)!=-1)) {
         incrementVariable(var);
         g=gen(var.toStdString(),context);
     }
@@ -2492,10 +2573,80 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
 
     }
     return false;
-
 }
 
 
+void Canvas2D::updateAllChildrenFrom(MyItem* item){
+    QList<MyItem*> v;
+    refreshFromItem(item,v);
+    qSort(v.begin(),v.end(),lessThan);
+
+
+    for (int i=0;i<v.size();++i){
+        int level=v.at(i)->getLevel();
+        Command c=commands.at(level);
+        gen g(c.command.toStdString(),context);
+
+        gen answer=protecteval(g,1,context);
+        if (v.at(i)->isAngleItem()){
+            AngleItem* angle=dynamic_cast<AngleItem*>(v.at(i));
+            if (answer.type!=giac::_VECT) return;
+            //AngleItem* angle=new AngleItem(this);
+            vecteur* vect=answer._VECTptr;
+            vecteur::iterator it=vect->begin();
+            angle->setValue(giac::simplify(*it,context));
+            QList<MyItem*> vv;
+            ++it;
+            addToVector(*it,vv);
+            angle->getCircle()->updateValueFrom(vv.at(0));
+            vv.clear();
+            ++it;
+            addToVector(*it,vv);
+            angle->getCurve()->updateValueFrom(vv.at(0));
+            continue;
+        }
+        QList<MyItem*> vv;
+        addToVector(answer,vv);
+        // Not the particular case of an intersection point or tangent lines
+        if (!v.at(i)->isInter()){
+            v.at(i)->updateValueFrom(vv.at(0));
+            delete vv.at(0);
+        }
+        else{
+            QVector<MyItem*> children=v.at(i)->getChildren();
+            for (int j=0;j<vv.size();++j){
+                // an intersection point already exists
+                if (children.size()>j){
+                    children.at(j)->updateValueFrom(vv.at(j));
+                    // Update value stored in giac
+                    if (v.at(i)->getType()=="Intersection")
+                        giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                    else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                    delete vv.at(j);
+                }
+                // There are not enough points
+                else{
+                    findFreeVar(varPt);
+                    vv.at(j)->setLegend(varPt);
+                    vv.at(j)->setVar(varPt);
+                    if (v.at(i)->getType()=="Intersection")
+                        giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
+                    else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                    pointItems.append(vv.at(j));
+                    v.at(j)->updateScreenCoords(true);
+                    parent->addToTree(vv.at(j));
+                    v.at(i)->addChild(vv.at(j));
+                }
+             }
+            // All older points become undef
+            for (int j=vv.size();j<children.size();++j){
+                giac::sto(giac::undef,giac::gen(QString(v.at(i)->getChildAt(j)->getVar()).toStdString(),context),context);
+                v.at(i)->getChildAt(j)->setUndef(true);
+            }
+
+        }
+    }
+}
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     QString s(item->getVar());
     if (item->isPointElement()){
@@ -2511,83 +2662,15 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     gen g(s.toStdString(),context);
     QList<MyItem*> v;
     addToVector(protecteval(g,1,context),v);
+
     item->updateValueFrom(v.at(0));
-        delete v.at(0);
-        if (item->hasChildren()){
-            v.clear();
-            refreshFromItem(item,v);
-            qSort(v.begin(),v.end(),lessThan);
-
-
-            for (int i=0;i<v.size();++i){
-                int level=v.at(i)->getLevel();
-                Command c=commands.at(level);
-                gen g(c.command.toStdString(),context);
-
-                gen answer=protecteval(g,1,context);
-                if (v.at(i)->isAngleItem()){
-                    AngleItem* angle=dynamic_cast<AngleItem*>(v.at(i));
-                    if (answer.type!=giac::_VECT) return;
-                    //AngleItem* angle=new AngleItem(this);
-                    vecteur* vect=answer._VECTptr;
-                    vecteur::iterator it=vect->begin();
-                    angle->setValue(giac::simplify(*it,context));
-                    QList<MyItem*> vv;
-                    ++it;
-                    addToVector(*it,vv);
-                    angle->getCircle()->updateValueFrom(vv.at(0));
-                    vv.clear();
-                    ++it;
-                    addToVector(*it,vv);
-                    angle->getCurve()->updateValueFrom(vv.at(0));
-                    continue;
-                }
-                QList<MyItem*> vv;
-                addToVector(answer,vv);
-                // Not the particular case of an intersection point or tangent lines
-                if (!v.at(i)->isInter()){
-                    v.at(i)->updateValueFrom(vv.at(0));
-                    delete vv.at(0);
-                }
-                else{
-                    QVector<MyItem*> children=v.at(i)->getChildren();
-                    for (int j=0;j<vv.size();++j){
-                        // an intersection point already exists
-                        if (children.size()>j){
-                            children.at(j)->updateValueFrom(vv.at(j));
-                            // Update value stored in giac
-                            if (v.at(i)->getType()=="Intersection")
-                                giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
-                            else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
-                            delete vv.at(j);
-                        }
-                        // There are not enough points
-                        else{
-                            findFreeVar(varPt);
-                            vv.at(j)->setLegend(varPt);
-                            vv.at(j)->setVar(varPt);
-                            if (v.at(i)->getType()=="Intersection")
-                                giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
-                            else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
-                            pointItems.append(vv.at(j));
-                            v.at(j)->updateScreenCoords(true);
-                            parent->addToTree(vv.at(j));
-                            v.at(i)->addChild(vv.at(j));
-                        }
-                     }
-                    // All older points become undef
-                    for (int j=vv.size();j<children.size();++j){
-                        giac::sto(giac::undef,giac::gen(QString(v.at(i)->getChildAt(j)->getVar()).toStdString(),context),context);
-                        v.at(i)->getChildAt(j)->setUndef(true);
-                    }
-
-                }
-            }
-        }
-        updatePixmap(false);
-        parent->updateValueInDisplayPanel();
-        repaint();
-
+    delete v.at(0);
+    if (item->hasChildren()){
+        updateAllChildrenFrom(item);
+    }
+    updatePixmap(false);
+    parent->updateValueInDisplayPanel();
+    repaint();
 }
 
 /**
@@ -2595,7 +2678,7 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
  * @param item Root Item
  * @param list to store all chlidren
  *
- * Record int the list all the children from a root element.
+ * Record in the list all the children from a root element.
  */
 void Canvas2D::refreshFromItem(MyItem * item, QList<MyItem*>& list, bool evenInter){
     QVector<MyItem*> v=item->getChildren();

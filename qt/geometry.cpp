@@ -1504,3 +1504,23 @@ MyItem* AngleItem::getCurve(){
 QString AngleItem::getDisplayValue(){
    return QString::fromStdString(giac::gen2mathml(value,g2d->getContext()));
 }
+CursorItem::CursorItem(const bool & b, Canvas2D * p):MyItem(p){
+    isNumeric=b;
+}
+void CursorItem::draw(QPainter *) const{}
+void CursorItem::updateScreenCoords(const bool){}
+QString CursorItem::getType() const{
+    return(QObject::tr("Curseur"));
+}
+CursorItem::~CursorItem(){
+    delete cursorPanel;
+}
+CursorPanel* CursorItem::getCursorPanel(){
+    return cursorPanel;
+}
+void CursorItem::setCursorPanel(CursorPanel* p){
+    cursorPanel=p;
+}
+bool CursorItem::isFormal(){
+    return !isNumeric;
+}

@@ -137,7 +137,7 @@ class GraphWidget:public OutputWidget{
     void updateValueInDisplayPanel();
     void selectInTree(MyItem *);
     void addCursorPanel(CursorPanel* );
-
+    void deleteCursorPanel(CursorPanel* );
  private:
     MainWindow* mainWindow;
     bool isInteractiveWidget;
@@ -304,7 +304,7 @@ private:
     // Item for preview
     MyItem* itemPreview;
     // vector to store Trace points
-    QVector<MyItem*> traceVector;
+    QList<MyItem*> traceVector;
     // Command for missing point in preview
     QString missingPoint;
 
@@ -315,10 +315,14 @@ private:
     GridParam gridParam;
     AxisParam xAxisParam,yAxisParam;
 
-    // vectors to store geometry items
+    // Lists to store geometry items
     QList<MyItem*> lineItems;
     QList<MyItem*> pointItems;
     QList<MyItem*> filledItems;
+
+    //Lists to store geometry cursors
+    QList<MyItem*> cursorItems;
+
 
     // A command for each line
     QList<Command> commands;
@@ -380,6 +384,7 @@ private:
     bool checkForValidAction(MyItem *);
     void findFreeVar(QString &);
     void incrementVariable(QString &);
+    void updateAllChildrenFrom(MyItem*);
     void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&, const int );
     void refreshFromItem(MyItem *, QList<MyItem *> &,bool evenInter=false);
@@ -418,6 +423,8 @@ private slots:
     void deleteObject();
     void trace(bool);
     void renameObject();
+    void updateAllChildrenFrom();
+    void deleteCursorPanel();
     //    void zoom_Factor(const int&);
 };
 
@@ -752,11 +759,9 @@ private:
 class CursorPanel:public QWidget{
     Q_OBJECT
 public:
-    CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, QWidget * p);
-
-    QList<MyItem*>* getChildren();
-    void addChild(MyItem*);
-    double getValue() const;
+    CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, CursorItem * p);
+   double getValue() const;
+   CursorItem* getOwner();
 private:
     double min;
     double max;
@@ -769,12 +774,12 @@ private:
     QLabel* labValue;
     QLabel* labMax;
     QLabel* labName;
-    QList<MyItem*> children;
+    CursorItem* owner;
     void initGui();
 private slots:
     void updateValue(int);
 signals:
-    valueChanged(double);
-    deletePanel();
+    void valueChanged();
+    void deletePanel();
 };
 #endif // OUTPUT_H
