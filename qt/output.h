@@ -141,6 +141,8 @@ class GraphWidget:public OutputWidget{
     void deleteCursorPanel(CursorPanel* );
     virtual void toXML(QDomElement &);
     void loadXML(QDomElement &);
+    void XML2Circle(QDomElement &nodeCircle, const int &att);
+    void XML2Curve(QDomElement &, const bool &fillable, const int &att);
  private:
     MainWindow* mainWindow;
     bool isInteractiveWidget;

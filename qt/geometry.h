@@ -314,6 +314,7 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;
     virtual bool isPixel() const;
+    virtual void toXML(QDomElement &);
     virtual QString getType() const;
     virtual bool isFillable() const;
 private:
@@ -327,6 +328,7 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;
     virtual bool isLegendItem() const;
+    virtual void toXML(QDomElement &);
     virtual QString getType() const;
 private:
     QPointF pos;
@@ -339,6 +341,7 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;
     virtual bool isList() const;
+    virtual void toXML(QDomElement &);
     virtual QString getType() const;
     virtual bool isFillable() const;
 
@@ -378,6 +381,7 @@ public:
     virtual bool isAngleItem() const;
     virtual QString getType() const;
     void setCircle(MyItem*);
+    virtual void toXML(QDomElement &);
     void setCurve(MyItem*);
     MyItem* getCircle();
     MyItem* getCurve();
@@ -395,6 +399,7 @@ public:
     virtual void draw(QPainter*) const;
     virtual QString getType() const;
     CursorPanel* getCursorPanel();
+    virtual void toXML(QDomElement &);
     void setCursorPanel(CursorPanel*);
     bool isFormal();
 private:

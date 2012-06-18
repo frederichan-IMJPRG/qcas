@@ -1431,6 +1431,12 @@ bool Pixel::isPixel() const{
     return true;
 }
 
+void Pixel::toXML(QDomElement & top){
+    QDomElement pixelNode=top.ownerDocument().createElement("pixel");
+    pixelNode.setAttribute("x",pixel.x());
+    pixelNode.setAttribute("y",pixel.y());
+    top.appendChild(pixelNode);
+}
 void Pixel::updateScreenCoords(const bool compute){
     if (compute){
         double x,y;
@@ -1489,6 +1495,13 @@ void LegendItem::draw(QPainter* painter) const{
     }
 
 }
+void LegendItem::toXML(QDomElement & top){
+    QDomElement legendNode=top.ownerDocument().createElement("legend");
+    legendNode.setAttribute("x",pos.x());
+    legendNode.setAttribute("y",pos.y());
+    top.appendChild(legendNode);
+}
+
 bool LegendItem::isLegendItem() const{
     return true;
 }
@@ -1522,7 +1535,12 @@ bool ListItem::isFillable() const{
     return false;
 }
 
+void ListItem::toXML(QDomElement & top){
+    for (int i=0;i<list.size();++i){
+        list.at(i)->toXML(top);
+    }
 
+}
 void ListItem::draw(QPainter* painter) const{
     for (int i=0;i<list.size();++i){
         list.at(i)->draw(painter);
@@ -1630,6 +1648,17 @@ MyItem* AngleItem::getCurve(){
 QString AngleItem::getDisplayValue(){
    return QString::fromStdString(giac::gen2mathml(value,g2d->getContext()));
 }
+void AngleItem::toXML(QDomElement & top){
+    QDomElement angle=top.ownerDocument().createElement("angle");
+    QDomElement valueNode=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    valueNode.appendChild(text);
+    angle.appendChild(valueNode);
+    arc->toXML(angle);
+    curve->toXML(angle);
+    top.appendChild(angle);
+}
+
 CursorItem::CursorItem(const bool & b, Canvas2D * p):MyItem(p){
     isNumeric=b;
 }
@@ -1638,6 +1667,12 @@ void CursorItem::updateScreenCoords(const bool){}
 QString CursorItem::getType() const{
     return(QObject::tr("Curseur"));
 }
+void CursorItem::toXML(QDomElement & top){
+    QDomElement cursor=top.ownerDocument().createElement("cursor");
+    //cur
+
+}
+
 CursorItem::~CursorItem(){
     delete cursorPanel;
 }
