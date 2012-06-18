@@ -576,8 +576,11 @@ void MainWindow::changeWizard(QListWidgetItem *current, QListWidgetItem *previou
     wizardPages->setCurrentIndex(wizardList->row(current));
 }
 void MainWindow::about(){
-    QMessageBox::about(this,tr("A propos de QCAS"),tr("<h2>QCAS </h2>"
-                                                      "patati patata"));
+    QMessageBox::about(this,tr("A propos de QCAS"),tr("<h1> <font color=\"#8000FF\"> QCAS </font></h1>"
+                                                      "<hr>"
+                                                      "Licence: GPL <br>"
+                                                      "Version: 0.1 beta<br><hr>"
+                                                      ).append(QDate::currentDate().toString()));
 
 }
 void MainWindow::closeEvent(QCloseEvent *event){
