@@ -239,6 +239,7 @@ public:
     virtual bool isVector() const;
     bool isPolygon() const;
     virtual bool isFillable() const;
+    virtual void toXML(QDomElement &);
     void setFillable(const bool &);
     virtual QString getDisplayValue();
     virtual void updateValueFrom(MyItem *);
@@ -262,6 +263,7 @@ public:
     virtual bool isBezierCurve() const;
     virtual void draw(QPainter*) const;
     virtual QString getType() const;
+    virtual void toXML(QDomElement &);
     virtual bool isFillable() const;
     void setFillable(const bool &);
     virtual QString getDisplayValue();
@@ -292,6 +294,7 @@ public:
     virtual QString getDisplayValue();
     virtual void updateValueFrom(MyItem*);
     QPointF getCenter() const;
+    virtual void toXML(QDomElement &);
     double getDiametre() const;
     double getStartAngle() const;
     double getEndAngle() const;

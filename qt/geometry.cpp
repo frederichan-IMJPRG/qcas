@@ -88,6 +88,11 @@ void MyItem::setTraceActive(const bool & b){
 }
 void MyItem::toXML(QDomElement & top){
     top.setAttribute("attributes",attributes);
+    QDomElement legendNode=top.ownerDocument().createElement("legend");
+    QDomText text=top.ownerDocument().createTextNode(getLegend());
+    legendNode.appendChild(text);
+    top.appendChild(legendNode);
+    top.setAttribute("fillable",isFillable());
 
 }
 bool MyItem::hasChildren() const{
@@ -477,10 +482,6 @@ void Point::toXML(QDomElement &top){
     QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
     affix.appendChild(text);
     point.appendChild(affix);
-    QDomElement legendNode=top.ownerDocument().createElement("legend");
-    text=top.ownerDocument().createTextNode(getLegend());
-    legendNode.appendChild(text);
-    point.appendChild(legendNode);
 
     MyItem::toXML(point);
     top.appendChild(point);
@@ -1116,7 +1117,35 @@ bool Curve::isSegment() const{
     }
     else return (path.elementCount()==2);
 }
+void Curve::toXML(QDomElement & top){
+    QDomElement curve=top.ownerDocument().createElement("curve");
+    curve.setAttribute("isVector",vector);
+    MyItem::toXML(curve);
+    QDomElement valueNode=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    valueNode.appendChild(text);
+    curve.appendChild(valueNode);
 
+
+    QDomElement lineTo;
+
+    for (int i=0;i<path.elementCount();++i){
+
+        if (path.elementAt(i).isMoveTo()) {
+            lineTo= top.ownerDocument().createElement("moveto");
+        }
+        else lineTo= top.ownerDocument().createElement("lineto");
+
+        QString s(QString::number(path.elementAt(i).x));
+        lineTo.setAttribute("x",s);
+        s=QString::number(path.elementAt(i).y);
+        lineTo.setAttribute("y",s);
+
+        curve.appendChild(lineTo);
+    }
+    top.appendChild(curve);
+
+}
 QString Curve::getType() const{
     if (vector) return QObject::tr("Vecteur");
     else if (isSegment()) return QObject::tr("Segment");
@@ -1241,6 +1270,20 @@ void BezierCurve::updateScreenCoords(const bool compute){
 QString BezierCurve::getType() const{
     return QObject::tr("Courbe de Bézier");
 }
+void BezierCurve::toXML(QDomElement & top){
+    QDomElement bezier=top.ownerDocument().createElement("bezier");
+    MyItem::toXML(bezier);
+    QDomElement control= top.ownerDocument().createElement("control");
+
+    for (int i=0;i<points.size();++i){
+        control.setAttribute("x",QString::number(points.at(i).x()));
+        control.setAttribute("y",QString::number(points.at(i).y()));
+        bezier.appendChild(control);
+        control= top.ownerDocument().createElement("control");
+    }
+    top.appendChild(bezier);
+}
+
 bool BezierCurve::isFillable() const{
     return (fillable);
 }
@@ -1275,6 +1318,27 @@ double Circle::getStartAngle() const{
 }
 double Circle::getEndAngle() const{
     return endAngle;
+}
+void Circle::toXML(QDomElement & top){
+    QDomElement circle=top.ownerDocument().createElement("circle");
+
+    circle.setAttribute("diametre",diametre);
+    circle.setAttribute("startAngle",startAngle/180*3.14159);
+    circle.setAttribute("endAngle",endAngle/180*3.14159);
+
+    QDomElement equation=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    equation.appendChild(text);
+    circle.appendChild(equation);
+
+    QDomElement centerNode=top.ownerDocument().createElement("center");
+    centerNode.setAttribute("x",center.x());
+    centerNode.setAttribute("y",center.y());
+    circle.appendChild(centerNode);
+    MyItem::toXML(circle);
+
+    top.appendChild(circle);
+
 }
 void Circle::updateValueFrom(MyItem* item){
     if (item->isUndef()) {
@@ -1353,7 +1417,6 @@ Pixel::Pixel(const QPointF &p, Canvas2D * parent):MyItem(parent){
     double x,y;
     g2d->toXY(p.x(),p.y(),x,y);
     pixel=QPointF(x,y);
-
 }
 bool Pixel::isUnderMouse(const QRectF &p) const{
     return false;

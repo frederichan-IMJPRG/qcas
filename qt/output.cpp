@@ -763,6 +763,7 @@ void GraphWidget::loadXML(QDomElement & graph2d){
         if (!element.isNull()) {
             QString tag=element.tagName();
             int att=element.attribute("attributes","0").toInt();
+            bool fillable=element.attribute("fillable","0").toInt();
             if (tag=="point"){
                 giac::gen g;
                 QString legend;
@@ -853,6 +854,77 @@ void GraphWidget::loadXML(QDomElement & graph2d){
                     grid.theta=(PolarAngle)element.attribute("theta",QString::number(PI_6)).toInt();
                 }
                 canvas->setGridParam(grid);
+            }
+            else if (tag=="bezier"){
+                QDomNodeList list=element.childNodes();
+                QList<QPointF> controlPoints;
+                for (int i=0;i<list.size();++i){
+                    QDomElement control=list.at(i).toElement();
+                    if (control.tagName()=="control"){
+                        QPointF p(control.attribute("x","0").toDouble(),control.attribute("y","0").toDouble());
+                        controlPoints.append(p);
+                    }
+                }
+                BezierCurve* bez =new BezierCurve(controlPoints,canvas);
+                bez->setFillable(fillable);
+                bez->setAttributes(att);
+                bez->setFillable(fillable);
+                addToTree(bez);
+                if (fillable) canvas->getFilledItem()->append(bez);
+                else canvas->getLineItem()->append(bez);
+
+            }
+            else if (tag=="curve"){
+                QDomNodeList list=element.childNodes();
+                QPainterPath path;
+                gen value;
+
+                for (int i=0;i<list.size();++i){
+                    QDomElement control=list.at(i).toElement();
+                    if (control.tagName()=="moveto"){
+                        QPointF p(control.attribute("x","0").toDouble(),control.attribute("y","0").toDouble());
+                        path.moveTo(p);
+                    }
+                    else if (control.tagName()=="lineto"){
+                        QPointF p(control.attribute("x","0").toDouble(),control.attribute("y","0").toDouble());
+                        path.lineTo(p);
+                    }
+                    else if(control.tagName()=="value"){
+                        value=gen(control.text().toStdString(),mainWindow->getContext());
+                    }
+                }
+                Curve* c =new Curve(path,canvas);
+                c->setFillable(fillable);
+                c->setAttributes(att);
+                c->setValue(value);
+                c->setVector(element.attribute("isVector").toInt());
+                addToTree(c);
+                if (fillable) canvas->getFilledItem()->append(c);
+                else canvas->getLineItem()->append(c);
+
+            }
+            else if (tag=="circle"){
+                QDomNodeList list=element.childNodes();
+                QPointF center;
+                double diametre=element.attribute("diametre","1").toDouble();
+                double startAngle=element.attribute("startAngle","0").toDouble();
+                double endAngle=element.attribute("endAngle","6.28").toDouble();;
+                gen value;
+                for (int i=0;i<list.size();++i){
+                    QDomElement control=list.at(i).toElement();
+                    if (control.tagName()=="center"){
+                        center=QPointF(control.attribute("x","0").toDouble(),control.attribute("y","0").toDouble());
+                    }
+                    else if(control.tagName()=="value"){
+                        value=gen(control.text().toStdString(),mainWindow->getContext());
+                    }
+                }
+                Circle* c=new Circle(center,diametre,startAngle,endAngle,canvas);
+                c->setValue(value);
+                c->setAttributes(att);
+                addToTree(c);
+                canvas->getFilledItem()->append(c);
+
             }
         }
         first=first.nextSibling();
