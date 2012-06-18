@@ -70,6 +70,8 @@ OutputWidget::OutputWidget(QWidget* p):QWidget(p){
 void OutputWidget::setLine(Line* l){
     line=l;
 }
+void OutputWidget::toXML(QDomElement &){
+}
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
     formula=giac::undef;
     context=0;
@@ -97,8 +99,11 @@ void FormulaWidget::initGui(){
     copyAction->setIcon(QIcon(":/images/edit-copy.png"));
     toLatexAction=new QAction(tr("Copier vers LaTeX"),menu);
     toLatexAction->setIcon(QIcon(":/images/tex.png"));
+    toMathmlAction=new QAction(tr("Copier vers Mathml"),menu);
+    toMathmlAction->setIcon(QIcon(":/images/mathml.png"));
     menu->addAction(copyAction);
     menu->addAction(toLatexAction);
+    menu->addAction(toMathmlAction);
 
     QHBoxLayout *layout=new QHBoxLayout(this);
     layout->setSizeConstraint(QLayout::SetFixedSize);
@@ -107,7 +112,9 @@ void FormulaWidget::initGui(){
     connect(mmlWidget,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayMenu(QPoint)));
     connect(copyAction,SIGNAL(triggered()),this,SLOT(copy()));
     connect(toLatexAction,SIGNAL(triggered()),this,SLOT(copyToLaTeX()));
+    connect(toMathmlAction,SIGNAL(triggered()),this,SLOT(copyToMathml()));
 }
+
 void FormulaWidget::copy(){
     QClipboard* clip=QApplication::clipboard();
     clip->setText(QString::fromStdString(giac::print(formula,context)));
@@ -115,7 +122,10 @@ void FormulaWidget::copy(){
 void FormulaWidget::copyToLaTeX(){
     QClipboard* clip=QApplication::clipboard();
     clip->setText(QString::fromStdString(gen2tex(formula,context)));
-
+}
+void FormulaWidget::copyToMathml(){
+    QClipboard* clip=QApplication::clipboard();
+    clip->setText(QString::fromStdString(gen2mathml(formula,context)));
 }
 void FormulaWidget::displayMenu(QPoint p){
     menu->popup(mapToGlobal(p));
@@ -141,6 +151,17 @@ void FormulaWidget::updateFormula(const QString  s){
 QSize FormulaWidget::sizeHint(){
     return mmlWidget->size();
 }
+void FormulaWidget::toXML(QDomElement & top){
+
+    QDomElement output=top.ownerDocument().createElement("formula");
+    QString mathml (QString::fromStdString(giac::print(formula,context)));
+
+    QDomText text=top.ownerDocument().createTextNode(mathml);
+    output.appendChild(text);
+    top.appendChild(output);
+}
+
+
 void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     context=c;
     formula=g;
@@ -162,9 +183,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
      resize(mmlWidget->size());
 }
 
-void FormulaWidget::toXML(QDomElement& d){
 
-}
 CursorPanel::CursorPanel(const QString &Name, const double &Min, const double & Max, const double & Step, const double & Default, CursorItem *p){
     owner=p;
     name=Name;
@@ -217,6 +236,13 @@ double CursorPanel::getValue() const{
     return min+slider->value()*step;
 }
 
+/**
+ * @brief GraphWidget::GraphWidget
+ *        This constructor is used for 2D graĥ
+ * @param context The current context
+ * @param b is Widget Interactive ?
+ * @param main The Main Window
+ */
 
 GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
         mainWindow=main;
@@ -226,7 +252,13 @@ GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
         canvas->repaint();
         initGui();
 }
-
+/**
+ * @brief GraphWidget::GraphWidget
+ *        This constructor is used for 2D graĥ
+ * @param g The gen to draw
+ * @param context The current context
+ * @param b is Widget Interactive ?
+ */
 GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b){
     isInteractiveWidget=b;
     canvas=new Canvas2D(this,context);
@@ -716,7 +748,119 @@ void GraphWidget::addCursorPanel(CursorPanel * c){
 }
 void GraphWidget::deleteCursorPanel(CursorPanel * cp){
     sliderPanel->layout()->removeWidget(cp);
+}
+void GraphWidget::toXML(QDomElement & top){
+    QDomElement output=top.ownerDocument().createElement("graph2d");
+    canvas->toXML(output);
+    top.appendChild(output);
 
+}
+void GraphWidget::loadXML(QDomElement & graph2d){
+    canvas->setFixedSize(Config::graph_width,Config::graph_width*3/4);
+    QDomNode first=graph2d.firstChild();
+    while(!first.isNull()){
+        QDomElement element=first.toElement();
+        if (!element.isNull()) {
+            QString tag=element.tagName();
+            int att=element.attribute("attributes","0").toInt();
+            if (tag=="point"){
+                giac::gen g;
+                QString legend;
+                QDomNodeList list=element.childNodes();
+                for (int i=0;i<list.size();++i){
+                    QDomElement node=list.at(i).toElement();
+                    if (!node.isNull()){
+                        if (node.tagName()=="value") g=gen(node.text().toStdString(),mainWindow->getContext());
+                        else if (node.tagName()=="legend") legend=node.text();
+                    }
+                }
+
+                Point* p=new Point(g,canvas);
+                p->setLegend(legend);
+                p->setAttributes(att);
+                addToTree(p);
+                canvas->getPointItem()->append(p);
+
+           }
+            else if ((tag=="line") || (tag=="halfline")){
+                giac::gen g;
+                QPointF start;
+                QPointF end;
+                QDomNodeList list=element.childNodes();
+                for (int i=0;i<list.size();++i){
+                    QDomElement node=list.at(i).toElement();
+                    if (!node.isNull()){
+                        if (node.tagName()=="equation") g=gen(node.text().toStdString(),mainWindow->getContext());
+                        else if(node.tagName()=="startPoint") {
+                            double x=node.attribute("x","0").toDouble();
+                            double y=node.attribute("y","0").toDouble();
+                            start=QPointF(x,y);
+
+                        }
+                        else if(node.tagName()=="endPoint") {
+                            double x=node.attribute("x","0").toDouble();
+                            double y=node.attribute("y","0").toDouble();
+                            end=QPointF(x,y);
+
+                        }
+                    }
+                }
+                //line
+                if (tag=="line") {
+                    LineItem* l=new LineItem(start,end,canvas);
+                    l->setAttributes(att);
+                    l->setValue(g);
+                    addToTree(l);
+                    canvas->getLineItem()->append(l);
+                }
+                // halfline
+                else {
+                    HalfLineItem* l=new HalfLineItem(start,end,canvas);
+                    l->setAttributes(att);
+                    l->setValue(g);
+                    addToTree(l);
+                    canvas->getLineItem()->append(l);
+                }
+            }
+            else if (tag=="axis"){
+                AxisParam axisParam;
+                axisParam.isVisible=(element.attribute("isVisible","0")!=0);
+                axisParam.legend=element.attribute("legend","");
+                axisParam.unitSuffix=element.attribute("unitSuffix","");
+                axisParam.max=element.attribute("max","5").toDouble();
+                axisParam.min=element.attribute("min",QString::number(axisParam.max-10)).toDouble();
+
+                axisParam.tick=element.attribute("tick","1").toDouble();
+                axisParam.color=QColor::fromRgb(element.attribute("color","0").toUInt());
+                if (element.attribute("position")=="x") canvas->setXAxisParam(axisParam);
+                else canvas->setYAxisParam(axisParam);
+            }
+            else if (tag=="grid"){
+                GridParam grid;
+                grid.isVisible=(element.attribute("isVisible","0")!=0);
+                grid.isCartesian=(element.attribute("isCartesian","0")!=0);
+                //grid.color=QColor::fromRgb(element.attribute("color","0").toInt());
+
+                grid.color=QColor::fromRgb(element.attribute("color","0").toUInt());
+
+                grid.line=element.attribute("line","0").toInt();
+                if (grid.isCartesian){
+                    grid.x=element.attribute("x","1").toDouble();
+                    grid.y=element.attribute("y","1").toDouble();
+                }
+                else{
+                    grid.r=element.attribute("r","1").toDouble();
+                    grid.theta=(PolarAngle)element.attribute("theta",QString::number(PI_6)).toInt();
+                }
+                canvas->setGridParam(grid);
+            }
+        }
+        first=first.nextSibling();
+    }
+
+    canvas->setBounds(canvas->getXAxisParam().min,canvas->getXAxisParam().max,canvas->getYAxisParam().min,canvas->getYAxisParam().max);
+    canvas->setXYUnit();
+    canvas->updatePixmap(true);
 
 }
 QList<MyItem*> GraphWidget::getTreeSelectedItems(){
@@ -955,8 +1099,7 @@ void Canvas2D::setActionTool(action a){
                 newCommand.command=s;
                 newCommand.attributes=0;
                 newCommand.isCustom=false;
-                commands.append(newCommand);
-                evaluationLevel=commands.size()-1;
+                evaluationLevel=commands.size();
                 gen g(newCommand.command.toStdString(),context);
         //                    qDebug()<<QString::fromStdString(g.print(context));
                 QList<MyItem*> v;
@@ -967,6 +1110,8 @@ void Canvas2D::setActionTool(action a){
                     return;
                 }
                 findIDNT(g,v.at(0));
+                newCommand.item=v.at(0);
+                commands.append(newCommand);
 
                 v.at(0)->setVar(varLine);
                 v.at(0)->updateScreenCoords(true);
@@ -997,8 +1142,7 @@ void Canvas2D::setActionTool(action a){
             newCommand.command=s;
             newCommand.attributes=0;
             newCommand.isCustom=false;
-            commands.append(newCommand);
-            evaluationLevel=commands.size()-1;
+            evaluationLevel=commands.size();
             gen g(newCommand.command.toStdString(),context);
 
             QList<MyItem*> v;
@@ -1009,6 +1153,8 @@ void Canvas2D::setActionTool(action a){
                 return;
             }
             findIDNT(g,v.at(0));
+            newCommand.item=v.at(0);
+            commands.append(newCommand);
 
             v.at(0)->setVar(varLine);
             v.at(0)->updateScreenCoords(true);
@@ -4198,16 +4344,80 @@ void Canvas2D::paintEvent(QPaintEvent * ){
 
 }
 void Canvas2D::resizeEvent(QResizeEvent * ev){
-
-    xmax=xmin+(ev->size().width()-40)/xunit;
-    ymin=ymax-(ev->size().height()-40)/yunit;
-    setXYUnit();
-    updatePixmap(false);
-    repaint();
+      if (isInteractive()){
+        xmax=xmin+(ev->size().width()-40)/xunit;
+        ymin=ymax-(ev->size().height()-40)/yunit;
+        setXYUnit();
+        updatePixmap(false);
+        repaint();
+    }
 
 }
-void  Canvas2D::toXML(){
+/**
+ * @brief Canvas2D::toXML
+ * @param top The top element in XML hierarchy (a "graph2d" element)
+ */
+void  Canvas2D::toXML(QDomElement & top){
+    QDomElement interactive=top.ownerDocument().createElement("interactive");
+    QDomText text;
+    if (isInteractive())
+        text=top.ownerDocument().createTextNode("true");
+    else text=top.ownerDocument().createTextNode("false");
+    interactive.appendChild(text);
+    top.appendChild(interactive);
+    // export axis and grid
+
+    QDomElement xaxis=top.ownerDocument().createElement("axis");
+    xaxis.setAttribute("position","x");
+    xaxis.setAttribute("color",xAxisParam.color.rgb());
+    xaxis.setAttribute("isVisible",xAxisParam.isVisible);
+    xaxis.setAttribute("legend",xAxisParam.legend);
+    xaxis.setAttribute("unitSuffix",xAxisParam.unitSuffix);
+    xaxis.setAttribute("tick",xAxisParam.tick);
+    xaxis.setAttribute("min",xmin);
+    xaxis.setAttribute("max",xmax);
+
+    QDomElement yaxis=top.ownerDocument().createElement("axis");
+    yaxis.setAttribute("position","y");
+    yaxis.setAttribute("color",yAxisParam.color.rgb());
+    yaxis.setAttribute("isVisible",yAxisParam.isVisible);
+    yaxis.setAttribute("legend",yAxisParam.legend);
+    yaxis.setAttribute("unitSuffix",yAxisParam.unitSuffix);
+    yaxis.setAttribute("tick",yAxisParam.tick);
+    yaxis.setAttribute("min",ymin);
+    yaxis.setAttribute("max",ymax);
+
+    QDomElement grid=top.ownerDocument().createElement("grid");
+    grid.setAttribute("color",gridParam.color.rgb());
+    grid.setAttribute("line",gridParam.line);
+    grid.setAttribute("isVisible",gridParam.isVisible);
+    grid.setAttribute("isCartesian",gridParam.isCartesian);
+    if (gridParam.isCartesian){
+        grid.setAttribute("x",gridParam.x);
+        grid.setAttribute("y",gridParam.y);
     }
+    else{
+        grid.setAttribute("r",gridParam.x);
+        grid.setAttribute("theta",gridParam.y);
+    }
+    top.appendChild(grid);
+    top.appendChild(xaxis);
+    top.appendChild(yaxis);
+
+    // Export all "fillable" Items
+    for (int i=0;i<filledItems.size();++i){
+        filledItems.at(i)->toXML(top);
+    }
+    // Export all "line" Items
+    for (int i=0;i<lineItems.size();++i){
+        lineItems.at(i)->toXML(top);
+    }
+    // Export all "point" Items
+    for (int i=0;i<pointItems.size();++i){
+        pointItems.at(i)->toXML(top);
+    }
+}
+
 
 void Canvas2D::setFocusOwner(MyItem * item){
     item->setHighLighted(true);

@@ -34,7 +34,7 @@ Line::Line(int id,FormalWorkSheet *parent):QWidget(parent){
     this->id=id;
     workSheet=parent;
 
-    out=NULL;
+    out=0;
     check=new QCheckBox(QString::number(id+1));
 
    input=new TextInput(this);
@@ -83,7 +83,7 @@ FormalWorkSheet* Line::getWorkSheet() const{
     return workSheet;
 }
 void Line::evaluate(const QString & formula){
-    if (out!=NULL){
+    if (out!=0){
         mainLayout->removeWidget(out);
         delete out;
     }
@@ -96,6 +96,7 @@ OutputWidget* Line::getOuputWidget(){
 
 void Line::displayResult(OutputWidget* uuu){
     this->out=uuu;
+
     out->setMinimumSize(out->sizeHint());
     out->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     mainLayout->addWidget(out,1,1,Qt::AlignLeft);

@@ -86,7 +86,10 @@ bool MyItem::isTraceActive() const {
 void MyItem::setTraceActive(const bool & b){
     traceActive=b;
 }
+void MyItem::toXML(QDomElement & top){
+    top.setAttribute("attributes",attributes);
 
+}
 bool MyItem::hasChildren() const{
     return !children.isEmpty();
 }
@@ -468,7 +471,20 @@ QString Point::getDisplayValue(){
     return mml;
 }
 
+void Point::toXML(QDomElement &top){
+    QDomElement point=top.ownerDocument().createElement("point");
+    QDomElement affix=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    affix.appendChild(text);
+    point.appendChild(affix);
+    QDomElement legendNode=top.ownerDocument().createElement("legend");
+    text=top.ownerDocument().createTextNode(getLegend());
+    legendNode.appendChild(text);
+    point.appendChild(legendNode);
 
+    MyItem::toXML(point);
+    top.appendChild(point);
+}
 void Point::setValue(const giac::gen & g){
    value=g;
    x=giac::evalf_double(giac::re(value,g2d->getContext()),1,g2d->getContext()).DOUBLE_val();
@@ -670,6 +686,31 @@ void LineItem::updateValueFrom(MyItem * item){
     setValue(item->getValue());
     updateScreenCoords(true);
 }
+
+void LineItem::toXML(QDomElement & top){
+    QDomElement line=top.ownerDocument().createElement("line");
+    QDomElement equation=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    equation.appendChild(text);
+    line.appendChild(equation);
+    MyItem::toXML(line);
+
+    QDomElement start=top.ownerDocument().createElement("startPoint");
+    start.setAttribute("x",startPoint.x());
+    start.setAttribute("y",startPoint.y());
+    QDomElement end=top.ownerDocument().createElement("endPoint");
+    end.setAttribute("x",endPoint.x());
+    end.setAttribute("y",endPoint.y());
+
+    line.appendChild(start);
+    line.appendChild(end);
+
+    top.appendChild(line);
+
+
+}
+
+
 QPointF LineItem::getStartPoint() const{
     return startPoint;
 }
@@ -793,6 +834,28 @@ QPointF HalfLineItem::getStartPoint() const{
 }
 QPointF HalfLineItem::getEndPoint() const{
     return endPoint;
+}
+
+void HalfLineItem::toXML(QDomElement & top){
+    QDomElement halfline=top.ownerDocument().createElement("halfline");
+    QDomElement equation=top.ownerDocument().createElement("value");
+    QDomText text=top.ownerDocument().createTextNode(QString::fromStdString(giac::print(value,g2d->getContext())));
+    equation.appendChild(text);
+    halfline.appendChild(equation);
+
+    QDomElement start=top.ownerDocument().createElement("startPoint");
+    start.setAttribute("x",startPoint.x());
+    start.setAttribute("y",startPoint.y());
+    QDomElement end=top.ownerDocument().createElement("endPoint");
+    end.setAttribute("x",endPoint.x());
+    end.setAttribute("y",endPoint.y());
+
+    halfline.appendChild(start);
+    halfline.appendChild(end);
+    MyItem::toXML(halfline);
+
+    top.appendChild(halfline);
+
 }
 
 void HalfLineItem::setValue(const giac::gen &g){

@@ -83,7 +83,7 @@ class OutputWidget:public QWidget{
 public:
     OutputWidget(QWidget* widget=0);
     void setLine(Line* );
-//    virtual void toXML(QDomElement&);
+    virtual void toXML(QDomElement&);
 
 private:
     Line* line;
@@ -93,10 +93,10 @@ class FormulaWidget :public OutputWidget{
 public:
     FormulaWidget(QWidget*);
     FormulaWidget(const giac::gen &, giac::context *);
-    virtual void toXML(QDomElement&);
     void updateFormula(const giac::gen &, giac::context *);
     void updateFormula(const QString );
     void setGen(const giac::gen &);
+    virtual void toXML(QDomElement &);
 protected:
     QSize sizeHint();
 private:
@@ -107,11 +107,12 @@ private:
     QMenu* menu;
     QAction* copyAction;
     QAction* toLatexAction;
+    QAction* toMathmlAction;
 private slots:
     void displayMenu(QPoint);
     void copy();
     void copyToLaTeX();
-
+    void copyToMathml();
 };
 
 
@@ -138,6 +139,8 @@ class GraphWidget:public OutputWidget{
     void selectInTree(MyItem *);
     void addCursorPanel(CursorPanel* );
     void deleteCursorPanel(CursorPanel* );
+    virtual void toXML(QDomElement &);
+    void loadXML(QDomElement &);
  private:
     MainWindow* mainWindow;
     bool isInteractiveWidget;
@@ -224,7 +227,7 @@ struct GridParam{
 };
 struct AxisParam{
     QColor color;
-    int  line;
+//    int  line;
     bool isVisible;
     QString legend;
     QString unitSuffix;
@@ -250,7 +253,7 @@ public:
     void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
-    void toXML();
+    void toXML(QDomElement &);
     QList<MyItem*>* getPointItem();
     QList<MyItem *> *getLineItem();
     QList<MyItem*>* getFilledItem();

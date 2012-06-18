@@ -6,6 +6,9 @@ QT += core \
      xml
 TARGET = qcas
 TEMPLATE = app
+QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H -DUSE_GMP_REPLACEMENTS -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_RELEASE += -DHAVE_CONFIG_H -DUSE_GMP_REPLACEMENTS -fno-strict-aliasing -Wno-unused-parameter
+
 QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
@@ -24,7 +27,13 @@ INCLUDEPATH += . \
     qt \
     giac \
     libtommath
-LIBS += -ldl
+win32{
+    INCLUDEPATH+=pthread
+    win32:LIBS+=c:/msysgit/qcas/pthread/libpthreadGC2.a
+}
+unix{
+    LIBS += -ldl
+}
 
 # Input
 HEADERS += qt/output.h \
@@ -115,7 +124,10 @@ HEADERS += qt/output.h \
            libtommath/tommath_class.h \
            libtommath/tommath_superclass.h\
     qt/gui/prefdialog.h \
-    qt/gui/plotfunctiondialog.h
+    qt/gui/plotfunctiondialog.h \
+    pthread-win32/semaphore.h \
+    pthread-win32/sched.h \
+    pthread-win32/pthread.h
 
 SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/MainWindow.cpp \
@@ -380,5 +392,7 @@ OTHER_FILES += \
     qt/images/formalcursor.png \
     qt/images/svg.png \
     qt/images/png.png \
-    qt/images/homothety.png
+    qt/images/homothety.png \
+    pthread-win32/libpthreadGC2.a \
+    qt/images/mathml.png
 RESOURCES += qt/qcas.qrc

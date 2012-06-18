@@ -53,7 +53,7 @@
 #include <QGroupBox>
 # include <QDomDocument>
 # include <QDomText>
-
+#include "output.h"
 
 
 #include "CasManager.h"
@@ -257,8 +257,8 @@ bool MainWindow::loadFile(const QString &fileName){
          return false;
      }
      file.close();
-     qDebug()<<"Loading...";
-     qDebug()<<doc.toString();
+//     qDebug()<<"Loading...";
+//     qDebug()<<doc.toString();
 
      QDomElement root = doc.documentElement();
      if (root.tagName()!="qcas") return false;
@@ -266,31 +266,48 @@ bool MainWindow::loadFile(const QString &fileName){
     int tabBeforeLoad=tabPages->count();
 
      QDomNode node = root.firstChild();
-     while(!node.isNull()) {
+     while(!node.isNull()){
         QDomElement sheet = node.toElement(); // try to convert the node to an element.
          if(!sheet.isNull()) {
              if (sheet.tagName()=="formal"){
                 tabPages->addFormalSheet();
                 FormalWorkSheet *f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
                 QDomNode first=sheet.firstChild();
+                bool goToNextLine=true;
+
                 while(!first.isNull()){
                     QDomElement element=first.toElement();
                     if (!element.isNull()) {
                         QString tag=element.tagName();
                         if (tag=="command"){
+                            if (goToNextLine) goToNextLine=false;
+                            else {
+                                f->goToNextLine();
+                            }
                             f->sendText(element.text());
-                            f->goToNextLine();
 
+                       }
+                        else if (tag=="formula"){
+                            giac::gen g(element.text().toStdString(),getContext());
+                            FormulaWidget* formWidget=new FormulaWidget(g,getContext());
+                              f->displayResult(f->getCurrent(),formWidget);
+                              goToNextLine=true;
                         }
-                        else if (tag=="answer"){
-                            qDebug()<<"TODO";
+                        else if (tag=="graph2d"){
+                            GraphWidget* graph=new GraphWidget(getContext(),false,this);
+                            graph->loadXML(element);
+                            graph->updateAllCategories();
+
+                            f->displayResult(f->getCurrent(),graph);
+
+                            goToNextLine=true;
+
                         }
                     }
                     first=first.nextSibling();
-
                 }
              }
-                       node= node.nextSibling();
+             node= node.nextSibling();
          }
 
      }

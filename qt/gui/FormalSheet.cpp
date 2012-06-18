@@ -31,7 +31,7 @@
 #include "FormalLineWidgets.h"
 #include "FormalLine.h"
 #include "../MainWindow.h"
-
+#include "output.h"
 TextBlockData::TextBlockData():QTextBlockUserData(){
 }
 DelimiterInfo* TextBlockData::infoAt(const int i){
@@ -327,6 +327,7 @@ void FormalWorkSheet::undo(){
     lines->at(current)->getTextInput()->undo();
 
 }
+
 void FormalWorkSheet::sendText(const QString & s){
     lines->at(current)->getTextInput()->insertPlainText(s);
 }
@@ -348,13 +349,8 @@ void  FormalWorkSheet::toXML(QDomElement & root){
         QDomText text=root.ownerDocument().createTextNode(line->getTextInput()->toPlainText());
         command.appendChild(text);
         formal.appendChild(command);
-
-
- //       formal.appendChild(command);
-
-
-
-   //     line->getOuputWidget();
+        OutputWidget* out=line->getOuputWidget();
+        if (out!=0) out->toXML(formal);
 
     }
     root.appendChild(formal);

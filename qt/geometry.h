@@ -22,7 +22,7 @@
 #include <QPainterPath>
 #include "../giac/gen.h"
 #include "tex.h"
-
+#include <QDomElement>
 class QPainter;
 class Canvas2D;
 class QTreeWidgetItem ;
@@ -60,7 +60,7 @@ public:
   void setFromInter(const bool &);
   bool isTraceActive() const;
   virtual void setTraceActive(const bool &);
-
+  virtual void toXML(QDomElement &);
   virtual void draw(QPainter*) const =0 ;
 
   virtual void updateScreenCoords(const bool)=0;
@@ -147,6 +147,7 @@ public:
     int getPointStyle() const;
     virtual int getPenWidth() const;
     virtual void setValue(const giac::gen & );
+    void toXML(QDomElement &);
     virtual QString  getDisplayValue();
 protected:
     double x,y;
@@ -182,6 +183,7 @@ public:
     virtual QString getType() const;
     virtual QString getDisplayValue();
     virtual void updateValueFrom(MyItem *);
+    virtual void toXML(QDomElement &);
 
     QPointF getStartPoint() const;
     QPointF getEndPoint() const;
@@ -207,6 +209,8 @@ public:
     virtual void setValue(const giac::gen &);
     virtual void updateValueFrom(MyItem *);
     virtual bool isUnderMouse(const QRectF& p) const;
+    virtual void toXML(QDomElement &);
+
     QPointF getStartPoint() const;
     QPointF getEndPoint() const;
 
