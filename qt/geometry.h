@@ -100,6 +100,7 @@ public:
   Qt::PenCapStyle getPenStyle();
   Qt::PenStyle getLineType();
   void setAttributes(const int &);
+  int getAttributes() const;
   bool isFilled() const;
   QColor getColor() const;
   QColor getFltkColor(int &c) const;

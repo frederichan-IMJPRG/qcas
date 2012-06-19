@@ -342,6 +342,12 @@ bool MainWindow::saveFile(const QString &fileName){
             break;
         case MainSheet::PROGRAMMING_TYPE:
             break;
+        case MainSheet::G2D_TYPE:
+        {GraphWidget *graph=qobject_cast<GraphWidget*>(tabPages->widget(i));
+        graph->toInteractiveXML(root);
+    }
+         break;
+
         }
 
    }

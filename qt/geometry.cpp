@@ -269,6 +269,9 @@ bool MyItem::legendVisible()const{
     if ((attributes>>31)==1) return false;
     return true;
 }
+int MyItem::getAttributes() const{
+    return attributes;
+}
 void MyItem::setAttributes(const int& c){
     attributes=(unsigned int)c;
     if (isFilled()){

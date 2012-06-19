@@ -24,7 +24,7 @@ class MainWindow;
 
 class MainSheet{
 public:
-    enum sheetType{FORMAL_TYPE=0,SPREADSHEET_TYPE=1,PROGRAMMING_TYPE=2,G2D=3};
+    enum sheetType{FORMAL_TYPE,G2D_TYPE,SPREADSHEET_TYPE,PROGRAMMING_TYPE};
     MainSheet(sheetType);
     sheetType getType() const;
 protected:

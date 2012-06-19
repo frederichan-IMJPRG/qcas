@@ -32,6 +32,7 @@
 #include <QTabWidget>
 #include <QList>
 #include <QPoint>
+#include "gui/CentralTabWidget.h"
 class QMenu;
 //class QLabel;
 class MainWindow;
@@ -122,7 +123,7 @@ private slots:
  *  It supports two modes:  normal or interactive
  *
  */
-class GraphWidget:public OutputWidget{
+class GraphWidget:public OutputWidget,public MainSheet{
     Q_OBJECT
 
   public:
@@ -140,6 +141,7 @@ class GraphWidget:public OutputWidget{
     void addCursorPanel(CursorPanel* );
     void deleteCursorPanel(CursorPanel* );
     virtual void toXML(QDomElement &);
+    void toInteractiveXML(QDomElement  &);
     void loadXML(QDomElement &);
     void XML2Circle(QDomElement &nodeCircle, const int &att);
     void XML2Curve(QDomElement &, const bool &fillable, const int &att);
@@ -255,6 +257,7 @@ public:
     void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
+    void toInteractiveXML(QDomElement &);
     void toXML(QDomElement &);
     QList<MyItem*>* getPointItem();
     QList<MyItem *> *getLineItem();

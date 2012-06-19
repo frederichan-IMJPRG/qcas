@@ -244,7 +244,7 @@ double CursorPanel::getValue() const{
  * @param main The Main Window
  */
 
-GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
+GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main):MainSheet(MainSheet::G2D_TYPE){
         mainWindow=main;
         isInteractiveWidget=b;
         canvas=new Canvas2D(this,context);
@@ -259,7 +259,7 @@ GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main){
  * @param context The current context
  * @param b is Widget Interactive ?
  */
-GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b){
+GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b):MainSheet(MainSheet::G2D_TYPE){
     isInteractiveWidget=b;
     canvas=new Canvas2D(this,context);
     initGui();
@@ -753,8 +753,13 @@ void GraphWidget::toXML(QDomElement & top){
     QDomElement output=top.ownerDocument().createElement("graph2d");
     canvas->toXML(output);
     top.appendChild(output);
-
 }
+void GraphWidget::toInteractiveXML(QDomElement  &top){
+    QDomElement output=top.ownerDocument().createElement("interactive2d");
+    canvas->toInteractiveXML(output);
+    top.appendChild(output);
+}
+
 void GraphWidget::XML2Curve(QDomElement & nodeCurve,const bool & fillable, const int& att){
     QDomNodeList list=nodeCurve.childNodes();
     QPainterPath path;
@@ -4471,6 +4476,18 @@ void Canvas2D::resizeEvent(QResizeEvent * ev){
     }
 
 }
+void Canvas2D::toInteractiveXML(QDomElement & top){
+    for(int i=0;i<commands.size();++i){
+        QDomElement command=top.ownerDocument().createElement("command");
+        QString s=commands.at(i).command;
+        int id=s.lastIndexOf(")");
+        s.insert(id,QString("display=%1").arg(commands.at(i).item->getAttributes()));
+        QDomText text=top.ownerDocument().createTextNode(s);
+        command.appendChild(text);
+
+    }
+}
+
 /**
  * @brief Canvas2D::toXML
  * @param top The top element in XML hierarchy (a "graph2d" element)
