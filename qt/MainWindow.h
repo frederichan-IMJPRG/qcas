@@ -17,7 +17,7 @@
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-//#include "EvaluationThread.h"
+#include "gui/CentralTabWidget.h"
 #include <QMainWindow>
 #include "global.h"
 class QAction;
@@ -66,7 +66,7 @@ class MainWindow :public QMainWindow {
     giac::context * getContext() const;
     void displayStopWarning();
     void displayInStatusBar(const QString &,const QString&);
-
+    void updateInterface(MainSheet::sheetType);
 
 protected:
     void closeEvent(QCloseEvent *event);

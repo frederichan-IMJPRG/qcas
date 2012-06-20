@@ -61,7 +61,13 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     tabBar()->setTabButton(1,QTabBar::RightSide,add);
 
     connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
+    connect(this,SIGNAL(currentChanged(int)),this,SLOT(changeTab(int)));
 //    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+}
+void MainTabWidget::changeTab(int id){
+    MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));
+    if (sheet==0) return;
+    mainWindow->updateInterface(sheet->getType());
 }
 void MainTabWidget::closeTab(int id){
     MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));
@@ -93,12 +99,13 @@ void MainTabWidget::addG2dSheet(){
     this->insertTab(count()-1,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
     (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+    mainWindow->updateInterface(MainSheet::G2D_TYPE);
 }
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
-
     (qobject_cast<FormalWorkSheet*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+    mainWindow->updateInterface(MainSheet::FORMAL_TYPE);
 }
 void MainTabWidget::addSpreadSheet(){
     qDebug()<<"spreadsheet added";

@@ -515,7 +515,7 @@ void MainWindow::createGui(){
     vertSplit->addWidget(leftPanel);
     vertSplit->addWidget(rightPanel);
 
-    vertSplit->setStretchFactor(0,1);
+//    vertSplit->setStretchFactor(0,1);
     vertSplit->setStretchFactor(1,8);
 
     labelStatus=new QLabel;
@@ -559,7 +559,30 @@ void MainWindow::printHeader(){
 void MainWindow::displayInStatusBar(const QString & text, const QString & color){
     labelStatus->setText(QString("<b><font color=\"%1\">%2</font></b>").arg(color,text));
 }
-
+void MainWindow::updateInterface(MainSheet::sheetType type){
+    switch(type){
+        case MainSheet::G2D_TYPE:    {
+            copyAction->setVisible(false);
+            cutAction->setVisible(false);
+            pasteAction->setVisible(false);
+            redoAction->setVisible(true);
+            undoAction->setVisible(true);
+            evaluateAction->setVisible(false);
+            leftPanel->hide();
+        }
+        break;
+        case MainSheet::FORMAL_TYPE:
+        default:{
+            copyAction->setVisible(true);
+            cutAction->setVisible(true);
+            pasteAction->setVisible(true);
+            redoAction->setVisible(true);
+            undoAction->setVisible(true);
+            evaluateAction->setVisible(true);
+            leftPanel->show();
+        }
+    }
+}
 
 void MainWindow::displayGiacMessages(){
     printHeader();

@@ -50,6 +50,7 @@ public slots:
     void addProgrammingSheet();
     void addG2dSheet();
     void closeTab(int);
+    void changeTab(int);
 };
 
 
