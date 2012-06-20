@@ -394,5 +394,6 @@ OTHER_FILES += \
     qt/images/png.png \
     qt/images/homothety.png \
     pthread-win32/libpthreadGC2.a \
-    qt/images/mathml.png
+    qt/images/mathml.png \
+    qt/aide_cas
 RESOURCES += qt/qcas.qrc

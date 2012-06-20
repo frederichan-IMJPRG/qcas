@@ -334,13 +334,15 @@ bool TextInput::event(QEvent* event){
         if (!st.isEmpty()&&
             line->getWorkSheet()->getApp()->getCommandInfo()->isCommand(st)) {
             setProperty("myToolTip",st);
-            st.prepend("<b>");
-            st.append("&nbsp;&nbsp;</b><img src=\":/images/f1.png\" align=\"absmiddle\" height=");
-            QString s;
+            st.prepend(QString("<u>%1</u> &nbsp;&nbsp;<b><font color=#0000ff>").arg(tr("Mot-clé:")));
+            st.append("</font></b><br>");
+            st.prepend("<center><img src=\":/images/f1.png\" align=\"middle\" height=\"30\"></center><hr>");
+
+/*            QString s;
             s.setNum(2*QToolTip::font().pointSize());
             st.append(s);
-            st.append(">");
-
+            st.append("\">");
+*/
             QToolTip::showText(helpEvent->globalPos(), st);
         }
         else
@@ -349,7 +351,6 @@ bool TextInput::event(QEvent* event){
         }
         return QPlainTextEdit::event(event);
 }
-
 
 void TextInput::addMultiLines(int pos,int removed,int charsAdded){
     //User paste a text in the editor

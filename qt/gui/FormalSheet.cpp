@@ -89,20 +89,23 @@ void Highlighter::highlightBlock(const QString &text){
         c=text.at(i);
         // Found / symbol
         if (c==QChar('/')&&quote==-1){
+
             // Found // --> Comment the whole line
             if (slash!=-1) {
                 bool find_return=false;
-                for(int j=i+1;i<text.length();j++){
+
+                for(int j=i+1;j<text.length();j++){
                     if (text.at(j)==QChar('\n')){
                         setFormat(slash,j-slash+1,commentFormat);
                         find_return=true;
                         break;
                     }
-                    if (!find_return) setFormat(slash,text.length()-slash+1,commentFormat);
                 }
+                if (!find_return) setFormat(slash,text.length()-slash+1,commentFormat);
                 slash=-1;
             }
             else slash=i;
+
             backslash=false;
             key=-1;
         }

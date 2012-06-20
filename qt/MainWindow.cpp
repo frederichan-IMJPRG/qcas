@@ -843,13 +843,14 @@ void MainWindow::displayCrashWarning(){
     emit(hideCrashWarning());
 }
 
+
 CommandInfo::CommandInfo(){
     listAllCommands();
     completer=new QCompleter(commandList);
 
 }
 void CommandInfo::listAllCommands(){
-    QFile file("aide_cas");
+    QFile file(":/aide_cas");
     file.open(QIODevice::ReadOnly);
     QTextStream stream(&file);
     QString line;
