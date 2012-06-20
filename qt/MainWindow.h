@@ -72,6 +72,7 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private:
+    void clearWorkspace();
     void createGui();
     void createWizards();
     void createAction();

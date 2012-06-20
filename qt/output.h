@@ -143,8 +143,9 @@ class GraphWidget:public OutputWidget,public MainSheet{
     virtual void toXML(QDomElement &);
     void toInteractiveXML(QDomElement  &);
     void loadXML(QDomElement &);
-    void XML2Circle(QDomElement &nodeCircle, const int &att);
-    void XML2Curve(QDomElement &, const bool &fillable, const int &att);
+    void loadInteractiveXML(QDomElement &);
+    void XML2Axis(QDomElement &);
+    void XML2Grid(QDomElement &);
  private:
     MainWindow* mainWindow;
     bool isInteractiveWidget;
@@ -198,6 +199,8 @@ class GraphWidget:public OutputWidget,public MainSheet{
 
     void initGui();
     void createToolBar();
+    void XML2Circle(QDomElement &nodeCircle, const int &att);
+    void XML2Curve(QDomElement &, const bool &fillable, const int &att);
 
  private slots:
     void selectButtonIcon(QAction*);
@@ -254,10 +257,14 @@ public:
     };
 
     Canvas2D(GraphWidget* g2d, giac::context*);
+    ~Canvas2D();
     void createScene(const giac::gen & );
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
     void toInteractiveXML(QDomElement &);
+    void loadInteractiveXML(QDomElement &);
+    void axisToXML(QDomElement &);
+    void gridToXML(QDomElement &);
     void toXML(QDomElement &);
     QList<MyItem*>* getPointItem();
     QList<MyItem *> *getLineItem();
@@ -394,7 +401,7 @@ private:
     void incrementVariable(QString &);
     void updateAllChildrenFrom(MyItem*);
     void moveItem(MyItem*, const QPointF & );
-    QString commandFreePoint(const QPointF&, const int );
+    QString commandFreePoint(const QPointF&);
     void refreshFromItem(MyItem *, QList<MyItem *> &,bool evenInter=false);
     void addNewPoint(const QPointF );
     void addNewLine(const QString &,const bool&);

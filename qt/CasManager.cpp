@@ -146,6 +146,12 @@ CasManager::CasManager(MainWindow* main){
     connect(monitor,SIGNAL(finished()),mainWindow,SLOT(removeStopWarning()));
     logptr(new MyStream(this),context);
 }
+CasManager::~CasManager(){
+    delete context;
+    delete monitor;
+    delete stopThread;
+}
+
 bool CasManager::testExpression(const giac::gen & exp){
 
     if (exp.is_symb_of_sommet(giac::at_equal)){
@@ -160,12 +166,12 @@ CasManager::warning CasManager::initExpression(const QString *str){
 
     bool b=testExpression(expression);
     if (!b){
-        return CasManager::WARNING;
+        return CasManager::Warning;
     }
 
 
 
-    return CasManager::NO_WARNING;
+    return CasManager::No_warning;
 }
 
 
@@ -388,7 +394,7 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-    info(answer,0);
+   // info(answer,0);
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

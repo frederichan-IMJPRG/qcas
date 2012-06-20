@@ -83,9 +83,8 @@ void callback(const giac::gen & ,void * );
   **/
 class CasManager :QObject{
 public:
-    enum warning{NO_WARNING=0,WARNING=1,ERROR=2};
-
-
+    enum warning{No_warning,Warning,Error};
+    ~CasManager();
     CasManager(MainWindow *main );
     void evaluate();
     bool isRunning() const;

@@ -76,10 +76,17 @@ void MainTabWidget::closeTab(int id){
         break;
     case MainSheet::PROGRAMMING_TYPE:
         break;
+    case MainSheet::G2D_TYPE:{
+        GraphWidget *graph=qobject_cast<GraphWidget*>(widget(id));
+        removeTab(id);
+         delete graph;
+    }
+        break;
     }
     for (int i=id;i<=count()-2;i++){
         tabBar()->setTabText(i,tr("Feuille n°")+QString::number(i+1));
     }
+
 
 }
 void MainTabWidget::addG2dSheet(){
@@ -90,6 +97,7 @@ void MainTabWidget::addG2dSheet(){
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
+
     (qobject_cast<FormalWorkSheet*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
 }
 void MainTabWidget::addSpreadSheet(){

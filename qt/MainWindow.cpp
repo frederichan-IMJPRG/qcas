@@ -25,6 +25,7 @@
 #include <QDebug>
 #include <QLabel>
 #include <QToolBox>
+#include <QSettings>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QListWidget>
@@ -214,11 +215,30 @@ void MainWindow::createContextMenu(){
 
 }
 
+/**
+ * @brief MainWindow::clearWorkspace
+ *        Purge all variable in Giac.
+ *        Delete all tabs.
+ *
+ */
+void MainWindow::clearWorkspace(){
+
+    for (int i=tabPages->count()-2;i>=0;--i){
+        tabPages->removeTab(i);
+    }
+    delete cas;
+    cas=new CasManager(this);
+
+    tabPages->addFormalSheet();
+}
+
+
 void MainWindow::newFile(){
     if (okToContinue()){
-
+        clearWorkspace();
         setCurrentFile("");
     }
+
 
 }
 bool MainWindow::okToContinue(){
@@ -241,7 +261,7 @@ bool MainWindow::okToContinue(){
 
 void MainWindow::open(){
     if (okToContinue()){
-        QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),tr("QCAS files (*.qcas)"));
+        QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS files (*.qcas)"));
         if (!fileName.isEmpty())
             loadFile(fileName);
     }
@@ -307,12 +327,17 @@ bool MainWindow::loadFile(const QString &fileName){
                     first=first.nextSibling();
                 }
              }
+             else if (sheet.tagName()=="interactive2d"){
+                 tabPages->addG2dSheet();
+                 GraphWidget *f=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+                 f->loadInteractiveXML(sheet);
+             }
              node= node.nextSibling();
          }
 
      }
 
-
+    setCurrentFile(fileName);
     return true;
 }
 
@@ -582,10 +607,16 @@ void MainWindow::changeWizard(QListWidgetItem *current, QListWidgetItem *previou
     wizardPages->setCurrentIndex(wizardList->row(current));
 }
 void MainWindow::about(){
-    QMessageBox::about(this,tr("A propos de QCAS"),tr("<h1> <font color=\"#8000FF\"> QCAS </font></h1>"
+    QMessageBox::about(this,tr("A propos de QCAS"),tr("<center><h1> <font color=\"#8000FF\"> QCAS </font></h1></center>"
                                                       "<hr>"
-                                                      "Licence: GPL <br>"
-                                                      "Version: 0.1 beta<br><hr>"
+                                                      "<ul>"
+                                                      "<li><b>Licence:</b> GPL </li>"
+                                                      "<li><b>Version:</b> 0.1 beta</li>"
+                                                      "<li><b>Site web de QCAS: </b><center><a href=\"http://qcas.tuxfamily.org\">http://qcas.tuxfamily.org</a></center><br></li>"
+                                                      "<li><b>Développeur de QCAS: </b>Loïc Le Coq (<a href=\"mailto:loic@qcas.tuxfamily.org\"> loic@qcas.tuxfamily.org</a>)</li>"
+                                                      "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
+                                                      "<li><b> Site Web de XCas:  <center><a href=\"http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html\">http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html</a></center><nr></li>"
+                                                      "</ul><hr>"
                                                       ).append(QDate::currentDate().toString()));
 
 }
@@ -605,10 +636,21 @@ void MainWindow::pref(){
 
 }
 void MainWindow::readSettings(){
+    QSettings settings("http://qcas.tuxfamily.org","QCAS");
+    QRect rect=settings.value("geometry",QRect(200,200,600,400)).toRect();
+    move(rect.topLeft());
+    resize(rect.size());
 
+    recentFiles=settings.value("recentFiles").toStringList();
+    updateRecentFileActions();
 }
 
-void MainWindow::writeSettings(){}
+void MainWindow::writeSettings(){
+    QSettings settings("http://qcas.tuxfamily.org","QCAS");
+    settings.setValue("geometry",geometry());
+    settings.setValue("recentFiles",recentFiles);
+
+}
 
 void MainWindow::copy(){
    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
@@ -699,7 +741,7 @@ void MainWindow::evaluate(const QString &formula){
             form->getCurrentLine()->addStopButton(stopButton);
             taskProperties.currentLine=form->getCurrentLine()->getId();
             CasManager::warning id=cas->initExpression(&formula);
-            if (id==CasManager::WARNING){
+            if (id==CasManager::Warning){
                 QString s("<font color=\"red\"");
                 s.append(tr("Attention! <br> Pour affecter une valeur à une variable, vous devez utiliser le symbole :="));
                 s.append("<br><u>Exemple</u>: a:=2 ou f(x):=x^2");
