@@ -1289,17 +1289,32 @@ void Canvas2D::setActionTool(action a){
                 gen g(newCommand.command.toStdString(),context);
         //                    qDebug()<<QString::fromStdString(g.print(context));
                 QList<MyItem*> v;
-                addToVector(protecteval(g,1,context),v);
+                gen answer=protecteval(g,1,context);
+
+
+                addToVector(answer,v);
                 if (v.isEmpty()){
                     giac::_purge(gen(varLine.toStdString(),context),context);
 
                     return;
                 }
                 findIDNT(g,v.at(0));
+
+                Curve* original=dynamic_cast<Curve*>(v.at(0));
+                for (int i=1;i<v.size();++i){
+                    Curve* curve=dynamic_cast<Curve*>(v.at(i));
+                    original->join(curve);
+
+                    delete curve;
+                }
+
+                qDebug()<<original->getPath();
+
                 newCommand.item=v.at(0);
                 commands.append(newCommand);
 
                 v.at(0)->setVar(varLine);
+
                 v.at(0)->updateScreenCoords(true);
                 lineItems.append(v.at(0));
                 parent->addToTree(v.at(0));
@@ -2948,8 +2963,6 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             QPointF oldPos=QPointF(pe->getXScreen(),pe->getYScreen());
             int id=c.command.indexOf(":=");
             gen gg(c.command.right(c.command.length()-id-2).toStdString(),context);
-
-
             gen answer=protecteval(gg,1,context);
 
             QList<MyItem*> vv;
@@ -2959,21 +2972,14 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             delete(vv.at(0));
             pe->setOrigin(origin);
 
-
             QString myCommand=c.command;
-//           int id=myCommand.indexOf(":=");
-//            gen g(myCommand.right(myCommand.length()-id-2).toStdString(),context);
             myCommand.append("+");
             myCommand.append(pe->getTranslation(oldPos));
             gen g(myCommand.toStdString(),context);
-
-            qDebug()<<myCommand;
             vv.clear();
             addToVector(protecteval(g,1,context),vv);
             Point* newPoint=dynamic_cast<Point*>(vv.at(0));
-
             pe->updateValueFrom(newPoint);
-            qDebug()<<QString::fromStdString(print(newPoint->getValue(),context));
             delete origin;
             delete newPoint;
 

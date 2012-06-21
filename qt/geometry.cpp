@@ -1132,6 +1132,19 @@ bool Curve::isSegment() const{
     }
     else return (path.elementCount()==2);
 }
+void Curve::join(Curve* c){
+    QPainterPath p=c->getPath();
+    for (int i=0;i<p.elementCount();++i){
+
+        if ((i==0)||(p.elementAt(i).isMoveTo())){
+            path.moveTo(QPointF(p.elementAt(i).x,p.elementAt(i).y));
+        }
+        else if (p.elementAt(i).isLineTo()){
+            path.lineTo(QPointF(p.elementAt(i).x,p.elementAt(i).y));
+        }
+    }
+}
+
 void Curve::toXML(QDomElement & top){
     QDomElement curve=top.ownerDocument().createElement("curve");
     curve.setAttribute("isVector",vector);

@@ -249,6 +249,7 @@ public:
     bool isPolygon() const;
     virtual bool isFillable() const;
     virtual void toXML(QDomElement &);
+    void join(Curve*);
     void setFillable(const bool &);
     virtual QString getDisplayValue();
     virtual void updateValueFrom(MyItem *);
