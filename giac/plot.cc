@@ -3723,6 +3723,7 @@ namespace giac {
     int s=read_attributs(v,attributs,contextptr);
     if (s<2)
       return gendimerr(contextptr);
+    v=vecteur(v.begin(),v.begin()+s);
     polygonify(v,contextptr);
     return pnt_attrib(gen(v,_GROUP__VECT),attributs,contextptr);
   }

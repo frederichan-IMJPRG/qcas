@@ -32,6 +32,7 @@
 #include <QTabWidget>
 #include <QList>
 #include <QPoint>
+#include <QUndoCommand>
 #include "gui/CentralTabWidget.h"
 class QMenu;
 //class QLabel;
@@ -77,7 +78,15 @@ signals:
 public slots:
 };
 
-
+class AddCommand:public QUndoCommand{
+public:
+    AddCommand(int,Canvas2D*);
+    void undo();
+    void redo();
+private:
+    Canvas2D* canvas;
+    int level;
+};
 
 
 class OutputWidget:public QWidget{
@@ -345,6 +354,9 @@ private:
     // action selected
     action currentActionTool;
     QList<MyItem*> selectedItems;
+
+    // History undo-redo
+    QUndoStack* undoStack;
 
 
     QMenu * menuGeneral;
@@ -777,6 +789,9 @@ public:
     CursorPanel(const QString &Name,const double &Min, const double & Max, const double & Step,const double & Default, CursorItem * p);
    double getValue() const;
    CursorItem* getOwner();
+   double getMin() const;
+   double getMax() const;
+   double getStep() const;
 private:
     double min;
     double max;

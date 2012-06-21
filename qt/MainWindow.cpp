@@ -377,6 +377,7 @@ bool MainWindow::saveFile(const QString &fileName){
 
    }
     doc.appendChild(root);
+//    qDebug()<<root.oString();
 //    qDebug()<<doc.toString();
 //    qDebug()<<"Nom du fichier"<<fileName;
     QFile file(fileName);
@@ -820,7 +821,6 @@ void MainWindow::evaluate(){
 
 }
 void MainWindow::displayHelp(const QString & keyWord) const{
-    qDebug()<<keyWord;
    wizardList->setCurrentRow(2);
    (qobject_cast<WizardCatalog*>(wizardPages->currentWidget()))->displayPage(QUrl(keyWord));
 }

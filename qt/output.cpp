@@ -23,6 +23,7 @@
 #include <QMouseEvent>
 #include <giac/giac.h>
 #include <QFileDialog>
+#include <QUndoStack>
 #include <QFile>
 #include <QTreeWidget>
 #include <QLineEdit>
@@ -205,6 +206,17 @@ CursorPanel::CursorPanel(const QString &Name, const double &Min, const double & 
 CursorItem* CursorPanel::getOwner(){
     return owner;
 }
+double CursorPanel::getMin() const{
+    return min;
+}
+double CursorPanel::getMax() const{
+    return max;
+}
+double CursorPanel::getStep() const{
+    return step;
+}
+
+
 void CursorPanel::initGui(){
     QGridLayout* layout=new QGridLayout(this);
     labMin=new QLabel;
@@ -497,11 +509,11 @@ void GraphWidget::createToolBar(){
     circle3pt=new QAction(tr("Cercle (3 points)"),buttonCircle);
     circle3pt->setIcon(QIcon(":/images/circle3pt.png"));
     circle3pt->setData(canvas->CIRCLE3PT);
-    circle3pt->setProperty("comment","Trois points");
+    circle3pt->setProperty("comment",tr("Trois points"));
     arc3pt=new QAction(tr("Arc de cercle (3 points)"),buttonCircle);
     arc3pt->setIcon(QIcon(":/images/arc3pt.png"));
     arc3pt->setData(canvas->ARC3PT);
-    arc3pt->setProperty("comment","Trois points");
+    arc3pt->setProperty("comment",tr("Extrémités puis troisième point"));
 /*    arcCenter=new QAction(tr(" (3 points)"),buttonCircle);
     arcCenter->setIcon(QIcon(":/images/arc3pt.png"));
     arcCenter->setData(canvas->ARC3PT);
@@ -1015,8 +1027,17 @@ void GraphWidget::removeFromTree(MyItem * item){
 }
 
 
-
-
+/*AddCommand::AddCommand(int l, Canvas2D* c):QUndoCommand(c){
+    level=l;
+    canvas=c;
+}
+AddCommand::undo(){
+    canvas->deleteObject(canvas->getCommands().at(level).item);
+}
+AddCommand::redo(){
+    canvas->deleteObject(canvas->getCommands().at(level).item);
+}
+*/
 
 /**
   * clear all selected items in the tree
@@ -2163,11 +2184,14 @@ void Canvas2D::addToScene(QList<MyItem *> & v){
         else{
             MyItem *item=v.at(0);
             if (item->isFillable()) filledItems.append(item);
-            else if (item->isPoint()) pointItems.append(item);
+            else if (item->isPoint()) {
+                pointItems.append(item);
+            }
             else lineItems.append(item);
             focusOwner=item;
             parent->addToTree(item);
         }
+        parent->updateAllCategories();
     }
     else{
         for (int i=0;i<v.size();++i){
@@ -2898,8 +2922,9 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
         Command c=commands.at(level);
         gen g(c.command.toStdString(),context);
 
-        gen answer=protecteval(g,1,context);
         if (v.at(i)->isAngleItem()){
+            gen answer=protecteval(g,1,context);
+
             AngleItem* angle=dynamic_cast<AngleItem*>(v.at(i));
             if (answer.type!=giac::_VECT) return;
             //AngleItem* angle=new AngleItem(this);
@@ -2916,6 +2941,47 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             angle->getCurve()->updateValueFrom(vv.at(0));
             continue;
         }
+        // In case of a point element, we have to update the origin.
+        if (v.at(i)->isPointElement()){
+            PointElement*pe=dynamic_cast<PointElement*>(v.at(i));
+
+            QPointF oldPos=QPointF(pe->getXScreen(),pe->getYScreen());
+            int id=c.command.indexOf(":=");
+            gen gg(c.command.right(c.command.length()-id-2).toStdString(),context);
+
+
+            gen answer=protecteval(gg,1,context);
+
+            QList<MyItem*> vv;
+            addToVector(answer,vv);
+            Point* origin=new Point(this);
+            origin->updateValueFrom(vv.at(0));
+            delete(vv.at(0));
+            pe->setOrigin(origin);
+
+
+            QString myCommand=c.command;
+//           int id=myCommand.indexOf(":=");
+//            gen g(myCommand.right(myCommand.length()-id-2).toStdString(),context);
+            myCommand.append("+");
+            myCommand.append(pe->getTranslation(oldPos));
+            gen g(myCommand.toStdString(),context);
+
+            qDebug()<<myCommand;
+            vv.clear();
+            addToVector(protecteval(g,1,context),vv);
+            Point* newPoint=dynamic_cast<Point*>(vv.at(0));
+
+            pe->updateValueFrom(newPoint);
+            qDebug()<<QString::fromStdString(print(newPoint->getValue(),context));
+            delete origin;
+            delete newPoint;
+
+
+            continue;
+        }
+        gen answer=protecteval(g,1,context);
+
         QList<MyItem*> vv;
         addToVector(answer,vv);
         // Not the particular case of an intersection point or tangent lines
@@ -2925,15 +2991,48 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
         }
         else{
             QVector<MyItem*> children=v.at(i)->getChildren();
+
             for (int j=0;j<vv.size();++j){
-                // an intersection point already exists
+                // an intersection point (or a tangent line) already exists
                 if (children.size()>j){
-                    children.at(j)->updateValueFrom(vv.at(j));
-                    // Update value stored in giac
-                    if (v.at(i)->getType()=="Intersection")
-                        giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
-                    else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
-                    delete vv.at(j);
+                    // undefItem has to be replaced by Point or LineItem
+                    if (children.at(j)->getType()=="undef"){
+                        vv.at(j)->setAttributes(children.at(j)->getAttributes());
+                        for (int k=0;k<children.at(j)->getChildren().size();k++){
+                            vv.at(j)->addChild(children.at(j)->getChildAt(k));
+                        }
+                        vv.at(j)->setLegend(children.at(j)->getLegend());
+
+                        MyItem* tmp= children.at(j);
+                        v.at(i)->deleteChild(tmp);
+                        v.at(i)->addChild(vv.at(j));
+
+                        // Update value stored in giac
+                        if (v.at(i)->getType()=="Intersection")
+                            giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                        else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+
+                        // Replace item in pointItems or lineItems
+                        int id=pointItems.indexOf(tmp);
+                        if (id!=-1){
+                            pointItems.replace(id,vv.at(j));
+
+                        }
+                        else {
+                            id=lineItems.indexOf(tmp);
+                            if (id!=-1)
+                                lineItems.replace(id,vv.at(j));
+                        }
+                        delete tmp;
+                    }
+                    else{
+                        children.at(j)->updateValueFrom(vv.at(j));
+                        // Update value stored in giac
+                        if (v.at(i)->getType()=="Intersection")
+                            giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                        else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
+                        delete vv.at(j);
+                    }
                 }
                 // There are not enough points
                 else{
@@ -2944,7 +3043,7 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
                         giac::sto(giac::_point(vv.at(j)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
                     else giac::sto(giac::_droite(vv.at(j)->getValue(),context),giac::gen(children.at(j)->getVar().toStdString(),context),context);
                     pointItems.append(vv.at(j));
-                    v.at(j)->updateScreenCoords(true);
+                    v.at(i)->updateScreenCoords(true);
                     parent->addToTree(vv.at(j));
                     v.at(i)->addChild(vv.at(j));
                 }
@@ -2960,19 +3059,27 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
 }
 void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     QString s(item->getVar());
+    Command c=commands.at(item->getLevel());
     if (item->isPointElement()){
         PointElement* pe=dynamic_cast<PointElement*>(item);
 
         s=(commands.at(item->getLevel())).command;
         s.append("+");
         s.append(pe->getTranslation(p));
+
+
+
     }
     else if (item->isPoint()){
         s.append(commandFreePoint(p));
+        c.command=s;
     }
     gen g(s.toStdString(),context);
     QList<MyItem*> v;
+
+    commands.replace(item->getLevel(),c);
     addToVector(protecteval(g,1,context),v);
+
 
     item->updateValueFrom(v.at(0));
     delete v.at(0);
@@ -3234,7 +3341,6 @@ void Canvas2D::addNewPoint(const QPointF p){
    pointItems.append(v.at(0));
    newCommand.item=v.at(0);
    commands.append(newCommand);
-
 
    parent->addToTree(v.at(0));
    focusOwner=v.at(0);
@@ -3613,6 +3719,7 @@ void Canvas2D::addNewArc(const bool & onlyForPreview){
         return;
     }
     c.isCustom=false;
+    c.item=v.at(0);
     commands.append(c);
 
     if (v.at(0)->isUndef()){
@@ -3626,6 +3733,7 @@ void Canvas2D::addNewArc(const bool & onlyForPreview){
     }
     v.at(0)->updateScreenCoords(true);
     v.at(0)->setVar(varLine);
+
     filledItems.append(v.at(0));
     parent->addToTree(v.at(0));
     focusOwner=v.at(0);
@@ -3870,7 +3978,6 @@ void Canvas2D::addTransformObject(const QString & type){
 
 
 void Canvas2D::addNewPointElement(const QPointF &pos){
-//    if (focusOwner->isLine()|| focusOwner->isHalfLine()){
         findFreeVar(varPt);
         Command newCommand;
         QString s(varPt);
@@ -3900,15 +4007,18 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         v.clear();
         addToVector(protecteval(g,1,context),v);
 
-        newCommand.item=v.at(0);
-        commands.append(newCommand);
         p->setAttributes(0);
         p->updateValueFrom(v.at(0));
         p->setLevel(evaluationLevel);
         p->setLegend(v.at(0)->getLegend());
+
+        delete v.at(0);
         p->updateScreenCoords(true);
         p->setVar(varPt);
         p->setMovable(true);
+        newCommand.item=p;//v.at(0);
+        commands.append(newCommand);
+
         selectedItems.at(0)->addChild(p);
 
         pointItems.append(p);
@@ -4045,6 +4155,7 @@ void Canvas2D::addNewAngle(){
 
     angle->setLevel(evaluationLevel);
     c.isCustom=false;
+    c.item=angle;
     commands.append(c);
 
     angle->updateScreenCoords(true);
@@ -4063,8 +4174,13 @@ void Canvas2D::addNewAngle(){
 
 
 }
-
-
+/**
+ * @brief Canvas2D::addInter This creates:
+ *                            -intersection points from two objects
+ *                             -tangent from a curve and a point
+ *
+ * @param type "inter" or "tangent" depending on selected tool.
+ */
 void Canvas2D::addInter(const QString & type){
     Command newCommand;
     newCommand.attributes=0;
@@ -4099,6 +4215,7 @@ void Canvas2D::addInter(const QString & type){
             v.at(i)->setVar(varPt);
             giac::sto(giac::_point(v.at(i)->getValue(),context),giac::gen(QString(varPt).toStdString(),context),context);
         }
+
         else{
             findFreeVar(varLine);
             v.at(i)->setLegend(varLine);
@@ -4124,6 +4241,9 @@ void Canvas2D::addInter(const QString & type){
     updatePixmap(false);
     repaint();
 }
+
+
+
 void Canvas2D::executeMyAction(bool onlyForPreview=false){
         if (itemPreview!=0) delete itemPreview;
          itemPreview=0;
@@ -4190,7 +4310,7 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
     default:{}
 
     }
-
+    //undoHistory.append(QString("add %1").arg(evaluationLevel));
     if (!onlyForPreview)    selectedItems.clear();
 
 }
@@ -4530,29 +4650,213 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
             }
             else if (tag=="command"){
                 Command c;
-                int id=element.text().lastIndexOf(",display=");
+                c.command=element.text();
+                QString s(c.command);
+                int id=s.lastIndexOf(");");
                 if (id!=-1){
-                    c.command=element.text().left(id).append(");");
+                    s.insert(id,QString(",display=%1").arg(element.attribute("attributes","0")));
                 }
+
+
                 c.isCustom=false;
-                gen entry(element.text().toStdString(),context);
+
+                gen entry(s.toStdString(),context);
 
                 gen answer=protecteval(entry,1,context);
                 evaluationLevel=commands.size();
                 QList<MyItem*> v;
                 addToVector(answer,v);
+                /*******************************************************
+                *****  Case of intersection points or tangent lines *****
+                 */
+
+                QString vars=element.attribute("interVariables","");
+                if (!vars.isEmpty()){
+                    bool isTangent=(c.command.indexOf(":=tangent(")!=-1);
+                    InterItem* inter=0;
+                    if (!isTangent)
+                        inter=new InterItem(false,this);
+                    else inter=new InterItem(true,this);
+                        inter->setLevel(evaluationLevel);
+
+                      // inter command
+                      if (!isTangent)
+                          pointItems.append(inter);
+                      // tangent command
+                      else lineItems.append(inter);
+
+                      QStringList listVars=vars.split(',');
+                      QStringList listLegends=element.attribute("interLegends").split(',');
+                      QStringList listAttributes=element.attribute("interAttributes").split(',');
+                      for (int i=0;i<v.size();++i){
+                          v.at(i)->setFromInter(true);
+                          v.at(i)->setLevel(evaluationLevel);
+                          if (i<listLegends.size())
+                              v.at(i)->setLegend(listLegends.at(i));
+                          if (i<listAttributes.size())
+                              v.at(i)->setAttributes(listAttributes.at(i).toInt());
+                          v.at(i)->setVar(listVars.at(i));
+                          gen var(listVars.at(i).toStdString(),context);
+                          if (isTangent){
+                              giac::sto(giac::_droite(v.at(i)->getValue(),context),var,context);
+                              lineItems.append(v.at(i));
+                          }
+                          else {
+                               giac::sto(giac::_point(v.at(i)->getValue(),context),var,context);
+                               pointItems.append(v.at(i));
+                          }
+                          parent->addToTree(v.at(i));
+                          inter->addChild(v.at(i));
+                       }
+
+                      // Complete with undef points
+                      for (int i=v.size();i<listVars.size();++i){
+                          UndefItem* undef=new UndefItem(this);
+                          undef->setVar(listVars.at(i));
+                          undef->setFromInter(true);
+                          undef->setLevel(evaluationLevel);
+                          if (i<listLegends.size())
+                              undef->setLegend(listLegends.at(i));
+                          if (i<listAttributes.size())
+                              undef->setAttributes(listAttributes.at(i).toInt());
+                          inter->addChild(undef);
+                          if (isTangent){
+                               lineItems.append(undef);
+                          }
+                          else {
+                               pointItems.append(undef);
+                          }
+
+                          giac::sto(giac::undef,gen(listVars.at(i).toStdString(),context),context);
+                          parent->addToTree(undef);
+
+                      }
+                      parent->updateAllCategories();
+                      findIDNT(entry,inter);
+                      c.item=inter;
+                      commands.append(c);
+
+
+                }
+                /***********************************
+                 ******* Case PointElement
+                 ***/
+                else if(element.attribute("isPointElement","0").toInt()){
+                    QString s=QString("%1+i*%2").arg(element.attribute("originX","0")).arg(element.attribute("originX","0"));
+                    Point* p=new Point(gen(s.toStdString(),context),this);
+                    PointElement *pe=new PointElement(p,this);
+                    delete p;
+                    pe->setValue(gen(element.attribute("value","0").toStdString(),context));
+                    pe->setAttributes(element.attribute("attribute","0").toInt());
+                    pe->setLevel(evaluationLevel);
+                    pe->setLegend(element.attribute("legend",""));
+
+                    int id=element.text().indexOf(":=");
+                   if (id!=-1){
+                       pe->setVar(element.text().left(id));
+                   }
+                    pe->setMovable(true);
+                    findIDNT(entry,pe);
+                    c.item=pe;
+                    commands.append(c);
+                   pointItems.append(pe);
+                    parent->addToTree(pe);
+                    parent->updateAllCategories();
+               }
+
+                /**********************
+                 ****  Case AngleItem
+                 */
+                else if (element.attribute("isAngleItem","0").toInt()){
+
+                    if (answer.type!=giac::_VECT) break;
+                    AngleItem* angle=new AngleItem(this);
+                    vecteur* vect=answer._VECTptr;
+                    vecteur::iterator it=vect->begin();
+
+                    angle->setValue(*it);
+                    QList<MyItem*> v;
+                    ++it;
+                    addToVector(*it,v);
+                    angle->setCircle(v.at(0));
+                    v.clear();
+                    ++it;
+                    addToVector(*it,v);
+                    angle->setCurve(v.at(0));
+
+                    angle->setLevel(evaluationLevel);
+                    angle->setAttributes(element.attribute("attributes","0").toInt());
+
+                    c.isCustom=false;
+                    c.item=angle;
+                    commands.append(c);
+
+                    angle->updateScreenCoords(true);
+                    filledItems.append(angle);
+                    parent->addToTree(angle);
+                    focusOwner=angle;
+                    for (int i=0;i<selectedItems.size();++i){
+                        selectedItems.at(i)->addChild(angle);
+                    }
+                    // set Var
+                    int id=element.text().indexOf(":=");
+                   if (id!=-1){
+                       v.at(0)->setVar(element.text().left(id));
+                   }
+
+                    findIDNT(entry,angle);
+                    parent->updateAllCategories();
+                }
+                /***************************
+                 ******** Case Cursor
+                 **/
+                else if(element.attribute("isCursor","0").toInt()){
+                    commands.append(c);
+                    evaluationLevel=commands.size()-1;
+
+                    CursorItem* cursor;
+                    bool isFormal=element.attribute("isFormal","0").toInt();
+
+                    if (isFormal){
+                       cursor=new CursorItem(false,this);
+                   }
+                   else cursor=new CursorItem(true,this);
+                    cursor->setVar(element.attribute("var"));
+                   cursor->setLevel(evaluationLevel);
+                    commands.last().item=cursor;
+                    CursorPanel* cp=new CursorPanel(cursor->getVar(),element.attribute("min","-5").toDouble(), element.attribute("max","5").toDouble(),
+                                                    element.attribute("step","0.1").toDouble(),element.attribute("value","0").toDouble(),cursor);
+                    if (isFormal) {
+                        gen g(QString("assume(%1=%2);").arg(cursor->getVar()).arg(element.attribute("value","0")).toStdString(),context);
+                        protecteval(g,1,context);
+                    }
+                    else
+                        giac::sto(gen(element.attribute("value","0").toStdString(),context),gen(cursor->getVar().toStdString(),context),context);
+                    cursor->setCursorPanel(cp);
+                    cursorItems.append(cursor);
+                    parent->addCursorPanel(cp);
+                    // Init to first free var
+                    varLine="a";
+                    findFreeVar(varLine);
+                    connect (cp,SIGNAL(valueChanged()),this,SLOT(updateAllChildrenFrom()));
+                    connect(cp,SIGNAL(deletePanel()),this,SLOT(deleteCursorPanel()));
+
+
+
+                }
+                else{
+
                 findIDNT(entry,v.at(0));
-                id=element.text().indexOf(":=");
+                 id=element.text().indexOf(":=");
                 if (id!=-1){
                     v.at(0)->setVar(element.text().left(id));
                 }
-
                 c.item=v.at(0);
                 commands.append(c);
+                v.at(0)->setLegend(element.attribute("legend",""));
                 v.at(0)->setMovable(element.attribute("movable","0").toInt());
                 addToScene(v);
-
-
+                }
 
             }
           }
@@ -4569,21 +4873,58 @@ void Canvas2D::toInteractiveXML(QDomElement & top){
     axisToXML(top);
     for(int i=0;i<commands.size();++i){
         QDomElement command=top.ownerDocument().createElement("command");
-        command.setAttribute("movable",commands.at(i).item->isMovable());
+        MyItem* item=commands.at(i).item;
+        if (item->isMovable())
+            command.setAttribute("movable",item->isMovable());
+        if (item->getAttributes()!=0)
+            command.setAttribute("attributes",item->getAttributes());
+
+        command.setAttribute("legend",item->getLegend());
+
         QString s=commands.at(i).command;
-        int id=s.lastIndexOf(")");
-        s.insert(id,QString(",display=%1").arg(commands.at(i).item->getAttributes()));
+
+        if (item->isInter()){
+            QString vars;
+            QString legends;
+            QString attributes;
+            for(int j=0;j<item->getChildren().size();++j){
+                    vars.append(item->getChildAt(j)->getVar());
+                    legends.append(item->getChildAt(j)->getLegend());
+                    attributes.append(QString::number(item->getChildAt(j)->getAttributes()));
+                    if (j!=item->getChildren().size()-1) {
+                        vars.append(",");
+                        legends.append(",");
+                        attributes.append(",");
+                    }
+                }
+            command.setAttribute("interVariables",vars);
+            command.setAttribute("interLegends",legends);
+            command.setAttribute("interAttributes",attributes);
+         }
+        else if(item->isAngleItem()){
+            command.setAttribute("isAngleItem",item->isAngleItem());
+        }
+        else if(item->isPointElement()){
+            PointElement * pe=dynamic_cast<PointElement*>(item);
+            command.setAttribute("isPointElement",item->isPointElement());
+            command.setAttribute("originX",QString::number(pe->getOrigin().x()));
+            command.setAttribute("originY",QString::number(pe->getOrigin().y()));
+            command.setAttribute("value",QString::fromStdString(print(pe->getValue(),context)));
+
+        }
+        else if (item->isCursorItem()){
+            CursorItem * ci=dynamic_cast<CursorItem*>(item);
+            command.setAttribute("isCursor",item->isCursorItem());
+            command.setAttribute("isFormal",ci->isFormal());
+            command.setAttribute("min",ci->getCursorPanel()->getMin());
+            command.setAttribute("max",ci->getCursorPanel()->getMax());
+            command.setAttribute("step",ci->getCursorPanel()->getStep());
+            command.setAttribute("value",ci->getCursorPanel()->getValue());
+            command.setAttribute("var",ci->getVar());
+        }
         QDomText text=top.ownerDocument().createTextNode(s);
         command.appendChild(text);
-
-/*        if (commands.at(i).item->isPoint()){
-            (commands.at(i)).item->toXML(command);
-        }
-*/
         top.appendChild(command);
-
-
-
     }
 }
 void  Canvas2D::axisToXML(QDomElement & top){
@@ -4800,7 +5141,9 @@ void PanelProperties::addToTree( MyItem * item){
     if (item->isPixel()) return;
 
     if (item->isPoint()){
+
        nodePoint->addChild(treeItem);
+
 
     }
     else if(item->isLine()){
@@ -5079,7 +5422,11 @@ void DisplayProperties::initGui(){
 void DisplayProperties::updateColor(QColor color){
     for (int i=0;i<listItems->count();++i){
         QColor c(color);
+
+
         c.setAlpha(listItems->at(i)->getColor().alpha());
+
+
         listItems->at(i)->setColor(c);
     }
     updateCanvas();
@@ -5779,7 +6126,7 @@ SourceDialog::SourceDialog(Canvas2D* p){
 void SourceDialog::initGui(){
     QHBoxLayout* hbox=new QHBoxLayout(this);
     listWidget=new QListWidget(this);
-    QList<Canvas2D::Command> commands=parent->getCommands();
+  //  QList<Canvas2D::Command> commands=parent->getCommands();
     QStringList list;
     parent->getDisplayCommands(list);
     listWidget->addItems(list);

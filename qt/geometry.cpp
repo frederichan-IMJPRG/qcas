@@ -104,6 +104,7 @@ void MyItem::addChild(MyItem * item){
 QVector<MyItem*> MyItem::getChildren(){
     return children;
 }
+
 MyItem* MyItem::getChildAt(const int& id){
     return children.at(id);
 }
@@ -146,6 +147,10 @@ bool MyItem::isHalfLine() const{
 bool MyItem::isCurve() const{
     return false;
 }
+bool MyItem::isCursorItem() const{
+    return false;
+}
+
 bool MyItem::isBezierCurve() const{
     return false;
 }
@@ -461,6 +466,13 @@ Point::Point(const giac::gen & g,Canvas2D* graph):MyItem(graph){
 int Point::getPenWidth() const{
     return ((attributes& 0x00380000) >> 19);
 }
+double Point::getXScreen() const{
+    return xScreen;
+}
+double Point::getYScreen() const{
+    return yScreen;
+}
+
 QString Point::getDisplayValue(){
     if (undef){
         QString mml("<math mode=\"display\">\n");
@@ -1566,8 +1578,15 @@ void UndefItem::draw(QPainter*) const{}
 bool UndefItem::isUndef() const{
     return true;
 }
+QString UndefItem::getDisplayValue(){
+
+    QString mml("<math mode=\"display\">\n<mtext>undef</mtext>\n</math>");
+
+    return QString(mml);
+}
+
 QString UndefItem::getType() const{
-    return QString(QObject::tr("undef"));
+    return QString("undef");
 }
 InterItem::InterItem(const bool &isTangent, Canvas2D* p):MyItem(p){
 tangent=isTangent;
@@ -1584,18 +1603,21 @@ QString InterItem::getType() const{
     return QString("Intersection");
 }
 
+/*QPointF PointElement::getOriginScreen() const{
+    return originScreen;
+}*/
 QPointF PointElement::getOrigin() const{
     return origin;
 }
-void PointElement::setorigin(const QPointF & p){
-    origin=p;
+
+void PointElement::setOrigin(Point* p){
+    origin=QPointF(p->x,p->y);
 }
 PointElement::PointElement(Point *p, Canvas2D *graph ):Point(graph){
     double a,b;
+    origin=QPointF(p->x,p->y);
     g2d->toScreenCoord(p->x,p->y,a,b);
-    origin=QPointF(a,b);
-//    qDebug()<<"origine"<<a<<b<<p->x<<p->y;
-
+    originScreen=QPointF(a,b);
 }
 QString PointElement::getTranslation(const QPointF& p){
     double a,b;
@@ -1603,12 +1625,20 @@ QString PointElement::getTranslation(const QPointF& p){
     g2d->toScreenCoord(0,0,xO,yO);
 //    qDebug()<<"translation"<<p.x()<<p.y()<<origin.x()<<origin.y();
 //    qDebug()<<"translation"<<p.x()-origin.x()<<origin.y()-p.y()<<p.x()-origin.x()+xO<<p.y()-origin.y()+yO;
-    g2d->toXY(p.x()-origin.x()+xO,p.y()-origin.y()+yO,a,b);
+    g2d->toXY(p.x()-originScreen.x()+xO,p.y()-originScreen.y()+yO,a,b);
     QString s;
     s.append(QString::number(a));
     s.append("+i*");
     s.append(QString::number(b));
     return s;
+}
+void PointElement::updateScreenCoords(const bool compute){
+    if (compute){
+        double a,b;
+        g2d->toScreenCoord(origin.x(),origin.y(),a,b);
+        originScreen=QPointF(a,b);
+    }
+    Point::updateScreenCoords(compute);
 }
 bool PointElement::isPointElement() const{
     return true;
@@ -1684,6 +1714,9 @@ CursorPanel* CursorItem::getCursorPanel(){
 }
 void CursorItem::setCursorPanel(CursorPanel* p){
     cursorPanel=p;
+}
+bool CursorItem::isCursorItem()const{
+    return true;
 }
 bool CursorItem::isFormal(){
     return !isNumeric;

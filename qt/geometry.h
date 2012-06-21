@@ -41,6 +41,7 @@ public:
   virtual bool isVector() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
+  virtual bool isCursorItem() const;
   virtual bool isBezierCurve() const;
   virtual bool isInter() const;
   virtual bool isList() const;
@@ -150,6 +151,9 @@ public:
     virtual void setValue(const giac::gen & );
     void toXML(QDomElement &);
     virtual QString  getDisplayValue();
+    double getXScreen() const;
+    double getYScreen() const;
+
 protected:
     double x,y;
 
@@ -165,11 +169,15 @@ class PointElement:public Point{
 public:
     PointElement(Point*,Canvas2D *graph );
     QPointF getOrigin() const;
-    void setorigin(const QPointF &);
-    QString getTranslation(const QPointF &);
-    virtual bool isPointElement() const;
+//    QPointF getOriginScreen() const;
+    void setOrigin(Point *);
 
+    QString getTranslation(const QPointF &);
+//    virtual void updateValueFrom(MyItem *);
+    virtual bool isPointElement() const;
+    virtual void updateScreenCoords(const bool);
 private:
+    QPointF originScreen;
     QPointF origin;
 };
 
@@ -357,6 +365,7 @@ public:
     virtual void draw(QPainter*) const;
     virtual QString getType() const;
     virtual bool isUndef() const;
+    virtual QString getDisplayValue();
 
 };
 
@@ -402,6 +411,7 @@ public:
     CursorPanel* getCursorPanel();
     virtual void toXML(QDomElement &);
     void setCursorPanel(CursorPanel*);
+    virtual bool isCursorItem() const;
     bool isFormal();
 private:
         bool isNumeric;
