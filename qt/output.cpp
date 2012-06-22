@@ -1298,34 +1298,30 @@ void Canvas2D::setActionTool(action a){
 
                     return;
                 }
-                findIDNT(g,v.at(0));
-
-                Curve* original=dynamic_cast<Curve*>(v.at(0));
-                for (int i=1;i<v.size();++i){
-                    Curve* curve=dynamic_cast<Curve*>(v.at(i));
-                    original->join(curve);
-
-                    delete curve;
+                MyItem* item=v.at(0);
+                if (v.size()>1) {
+                    item =new MultiCurve(v,this);
+                    item->setLegend(v.at(0)->getLegend());
+                    item->setAttributes(v.at(0)->getAttributes());
+                    item->setValue(v.at(0)->getValue());
                 }
 
-                qDebug()<<original->getPath();
-
-                newCommand.item=v.at(0);
+                findIDNT(g,item);
+                newCommand.item=item;
                 commands.append(newCommand);
 
-                v.at(0)->setVar(varLine);
-
-                v.at(0)->updateScreenCoords(true);
-                lineItems.append(v.at(0));
-                parent->addToTree(v.at(0));
-                focusOwner=v.at(0);
-                parent->updateAllCategories();
+                item->setVar(varLine);
+                item->updateScreenCoords(true);
+                lineItems.append(item);
+                focusOwner=item;
+                item->setVisible(false);
+                parent->addToTree(item);
                 parent->selectInTree(focusOwner);
-                selectedItems.append(focusOwner);
+                parent->updateAllCategories();
+                item->setVisible(true);
+
                 updatePixmap(false);
                 repaint();
-
-
             }
 
         delete(dialog);
@@ -4617,6 +4613,8 @@ void Canvas2D::paintEvent(QPaintEvent * ){
     QList<MyItem*> selectedItems=parent->getTreeSelectedItems();
     for (int i=0;i<selectedItems.size();++i){
         MyItem* item =selectedItems.at(i);
+        // focusOwner will be drawn just after this.
+        if (item==focusOwner) continue;
         item->setHighLighted(true);
         item->draw(&painter);
         item->setHighLighted(false);
@@ -5010,7 +5008,7 @@ void Canvas2D::setFocusOwner(MyItem * item){
         focusOwner->setHighLighted(false);
     }
     focusOwner=item;
-    repaint();
+//    repaint();
 }
 
 bool Canvas2D::isInteractive() const{
@@ -5033,7 +5031,6 @@ bool Canvas2D::checkForOnlyFillables(const QList<MyItem *> *list) const{
 
 
 bool Canvas2D::checkForOnlyLines(const QList<MyItem *> *list) const{
-
     for (int i=0;i<list->size();++i){
         if (list->at(i)->isPoint()) return false;
     }
@@ -5169,6 +5166,9 @@ void PanelProperties::addToTree( MyItem * item){
             nodePolygon->addChild(treeItem);
         else
             nodeCurve->addChild(treeItem);
+    }
+    else if (item->isMultiCurve()){
+        nodeCurve->addChild(treeItem);
     }
     else if(item->isBezierCurve()){
             nodeCurve->addChild(treeItem);
@@ -5317,10 +5317,10 @@ DisplayProperties::DisplayProperties(Canvas2D *canvas):QTabWidget(canvas){
 }
 void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
 
-    setVisible(true);
-    delete listItems;
-    listItems=l;
-    if (l->count()>1) valuePanel->setVisible(false);
+   setVisible(true);
+   delete listItems;
+   listItems=l;
+   if (l->count()>1) valuePanel->setVisible(false);
    else if (!QString::fromStdString(giac::print(listItems->at(0)->getValue(),parent->getContext())).trimmed().isEmpty()){
         valuePanel->setGenValue(listItems->at(0)->getValue());
         valuePanel->setDisplayValue(listItems->at(0)->getDisplayValue());
@@ -5367,7 +5367,6 @@ void DisplayProperties::updateDisplayPanel(QList<MyItem *> * l){
         alphaFillPanel->setValue(8-listItems->at(0)->getColor().alpha()/36);
         else alphaFillPanel->setValue(8);
         alphaFillPanel->setVisible(true);
-
     }
 
 
@@ -5428,24 +5427,20 @@ void DisplayProperties::initGui(){
 void DisplayProperties::updateColor(QColor color){
     for (int i=0;i<listItems->count();++i){
         QColor c(color);
-
-
         c.setAlpha(listItems->at(i)->getColor().alpha());
-
-
         listItems->at(i)->setColor(c);
     }
     updateCanvas();
 }
 void DisplayProperties::updateTypeLine(int c){
     for (int i=0;i<listItems->count();++i){
+
         listItems->at(i)->setStyle(c);
     }
     updateCanvas();
 }
 
 void DisplayProperties::updateCanvas(){
-
     parent->updatePixmap(false);
     parent->repaint();
 }

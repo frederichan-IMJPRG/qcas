@@ -147,6 +147,10 @@ bool MyItem::isHalfLine() const{
 bool MyItem::isCurve() const{
     return false;
 }
+bool MyItem::isMultiCurve() const{
+    return false;
+}
+
 bool MyItem::isCursorItem() const{
     return false;
 }
@@ -1043,8 +1047,8 @@ QString Curve::getDisplayValue(){
 
 }
 void Curve::draw(QPainter *painter) const{
-    if (!isVisible()) return;
 
+    if (!isVisible()) return;
     int width=1;
     QColor color=getColor();
     if (highLighted){
@@ -1070,7 +1074,6 @@ void Curve::draw(QPainter *painter) const{
         painter->drawPath(envelop);
 
     }
-
 }
 bool Curve::isCurve() const{
     return true;
@@ -1132,18 +1135,6 @@ bool Curve::isSegment() const{
     }
     else return (path.elementCount()==2);
 }
-void Curve::join(Curve* c){
-    QPainterPath p=c->getPath();
-    for (int i=0;i<p.elementCount();++i){
-
-        if ((i==0)||(p.elementAt(i).isMoveTo())){
-            path.moveTo(QPointF(p.elementAt(i).x,p.elementAt(i).y));
-        }
-        else if (p.elementAt(i).isLineTo()){
-            path.lineTo(QPointF(p.elementAt(i).x,p.elementAt(i).y));
-        }
-    }
-}
 
 void Curve::toXML(QDomElement & top){
     QDomElement curve=top.ownerDocument().createElement("curve");
@@ -1193,6 +1184,21 @@ void Curve::setFillable(const bool & b){
 void Curve::setPolygon(const bool & b){
     polygon=b;
 }
+MultiCurve::MultiCurve(const QList<MyItem *> & l, Canvas2D * c):ListItem(l,c){
+}
+bool MultiCurve::isList() const{
+    return false;
+}
+bool MultiCurve::isMultiCurve() const{
+    return true;
+}
+QString MultiCurve::getDisplayValue(){
+        QString mml("<math mode=\"display\">\n");
+        mml.append(QString::fromStdString(gen2mathml(value,g2d->getContext())));
+        mml.append("</math>");
+        return mml;
+}
+
 BezierCurve::BezierCurve(const QList<QPointF> &p,Canvas2D *graph):MyItem(graph){
     points=p;
     int rem=(points.size()-1)%3;
@@ -1571,6 +1577,8 @@ void ListItem::toXML(QDomElement & top){
 }
 void ListItem::draw(QPainter* painter) const{
     for (int i=0;i<list.size();++i){
+        list.at(i)->setHighLighted(highLighted);
+        list.at(i)->setAttributes(attributes);
         list.at(i)->draw(painter);
     }
 }

@@ -41,6 +41,7 @@ public:
   virtual bool isVector() const;
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
+  virtual bool isMultiCurve() const;
   virtual bool isCursorItem() const;
   virtual bool isBezierCurve() const;
   virtual bool isInter() const;
@@ -249,7 +250,6 @@ public:
     bool isPolygon() const;
     virtual bool isFillable() const;
     virtual void toXML(QDomElement &);
-    void join(Curve*);
     void setFillable(const bool &);
     virtual QString getDisplayValue();
     virtual void updateValueFrom(MyItem *);
@@ -264,6 +264,7 @@ private:
     QPainterPath envelop;
     QPainterPath pathArrow;
 };
+
 class BezierCurve:public MyItem{
 public:
     BezierCurve(const QList<QPointF> & , Canvas2D*);
@@ -357,6 +358,13 @@ public:
 
 private:
     QList<MyItem*> list;
+};
+class MultiCurve:public ListItem{
+public:
+    MultiCurve(const QList<MyItem*> & , Canvas2D*);
+    virtual bool isList() const;
+    virtual bool isMultiCurve() const;
+    virtual QString getDisplayValue();
 };
 class UndefItem:public MyItem{
 public:
