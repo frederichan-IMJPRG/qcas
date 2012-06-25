@@ -119,7 +119,18 @@ protected:
 private:
     Canvas2D* canvas;
 };
-
+class ModifyObjectAttributes:public QUndoCommand{
+public:
+    ModifyObjectAttributes(const QString &, const QString &,Canvas2D*);
+    virtual void undo();
+    virtual void redo();
+private:
+    Canvas2D* canvas;
+    int  oldAtt;
+    int newAtt;
+    QString oldLegend;
+    QString newLegend;
+};
 class RenameObjectCommand:public QUndoCommand{
 public:
     RenameObjectCommand(const QString &, const QString &,Canvas2D*);

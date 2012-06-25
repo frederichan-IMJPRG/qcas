@@ -1137,8 +1137,19 @@ AddObjectCommand::AddObjectCommand(Canvas2D * c){
  *     undo operation
  */
 void AddObjectCommand::undo(){
+    MyItem* item=canvas->getCommands().last().item;
+    if (!item->isInter())
+        canvas->deleteSingleObject(item);
+    else {
+        while(item->hasChildren()){
+            MyItem* last=item->getChildren().last();
+            item->deleteChild(last);
+            canvas->deleteSingleObject(last);
+        }
+        canvas->deleteSingleObject(item);
 
-    canvas->deleteSingleObject(canvas->getCommands().last().item);
+    }
+
     canvas->initAfterDeleting();
 }
 
@@ -1193,7 +1204,15 @@ void DeleteObjectCommand::undo(){
     }
 void DeleteObjectCommand::redo(){
     for (int i=0;i<levels.size();++i){
-        canvas->deleteSingleObject(canvas->getCommands().at(levels.at(i)).item);
+        MyItem* item=canvas->getCommands().at(levels.at(i)).item;
+        if (item->isInter() ){
+            while(item->hasChildren()){
+                MyItem* lastChild=item->getChildren().last();
+                item->deleteChild(lastChild);
+                canvas->deleteSingleObject(lastChild);
+            }
+        }
+        canvas->deleteSingleObject(item);
     }
     canvas->initAfterDeleting();
 }
@@ -2475,7 +2494,20 @@ void Canvas2D::displayGrid(bool b){
      updatePixmap(false);
     repaint();
 }
+/**
+ * @brief lessThan
+ * @param a first item
+ * @param b second item
+ * @return true if a's level is less than b's level
+ *              It's very important in case of equality that Inter items come before their children.
+ *
+ */
 bool lessThan(const MyItem* a, const MyItem*b){
+    if (a->getLevel()==b->getLevel()){
+
+        if (a->isInter()) return true;
+        else if (b->isInter()) return false;
+    }
     return a->getLevel()<b->getLevel();
 }
 int Canvas2D::findItemFromVar(const QString& var,QList<MyItem*>* list){
@@ -2664,10 +2696,17 @@ void Canvas2D::deleteObject(MyItem * focus){
     v.append(focus);
     refreshFromItem(focus,v,true);
     qSort(v.begin(),v.end(),lessThan);
-    DeleteObjectCommand* del=new DeleteObjectCommand(v.at(v.size()-1)->getLevel(),this);
-    for (int i=v.size()-2;i>=0;--i){
+
+
+    int end=v.size()-1;
+    while (v.at(end)->isFromInter()){
+        --end;
+    }
+    DeleteObjectCommand* del=new DeleteObjectCommand(v.at(end)->getLevel(),this);
+    for (int i=end-1;i>=0;--i){
         int level=v.at(i)->getLevel();
-        del->mergeWith(new DeleteObjectCommand(level,this));
+        if (!v.at(i)->isFromInter())
+            del->mergeWith(new DeleteObjectCommand(level,this));
     }
     undoStack->push(del);
 
@@ -2717,7 +2756,7 @@ void Canvas2D::deleteSingleObject(MyItem * deletedObject){
     parent->removeFromTree(deletedObject);
 
     //delete from pointItems, lineItems, vectorItems
-    if (deletedObject->isPoint()){
+    if (deletedObject->isPoint()|| (deletedObject->isInter()&&(deletedObject->getType()=="Intersection"))){
         int id=pointItems.indexOf(deletedObject);
         if (id!=-1)  pointItems.removeAt(id);
         id= traceVector.indexOf(deletedObject);
@@ -3297,7 +3336,10 @@ void Canvas2D::refreshFromItem(MyItem * item, QList<MyItem*>& list, bool evenInt
         if (!list.contains(v.at(i))){
             if (evenInter) list.append(v.at(i));
             else if (!item->isInter()) list.append(v.at(i));
+
             if (v.at(i)->hasChildren()) refreshFromItem(v.at(i),list);
+
+
         }
     }
 }
@@ -5778,6 +5820,7 @@ void LegendPanel::updateCanvas(){
         if (legendPanel->isVisible()) parent->getListItems()->at(i)->setLegend(legendEdit->text());
         parent->getListItems()->at(i)->setLegendPos(comboPos->currentIndex());
     }
+
     parent->updateCanvas();
 }
 
