@@ -1090,10 +1090,29 @@ void Curve::updateScreenCoords(const bool compute){
     if (compute){
         double xtmp,ytmp;
         pathScreen=QPainterPath();
+        QPointF save;
+        bool saveDef=false;
+        bool moveTo=true;
         for (int i=0;i<path.elementCount();++i){
             g2d->toScreenCoord(path.elementAt(i).x,path.elementAt(i).y,xtmp,ytmp);
-            if (i==0) pathScreen.moveTo(xtmp,ytmp);
-            else pathScreen.lineTo(xtmp,ytmp);
+            if ((xtmp>0)&&(xtmp<g2d->width())&&(ytmp>0)&&(ytmp<g2d->height()))
+            {
+                if (moveTo) {
+                    if (saveDef){
+                    pathScreen.moveTo(save);
+                    pathScreen.lineTo(xtmp,ytmp);
+                    }
+                    else pathScreen.moveTo(xtmp,ytmp);
+                    moveTo=false;
+                }
+                else pathScreen.lineTo(xtmp,ytmp);
+                saveDef=false;
+            }
+            else  {
+                save=QPointF(xtmp,ytmp);
+                moveTo=true;
+                saveDef=true;
+            }
         }
         if (vector){
             pathArrow=QPainterPath();
@@ -1122,7 +1141,6 @@ void Curve::updateScreenCoords(const bool compute){
     stroke.setDashPattern(getLineType());
     stroke.setWidth(width);
     envelop=stroke.createStroke(pathScreen);
-
 }
 
 bool Curve::isVector() const{
@@ -1620,7 +1638,7 @@ void InterItem::updateScreenCoords(const bool){}
 void InterItem::draw(QPainter*) const{}
 bool InterItem::isInter() const{return true;}
 QString InterItem::getType() const{
-    if (tangent) return QString("Tangente");
+    if (tangent) return QString("Tangent");
     return QString("Intersection");
 }
 

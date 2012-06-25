@@ -1040,10 +1040,162 @@ AddCommand::redo(){
 */
 
 /**
-  * clear all selected items in the tree
-  */
+ * @brief GraphWidget::clearSelection
+ * clear all selected items in the tree
+ */
 void GraphWidget::clearSelection(){
     propPanel->clearSelection();
+}
+void GraphWidget::undo(){
+    canvas->undo();
+}
+void GraphWidget::redo(){
+    canvas->redo();
+}
+void GraphWidget::setUndoButton(bool b){
+    mainWindow->setUndoButton(b);
+}
+void GraphWidget::setRedoButton(bool b){
+
+    mainWindow->setRedoButton(b);
+}
+RenameObjectCommand::RenameObjectCommand(const QString &o, const QString &n, Canvas2D *c){
+    canvas=c;
+    oldName=o;
+    newName=n;
+}
+void RenameObjectCommand::undo(){
+    int id=canvas->findItemFromVar(newName,canvas->getPointItem());
+    if (id!=-1){
+            canvas->renameSingleObject(canvas->getPointItem()->at(id),oldName);
+    }
+    else {
+        id=canvas->findItemFromVar(newName,canvas->getLineItem());
+        if (id!=-1){
+                canvas->renameSingleObject(canvas->getLineItem()->at(id),oldName);
+        }
+        else {
+            id=canvas->findItemFromVar(newName,canvas->getFilledItem());
+            if (id!=-1){
+                    canvas->renameSingleObject(canvas->getFilledItem()->at(id),oldName);
+            }
+        }
+    }
+
+
+}
+
+void RenameObjectCommand::redo(){
+    int id=canvas->findItemFromVar(oldName,canvas->getPointItem());
+    if (id!=-1){
+            canvas->renameSingleObject(canvas->getPointItem()->at(id),newName);
+    }
+    else {
+        id=canvas->findItemFromVar(oldName,canvas->getLineItem());
+        if (id!=-1){
+                canvas->renameSingleObject(canvas->getLineItem()->at(id),newName);
+        }
+        else {
+            id=canvas->findItemFromVar(oldName,canvas->getFilledItem());
+            if (id!=-1){
+                    canvas->renameSingleObject(canvas->getFilledItem()->at(id),newName);
+            }
+        }
+    }
+}
+
+MoveObjectCommand::MoveObjectCommand(int l, QPointF start, QPointF end, Canvas2D * c){
+    level=l;
+    canvas=c;
+    oldPos=start;
+    newPos=end;
+}
+void MoveObjectCommand::undo(){
+    canvas->moveItem(canvas->getCommands().at(level).item,oldPos);
+}
+void MoveObjectCommand::redo(){
+    if (initCall) {
+        initCall=false;
+        return;
+    }
+    canvas->moveItem(canvas->getCommands().at(level).item,newPos);
+}
+/**
+ * @brief AddObjectCommand::AddObjectCommand
+ * @param c the cavas parent
+ */
+AddObjectCommand::AddObjectCommand(Canvas2D * c){
+    canvas=c;
+    initCall=true;
+    this->setText(QObject::tr("Ajouter").append(canvas->getCommands().last().item->getType()));
+    QDomElement root=doc.createElement("root");
+    canvas->itemToXML(canvas->getCommands().last(),root);
+    doc.appendChild(root);
+}
+/**
+ * @brief AddObjectCommand::undo
+ *     undo operation
+ */
+void AddObjectCommand::undo(){
+
+    canvas->deleteSingleObject(canvas->getCommands().last().item);
+    canvas->initAfterDeleting();
+}
+
+
+/**
+ * @brief AddObjectCommand::redo
+ *     redo operation
+ */
+void AddObjectCommand::redo(){
+    if (initCall) {
+        initCall=false;
+        return;
+    }
+     QDomElement root = doc.documentElement();
+     canvas->loadInteractiveXML(root);
+     canvas->repaint();
+}
+
+
+
+DeleteObjectCommand::DeleteObjectCommand(int l,Canvas2D * parent){
+    levels.append(l);
+    canvas=parent;
+
+    this->setText(QObject::tr("Supprimer ").append(canvas->getCommands().at(l).item->getType()));
+    QDomDocument doc;
+    QDomElement root=doc.createElement("root");
+    canvas->itemToXML(canvas->getCommands().at(l),root,true);
+    doc.appendChild(root);
+    docs.append(doc);
+}
+int DeleteObjectCommand::id() const{
+    return 1;
+}
+bool DeleteObjectCommand::mergeWith(const QUndoCommand *other){
+    if (other->id()!=id()) return false;
+
+    const DeleteObjectCommand* del=dynamic_cast<const DeleteObjectCommand*>(other);
+    for (int i=0;i<del->docs.size();++i){
+        docs.append(del->docs.at(i));
+        levels.append(del->levels.at(i));
+    }
+    return true;
+}
+
+void DeleteObjectCommand::undo(){
+    for (int i=levels.size()-1;i>=0;--i){
+        QDomElement root = docs.at(i).documentElement();
+        canvas->loadInteractiveXML(root);
+    }
+    canvas->repaint();
+    }
+void DeleteObjectCommand::redo(){
+    for (int i=0;i<levels.size();++i){
+        canvas->deleteSingleObject(canvas->getCommands().at(levels.at(i)).item);
+    }
+    canvas->initAfterDeleting();
 }
 
 
@@ -1060,6 +1212,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     varPt="A";
     varLine="a";
     evaluationLevel=-1;
+    undoStack=new QUndoStack(this);
 
     // Grid parameters
     gridParam.isVisible=true;
@@ -1080,15 +1233,15 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     setAutoFillBackground(true);
 
 
-    xmin=giac::gnuplot_xmin;
-    xmax=giac::gnuplot_xmax;
-    ymin=giac::gnuplot_ymin;
-    ymax=giac::gnuplot_ymax;
+    xAxisParam.min=giac::gnuplot_xmin;
+    xAxisParam.max=giac::gnuplot_xmax;
+    yAxisParam.min=giac::gnuplot_ymin;
+    yAxisParam.max=giac::gnuplot_ymax;
 
-    giac::global_window_xmin=xmin;
-    giac::global_window_xmax=xmax;
-    giac::global_window_ymin=ymin;
-    giac::global_window_ymax=ymax;
+    giac::global_window_xmin=xAxisParam.min;
+    giac::global_window_xmax=xAxisParam.max;
+    giac::global_window_ymin=yAxisParam.min;
+    giac::global_window_ymax=yAxisParam.max;
 
     setXYUnit();
     make_ortho();
@@ -1099,6 +1252,8 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     p.setHorizontalStretch(1);
     setSizePolicy(p);
 
+    connect(undoStack,SIGNAL(canUndoChanged(bool)),parent,SLOT(setUndoButton(bool)));
+    connect(undoStack,SIGNAL(canRedoChanged(bool)),parent,SLOT(setRedoButton(bool)));
  //   setMinimumHeight(100);
 }
 Canvas2D::~Canvas2D(){
@@ -1259,13 +1414,13 @@ void Canvas2D::setActionTool(action a){
             v.at(0)->setVar(varPt);
             newCommand.item=v.at(0);
             commands.append(newCommand);
-
+            undoStack->push(new AddObjectCommand(this));
             pointItems.append(v.at(0));
             parent->addToTree(v.at(0));
             focusOwner=v.at(0);
             parent->updateAllCategories();
             parent->selectInTree(focusOwner);
-            selectedItems.append(focusOwner);
+
             updatePixmap(false);
             repaint();
         }
@@ -1301,18 +1456,19 @@ void Canvas2D::setActionTool(action a){
                 MyItem* item=v.at(0);
                 if (v.size()>1) {
                     item =new MultiCurve(v,this);
+                    item->setLevel(evaluationLevel);
                     item->setLegend(v.at(0)->getLegend());
                     item->setAttributes(v.at(0)->getAttributes());
                     item->setValue(v.at(0)->getValue());
                 }
 
-                findIDNT(g,item);
+                 findIDNT(g,item);
                 newCommand.item=item;
                 commands.append(newCommand);
-
                 item->setVar(varLine);
                 item->updateScreenCoords(true);
                 lineItems.append(item);
+                undoStack->push(new AddObjectCommand(this));
                 focusOwner=item;
                 item->setVisible(false);
                 parent->addToTree(item);
@@ -1357,6 +1513,7 @@ void Canvas2D::setActionTool(action a){
             v.at(0)->updateScreenCoords(true);
             lineItems.append(v.at(0));
             parent->addToTree(v.at(0));
+            undoStack->push(new AddObjectCommand(this));
             focusOwner=v.at(0);
             parent->updateAllCategories();
             parent->selectInTree(focusOwner);
@@ -1534,10 +1691,10 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
 
 
 void Canvas2D::setBounds(const double & xMin, const double &xMax, const double & yMin, const double & yMax){
-    xmin=xMin;
-    xmax=xMax;
-    ymin=yMin;
-    ymax=yMax;
+    xAxisParam.min=xMin;
+    xAxisParam.max=xMax;
+    yAxisParam.min=yMin;
+    yAxisParam.max=yMax;
 }
 void Canvas2D::setXAxisParam(const AxisParam & s){
     xAxisParam=s;
@@ -2099,18 +2256,18 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
 //*/
   }
 double Canvas2D::getXmin() const{
-    return xmin;
+    return xAxisParam.min;
 }
 double Canvas2D::getXmax() const{
-    return xmax;
+    return xAxisParam.max;
 }
 double Canvas2D::getYmin() const{
-    return ymin;
+    return yAxisParam.min;
 }
 double Canvas2D::getYmax() const{
-    return ymax;
+    return yAxisParam.max;
 }
-QList<Canvas2D::Command> &Canvas2D::getCommands(){
+QList<Command> &Canvas2D::getCommands(){
     return commands;
 }
 
@@ -2160,9 +2317,9 @@ void Canvas2D::createScene(const giac::gen & g){
 
 
 
-    giac::autoscaleminmax(vx,xmin,xmax);
+    giac::autoscaleminmax(vx,xAxisParam.min,xAxisParam.max);
 
-    giac::autoscaleminmax(vy,ymin,ymax);
+    giac::autoscaleminmax(vy,yAxisParam.min,yAxisParam.max);
 //    qDebug()<<xmin<<xmax<<ymin<<ymax;
 //    autoscaleminmax(vz,zmin,zmax);
 
@@ -2183,6 +2340,16 @@ void Canvas2D::createScene(const giac::gen & g){
 
      updatePixmap(true);
 }
+
+void Canvas2D::undo(){
+    if (undoStack->canUndo()) {
+        undoStack->undo();
+    }
+}
+void Canvas2D::redo(){
+    if (undoStack->canRedo()) undoStack->redo();
+}
+
 void Canvas2D::addToScene(QList<MyItem *> & v){
     if (parent->isInteractive()){
         if (v.size()!=1) {
@@ -2231,29 +2398,29 @@ void Canvas2D::zoom_In(){
 
 
         if (tmpx2>tmpx) {
-            xmin=tmpx;
-            xmax=tmpx2;
+            xAxisParam.min=tmpx;
+            xAxisParam.max=tmpx2;
         }
         else {
-            xmin=tmpx2;
-            xmax=tmpx;
+            xAxisParam.min=tmpx2;
+            xAxisParam.max=tmpx;
         }
         if (tmpy2>tmpy) {
-            ymin=tmpy;
-            ymax=tmpy2;
+            yAxisParam.min=tmpy;
+            yAxisParam.max=tmpy2;
         }
         else {
-            ymin=tmpy2;
-            ymax=tmpy;
+            yAxisParam.min=tmpy2;
+            yAxisParam.max=tmpy;
         }
     }
     else {
-        double xstep=(xmax-xmin)/10;
-        double ystep=(ymax-ymin)/10;
-        xmin+=xstep;
-        xmax-=xstep;
-        ymin+=ystep;
-        ymax-=ystep;
+        double xstep=(xAxisParam.max-xAxisParam.min)/10;
+        double ystep=(yAxisParam.max-yAxisParam.min)/10;
+        xAxisParam.min+=xstep;
+        xAxisParam.max-=xstep;
+        yAxisParam.min+=ystep;
+        yAxisParam.max-=ystep;
     }
     selectionRight=false;
     setXYUnit();
@@ -2265,15 +2432,15 @@ void Canvas2D::make_ortho(){
 
     if (xunit>yunit){
         xunit=yunit;
-        double step=((width()-40)/xunit-(xmax-xmin))/2;
-        xmin-=step;
-        xmax+=step;
+        double step=((width()-40)/xunit-(xAxisParam.max-xAxisParam.min))/2;
+        xAxisParam.min-=step;
+        xAxisParam.max+=step;
     }
     else if (xunit<yunit){
         yunit=xunit;
-        double step=((height()-40)/yunit-(ymax-ymin))/2;
-        ymin-=step;
-        ymax+=step;
+        double step=((height()-40)/yunit-(yAxisParam.max-yAxisParam.min))/2;
+        yAxisParam.min-=step;
+        yAxisParam.max+=step;
 
     }
     updatePixmap(true);
@@ -2282,12 +2449,12 @@ void Canvas2D::make_ortho(){
 }
 void Canvas2D::zoom_Out(){
     selectionRight=false;
-    double xstep=(xmax-xmin)/8;
-    double ystep=(ymax-ymin)/8;
-    xmin-=xstep;
-    xmax+=xstep;
-    ymin-=ystep;
-    ymax+=ystep;
+    double xstep=(xAxisParam.max-xAxisParam.min)/8;
+    double ystep=(yAxisParam.max-yAxisParam.min)/8;
+    xAxisParam.min-=xstep;
+    xAxisParam.max+=xstep;
+    yAxisParam.min-=ystep;
+    yAxisParam.max+=ystep;
     setXYUnit();
     updatePixmap(true);
     this->repaint();
@@ -2318,38 +2485,10 @@ int Canvas2D::findItemFromVar(const QString& var,QList<MyItem*>* list){
     return -1;
 }
 
-
-void Canvas2D::renameObject(MyItem * item, const QString & var){
-    QString copy(var);
+void Canvas2D::renameSingleObject(MyItem * item, const QString & var){
     gen newName(var.toStdString(),context);
-    gen value=eval(newName,1,context);
-    // If the variable is already busy
-    if (value!=newName){
-        copy.append("1");
-        findFreeVar(copy);
-        int id=findItemFromVar(var,&pointItems);
-        if (id!=-1){
-            renameObject(pointItems.at(id),copy);
-        }
-        else {
-            id=findItemFromVar(var,&lineItems);
-            if (id!=-1){
-               renameObject(lineItems.at(id),copy);
-            }
-            else {
-                id=findItemFromVar(var,&filledItems);
-                if (id!=-1){
-                   renameObject(filledItems.at(id),copy);
-                }
-                else {
-                    QMessageBox::warning(this,tr("Impossible de renommer le point"),tr("Le nom de variable choisi est actuellement indisponible.\n"
-                                                          "La variable est déjà utilisée pour un objet externe à cette feuille de géométrie."),QMessageBox::Ok,QMessageBox::NoButton);
-                    return;
-                }
-            }
-        }
 
-      }
+
     // modify all references in commands
     Command c=commands.at(item->getLevel());
     QString s(c.command);
@@ -2414,6 +2553,50 @@ void Canvas2D::renameObject(MyItem * item, const QString & var){
 }
 
 
+void Canvas2D::renameObject(MyItem * item, const QString & var){
+    QString copy(var);
+    gen newName(var.toStdString(),context);
+    gen value=eval(newName,1,context);
+    bool beginMacro=false;
+
+    // If the variable is already busy
+
+    if (value!=newName){
+        beginMacro=true;
+        undoStack->beginMacro("Group renaming");
+        copy.append("1");
+        findFreeVar(copy);
+        int id=findItemFromVar(var,&pointItems);
+        if (id!=-1){
+            renameObject(pointItems.at(id),copy);
+        }
+        else {
+            id=findItemFromVar(var,&lineItems);
+            if (id!=-1){
+               renameObject(lineItems.at(id),copy);
+            }
+            else {
+                id=findItemFromVar(var,&filledItems);
+                if (id!=-1){
+                   renameObject(filledItems.at(id),copy);
+                }
+                else {
+                    if (beginMacro) undoStack->endMacro();
+                    QMessageBox::warning(this,tr("Impossible de renommer le point"),tr("Le nom de variable choisi est actuellement indisponible.\n"
+                                                          "La variable est déjà utilisée pour un objet externe à cette feuille de géométrie."),QMessageBox::Ok,QMessageBox::NoButton);
+                    return;
+                }
+            }
+        }
+
+      }
+
+    RenameObjectCommand* roc=new RenameObjectCommand(item->getVar(),var,this);
+    undoStack->push((roc));
+    if (beginMacro) undoStack->endMacro();
+}
+
+
 
 void Canvas2D::renameObject(){
     OneArgDialog *dialog=new OneArgDialog(this,tr("Nouveau nom:"));
@@ -2450,26 +2633,26 @@ void Canvas2D::deleteObject(MyItem * focus){
 
    // First, find if this item comes from an intersection
     if (focus->isFromInter()){
-        for (int i=0;i<pointItems.size();++i){
-            MyItem * item=pointItems.at(i);
-            if (item->isInter()&&item->getChildren().contains(focus)){
-                // Only one child, we delete the intersection point too
-                if (item->getChildren().size()==1) {
-                        for (int i=0;i<start;++i){
-                            MyItem* tmp=commands.at(i).item;
-                            tmp->deleteChild(item);
-                        }
-                        pointItems.removeAt(pointItems.indexOf(item));
-//                        commands.removeAt(start);
-                        delete item;
-                 }
-                // Several childs, only delete this point
-                  else{
+        QList<MyItem*> *itemCollection;
+        /* there are two cases:
+         **** focus could be an intersection point
+         **** focus could be a line created by tangent
+         */
+        if (focus->isPoint()) itemCollection=&pointItems;
+        else itemCollection=&lineItems;
 
-                    item->deleteChild(focus);
-                }
-                break;
-                // End only one child
+        for (int i=0;i<itemCollection->size();++i){
+            MyItem * item=itemCollection->at(i);
+            if (item->isInter()&&item->getChildren().contains(focus)){
+                // Disconnect object from all its potential parents
+                for (int j=0;j<start;++j){
+                MyItem* tmp=commands.at(j).item;
+                tmp->deleteChild(item);
+               }
+//             itemCollection->removeAt(itemCollection->indexOf(item));
+//             delete item; //??????
+                focus=item;
+             break;
             }
         }
     }
@@ -2481,55 +2664,19 @@ void Canvas2D::deleteObject(MyItem * focus){
     v.append(focus);
     refreshFromItem(focus,v,true);
     qSort(v.begin(),v.end(),lessThan);
-
-    for (int i=v.size()-1;i>=0;--i){
+    DeleteObjectCommand* del=new DeleteObjectCommand(v.at(v.size()-1)->getLevel(),this);
+    for (int i=v.size()-2;i>=0;--i){
         int level=v.at(i)->getLevel();
-        // First, disconnect object from all its potential parents
-        for (int j=0;j<level;++j){
-                MyItem* item=commands.at(j).item;
-                item->deleteChild(v.at(i));
-         }
-
-        // delete the command
-        if (!v.at(i)->isFromInter())
-            commands.removeAt(level);
-        // delete from tree
-        parent->removeFromTree(v.at(i));
-
-        //delete from pointItems, lineItems, vectorItems
-        if (v.at(i)->isPoint()){
-            int id=pointItems.indexOf(v.at(i));
-            if (id!=-1)  pointItems.removeAt(id);
-            id= traceVector.indexOf(v.at(i));
-            if (id!=-1)  traceVector.removeAt(id);
-
-        }
-        else {
-            int id=lineItems.indexOf(v.at(i));
-            if (id!=-1)  lineItems.removeAt(id);
-            id=filledItems.indexOf(v.at(i));
-            if (id!=-1)  filledItems.removeAt(id);
-
-        }
-        // delete from giac memory
-
-        giac::_purge(gen(v.at(i)->getVar().toStdString(),context),context);
-
-        // And then delete the pointer
-        delete v.at(i);
+        del->mergeWith(new DeleteObjectCommand(level,this));
     }
+    undoStack->push(del);
 
-    // Finally, updates all level
-    for (int i=start;i<commands.size();++i){
-        MyItem *item=commands.at(i).item;
-        item->setLevel(i);
-        if (item->isInter()){
-            for (int j=0;j<item->getChildren().size();++j){
-                item->getChildAt(j)->setLevel(i);
-            }
-        }
-    }
+    // Finally, update all levels
+    updateAllLevelsFrom(start);
 
+    initAfterDeleting();
+}
+void Canvas2D::initAfterDeleting(){
     selectedItems.clear();
     focusOwner=0;
     updatePixmap(false);
@@ -2541,7 +2688,56 @@ void Canvas2D::deleteObject(MyItem * focus){
     parent->updateValueInDisplayPanel();
 }
 
+void Canvas2D::updateAllLevelsFrom(const int& start){
 
+    for (int i=start;i<commands.size();++i){
+        MyItem *item=commands.at(i).item;
+        item->setLevel(i);
+        if (item->isInter()){
+            for (int j=0;j<item->getChildren().size();++j){
+                item->getChildAt(j)->setLevel(i);
+            }
+        }
+    }
+}
+
+
+void Canvas2D::deleteSingleObject(MyItem * deletedObject){
+    int level=deletedObject->getLevel();
+    // First, disconnect object from all its potential parents
+    for (int j=0;j<level;++j){
+            MyItem* item=commands.at(j).item;
+            item->deleteChild(deletedObject);
+     }
+
+    // delete the command
+    if (!deletedObject->isFromInter())
+        commands.removeAt(level);
+    // delete from tree
+    parent->removeFromTree(deletedObject);
+
+    //delete from pointItems, lineItems, vectorItems
+    if (deletedObject->isPoint()){
+        int id=pointItems.indexOf(deletedObject);
+        if (id!=-1)  pointItems.removeAt(id);
+        id= traceVector.indexOf(deletedObject);
+        if (id!=-1)  traceVector.removeAt(id);
+
+    }
+    else {
+        int id=lineItems.indexOf(deletedObject);
+        if (id!=-1)  lineItems.removeAt(id);
+        id=filledItems.indexOf(deletedObject);
+        if (id!=-1)  filledItems.removeAt(id);
+
+    }
+    // delete from giac memory
+
+    giac::_purge(gen(deletedObject->getVar().toStdString(),context),context);
+
+    // delete pointer
+    delete deletedObject;
+}
 
 
 void Canvas2D::displayLegend(bool b){
@@ -2592,20 +2788,20 @@ void Canvas2D::updatePixmap(const bool &compute){
 
 void Canvas2D::drawAxes(QPainter * painter){
 
-    if ((xmin<0)& (xmax>0) && (yAxisParam.isVisible)){
+    if ((xAxisParam.min<0)& (xAxisParam.max>0) && (yAxisParam.isVisible)){
         double a,b;
         painter->setPen(QPen(yAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
         double step=yAxisParam.tick;
         if (!isInteractive()){
-            step=(ymax-ymin)/8;
+            step=(yAxisParam.max-yAxisParam.min)/8;
             double tenPower=pow(10,floor(log10(step)));
             int first=floor(step/tenPower);
             if (step/tenPower-first>0.5) step=(first+1)*tenPower;
             else step=first*tenPower;
         }
-        for (int i=floor(ymin/step);i<=floor(ymax/step);i++){
+        for (int i=floor(yAxisParam.min/step);i<=floor(yAxisParam.max/step);i++){
             double grad=step*i;
-            if (grad>ymin && grad<ymax){
+            if (grad>yAxisParam.min && grad<yAxisParam.max){
                 toScreenCoord(0,grad,a,b);
                 QPointF p1=QPointF(a,b);
                 QPointF p2=QPointF(a+3,b);
@@ -2614,7 +2810,7 @@ void Canvas2D::drawAxes(QPainter * painter){
                 if (!yAxisParam.unitSuffix.isEmpty()) s.append(" ").append(yAxisParam.unitSuffix);
                 if (i%2==0) {
                     //Problem of the origin
-                    if ((ymin<0) & (ymax>0) && (grad==0)){
+                    if ((yAxisParam.min<0) & (yAxisParam.max>0) && (grad==0)){
                         //TODO
                         painter->drawText(QPointF(a+6,b-painter->fontMetrics().height()+painter->fontMetrics().ascent()/2.0),s);
                     }
@@ -2625,9 +2821,9 @@ void Canvas2D::drawAxes(QPainter * painter){
 
         }
         // Draw axis
-        toScreenCoord(0,ymin,a,b);
+        toScreenCoord(0,yAxisParam.min,a,b);
         QPointF p1=QPointF(a,b);
-        toScreenCoord(0,ymax,a,b);
+        toScreenCoord(0,yAxisParam.max,a,b);
         QPointF p2=QPointF(a,b);
         painter->drawLine(p1,p2);
 
@@ -2647,21 +2843,21 @@ void Canvas2D::drawAxes(QPainter * painter){
 
 
     }
-    if ((ymin<0) && (ymax>0) && (xAxisParam.isVisible)){
+    if ((yAxisParam.min<0) && (yAxisParam.max>0) && (xAxisParam.isVisible)){
         double a,b;
         painter->setPen(QPen(xAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
         double step=xAxisParam.tick;
         if (!isInteractive()){
-            step=(xmax-xmin)/8;
+            step=(xAxisParam.max-xAxisParam.min)/8;
             double tenPower=pow(10,floor(log10(step)));
             int first=floor(step/tenPower);
             if (step/tenPower-first>0.5) step=(first+1)*tenPower;
             else step=first*tenPower;
         }
 
-        for (int i=floor(xmin/step);i<=floor(xmax/step);i++){
+        for (int i=floor(xAxisParam.min/step);i<=floor(xAxisParam.max/step);i++){
             double grad=step*i;
-            if (grad>xmin && grad<xmax){
+            if (grad>xAxisParam.min && grad<xAxisParam.max){
                 toScreenCoord(grad,0,a,b);
                 QPointF p1=QPointF(a,b);
                 QPointF p2=QPointF(a,b-3);
@@ -2670,7 +2866,7 @@ void Canvas2D::drawAxes(QPainter * painter){
                 if (!xAxisParam.unitSuffix.isEmpty()) s.append(" ").append(xAxisParam.unitSuffix);
                 if (i%2==0) {
                     //Problem of the origin
-                    if ((xmin<0) & (xmax>0) && (grad==0)){
+                    if ((xAxisParam.min<0) & (xAxisParam.max>0) && (grad==0)){
                         //TODO
                         painter->drawText(QPointF(a+5,b+6+painter->fontMetrics().height()/2),s);
 
@@ -2680,9 +2876,9 @@ void Canvas2D::drawAxes(QPainter * painter){
             }
         }
         // Draw axis
-        toScreenCoord(xmin,0,a,b);
+        toScreenCoord(xAxisParam.min,0,a,b);
         QPointF p1=QPointF(a,b);
-        toScreenCoord(xmax,0,a,b);
+        toScreenCoord(xAxisParam.max,0,a,b);
         QPointF p2=QPointF(a,b);
         painter->drawLine(p1,p2);
 
@@ -2713,20 +2909,20 @@ void Canvas2D::drawGrid(QPainter * painter){
     else if (gridParam.line==7) pen.setCapStyle(Qt::SquareCap);
     painter->setPen(pen);
     if (gridParam.isCartesian){
-        double i=(int)(xmin/gridParam.x)*gridParam.x;
+        double i=(int)(xAxisParam.min/gridParam.x)*gridParam.x;
         double a,b,c,d;
-        toScreenCoord(0,ymin,c,a);
-        toScreenCoord(0,ymax,c,b);
-        while (i<xmax){
+        toScreenCoord(0,yAxisParam.min,c,a);
+        toScreenCoord(0,yAxisParam.max,c,b);
+        while (i<xAxisParam.max){
             toScreenCoord(i,0,c,d);
             painter->drawLine(c,a,c,b);
             i+=gridParam.x;
         }
-        i=(int)(ymin/gridParam.y)*gridParam.y;
-        toScreenCoord(xmin,0,a,c);
-        toScreenCoord(xmax,0,b,c);
+        i=(int)(yAxisParam.min/gridParam.y)*gridParam.y;
+        toScreenCoord(xAxisParam.min,0,a,c);
+        toScreenCoord(xAxisParam.max,0,b,c);
 
-        while (i<ymax){
+        while (i<yAxisParam.max){
             double c,d;
             toScreenCoord(0,i,c,d);
             painter->drawLine(a,d,b,d);
@@ -2735,8 +2931,8 @@ void Canvas2D::drawGrid(QPainter * painter){
 
     }
     else {
-        double X=std::max(std::abs(xmin),std::abs(xmax));
-        double Y=std::max(std::abs(ymax),std::abs(ymin));
+        double X=std::max(std::abs(xAxisParam.min),std::abs(xAxisParam.max));
+        double Y=std::max(std::abs(yAxisParam.max),std::abs(yAxisParam.min));
         double i=gridParam.r;
 
         while( i<std::sqrt(X*X+Y*Y)){
@@ -2778,17 +2974,17 @@ void Canvas2D::drawPolarLine(const int &frac,QPainter * painter ){
          if ((2*i)!=frac) {
 
              double tan=std::tan(angle);
-             if (isInScene(xmin,tan*xmin)){
-                v.append(xmin);v.append(tan*xmin);
+             if (isInScene(xAxisParam.min,tan*xAxisParam.min)){
+                v.append(xAxisParam.min);v.append(tan*xAxisParam.min);
             }
-            if (isInScene(xmax,tan*xmax)){
-                v.append(xmax);v.append(tan*xmax);
+            if (isInScene(xAxisParam.max,tan*xAxisParam.max)){
+                v.append(xAxisParam.max);v.append(tan*xAxisParam.max);
              }
-            if (isInScene(ymin/tan,ymin)){
-                v.append(ymin/tan);v.append(ymin);
+            if (isInScene(yAxisParam.min/tan,yAxisParam.min)){
+                v.append(yAxisParam.min/tan);v.append(yAxisParam.min);
             }
-            if (isInScene(ymax/tan,ymax)){
-                v.append(ymax/tan);v.append(ymax);
+            if (isInScene(yAxisParam.max/tan,yAxisParam.max)){
+                v.append(yAxisParam.max/tan);v.append(yAxisParam.max);
             }
 
             if (v.size()==4){
@@ -2802,8 +2998,8 @@ void Canvas2D::drawPolarLine(const int &frac,QPainter * painter ){
          }
          else {
              double a,b,c,d;
-             toScreenCoord(0,ymin,a,b);
-             toScreenCoord(0,ymax,c,d);
+             toScreenCoord(0,yAxisParam.min,a,b);
+             toScreenCoord(0,yAxisParam.max,c,d);
              painter->drawLine(QPointF(a,b),QPointF(c,d));
             }
          angle+=theta;
@@ -2814,7 +3010,7 @@ void Canvas2D::drawPolarLine(const int &frac,QPainter * painter ){
 
 bool Canvas2D::isInScene(const double & x,const double & y){
 //    qDebug()<<x<<y<<(((x>=xmin)&&(x<=xmax))&&((y>=ymin)&&(y<=ymax)));
-    return ((x>=xmin)&&(x<=xmax))&&((y>=ymin)&&(y<=ymax));
+    return ((x>=xAxisParam.min)&&(x<=xAxisParam.max))&&((y>=yAxisParam.min)&&(y<=yAxisParam.max));
 }
 
 
@@ -2835,8 +3031,8 @@ void Canvas2D::drawElements(QList<MyItem*> & v,QPainter* painter,const bool &com
   **/
 
 void Canvas2D::toXY(const double xscreen,const double yscreen,double&  x, double& y){
-    x=xmin+(xscreen-20)/xunit;
-    y=ymax-(yscreen-20)/yunit;
+    x=xAxisParam.min+(xscreen-20)/xunit;
+    y=yAxisParam.max-(yscreen-20)/yunit;
 
 }
 
@@ -2845,13 +3041,13 @@ void Canvas2D::toXY(const double xscreen,const double yscreen,double&  x, double
   **/
 void Canvas2D::toScreenCoord(const double x,const double y,double& xScreen, double& yScreen){
 //    qDebug()<<"unités"<<xmin<<xmax<<xunit<<yunit<<zoom;
-    xScreen=20+(x-xmin)*xunit;
-    yScreen=20+(ymax-y)*yunit;
+    xScreen=20+(x-xAxisParam.min)*xunit;
+    yScreen=20+(yAxisParam.max-y)*yunit;
 }
 
 void Canvas2D::setXYUnit(){
-    xunit=(width()-40)/(xmax-xmin);
-    yunit=(height()-40)/(ymax-ymin);
+    xunit=(width()-40)/(xAxisParam.max-xAxisParam.min);
+    yunit=(height()-40)/(yAxisParam.max-yAxisParam.min);
 }
 /**
   * In interactive mode: Points are labeled consecutively as follow:
@@ -3064,25 +3260,20 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     Command c=commands.at(item->getLevel());
     if (item->isPointElement()){
         PointElement* pe=dynamic_cast<PointElement*>(item);
-
         s=(commands.at(item->getLevel())).command;
         s.append("+");
         s.append(pe->getTranslation(p));
-
-
-
     }
     else if (item->isPoint()){
         s.append(commandFreePoint(p));
         c.command=s;
+        commands.replace(item->getLevel(),c);
+
     }
     gen g(s.toStdString(),context);
     QList<MyItem*> v;
 
-    commands.replace(item->getLevel(),c);
     addToVector(protecteval(g,1,context),v);
-
-
     item->updateValueFrom(v.at(0));
     delete v.at(0);
     if (item->hasChildren()){
@@ -3096,14 +3287,13 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
 /**
  * @brief Canvas2D::refreshFromItem
  * @param item Root Item
- * @param list to store all chlidren
- *
+ * @param list to store all children
+ * @param evenInter
  * Record in the list all the children from a root element.
  */
 void Canvas2D::refreshFromItem(MyItem * item, QList<MyItem*>& list, bool evenInter){
     QVector<MyItem*> v=item->getChildren();
     for (int i=0;i<v.size();++i){
-//        qDebug()<<v.at(i)->getVar()<<v.at(i)->hasChildren();
         if (!list.contains(v.at(i))){
             if (evenInter) list.append(v.at(i));
             else if (!item->isInter()) list.append(v.at(i));
@@ -3129,7 +3319,6 @@ bool Canvas2D::checkForValidAction(MyItem * item){
     if (!parent->isInteractive()) return true;
     switch(currentActionTool){
     case  SINGLEPT:
-        return true;
     case INTER:
         return (!item->isPoint());
         break;
@@ -3350,6 +3539,7 @@ void Canvas2D::addNewPoint(const QPointF p){
    parent->selectInTree(focusOwner);
    selectedItems.append(focusOwner);
    updatePixmap(false);
+   undoStack->push(new AddObjectCommand(this));
    // In case of open polygon, we have to redraw the preview before repaint (else itemPreview=0)
    if (currentActionTool==POLYGON) {
        QString s=commandFreePoint(p);
@@ -3994,7 +4184,6 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         Point* origin=dynamic_cast<Point*>(v.at(0));
         if (origin !=0){
             p=new PointElement(origin,this);
-//            qDebug()<<"origine"<<origin->x()<<origin->y();
         }
         delete origin;
         if (p==0) return;
@@ -4249,7 +4438,6 @@ void Canvas2D::addInter(const QString & type){
 void Canvas2D::executeMyAction(bool onlyForPreview=false){
         if (itemPreview!=0) delete itemPreview;
          itemPreview=0;
-
     switch(currentActionTool){
         case SELECT: parent->selectInTree(focusOwner);
         break;
@@ -4312,8 +4500,12 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
     default:{}
 
     }
+
     //undoHistory.append(QString("add %1").arg(evaluationLevel));
-    if (!onlyForPreview)    selectedItems.clear();
+    if (!onlyForPreview)    {
+        selectedItems.clear();
+        if (currentActionTool!=SELECT) undoStack->push(new AddObjectCommand(this));
+    }
 
 }
 void Canvas2D::commandTwoArgs(const QString &command,const QString &first,const QString &second,QString  & result){
@@ -4422,6 +4614,7 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
             // Create a segment. First point then double clic for the second point.
             // the segment is focused after creation, but unchecked for selection... and goes to selectedItems
             if (parent->isInteractive()){
+
                 // To improve (In most cases, the foolowing line is a  double check)
                 if (checkForValidAction(focusOwner)) {
                     selectedItems<<focusOwner;
@@ -4435,6 +4628,13 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 if (checkForCompleteAction()){
                       executeMyAction();
                 }
+                if (isMoving) {
+                    isMoving=false;
+                    undoStack->push(new MoveObjectCommand(focusOwner->getLevel(),startSel,e->posF(),this));
+                }
+
+
+
             }
             else parent->selectInTree(focusOwner);
         }
@@ -4516,7 +4716,10 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
     // try to move and object
     if (parent->isInteractive()&&focusOwner!=0&& selectionLeft&&(currentActionTool==SELECT)){
 
-        if (focusOwner->isMovable()) moveItem(focusOwner,mousePos);
+        if (focusOwner->isMovable()) {
+            isMoving=true;
+            moveItem(focusOwner,mousePos);
+        }
         return;
     }
 
@@ -4556,7 +4759,10 @@ void Canvas2D::mousePressEvent(QMouseEvent *e){
             startSel=e->pos();
     }
     else if(b==Qt::LeftButton){
-        if (parent->isInteractive()) selectionLeft=true;
+        if (parent->isInteractive()) {
+            selectionLeft=true;
+            startSel=e->pos();
+        }
     }
 }
 bool Canvas2D::event(QEvent * ev){
@@ -4632,8 +4838,8 @@ void Canvas2D::paintEvent(QPaintEvent * ){
 }
 void Canvas2D::resizeEvent(QResizeEvent * ev){
       if (isInteractive()){
-        xmax=xmin+(ev->size().width()-40)/xunit;
-        ymin=ymax-(ev->size().height()-40)/yunit;
+        xAxisParam.max=xAxisParam.min+(ev->size().width()-40)/xunit;
+        yAxisParam.min=yAxisParam.max-(ev->size().height()-40)/yunit;
         setXYUnit();
         updatePixmap(false);
         repaint();
@@ -4662,14 +4868,19 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 }
 
 
+
                 c.isCustom=false;
 
                 gen entry(s.toStdString(),context);
 
                 gen answer=protecteval(entry,1,context);
-                evaluationLevel=commands.size();
+                int level=element.attribute("level","-1").toInt();
+                if (level==-1) level=commands.size();
+                evaluationLevel=level;
                 QList<MyItem*> v;
                 addToVector(answer,v);
+
+
                 /*******************************************************
                 *****  Case of intersection points or tangent lines *****
                  */
@@ -4738,8 +4949,10 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                       parent->updateAllCategories();
                       findIDNT(entry,inter);
                       c.item=inter;
-                      commands.append(c);
 
+
+                      commands.insert(level,c);
+                      updateAllLevelsFrom(level);
 
                 }
                 /***********************************
@@ -4762,8 +4975,9 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     pe->setMovable(true);
                     findIDNT(entry,pe);
                     c.item=pe;
-                    commands.append(c);
-                   pointItems.append(pe);
+                    commands.insert(level,c);
+                    updateAllLevelsFrom(level);
+                    pointItems.append(pe);
                     parent->addToTree(pe);
                     parent->updateAllCategories();
                }
@@ -4793,7 +5007,9 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
 
                     c.isCustom=false;
                     c.item=angle;
-                    commands.append(c);
+
+                    commands.insert(level,c);
+                    updateAllLevelsFrom(level);
 
                     angle->updateScreenCoords(true);
                     filledItems.append(angle);
@@ -4856,7 +5072,8 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     v.at(0)->setVar(element.text().left(id));
                 }
                 c.item=v.at(0);
-                commands.append(c);
+                commands.insert(level,c);
+                updateAllLevelsFrom(level);
                 v.at(0)->setLegend(element.attribute("legend",""));
                 v.at(0)->setMovable(element.attribute("movable","0").toInt());
                 addToScene(v);
@@ -4869,66 +5086,70 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
     setBounds(xAxisParam.min,xAxisParam.max,yAxisParam.min,yAxisParam.max);
     setXYUnit();
     updatePixmap(true);
+}
+void Canvas2D::itemToXML(Command c,QDomElement & top , const bool &setLevel){
+    QDomElement command=top.ownerDocument().createElement("command");
+    MyItem* item=c.item;
+    if (item->isMovable())
+        command.setAttribute("movable",item->isMovable());
+    if (item->getAttributes()!=0)
+        command.setAttribute("attributes",item->getAttributes());
 
+    command.setAttribute("legend",item->getLegend());
+    if (setLevel) command.setAttribute("level",item->getLevel());
+
+    QString s=c.command;
+    if (item->isInter()){
+        QString vars;
+        QString legends;
+        QString attributes;
+        for(int j=0;j<item->getChildren().size();++j){
+                vars.append(item->getChildAt(j)->getVar());
+                legends.append(item->getChildAt(j)->getLegend());
+                attributes.append(QString::number(item->getChildAt(j)->getAttributes()));
+                if (j!=item->getChildren().size()-1) {
+                    vars.append(",");
+                    legends.append(",");
+                    attributes.append(",");
+                }
+            }
+        command.setAttribute("interVariables",vars);
+        command.setAttribute("interLegends",legends);
+        command.setAttribute("interAttributes",attributes);
+     }
+    else if(item->isAngleItem()){
+        command.setAttribute("isAngleItem",item->isAngleItem());
+    }
+    else if(item->isPointElement()){
+        PointElement * pe=dynamic_cast<PointElement*>(item);
+        command.setAttribute("isPointElement",item->isPointElement());
+        command.setAttribute("originX",QString::number(pe->getOrigin().x()));
+        command.setAttribute("originY",QString::number(pe->getOrigin().y()));
+        command.setAttribute("value",QString::fromStdString(print(pe->getValue(),context)));
+
+    }
+    else if (item->isCursorItem()){
+        CursorItem * ci=dynamic_cast<CursorItem*>(item);
+        command.setAttribute("isCursor",item->isCursorItem());
+        command.setAttribute("isFormal",ci->isFormal());
+        command.setAttribute("min",ci->getCursorPanel()->getMin());
+        command.setAttribute("max",ci->getCursorPanel()->getMax());
+        command.setAttribute("step",ci->getCursorPanel()->getStep());
+        command.setAttribute("value",ci->getCursorPanel()->getValue());
+        command.setAttribute("var",ci->getVar());
+    }
+    QDomText text=top.ownerDocument().createTextNode(s);
+    command.appendChild(text);
+    top.appendChild(command);
 
 }
+
+
 void Canvas2D::toInteractiveXML(QDomElement & top){
     gridToXML(top);
     axisToXML(top);
     for(int i=0;i<commands.size();++i){
-        QDomElement command=top.ownerDocument().createElement("command");
-        MyItem* item=commands.at(i).item;
-        if (item->isMovable())
-            command.setAttribute("movable",item->isMovable());
-        if (item->getAttributes()!=0)
-            command.setAttribute("attributes",item->getAttributes());
-
-        command.setAttribute("legend",item->getLegend());
-
-        QString s=commands.at(i).command;
-
-        if (item->isInter()){
-            QString vars;
-            QString legends;
-            QString attributes;
-            for(int j=0;j<item->getChildren().size();++j){
-                    vars.append(item->getChildAt(j)->getVar());
-                    legends.append(item->getChildAt(j)->getLegend());
-                    attributes.append(QString::number(item->getChildAt(j)->getAttributes()));
-                    if (j!=item->getChildren().size()-1) {
-                        vars.append(",");
-                        legends.append(",");
-                        attributes.append(",");
-                    }
-                }
-            command.setAttribute("interVariables",vars);
-            command.setAttribute("interLegends",legends);
-            command.setAttribute("interAttributes",attributes);
-         }
-        else if(item->isAngleItem()){
-            command.setAttribute("isAngleItem",item->isAngleItem());
-        }
-        else if(item->isPointElement()){
-            PointElement * pe=dynamic_cast<PointElement*>(item);
-            command.setAttribute("isPointElement",item->isPointElement());
-            command.setAttribute("originX",QString::number(pe->getOrigin().x()));
-            command.setAttribute("originY",QString::number(pe->getOrigin().y()));
-            command.setAttribute("value",QString::fromStdString(print(pe->getValue(),context)));
-
-        }
-        else if (item->isCursorItem()){
-            CursorItem * ci=dynamic_cast<CursorItem*>(item);
-            command.setAttribute("isCursor",item->isCursorItem());
-            command.setAttribute("isFormal",ci->isFormal());
-            command.setAttribute("min",ci->getCursorPanel()->getMin());
-            command.setAttribute("max",ci->getCursorPanel()->getMax());
-            command.setAttribute("step",ci->getCursorPanel()->getStep());
-            command.setAttribute("value",ci->getCursorPanel()->getValue());
-            command.setAttribute("var",ci->getVar());
-        }
-        QDomText text=top.ownerDocument().createTextNode(s);
-        command.appendChild(text);
-        top.appendChild(command);
+        itemToXML(commands.at(i),top);
     }
 }
 void  Canvas2D::axisToXML(QDomElement & top){
@@ -4939,8 +5160,8 @@ void  Canvas2D::axisToXML(QDomElement & top){
     xaxis.setAttribute("legend",xAxisParam.legend);
     xaxis.setAttribute("unitSuffix",xAxisParam.unitSuffix);
     xaxis.setAttribute("tick",xAxisParam.tick);
-    xaxis.setAttribute("min",xmin);
-    xaxis.setAttribute("max",xmax);
+    xaxis.setAttribute("min",xAxisParam.min);
+    xaxis.setAttribute("max",xAxisParam.max);
 
     QDomElement yaxis=top.ownerDocument().createElement("axis");
     yaxis.setAttribute("position","y");
@@ -4949,8 +5170,8 @@ void  Canvas2D::axisToXML(QDomElement & top){
     yaxis.setAttribute("legend",yAxisParam.legend);
     yaxis.setAttribute("unitSuffix",yAxisParam.unitSuffix);
     yaxis.setAttribute("tick",yAxisParam.tick);
-    yaxis.setAttribute("min",ymin);
-    yaxis.setAttribute("max",ymax);
+    yaxis.setAttribute("min",yAxisParam.min);
+    yaxis.setAttribute("max",yAxisParam.max);
 
     top.appendChild(xaxis);
     top.appendChild(yaxis);
@@ -5441,7 +5662,9 @@ void DisplayProperties::updateTypeLine(int c){
 }
 
 void DisplayProperties::updateCanvas(){
+
     parent->updatePixmap(false);
+
     parent->repaint();
 }
 QList<MyItem*>* DisplayProperties::getListItems() const{

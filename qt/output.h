@@ -77,17 +77,60 @@ public:
 signals:
 public slots:
 };
-
-class AddCommand:public QUndoCommand{
+struct Command{
+    QString command;
+    int attributes;
+    MyItem* item;
+    bool isCustom;
+};
+class AddObjectCommand:public QUndoCommand{
 public:
-    AddCommand(int,Canvas2D*);
-    void undo();
-    void redo();
+    AddObjectCommand(Canvas2D*);
+    virtual void undo();
+    virtual void redo();
 private:
+    bool initCall;
     Canvas2D* canvas;
-    int level;
+    QDomDocument doc;
 };
 
+class MoveObjectCommand:public QUndoCommand{
+public:
+    MoveObjectCommand(int level,QPointF ,QPointF ,Canvas2D*);
+    virtual void undo();
+    virtual void redo();
+private:
+    bool initCall;
+    int level;
+    Canvas2D* canvas;
+    QPointF oldPos;
+    QPointF newPos;
+};
+class DeleteObjectCommand:public QUndoCommand{
+public:
+    DeleteObjectCommand(int l, Canvas2D *);
+    virtual void undo();
+    virtual void redo();
+    virtual int id() const;
+    virtual bool mergeWith(const QUndoCommand *other);
+protected:
+    QList<int> levels;
+    QList<QDomDocument> docs;
+private:
+    Canvas2D* canvas;
+};
+
+class RenameObjectCommand:public QUndoCommand{
+public:
+    RenameObjectCommand(const QString &, const QString &,Canvas2D*);
+    virtual void undo();
+    virtual void redo();
+private:
+    Canvas2D* canvas;
+    QString oldName;
+    QString newName;
+
+};
 
 class OutputWidget:public QWidget{
 public:
@@ -155,6 +198,8 @@ class GraphWidget:public OutputWidget,public MainSheet{
     void loadInteractiveXML(QDomElement &);
     void XML2Axis(QDomElement &);
     void XML2Grid(QDomElement &);
+    void undo();
+    void redo();
  private:
     MainWindow* mainWindow;
     bool isInteractiveWidget;
@@ -214,6 +259,9 @@ class GraphWidget:public OutputWidget,public MainSheet{
  private slots:
     void selectButtonIcon(QAction*);
     void selectAction();
+public slots:
+    void setUndoButton(bool);
+    void setRedoButton(bool);
 };
 
 
@@ -249,6 +297,8 @@ struct AxisParam{
     QString unitSuffix;
     double tick,min,max;
 };
+
+
 // The canvas to draw 2D graphics
 
 class Canvas2D:public QWidget{
@@ -258,13 +308,6 @@ public:
                 REFLECTION,POINT_SYMMETRY,TRANSLATION,ROTATION,HOMOTHETY,SIMILARITY,PLOT_FUNCTION,PLOT_BEZIER,REGULAR_POLYGON,POLYGON,CIRCLE2PT,CIRCLE_RADIUS
                 ,CIRCLE3PT,ARC3PT,ANGLE,NUMERIC_CURSOR,FORMAL_CURSOR};
 
-    struct Command{
-        QString command;
-        int attributes;
-        MyItem* item;
-        bool isCustom;
-    };
-
     Canvas2D(GraphWidget* g2d, giac::context*);
     ~Canvas2D();
     void createScene(const giac::gen & );
@@ -272,6 +315,7 @@ public:
     void toXY(const double,const double,double& , double&);
     void toInteractiveXML(QDomElement &);
     void loadInteractiveXML(QDomElement &);
+    void itemToXML(Command , QDomElement &, const bool &setLevel=false);
     void axisToXML(QDomElement &);
     void gridToXML(QDomElement &);
     void toXML(QDomElement &);
@@ -286,6 +330,9 @@ public:
     bool checkForOnlyLines(const QList<MyItem *> *) const;
     bool checkForOnlyFillables(const QList<MyItem *> *) const;
     void getDisplayCommands(QStringList & );
+    void undo();
+    void redo();
+    void moveItem(MyItem*, const QPointF & );
 
 
     // Getter & Setter
@@ -310,6 +357,12 @@ public:
     QList<Command>& getCommands();
     void deleteObject(MyItem*);
 
+    void deleteSingleObject(MyItem*);
+    void addToScene(QList<MyItem *> &);
+    void initAfterDeleting();
+    void renameSingleObject(MyItem*,const QString&);
+    int findItemFromVar(const QString&,QList<MyItem*>*);
+
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -333,7 +386,7 @@ private:
     QString missingPoint;
 
     // x,y range and units
-    double xmin,xmax,ymin,ymax,xunit,yunit;
+    double xunit,yunit;
     bool ortho;
 
     GridParam gridParam;
@@ -386,6 +439,9 @@ private:
     QPoint endSel;
     // If the user press the left button
     bool selectionLeft;
+    // true if the user is moving a point on the screen
+    bool isMoving;
+
     // The Pixmap on which all Items are drawn.
     QPixmap pixmap;
     // Variables names for points and lines.
@@ -398,7 +454,7 @@ private:
 
     void createMenuAction();
     void addToVector(const giac::gen &, QList<MyItem *> &);
-    void addToScene(QList<MyItem *> &);
+
 
     double find_tick(double);
     void drawAxes(QPainter*);
@@ -412,7 +468,6 @@ private:
     void findFreeVar(QString &);
     void incrementVariable(QString &);
     void updateAllChildrenFrom(MyItem*);
-    void moveItem(MyItem*, const QPointF & );
     QString commandFreePoint(const QPointF&);
     void refreshFromItem(MyItem *, QList<MyItem *> &,bool evenInter=false);
     void addNewPoint(const QPointF );
@@ -435,8 +490,10 @@ private:
     bool checkForOneMissingPoint();
     void executeMyAction(bool );
     void renameObject(MyItem*,const QString&);
-    int findItemFromVar(const QString&,QList<MyItem*>*);
     void findIDNT(giac::gen &, MyItem *);
+
+   void updateAllLevelsFrom(const int& );
+
 private slots:
     void zoom_In();
     void zoom_Out();
@@ -452,7 +509,6 @@ private slots:
     void renameObject();
     void updateAllChildrenFrom();
     void deleteCursorPanel();
-    //    void zoom_Factor(const int&);
 };
 
 class PanelProperties:public QWidget{

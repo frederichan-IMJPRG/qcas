@@ -584,7 +584,12 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
         }
     }
 }
-
+void MainWindow::setRedoButton(bool b){
+    redoAction->setEnabled(b);
+}
+void MainWindow::setUndoButton(bool b){
+    undoAction->setEnabled(b);
+}
 void MainWindow::displayGiacMessages(){
     printHeader();
     QStringList list=cas->getGiacDisplay();
@@ -727,6 +732,12 @@ void MainWindow::undo(){
         break;
     case MainSheet::PROGRAMMING_TYPE:
         break;
+     case MainSheet::G2D_TYPE:
+    {
+        GraphWidget* graph=qobject_cast<GraphWidget*>(tabPages->currentWidget());
+        graph->undo();
+    }
+     break;
     }
 }
 
@@ -741,6 +752,12 @@ void MainWindow::redo(){
         break;
     case MainSheet::PROGRAMMING_TYPE:
         break;
+     case MainSheet::G2D_TYPE:
+    {
+        GraphWidget* graph=qobject_cast<GraphWidget*>(tabPages->currentWidget());
+        graph->redo();
+    }
+     break;
     }
 }
 void MainWindow::killThread(){

@@ -67,6 +67,8 @@ class MainWindow :public QMainWindow {
     void displayStopWarning();
     void displayInStatusBar(const QString &,const QString&);
     void updateInterface(MainSheet::sheetType);
+    void setRedoButton(bool);
+    void setUndoButton(bool);
 
 protected:
     void closeEvent(QCloseEvent *event);
