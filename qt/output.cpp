@@ -1217,6 +1217,71 @@ void DeleteObjectCommand::redo(){
     canvas->initAfterDeleting();
 }
 
+ModifyAttributesCommand::ModifyAttributesCommand(const int &l , const int &old, const int &nouv
+                                                 , Canvas2D *c, const int &levChild){
+    levels.append(l);
+    levelsChild.append(levChild);
+    oldAtts.append(old);
+    newAtts.append(nouv);
+    canvas=c;
+}
+int ModifyAttributesCommand::id()const {
+    return 2;
+}
+bool ModifyAttributesCommand::mergeWith(const QUndoCommand *other){
+  /*  for (int i=0;i<canvas->getUndoStack()->count();++i){
+        qDebug()<<canvas->getUndoStack()->command(i)->id()<<canvas->getUndoStack()->index();
+    }*/
+    if (other->id()!=id()) return false;
+    const ModifyAttributesCommand*mac=dynamic_cast<const ModifyAttributesCommand*>(other);
+    for (int i=0;i<mac->levels.size();++i){
+        int id=0;
+        do{
+            id=levels.indexOf(mac->levels.at(i),id);
+            if (id!=-1&& levelsChild.at(id)==mac->levelsChild.at(id)) break;
+        } while (id!=-1);
+
+        if (id==-1) {
+            levels.append(mac->levels.at(i));
+            levelsChild.append(mac->levelsChild.at(i));
+            newAtts.append(mac->newAtts.at(i));
+            oldAtts.append(mac->oldAtts.at(i));
+        }
+        else {
+//            newAtts.replace(id,mac->newAtts.at(i));
+            oldAtts.replace(id,mac->oldAtts.at(i));
+        }
+    }
+    return true;
+}
+
+void ModifyAttributesCommand::redo(){
+    for (int i=0;i<levels.size();++i){
+        if (levelsChild.at(i)==-1){
+            canvas->getCommands().at(levels.at(i)).item->setAttributes(newAtts.at(i));
+        }
+        else {
+            MyItem* item=canvas->getCommands().at(levels.at(i)).item;
+            item->getChildAt(levelsChild.at(i))->setAttributes(newAtts.at(i));
+        }
+    }
+
+    canvas->updatePixmap(false);
+    canvas->repaint();
+}
+void ModifyAttributesCommand::undo(){
+    for (int i=0;i<levels.size();++i){
+        if (levelsChild.at(i)==-1){
+            canvas->getCommands().at(levels.at(i)).item->setAttributes(oldAtts.at(i));
+        }
+        else {
+            MyItem* item=canvas->getCommands().at(levels.at(i)).item;
+            item->getChildAt(levelsChild.at(i))->setAttributes(oldAtts.at(i));
+        }
+    }
+    canvas->updatePixmap(false);
+    canvas->repaint();
+}
 
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
@@ -2286,6 +2351,10 @@ double Canvas2D::getYmin() const{
 double Canvas2D::getYmax() const{
     return yAxisParam.max;
 }
+QUndoStack* Canvas2D::getUndoStack(){
+    return undoStack;
+}
+
 QList<Command> &Canvas2D::getCommands(){
     return commands;
 }
@@ -5684,24 +5753,59 @@ void DisplayProperties::initGui(){
     addTab(generalPanel,tr("Général"));
     addTab(attributesPanel,tr("Style"));
 
-    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
-    connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateTypeLine(int)));
+    connect(colorPanel,SIGNAL(colorSelected(int)),this,SLOT(updateAttributes(int)));
+    connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateAttributes(int)));
+    connect(widthPanel,SIGNAL(valueChanged(int)),this,SLOT(updateAttributes(int)));
+    connect(alphaFillPanel,SIGNAL(valueChanged(int)),this,SLOT(updateAttributes(int)));
+    connect(typePointPanel,SIGNAL(typePointSelected(int)),this,SLOT(updateAttributes(int)));
+    connect (displayObjectPanel,SIGNAL(visibleChanged(int)),this,SLOT(updateAttributes(int)));
 }
-void DisplayProperties::updateColor(QColor color){
-    for (int i=0;i<listItems->count();++i){
-        QColor c(color);
-        c.setAlpha(listItems->at(i)->getColor().alpha());
-        listItems->at(i)->setColor(c);
-    }
-    updateCanvas();
-}
-void DisplayProperties::updateTypeLine(int c){
-    for (int i=0;i<listItems->count();++i){
 
-        listItems->at(i)->setStyle(c);
+void DisplayProperties::updateAttributes(int c){
+    for (int i=0;i<listItems->count();++i){
+        int old=listItems->at(i)->getAttributes();
+        QObject* senderItem=sender();
+        if (senderItem==typeLinePanel)
+            listItems->at(i)->setStyle(c);
+        else if (senderItem==typePointPanel) listItems->at(i)->setPointStyle(c);
+        else if (senderItem==widthPanel) listItems->at(i)->setWidth(c-1);
+        else if (senderItem==alphaFillPanel) {
+            QColor color=listItems->at(i)->getColor();
+            int alpha=(8-c)*36;
+            color.setAlpha(alpha);
+            if (alpha!=252) listItems->at(i)->setFilled(true);
+            listItems->at(i)->setColor(color);
+        }
+        else if (senderItem==colorPanel){
+            QColor color=QColor::fromRgba(c);
+            color.setAlpha(listItems->at(i)->getColor().alpha());
+            listItems->at(i)->setColor(color);
+        }
+  /*      else if (senderItem==displayObjectPanel){
+                    listItems->at(i)->setVisible(c);
+        }*/
+        ModifyAttributesCommand* mac;
+        if (!listItems->at(i)->isFromInter())
+               mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent);
+        else {
+            MyItem* inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
+            int id=inter->getChildren().indexOf(listItems->at(i));
+            mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent,id);
+        }
+        bool b=false;
+        if (parent->getUndoStack()->index()>0){
+            b=mac->mergeWith(parent->getUndoStack()->command(parent->getUndoStack()->index()-1));
+        }
+
+        if  (!b) parent->getUndoStack()->push(mac);
+        else {
+            parent->getUndoStack()->undo();
+            parent->getUndoStack()->push(mac);
+        }
+
     }
-    updateCanvas();
 }
+
 
 void DisplayProperties::updateCanvas(){
 
@@ -5739,7 +5843,7 @@ void ColorPanel::chooseColor(){
     if (newColor.isValid()){
         color=newColor;
         updateButton();
-        emit colorSelected(color);
+        emit colorSelected(color.rgba());
     }
 }
 
@@ -5824,15 +5928,13 @@ void LegendPanel::updateCanvas(){
     parent->updateCanvas();
 }
 
-SliderPanel::SliderPanel(DisplayProperties *p,const QString & s):QGroupBox(p){
-    parent=p;
+SliderPanel::SliderPanel(QWidget* p,const QString & s):QGroupBox(p){
     initGui(s);
 }
 void SliderPanel::setValue(const int w ){
-    value=w;
-    disconnect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
-    slider->setValue(value);
-    connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
+    disconnect(slider,SIGNAL(valueChanged(int)),this,SIGNAL(valueChanged(int)));
+    slider->setValue(w);
+    connect(slider,SIGNAL(valueChanged(int)),this,SIGNAL(valueChanged(int)));
 
 }
 void SliderPanel::initGui(const QString &s){
@@ -5846,29 +5948,11 @@ void SliderPanel::initGui(const QString &s){
     slider->setTickPosition(QSlider::TicksAbove);
     hbox->addWidget(slider);
     setLayout(hbox);
-    connect(slider,SIGNAL(valueChanged(int)),this,SLOT(updateCanvas()));
-
+    connect(slider,SIGNAL(valueChanged(int)),this,SIGNAL(valueChanged(int)));
 }
-WidthPanel::WidthPanel(DisplayProperties* p,const QString & d):SliderPanel(p,d){}
-void WidthPanel::updateCanvas(){
-    for (int i=0;i<parent->getListItems()->count();++i){
-        parent->getListItems()->at(i)->setWidth(slider->value()-1);
-    }
-    parent->updateCanvas();
-}
-AlphaFillPanel::AlphaFillPanel(DisplayProperties* p,const QString & d):SliderPanel(p,d){}
-void AlphaFillPanel::updateCanvas(){
-    for (int i=0;i<parent->getListItems()->count();++i){
-        QColor c=parent->getListItems()->at(i)->getColor();
-        int alpha=(8-slider->value())*36;
-        c.setAlpha(alpha);
-        if (alpha!=252) parent->getListItems()->at(i)->setFilled(true);
-        parent->getListItems()->at(i)->setColor(c);
-    }
-    parent->updateCanvas();
-}
-TypePointPanel::TypePointPanel(const int t, DisplayProperties *p):QWidget(p){
-    parent=p;
+WidthPanel::WidthPanel(QWidget* p,const QString & d):SliderPanel(p,d){}
+AlphaFillPanel::AlphaFillPanel(QWidget* p,const QString & d):SliderPanel(p,d){}
+TypePointPanel::TypePointPanel(const int t, QWidget *p):QWidget(p){
     type=t;
     initGui();
 }
@@ -5970,21 +6054,13 @@ void TypePointPanel::initGui(){
     hbox->addWidget(combo);
     setLayout(hbox);
 
-    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typePointSelected(int)));
 }
 
-
-void TypePointPanel::updateCanvas(int c){
-    for (int i=0;i<parent->getListItems()->count();++i){
-        parent->getListItems()->at(i)->setPointStyle(c);
-    }
-    parent->updateCanvas();
-
-}
 void TypePointPanel::setStyle(int c){
-    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    disconnect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typePointSelected(int)));
     combo->setCurrentIndex(c);
-    connect(combo,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas(int)));
+    connect(combo,SIGNAL(currentIndexChanged(int)),this,SIGNAL(typePointSelected(int)));
 
 }
 
@@ -6070,8 +6146,7 @@ void TypeLinePanel::setStyle(const int &c){
 
 }
 
-DisplayObjectPanel::DisplayObjectPanel(DisplayProperties * p):QWidget(p){
-    parent=p;
+DisplayObjectPanel::DisplayObjectPanel(QWidget *p):QWidget(p){
     initGui();
 }
 void DisplayObjectPanel::initGui(){
@@ -6081,17 +6156,13 @@ void DisplayObjectPanel::initGui(){
    setLayout(hbox);
 }
 void DisplayObjectPanel::setChecked(const bool b){
-    disconnect(displayObject,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+    disconnect(displayObject,SIGNAL(clicked()),this,SLOT(emitSignal()));
     displayObject->setChecked(b);
-    connect(displayObject,SIGNAL(clicked()),this,SLOT(updateCanvas()));
+    connect(displayObject,SIGNAL(clicked()),this,SLOT(emitSignal()));
 }
-
-void DisplayObjectPanel::updateCanvas(){
-    for (int i=0;i<parent->getListItems()->count();++i){
-        parent->getListItems()->at(i)->setVisible(displayObject->isChecked());
-    }
-    parent->updateCanvas();
-
+void DisplayObjectPanel::emitSignal(){
+    if (displayObject->isChecked()) emit visibleChanged(1);
+    else emit visibleChanged(0);
 }
 GenValuePanel::GenValuePanel(Canvas2D * p):QWidget(p){
     parent=p;

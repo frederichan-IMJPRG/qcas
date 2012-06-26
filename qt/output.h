@@ -119,17 +119,23 @@ protected:
 private:
     Canvas2D* canvas;
 };
-class ModifyObjectAttributes:public QUndoCommand{
+class ModifyAttributesCommand:public QUndoCommand{
 public:
-    ModifyObjectAttributes(const QString &, const QString &,Canvas2D*);
+    ModifyAttributesCommand(const int &, const int &, const int &,Canvas2D*, const int& levChild=-1);
+
     virtual void undo();
     virtual void redo();
+    virtual int id() const;
+    virtual bool mergeWith(const QUndoCommand *other);
+protected:
+    QList <int> levels;
+    QList <int> levelsChild;
+    QList <int>  oldAtts;
+    QList <int> newAtts;
+
 private:
+
     Canvas2D* canvas;
-    int  oldAtt;
-    int newAtt;
-    QString oldLegend;
-    QString newLegend;
 };
 class RenameObjectCommand:public QUndoCommand{
 public:
@@ -373,7 +379,7 @@ public:
     void initAfterDeleting();
     void renameSingleObject(MyItem*,const QString&);
     int findItemFromVar(const QString&,QList<MyItem*>*);
-
+    QUndoStack * getUndoStack();
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -591,8 +597,7 @@ private:
 
     void initGui();
 private slots:
-    void updateColor(QColor);
-    void updateTypeLine(int);
+    void updateAttributes(int);
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
@@ -607,7 +612,7 @@ private:
 private slots:
     void chooseColor();
 signals:
-    void colorSelected(QColor);
+    void colorSelected(int);
 
 };
 class LegendPanel:public QWidget{
@@ -637,64 +642,54 @@ private slots:
 class SliderPanel:public QGroupBox{
     Q_OBJECT
 public:
-    SliderPanel(DisplayProperties* ,const QString &);
+    SliderPanel(QWidget *p, const QString &);
     void setValue(const int);
 private:
     void initGui(const QString &);
 protected:
-    DisplayProperties * parent;
     int value;
     QSlider *slider;
-protected slots:
-    virtual void updateCanvas()=0;
+signals:
+    void valueChanged(int);
 
 };
 class WidthPanel:public SliderPanel{
     Q_OBJECT
 public:
-    WidthPanel(DisplayProperties* ,const QString &);
-protected slots:
-    virtual void updateCanvas();
-
+    WidthPanel(QWidget*,const QString &);
 };
 class AlphaFillPanel:public SliderPanel{
     Q_OBJECT
 public:
-    AlphaFillPanel(DisplayProperties* ,const QString & );
-protected slots:
-    virtual void updateCanvas();
-
+    AlphaFillPanel(QWidget*,const QString & );
 };
 
 
 class DisplayObjectPanel:public QWidget{
     Q_OBJECT
 public:
-    DisplayObjectPanel(DisplayProperties*);
+    DisplayObjectPanel(QWidget*);
     void setChecked(const bool);
-protected slots:
-    virtual void updateCanvas();
 private:
-     DisplayProperties * parent;
     void initGui();
     QCheckBox * displayObject;
-
-
+private slots:
+    void emitSignal();
+signals:
+    void visibleChanged(int);
 };
 
 class TypePointPanel:public QWidget{
     Q_OBJECT
 public:
-    TypePointPanel(const int,DisplayProperties* );
+    TypePointPanel(const int,QWidget* );
     void setStyle(int);
 private:
     void initGui();
-    DisplayProperties * parent;
     int type;
     QComboBox *combo;
-private slots:
-    void updateCanvas(int);
-
+signals:
+    void typePointSelected(int);
 
 };
 class TypeLinePanel:public QWidget{
