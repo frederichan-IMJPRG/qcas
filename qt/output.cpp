@@ -1259,6 +1259,7 @@ void ModifyAttributesCommand::redo(){
     for (int i=0;i<levels.size();++i){
         if (levelsChild.at(i)==-1){
             canvas->getCommands().at(levels.at(i)).item->setAttributes(newAtts.at(i));
+
         }
         else {
             MyItem* item=canvas->getCommands().at(levels.at(i)).item;
@@ -1282,6 +1283,86 @@ void ModifyAttributesCommand::undo(){
     canvas->updatePixmap(false);
     canvas->repaint();
 }
+ZoomCommand::ZoomCommand(const AxisParam &ox, const AxisParam &nx, const AxisParam &oy, const AxisParam &ny, Canvas2D *c, const bool &comp){
+    oldX=ox;
+    newX=nx;
+    oldY=oy;
+    newY=ny;
+    canvas=c;
+    compute=comp;
+}
+int ZoomCommand::id() const{
+    return 3;
+}
+bool ZoomCommand::mergeWith(const QUndoCommand *other){
+    if (other->id()!=id()) return false;
+
+    const ZoomCommand*zc=dynamic_cast<const ZoomCommand*>(other);
+
+    bool canMerge=(zc->oldX.min==oldX.min)&& (zc->oldX.max==oldX.max)&&(zc->oldY.min==oldY.min)&& (zc->oldY.max==oldY.max);
+    canMerge=canMerge &&(zc->newX.min==newX.min)&& (zc->newX.max==newX.max)&&(zc->newY.min==newY.min)&& (zc->newY.max==newY.max);
+    if (!canMerge) return false;
+    oldX.color=zc->oldX.color;
+    oldX.isVisible=zc->oldX.isVisible;
+    oldX.legend=zc->oldX.legend;
+    oldX.tick=zc->oldX.tick;
+    oldX.unitSuffix=zc->oldX.unitSuffix;
+
+    oldY.color=zc->oldY.color;
+    oldY.isVisible=zc->oldY.isVisible;
+    oldY.legend=zc->oldY.legend;
+    oldY.tick=zc->oldY.tick;
+    oldY.unitSuffix=zc->oldY.unitSuffix;
+    return true;
+}
+void ZoomCommand::undo(){
+    canvas->setXAxisParam(oldX);
+    canvas->setYAxisParam(oldY);
+    if (compute) canvas->setXYUnit();
+    canvas->updatePixmap(compute);
+    canvas->repaint();
+
+}
+void ZoomCommand::redo(){
+    canvas->setXAxisParam(newX);
+    canvas->setYAxisParam(newY);
+    if (compute) canvas->setXYUnit();
+    canvas->updatePixmap(compute);
+    canvas->repaint();
+}
+
+DisplayObjectCommand::DisplayObjectCommand(const int &l , const bool &old, const bool &New, Canvas2D *c, const int &levChild){
+    canvas=c;
+    level=l;
+    levelChild=levChild;
+    oldVisible=old;
+    newVisible=New;
+}
+void DisplayObjectCommand::redo(){
+    if (levelChild==-1){
+       canvas->getCommands().at(level).item->setVisible(newVisible);
+    }
+    else{
+        MyItem* item=canvas->getCommands().at(level).item;
+        item->getChildAt(levelChild)->setVisible(newVisible);
+    }
+    canvas->updatePixmap(false);
+    canvas->repaint();
+
+}
+void DisplayObjectCommand::undo(){
+    if (levelChild==-1){
+       canvas->getCommands().at(level).item->setVisible(oldVisible);
+    }
+    else{
+        MyItem* item=canvas->getCommands().at(level).item;
+        item->getChildAt(levelChild)->setVisible(oldVisible);
+    }
+    canvas->updatePixmap(false);
+    canvas->repaint();
+
+}
+
 
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
@@ -2477,6 +2558,8 @@ void Canvas2D::addToScene(QList<MyItem *> & v){
   ****************          **************/
 
 void Canvas2D::zoom_In(){
+    AxisParam newX=xAxisParam;
+    AxisParam newY=yAxisParam;
 
     if (selectionRight){
         double tmpx,tmpy,tmpx2,tmpy2;
@@ -2486,66 +2569,63 @@ void Canvas2D::zoom_In(){
 
 
         if (tmpx2>tmpx) {
-            xAxisParam.min=tmpx;
-            xAxisParam.max=tmpx2;
+            newX.min=tmpx;
+            newX.max=tmpx2;
         }
         else {
-            xAxisParam.min=tmpx2;
-            xAxisParam.max=tmpx;
+            newX.min=tmpx2;
+            newX.max=tmpx;
         }
         if (tmpy2>tmpy) {
-            yAxisParam.min=tmpy;
-            yAxisParam.max=tmpy2;
+            newY.min=tmpy;
+            newY.max=tmpy2;
         }
         else {
-            yAxisParam.min=tmpy2;
-            yAxisParam.max=tmpy;
+            newY.min=tmpy2;
+            newY.max=tmpy;
         }
     }
     else {
         double xstep=(xAxisParam.max-xAxisParam.min)/10;
         double ystep=(yAxisParam.max-yAxisParam.min)/10;
-        xAxisParam.min+=xstep;
-        xAxisParam.max-=xstep;
-        yAxisParam.min+=ystep;
-        yAxisParam.max-=ystep;
+        newX.min+=xstep;
+        newX.max-=xstep;
+        newY.min+=ystep;
+        newY.max-=ystep;
     }
     selectionRight=false;
-    setXYUnit();
-    updatePixmap(true);
-    this->repaint();
-
+    undoStack->push(new ZoomCommand(xAxisParam,newX,yAxisParam,newY,this));
 }
 void Canvas2D::make_ortho(){
-
+    AxisParam newX=xAxisParam;
+    AxisParam newY=yAxisParam;
     if (xunit>yunit){
         xunit=yunit;
         double step=((width()-40)/xunit-(xAxisParam.max-xAxisParam.min))/2;
-        xAxisParam.min-=step;
-        xAxisParam.max+=step;
+        newX.min-=step;
+        newX.max+=step;
     }
     else if (xunit<yunit){
         yunit=xunit;
         double step=((height()-40)/yunit-(yAxisParam.max-yAxisParam.min))/2;
-        yAxisParam.min-=step;
-        yAxisParam.max+=step;
+        newY.min-=step;
+        newY.max+=step;
 
     }
-    updatePixmap(true);
-    repaint();
-
+    undoStack->push(new ZoomCommand(xAxisParam,newX,yAxisParam,newY,this));
 }
 void Canvas2D::zoom_Out(){
+    AxisParam newX=xAxisParam;
+    AxisParam newY=yAxisParam;
+
     selectionRight=false;
     double xstep=(xAxisParam.max-xAxisParam.min)/8;
     double ystep=(yAxisParam.max-yAxisParam.min)/8;
-    xAxisParam.min-=xstep;
-    xAxisParam.max+=xstep;
-    yAxisParam.min-=ystep;
-    yAxisParam.max+=ystep;
-    setXYUnit();
-    updatePixmap(true);
-    this->repaint();
+    newX.min-=xstep;
+    newX.max+=xstep;
+    newY.min-=ystep;
+    newY.max+=ystep;
+    undoStack->push(new ZoomCommand(xAxisParam,newX,yAxisParam,newY,this));
 
 }
 void Canvas2D::displayAxis(bool b){
@@ -4952,7 +5032,7 @@ void Canvas2D::resizeEvent(QResizeEvent * ev){
         xAxisParam.max=xAxisParam.min+(ev->size().width()-40)/xunit;
         yAxisParam.min=yAxisParam.max-(ev->size().height()-40)/yunit;
         setXYUnit();
-        updatePixmap(false);
+        updatePixmap(true);
         repaint();
     }
 
@@ -5758,8 +5838,25 @@ void DisplayProperties::initGui(){
     connect(widthPanel,SIGNAL(valueChanged(int)),this,SLOT(updateAttributes(int)));
     connect(alphaFillPanel,SIGNAL(valueChanged(int)),this,SLOT(updateAttributes(int)));
     connect(typePointPanel,SIGNAL(typePointSelected(int)),this,SLOT(updateAttributes(int)));
-    connect (displayObjectPanel,SIGNAL(visibleChanged(int)),this,SLOT(updateAttributes(int)));
+    connect (displayObjectPanel,SIGNAL(visibleChanged(bool)),this,SLOT(updateVisible(bool)));
 }
+void DisplayProperties::updateVisible(bool b){
+    parent->getUndoStack()->beginMacro("visibleAttributes" );
+    for (int i=0;i<listItems->count();++i){
+        DisplayObjectCommand * doc;
+        if (!listItems->at(i)->isFromInter()){
+             doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent);
+        }
+        else{
+            MyItem *inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
+            int id=inter->getChildren().indexOf(listItems->at(i));
+            doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent,id);
+        }
+        parent->getUndoStack()->push(doc);
+    }
+    parent->getUndoStack()->endMacro();
+}
+
 
 void DisplayProperties::updateAttributes(int c){
     for (int i=0;i<listItems->count();++i){
@@ -5781,9 +5878,6 @@ void DisplayProperties::updateAttributes(int c){
             color.setAlpha(listItems->at(i)->getColor().alpha());
             listItems->at(i)->setColor(color);
         }
-  /*      else if (senderItem==displayObjectPanel){
-                    listItems->at(i)->setVisible(c);
-        }*/
         ModifyAttributesCommand* mac;
         if (!listItems->at(i)->isFromInter())
                mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent);
@@ -6156,13 +6250,9 @@ void DisplayObjectPanel::initGui(){
    setLayout(hbox);
 }
 void DisplayObjectPanel::setChecked(const bool b){
-    disconnect(displayObject,SIGNAL(clicked()),this,SLOT(emitSignal()));
+    disconnect(displayObject,SIGNAL(clicked()),this,SIGNAL(visibleChanged(bool)));
     displayObject->setChecked(b);
-    connect(displayObject,SIGNAL(clicked()),this,SLOT(emitSignal()));
-}
-void DisplayObjectPanel::emitSignal(){
-    if (displayObject->isChecked()) emit visibleChanged(1);
-    else emit visibleChanged(0);
+    connect(displayObject,SIGNAL(clicked(bool)),this,SIGNAL(visibleChanged(bool)));
 }
 GenValuePanel::GenValuePanel(Canvas2D * p):QWidget(p){
     parent=p;
@@ -6203,28 +6293,31 @@ void AxisGridPanel::initGui(){
     connect(yPanel,SIGNAL(axisUpdated(AxisParam,bool)),this,SLOT(updateYAxis(AxisParam,bool)));
 }
 void AxisGridPanel::updateXAxis(AxisParam p, bool b){
-    if (p.min<p.max) {
-        parent->setXAxisParam(p);
-        parent->setBounds(parent->getXAxisParam().min,parent->getXAxisParam().max,
-                    parent->getYmin(),parent->getYmax());
-        updateCanvas(b);
-    }
+    updateAxis(p,b,true);
+
 }
 void AxisGridPanel::updateYAxis(AxisParam p, bool b){
+    updateAxis(p,b,false);
+
+}
+
+void AxisGridPanel::updateAxis(AxisParam p, bool b,const bool &isX){
     if (p.min<p.max) {
-        parent->setYAxisParam(p);
-        parent->setBounds(parent->getXmin(),parent->getXmax(),parent->getYAxisParam().min
-                          ,parent->getYAxisParam().max);
-        updateCanvas(b);
+    ZoomCommand *zc;
+        if (isX)
+           zc=new ZoomCommand(parent->getXAxisParam(),p,parent->getYAxisParam(),parent->getYAxisParam(),parent,b);
+       else zc=new ZoomCommand(parent->getXAxisParam(),parent->getXAxisParam(),parent->getYAxisParam(),p,parent,b);
+
+       if (parent->getUndoStack()->index()>0){
+            b=zc->mergeWith(parent->getUndoStack()->command(parent->getUndoStack()->index()-1));
+        }
+        if  (!b) parent->getUndoStack()->push(zc);
+        else {
+            parent->getUndoStack()->undo();
+            parent->getUndoStack()->push(zc);
+        }
     }
 }
-void AxisGridPanel::updateCanvas(const bool & b){
-
-    if (b) parent->setXYUnit();
-    parent->updatePixmap(b);
-    parent->repaint();
-}
-
 void AxisGridPanel::updateGrid(GridParam p){
     parent->setGridParam(p);
     parent->updatePixmap(false);
@@ -6266,12 +6359,12 @@ void GridPanel::initValue(const GridParam &p){
     connect(comboX,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateCanvas()));
     connect(comboY,SIGNAL(currentIndexChanged(QString)),this,SLOT(updateCanvas()));
     connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
-    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
+    connect(colorPanel,SIGNAL(colorSelected(int)),this,SLOT(updateColor(int)));
     connect(typeLinePanel,SIGNAL(typeLineSelected(int)),this,SLOT(updateLineType(int)));
     connect(comboPolarAngle,SIGNAL(currentIndexChanged(int)),this,SLOT(updateCanvas()));
 }
-void GridPanel::updateColor(QColor c){
-    param.color=c;
+void GridPanel::updateColor(int c){
+    param.color=QColor::fromRgba(c);
     emit gridUpdated(param);
 }
 void GridPanel::updateLineType(int id){
@@ -6423,8 +6516,8 @@ void AxisPanel::updateCanvas(){
 
    emit axisUpdated(p,b);
 }
-void AxisPanel::updateColor(QColor c){
-    color=c;
+void AxisPanel::updateColor(int c){
+    color=QColor::fromRgba(c);
     updateCanvas();
 }
 void AxisPanel::initValue(const AxisParam& p, const double & min, const double &max){
@@ -6435,7 +6528,7 @@ void AxisPanel::initValue(const AxisParam& p, const double & min, const double &
     disconnect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     disconnect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     disconnect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
-    disconnect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
+    disconnect(colorPanel,SIGNAL(colorSelected(int)),this,SLOT(updateColor(int)));
 
     editLabel->setText(p.legend);
     editUnitLabel->setText(p.unitSuffix);
@@ -6451,7 +6544,7 @@ void AxisPanel::initValue(const AxisParam& p, const double & min, const double &
     connect(editLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editUnitLabel,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
     connect(editDistance,SIGNAL(editingFinished()),this,SLOT(updateCanvas()));
-    connect(colorPanel,SIGNAL(colorSelected(QColor)),this,SLOT(updateColor(QColor)));
+    connect(colorPanel,SIGNAL(colorSelected(int )),this,SLOT(updateColor(int)));
 }
 
 

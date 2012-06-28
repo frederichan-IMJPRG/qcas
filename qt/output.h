@@ -83,6 +83,40 @@ struct Command{
     MyItem* item;
     bool isCustom;
 };
+
+enum PolarAngle{
+    PI_12=0,PI_8=1,PI_6=2,PI_4=3,PI_3=4,PI_2=5
+};
+/**
+ * @brief The GridParam struct
+ *
+ * @variable color: Grid color
+ * @variable line: line Type
+ * @variable isVisible true if grid is visible
+ * @variable isCartesian if grid is cartesian, false if polar
+ * @variable x: step on x axis (cartesian)
+ * @variable y: step on y axis (cartesian)
+ * @variable r: distance from origin (polar)
+ * @variable theta: angle for graduation (polar)
+ *
+ *
+ */
+struct GridParam{
+    QColor color;
+    int  line;
+    bool isCartesian,isVisible;
+    double x,y,r;
+    PolarAngle theta;
+};
+struct AxisParam{
+    QColor color;
+//    int  line;
+    bool isVisible;
+    QString legend;
+    QString unitSuffix;
+    double tick,min,max;
+};
+
 class AddObjectCommand:public QUndoCommand{
 public:
     AddObjectCommand(Canvas2D*);
@@ -137,6 +171,34 @@ private:
 
     Canvas2D* canvas;
 };
+class ZoomCommand:public QUndoCommand{
+public:
+    ZoomCommand(const AxisParam&,const AxisParam&,const AxisParam&,const AxisParam&,Canvas2D*,const bool &compute=true);
+    virtual void undo();
+    virtual void redo();
+    virtual int id() const;
+    virtual bool mergeWith(const QUndoCommand *other);
+protected:
+    bool compute;
+    AxisParam oldX,oldY,newX,newY;
+    Canvas2D* canvas;
+};
+
+
+class DisplayObjectCommand:public QUndoCommand{
+public:
+    DisplayObjectCommand(const int &, const bool &, const bool &,Canvas2D*, const int& levChild=-1);
+    virtual void undo();
+    virtual void redo();
+private:
+    bool oldVisible;
+    bool newVisible;
+    int level;
+    int levelChild;
+
+    Canvas2D* canvas;
+};
+
 class RenameObjectCommand:public QUndoCommand{
 public:
     RenameObjectCommand(const QString &, const QString &,Canvas2D*);
@@ -281,39 +343,6 @@ public slots:
     void setRedoButton(bool);
 };
 
-
-enum PolarAngle{
-    PI_12=0,PI_8=1,PI_6=2,PI_4=3,PI_3=4,PI_2=5
-};
-/**
- * @brief The GridParam struct
- *
- * @variable color: Grid color
- * @variable line: line Type
- * @variable isVisible true if grid is visible
- * @variable isCartesian if grid is cartesian, false if polar
- * @variable x: step on x axis (cartesian)
- * @variable y: step on y axis (cartesian)
- * @variable r: distance from origin (polar)
- * @variable theta: angle for graduation (polar)
- *
- *
- */
-struct GridParam{
-    QColor color;
-    int  line;
-    bool isCartesian,isVisible;
-    double x,y,r;
-    PolarAngle theta;
-};
-struct AxisParam{
-    QColor color;
-//    int  line;
-    bool isVisible;
-    QString legend;
-    QString unitSuffix;
-    double tick,min,max;
-};
 
 
 // The canvas to draw 2D graphics
@@ -598,6 +627,7 @@ private:
     void initGui();
 private slots:
     void updateAttributes(int);
+    void updateVisible(bool);
 };
 class ColorPanel:public QWidget{
     Q_OBJECT
@@ -673,10 +703,8 @@ public:
 private:
     void initGui();
     QCheckBox * displayObject;
-private slots:
-    void emitSignal();
 signals:
-    void visibleChanged(int);
+    void visibleChanged(bool);
 };
 
 class TypePointPanel:public QWidget{
@@ -729,17 +757,18 @@ class AxisGridPanel: public QTabWidget{
 public:
     AxisGridPanel(Canvas2D*);
     void initValue();
-    void updateCanvas(const bool &);
+//    void updateCanvas(const bool &);
 private:
     void initGui();
     GridPanel* gridPanel;
     AxisPanel* xPanel;
     AxisPanel* yPanel;
     Canvas2D* parent;
+    void updateAxis(AxisParam,bool,const bool&);
 private slots:
     void updateGrid(GridParam);
-    void updateXAxis(AxisParam,bool);
     void updateYAxis(AxisParam,bool);
+    void updateXAxis(AxisParam,bool);
 
 };
 class GridPanel:public QWidget{
@@ -763,7 +792,7 @@ private:
     GridParam param;
 private slots:
     void updateCanvas();
-    void updateColor(QColor);
+    void updateColor(int);
     void updateLineType(int);
     void displayValidPanel(int);
 
@@ -788,7 +817,7 @@ private:
     void initGui();
 private slots:
     void updateCanvas();
-    void updateColor(QColor);
+    void updateColor(int);
 signals:
     void axisUpdated(AxisParam,bool);
 };
