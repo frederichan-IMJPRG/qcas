@@ -104,6 +104,7 @@ public:
     void paste();
     void undo();
     void redo();
+    void deleteSelectedLevels();
     void sendText(const QString &);
     void displayResult(int line,OutputWidget* );
     void addSelectedLevel(int);

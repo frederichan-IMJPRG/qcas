@@ -233,7 +233,7 @@ FormalWorkSheet::FormalWorkSheet(MainWindow *parent):QScrollArea(),MainSheet(Mai
 
 }
 void FormalWorkSheet::addSelectedLevel(int level){
-    if (shift){
+  /*  if (shift){
         if (selectedLevels.empty()) selectedLevels.append(level);
         else{
             int last=selectedLevels.last();
@@ -248,13 +248,13 @@ void FormalWorkSheet::addSelectedLevel(int level){
             }
         }
     }
-    else {
+    else {*/
         int index=selectedLevels.indexOf(level);
         if (index!=-1){
             selectedLevels.remove(index);
         }
         else selectedLevels.append(level);
-    }
+    //}
 }
 void FormalWorkSheet::keyPressEvent(QKeyEvent *e){
     if (e->key()==Qt::Key_Shift)
@@ -326,6 +326,22 @@ void FormalWorkSheet::paste(){
 void FormalWorkSheet::redo(){
     lines->at(current)->getTextInput()->redo();
 }
+void FormalWorkSheet::deleteSelectedLevels(){
+    for (int i=selectedLevels.size()-1;i>=0;--i){
+        Line* line=lines->at(selectedLevels.at(i));
+        vLayout->removeWidget(line);
+        lines->remove(selectedLevels.at(i));
+        delete line;
+    }
+    selectedLevels.clear();
+    for (int i=0;i<lines->size();++i){
+        lines->at(i)->setId(i);
+    }
+    current=0;
+
+
+}
+
 void FormalWorkSheet::undo(){
     lines->at(current)->getTextInput()->undo();
 

@@ -97,6 +97,9 @@ private:
 
 
 };
+//class Interactive
+
+
 class PrefDialog: public QDialog{
     Q_OBJECT
 public:

@@ -847,7 +847,7 @@ private:
 };
 class OneArgDialog:public QDialog{
 public:
-    OneArgDialog(Canvas2D*,const QString &);
+    OneArgDialog(Canvas2D*, const QString &, const QString &title);
     QLineEdit* editRadius;
 private:
     QString type;

@@ -75,6 +75,9 @@ void Line::removeStopButton(){
 int Line::getId()const{
     return id;
 }
+void Line::setId(const int & a){
+    id=a;
+}
 TextInput* Line::getTextInput() const{
     return input;
 }

@@ -128,15 +128,13 @@ MyStream::MyStream(CasManager *cas,int bsize):ostream(new mybuf(cas,bsize)) {
 
 }
 
-
-
-
 CasManager::CasManager(MainWindow* main){
     mainWindow=main;
     giac::child_id=1;
     signal(SIGINT,giac::ctrl_c_signal_handler);
 
     context=new giac::context;
+    mainWindow->setDecimalDigits(giac::decimal_digits(context));
 //    giac::language(0,context);
 
     monitor=new MonitorThread(context);

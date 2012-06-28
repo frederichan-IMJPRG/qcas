@@ -82,7 +82,8 @@ MainWindow::MainWindow(){
 
     readSettings();
 
-//    setWindowIcon(":/images/icon.png");
+    setWindowIcon(QIcon(":/images/icon.png"));
+
     setCurrentFile("");
     createGui();
     wizardList->setCurrentRow(2);
@@ -156,6 +157,12 @@ void MainWindow::createAction(){
     redoAction->setIcon(QIcon(":/images/edit-redo.png"));
     connect(redoAction,SIGNAL(triggered()),this,SLOT(redo()));
 
+    deleteLevelAction=new QAction(tr("&Effacer les lignes sélectionnées"),this);
+    deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
+    deleteLevelAction->setIcon(QIcon(":/images/delete.png"));
+    connect(deleteLevelAction,SIGNAL(triggered()),this,SLOT(deleteSelectedLevels()));
+
+
     evaluateAction=new QAction(tr("&Evaluer"),this);
     evaluateAction->setShortcut(tr("Shift+Entrée"));
     evaluateAction->setStatusTip(tr("Evaluer"));
@@ -203,6 +210,14 @@ void MainWindow::createMenus(){
     }
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
+
+    editMenu=menuBar()->addMenu(tr("Edition"));
+    editMenu->addAction(pasteAction);
+    editMenu->addAction(cutAction);
+    editMenu->addAction(copyAction);
+    editMenu->addAction(undoAction);
+    editMenu->addAction(redoAction);
+    editMenu->addAction(deleteLevelAction);
 
     optionsMenu=menuBar()->addMenu(tr("&Options"));
     optionsMenu->addAction(prefAction);
@@ -416,9 +431,10 @@ void MainWindow::setCurrentFile(const QString &fileName){
         recentFiles.removeAll(curFile);
         recentFiles.prepend(curFile);
         updateRecentFileActions();
-        setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("QCAS")));
+        setWindowTitle(tr("%1[*] - %2").arg(shownName).arg("QCAS"));
 
     }
+    else setWindowTitle("QCAS");
 }
 
 QString MainWindow::strippedName(const QString &fullFileName){
@@ -563,22 +579,26 @@ void MainWindow::displayInStatusBar(const QString & text, const QString & color)
 void MainWindow::updateInterface(MainSheet::sheetType type){
     switch(type){
         case MainSheet::G2D_TYPE:    {
+            giac::decimal_digits(3,getContext());
             copyAction->setVisible(false);
             cutAction->setVisible(false);
             pasteAction->setVisible(false);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
             evaluateAction->setVisible(false);
+            deleteLevelAction->setVisible(false);
             leftPanel->hide();
         }
         break;
         case MainSheet::FORMAL_TYPE:
         default:{
+            giac::decimal_digits(decimalDigits,getContext());
             copyAction->setVisible(true);
             cutAction->setVisible(true);
             pasteAction->setVisible(true);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
+            deleteLevelAction->setVisible(true);
             evaluateAction->setVisible(true);
             leftPanel->show();
         }
@@ -590,6 +610,13 @@ void MainWindow::setRedoButton(bool b){
 void MainWindow::setUndoButton(bool b){
     undoAction->setEnabled(b);
 }
+int MainWindow::getDecimalDigit()const{
+    return decimalDigits;
+}
+void MainWindow::setDecimalDigits(const int &a){
+    decimalDigits=a;
+}
+
 void MainWindow::displayGiacMessages(){
     printHeader();
     QStringList list=cas->getGiacDisplay();
@@ -636,13 +663,13 @@ void MainWindow::changeWizard(QListWidgetItem *current, QListWidgetItem *previou
     wizardPages->setCurrentIndex(wizardList->row(current));
 }
 void MainWindow::about(){
-    QMessageBox::about(this,tr("A propos de QCAS"),tr("<center><h1> <font color=\"#8000FF\"> QCAS </font></h1></center>"
+    QMessageBox::about(this,tr("A propos de QCAS"),tr("<center><h1>  QCAS</h1></center>"
                                                       "<hr>"
                                                       "<ul>"
                                                       "<li><b>Licence:</b> GPL </li>"
                                                       "<li><b>Version:</b> 0.1 beta</li>"
                                                       "<li><b>Site web de QCAS: </b><center><a href=\"http://qcas.tuxfamily.org\">http://qcas.tuxfamily.org</a></center><br></li>"
-                                                      "<li><b>Développeur de QCAS: </b>Loïc Le Coq (<a href=\"mailto:loic@qcas.tuxfamily.org\"> loic@qcas.tuxfamily.org</a>)</li>"
+                                                      "<li><b>Développeur de QCAS: </b>Loïc Le Coq <center><a href=\"mailto:loic@qcas.tuxfamily.org\"> loic@qcas.tuxfamily.org</a></center><br></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
                                                       "<li><b> Site Web de XCas:  <center><a href=\"http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html\">http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html</a></center><nr></li>"
                                                       "</ul><hr>"
@@ -689,7 +716,7 @@ void MainWindow::copy(){
            form->copy();}
        break;
    case MainSheet::SPREADSHEET_TYPE:
-       break;
+   case MainSheet::G2D_TYPE:
    case MainSheet::PROGRAMMING_TYPE:
        break;
    }
@@ -702,7 +729,7 @@ void MainWindow::cut(){
             form->cut();}
         break;
     case MainSheet::SPREADSHEET_TYPE:
-        break;
+    case MainSheet::G2D_TYPE:
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
@@ -715,7 +742,7 @@ void MainWindow::paste(){
         form->paste();}
         break;
     case MainSheet::SPREADSHEET_TYPE:
-        break;
+    case MainSheet::G2D_TYPE:
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
@@ -725,7 +752,9 @@ void MainWindow::undo(){
     MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
     switch(sheet->getType()){
     case MainSheet::FORMAL_TYPE:
-        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+        {
+
+        FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
         form->undo();}
         break;
     case MainSheet::SPREADSHEET_TYPE:
@@ -760,6 +789,13 @@ void MainWindow::redo(){
      break;
     }
 }
+void MainWindow::deleteSelectedLevels(){
+    FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+    if (form==0) return;
+    form->deleteSelectedLevels();
+
+}
+
 void MainWindow::killThread(){
 
     cas->killThread();
@@ -797,7 +833,7 @@ void MainWindow::evaluate(const QString &formula){
         }
         break;
     case MainSheet::SPREADSHEET_TYPE:
-        break;
+    case MainSheet::G2D_TYPE:
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
@@ -831,7 +867,7 @@ void MainWindow::evaluate(){
             }
         break;
     case MainSheet::SPREADSHEET_TYPE:
-        break;
+   case MainSheet::G2D_TYPE:
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
@@ -849,7 +885,7 @@ void MainWindow::sendText(const QString & s){
         form->sendText(s);}
         break;
     case MainSheet::SPREADSHEET_TYPE:
-        break;
+    case MainSheet::G2D_TYPE:
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }

@@ -69,7 +69,8 @@ class MainWindow :public QMainWindow {
     void updateInterface(MainSheet::sheetType);
     void setRedoButton(bool);
     void setUndoButton(bool);
-
+    int getDecimalDigit() const;
+    void setDecimalDigits(const int & a);
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -117,6 +118,7 @@ private:
     QAction *pasteAction;
     QAction *undoAction;
     QAction *redoAction;
+    QAction *deleteLevelAction;
     QAction *evaluateAction;
     QAction *prefAction;
     QAction *aboutAction;
@@ -140,6 +142,7 @@ private:
     QTime* time;
     bool displayTimeAfterProcess;
     void printHeader();
+    int decimalDigits;
 
 public slots:
     void displayCrashWarning();
@@ -157,6 +160,7 @@ private slots:
     void paste();
     void undo();
     void redo();
+    void deleteSelectedLevels();
     void evaluate();
     void openRecentFile();
     void changeWizard(QListWidgetItem*,QListWidgetItem*);

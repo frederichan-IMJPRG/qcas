@@ -34,6 +34,7 @@ public:
     FormalWorkSheet* getWorkSheet() const;
     TextInput* getTextInput() const;
     int getId() const;
+    void setId(const int &);
     OutputWidget* getOuputWidget();
     void evaluate(const QString&);
     void displayResult(OutputWidget*);

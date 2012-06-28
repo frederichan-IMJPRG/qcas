@@ -248,7 +248,7 @@ void CasPanel::initValue(){
     else if (basis==16) comboBasis->setCurrentIndex(1);
     else if (basis==8) comboBasis->setCurrentIndex(2);
 
-    editDigits->setText(QString::number(giac::decimal_digits(c)));
+    editDigits->setText(QString::number(mainWindow->getDecimalDigit()));//QString::number(giac::decimal_digits(c)));
     if (giac::approx_mode(c)==0) checkSymbolic->setChecked(true);
     else checkSymbolic->setChecked(false);
     if (giac::angle_radian(c)==1) checkRadian->setChecked(true);
@@ -291,6 +291,7 @@ void CasPanel::apply(){
     d=editDigits->text().toInt();
     if (d<0) d=12;
      giac::decimal_digits(d,c);
+     mainWindow->setDecimalDigits(d);
     if (checkSymbolic->isChecked()) giac::approx_mode(0,c);
     else giac::approx_mode(1,c);
     if (checkRadian->isChecked()) giac::angle_radian(1,c);
@@ -472,18 +473,26 @@ void GeneralPanel::apply(){
 
 }
 /**
+ *************** PREFERENCES INTERACTIVE 2D
+ ****
+ ***/
+
+
+/**
    **********     PREFERENCES DIALOG BOX    *************************
 
   **/
 
 
-PrefDialog::PrefDialog(MainWindow * parent){
+PrefDialog::PrefDialog(MainWindow * parent):QDialog(parent){
     mainWindow=parent;
     setVisible(false);
     initGui();
 }
 
 void PrefDialog::initGui(){
+    setWindowTitle(tr("Configuration de QCAS"));
+
     generalPanel=new GeneralPanel;
     casPanel=new CasPanel(mainWindow);
     spreadSheetPanel=new QWidget(this);
@@ -518,7 +527,7 @@ void PrefDialog::initGui(){
 
     listWidget->addItem(generalItem);
     listWidget->addItem(casItem);
-    listWidget->addItem(spreadItem);
+//    listWidget->addItem(spreadItem);
     listWidget->addItem(interactive2dItem);
     listWidget->adjustSize();
     listWidget->setCurrentRow(0);

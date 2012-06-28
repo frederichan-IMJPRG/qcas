@@ -1367,7 +1367,6 @@ void DisplayObjectCommand::undo(){
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
     context=c;
-    giac::decimal_digits(3,c);
     ortho=true;
     selectionRight=false;
     selectionLeft=false;
@@ -1554,6 +1553,7 @@ void Canvas2D::setActionTool(action a){
     currentActionTool=a;
     if (currentActionTool==POINT_XY){
         CoordsDialog* dialog=new CoordsDialog(this);
+
         if (dialog->exec()){
             findFreeVar(varPt);
             Command newCommand;
@@ -1649,7 +1649,7 @@ void Canvas2D::setActionTool(action a){
 
     }
     else if(currentActionTool==LINEBYEQUATION){
-        OneArgDialog* dialog=new OneArgDialog(this,tr("Equation"));
+        OneArgDialog* dialog=new OneArgDialog(this,tr("Equation"),tr("Droite définie par une équation"));
         if (dialog->exec()){
             findFreeVar(varLine);
             QString s(varLine);
@@ -2780,7 +2780,7 @@ void Canvas2D::renameObject(MyItem * item, const QString & var){
 
 
 void Canvas2D::renameObject(){
-    OneArgDialog *dialog=new OneArgDialog(this,tr("Nouveau nom:"));
+    OneArgDialog *dialog=new OneArgDialog(this,tr("Nouveau nom:"),tr("Renommer un objet"));
     if (dialog->exec()){
         renameObject(focusOwner,dialog->editRadius->text());
 
@@ -3753,7 +3753,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
     // CIRCLE RADIUS
 
     if (selectedItems.size()==1 && !onlyForPreview){
-        OneArgDialog *dialog=new OneArgDialog(this,tr("Rayon:"));
+        OneArgDialog *dialog=new OneArgDialog(this,tr("Rayon:"),tr("définir le rayon du cercle"));
         if (dialog->exec()){
             QString first(selectedItems.at(0)->getVar());
             commandTwoArgs("circle",first,dialog->editRadius->text(),c.command);
@@ -3916,7 +3916,7 @@ void Canvas2D::addNewPolygon(const bool & onlyForPreview, const bool &iso){
         }
     }
     if (iso){
-        OneArgDialog* dialog=new OneArgDialog(this, tr("Nombre de côtés:"));
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Nombre de côtés:"),tr("Polygône régulier"));
         if (dialog->exec()){
             s.append(",");
             s.append(dialog->editRadius->text());
@@ -4247,7 +4247,7 @@ void Canvas2D::addTransformObject(const QString & type){
         s.append(":=rotation(");
         s.append(first);
         s.append(",");
-        OneArgDialog* dialog=new OneArgDialog(this, tr("Angle:"));
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Angle:"),tr("Définir l'angle de la rotation"));
         if (dialog->exec()){
             s.append(dialog->editRadius->text());
         }
@@ -4265,7 +4265,7 @@ void Canvas2D::addTransformObject(const QString & type){
         s.append(":=homothety(");
         s.append(first);
         s.append(",");
-        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"));
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"),tr("Définir le rapport de l'homothétie"));
         if (dialog->exec()){
             s.append(dialog->editRadius->text());
         }
@@ -4283,7 +4283,7 @@ void Canvas2D::addTransformObject(const QString & type){
         s.append(":=similarity(");
         s.append(first);
         s.append(",");
-        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"));
+        OneArgDialog* dialog=new OneArgDialog(this, tr("Rapport:"),tr("Définir le rapport de la similitude"));
         if (dialog->exec()){
             s.append(dialog->editRadius->text());
         }
@@ -4295,7 +4295,7 @@ void Canvas2D::addTransformObject(const QString & type){
         delete dialog;
         s.append(",");
 
-        dialog=new OneArgDialog(this, tr("Angle:"));
+        dialog=new OneArgDialog(this, tr("Angle:"),tr("Définir l'angle de la similitude"));
         if (dialog->exec()){
             s.append(dialog->editRadius->text());
         }
@@ -6555,6 +6555,7 @@ SourceDialog::SourceDialog(Canvas2D* p){
 
 
 void SourceDialog::initGui(){
+    setWindowTitle(tr("Construction de la figure"));
     QHBoxLayout* hbox=new QHBoxLayout(this);
     listWidget=new QListWidget(this);
   //  QList<Canvas2D::Command> commands=parent->getCommands();
@@ -6585,7 +6586,7 @@ CoordsDialog::CoordsDialog(Canvas2D* p):QDialog (p){
 
 
 void CoordsDialog::initGui(){
-
+    setWindowTitle(tr("Point défini par ses coordonnées"));
     QGridLayout* grid=new QGridLayout(this);
     QLabel* labelx=new QLabel(tr("Abscisse x:"),this);
     editX=new QLineEdit(this);
@@ -6612,8 +6613,9 @@ void CoordsDialog::initGui(){
     connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
 }
-OneArgDialog::OneArgDialog(Canvas2D* p, const QString & t):QDialog (p){
+OneArgDialog::OneArgDialog(Canvas2D* p, const QString & t,const QString & title):QDialog (p){
     type=t;
+    setWindowTitle(title);
     initGui();
 }
 
@@ -6643,6 +6645,7 @@ CursorDialog::CursorDialog(Canvas2D * p):QDialog(p){
     initGui();
 }
 void CursorDialog::initGui(){
+    setWindowTitle(tr("Définir un curseur"));
     QGridLayout* grid=new QGridLayout(this);
     QLabel * labVar=new QLabel(tr("Nom:"));
     editVar=new QLineEdit;

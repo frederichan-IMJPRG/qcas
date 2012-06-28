@@ -42,12 +42,13 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     programmingAction=new QAction(tr("Editeur de programmes"),add);
     programmingAction->setIcon(QIcon(":/images/programming.png"));
     g2dAction=new QAction(tr("Géométrie 2D"),add);
+    g2dAction->setIcon(QIcon(":/images/function.png"));
 
 
     menu=new QMenu;
     menu->addAction(formalAction);
-    menu->addAction(spreadsheetAction);
-    menu->addAction(programmingAction);
+  //  menu->addAction(spreadsheetAction);
+  //  menu->addAction(programmingAction);
     menu->addAction(g2dAction);
     add->setMenu(menu);
 

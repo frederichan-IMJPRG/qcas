@@ -13,12 +13,12 @@ QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS #-fpermissive
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -DUSE_GMP_REPLACEMENTS \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS #-fpermissive
+    -DGIAC_GENERIC_CONSTANTS -fpermissive
 DEPENDPATH += . \
     qt \
     giac \
@@ -395,5 +395,6 @@ OTHER_FILES += \
     qt/images/homothety.png \
     pthread-win32/libpthreadGC2.a \
     qt/images/mathml.png \
-    qt/aide_cas
+    qt/aide_cas \
+    qt/images/icon.png
 RESOURCES += qt/qcas.qrc

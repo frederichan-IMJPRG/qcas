@@ -35,6 +35,8 @@ PlotFunctionDialog::PlotFunctionDialog(Canvas2D *parent) :
     initGui();
 }
 void PlotFunctionDialog::initGui(){
+    setWindowTitle(tr("Définir une courbe représentative"));
+
     QVBoxLayout * vbox=new QVBoxLayout;
     tabWidget=new QTabWidget;
 
