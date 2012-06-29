@@ -347,9 +347,20 @@ bool MainWindow::loadFile(const QString &fileName){
                  GraphWidget *f=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
                  f->loadInteractiveXML(sheet);
              }
-             node= node.nextSibling();
+             else if(sheet.tagName()=="settings"){
+                 QDomNode first=sheet.firstChild();
+                 while(!first.isNull()){
+                     QDomElement element=first.toElement();
+                     if (!element.isNull()) {
+                         QString tag=element.tagName();
+                         if (tag=="cas") cas->loadXML(element);
+                         else if (tag=="general") { cas->loadGeneralXML(element);}
+                        }
+                     first=first.nextSibling();
+                 }
+             }
          }
-
+         node= node.nextSibling();
      }
 
     setCurrentFile(fileName);
@@ -369,7 +380,8 @@ bool MainWindow::saveFile(const QString &fileName){
     QDomDocument doc;
 
     QDomElement root=doc.createElement("qcas");
-
+    // write cas configuration
+    cas->toXML(root);
     for (int i=0;i<tabPages->count()-1;++i){
         MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->widget(i));
         switch(sheet->getType()){

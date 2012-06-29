@@ -563,3 +563,83 @@ void CasManager::clearGiacDisplay(){
     fullDisplay.clear();
 }
 
+void CasManager::toXML(QDomElement & root){
+    QDomElement settings=root.ownerDocument().createElement("settings");
+    QDomElement cas=root.ownerDocument().createElement("cas");
+    cas.setAttribute("xcas_mode",giac::xcas_mode(context));
+    cas.setAttribute("scientific_format",giac::scientific_format(context));
+    cas.setAttribute("integer_format",giac::integer_format(context));
+    cas.setAttribute("digits",mainWindow->getDecimalDigit());
+    cas.setAttribute("approx_mode",giac::approx_mode(context));
+    cas.setAttribute("radian",giac::angle_radian(context));
+    cas.setAttribute("complex_mode",giac::complex_mode(context));
+    cas.setAttribute("complex_variables",giac::complex_variables(context));
+    cas.setAttribute("increasing_power",giac::increasing_power(context));
+    cas.setAttribute("all_trig",giac::all_trig_sol(context));
+    cas.setAttribute("with_sqrt",giac::withsqrt(context));
+    cas.setAttribute("epsilon",giac::epsilon(context));
+    cas.setAttribute("proba_epsilon",giac::proba_epsilon(context));
+    cas.setAttribute("recurs_eval",giac::eval_level(context));
+    cas.setAttribute("eval_prog",giac::prog_eval_level_val(context));
+    cas.setAttribute("recurs_prog",giac::MAX_RECURSION_LEVEL);
+    cas.setAttribute("debug",giac::debug_infolevel);
+    cas.setAttribute("newton",giac::NEWTON_DEFAULT_ITERATION);
+    settings.appendChild(cas);
+    QDomElement general=root.ownerDocument().createElement("general");
+    general.setAttribute("graph_width",Config::graph_width);
+    general.setAttribute("language",Config::language);
+    general.setAttribute("xmin",giac::gnuplot_xmin);
+    general.setAttribute("xmax",giac::gnuplot_xmax);
+    general.setAttribute("ymin",giac::gnuplot_ymin);
+    general.setAttribute("ymax",giac::gnuplot_ymax);
+    general.setAttribute("zmin",giac::gnuplot_zmin);
+    general.setAttribute("zmax",giac::gnuplot_zmax);
+    general.setAttribute("tmin",giac::gnuplot_tmin);
+    general.setAttribute("tmax",giac::gnuplot_tmax);
+    general.setAttribute("autoscale",giac::autoscale);
+    general.setAttribute("grid_attraction",Config::gridAttraction);
+    settings.appendChild(general);
+    root.appendChild(settings);
+
+
+
+}
+
+void CasManager::loadXML(const QDomElement& root){
+    giac::xcas_mode(root.attribute("xcas_mode","0").toInt(),context);
+    giac::scientific_format(root.attribute("scientific_format","0").toInt(),context);
+    giac::integer_format(root.attribute("integer_format","10").toInt(),context);
+    int d=root.attribute("digits","12").toInt();
+    giac::decimal_digits(d,context);
+    mainWindow->setDecimalDigits(d);
+    giac::approx_mode(root.attribute("approx_mode","0").toInt(),context);
+    giac::angle_radian(root.attribute("radian","1").toInt(),context);
+    giac::complex_mode(root.attribute("complex_mode","0").toInt(),context);
+    giac::complex_variables(root.attribute("complex_variables","0").toInt(),context);
+    giac::increasing_power(root.attribute("increasing_power","0").toInt(),context);
+    giac::all_trig_sol(root.attribute("all_trig","0").toInt(),context);
+    giac::withsqrt(root.attribute("with_sqrt","10").toInt(),context);
+
+    giac::epsilon(root.attribute("epsilon","1e-10").toDouble(),context);
+    context->globalptr->_proba_epsilon_=root.attribute("proba_epsilon","1e-15").toDouble();
+    context->globalptr->_eval_level=root.attribute("recurs_eval","25").toInt();
+    giac::prog_eval_level_val(root.attribute("eval_prog","1").toInt(),context);
+    giac::MAX_RECURSION_LEVEL=root.attribute("recurs_prog","100").toInt();
+    giac::debug_infolevel=root.attribute("debug","0").toInt();
+    giac::NEWTON_DEFAULT_ITERATION=root.attribute("newton","20").toInt();
+}
+void CasManager::loadGeneralXML(const QDomElement& general){
+    Config::graph_width=general.attribute("graph_width","400").toInt();
+    Config::language=(Config::LANGUAGES)(general.attribute("language","0").toInt());
+    giac::gnuplot_xmin=general.attribute("xmin","-5").toDouble();
+    giac::gnuplot_xmax=general.attribute("xmax","5").toDouble();
+    giac::gnuplot_ymin=general.attribute("ymin","-5").toDouble();
+    giac::gnuplot_ymax=general.attribute("ymax","5").toDouble();
+    giac::gnuplot_zmin=general.attribute("zmin","-5").toDouble();
+    giac::gnuplot_zmax=general.attribute("zmax","5").toDouble();
+    giac::gnuplot_tmin=general.attribute("tmin","-6").toDouble();
+    giac::gnuplot_tmax=general.attribute("tmax","6").toDouble();
+    giac::autoscale=general.attribute("autoscale","1").toInt();
+    Config::gridAttraction=general.attribute("grid_attraction","1").toInt();
+
+}

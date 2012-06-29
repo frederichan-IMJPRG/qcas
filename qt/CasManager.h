@@ -19,6 +19,7 @@
 #define CASMANAGER_H
 #include <streambuf>
 #include <QThread>
+#include <QDomElement>
 #include <QStringList>
 //#include "global.h"
 #include "giac/gen.h"
@@ -96,6 +97,9 @@ public:
     void appendPrintCache(const QChar& );
     QStringList& getGiacDisplay() ;
     void clearGiacDisplay();
+    void toXML(QDomElement &);
+    void loadXML(const QDomElement &);
+    void loadGeneralXML(const QDomElement &);
 private:
     static giac::gen answer;
     MainWindow* mainWindow;
