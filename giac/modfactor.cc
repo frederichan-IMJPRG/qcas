@@ -140,7 +140,7 @@ namespace giac {
     int maxdeg(1); // maximal degree+1
     // make an array of iterator pointing to the cst coeff of v[]
     // and find maximal degree of v
-#ifdef VISUALC
+#if 1 // def VISUALC
     modpoly::const_iterator *itv = new modpoly::const_iterator[d],*itvptr;
 #else
     modpoly::const_iterator itv[d],*itvptr;
@@ -150,7 +150,7 @@ namespace giac {
       * itvptr=vit->end();
       maxdeg=max(maxdeg,int(vit->size()));
     }
-#ifdef VISUALC
+#if 1 // def VISUALC
     gen * res = new gen[maxdeg];
 #else
     gen res[maxdeg];
@@ -221,7 +221,7 @@ namespace giac {
 	s.push_back(*resptr);
       }      
     }
-#ifdef VISUALC
+#if 1 // def VISUALC
     delete [] itv;
     delete [] res;
 #endif
@@ -785,7 +785,7 @@ namespace giac {
       v_out.push_back(temp);
       return;
     }
-#ifdef VISUALC
+#if 1 // def VISUALC
     vector<modpoly>::const_iterator * it=new vector<modpoly>::const_iterator[n+1],itend=v_in.end(),itbegin=v_in.begin(), current;
 #else
     vector<modpoly>::const_iterator it[n+1],itend=v_in.end(),itbegin=v_in.begin(), current;
@@ -833,7 +833,7 @@ namespace giac {
 	  break;
       if (2*tmp>signed(q.size())-1){
 	v_out.push_back(unmodularize(q));
-#ifdef VISUALC
+#if 1 // def VISUALC
 	delete [] it;
 #endif
 	return ;
@@ -905,7 +905,7 @@ namespace giac {
 		  print_possible_degrees(new_possible_degrees,newqdeg);
 		combine(quo,v_new,env,v_out,new_possible_degrees,k);
 	      }
-#ifdef VISUALC
+#if 1 // def VISUALC
 	      delete [] it;
 #endif
 	      return;
@@ -953,7 +953,7 @@ namespace giac {
     }
     // k==n
     v_out.push_back(unmodularize(q));
-#ifdef VISUALC
+#if 1 // def VISUALC
     delete [] it;
 #endif
   }

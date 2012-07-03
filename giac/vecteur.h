@@ -319,7 +319,7 @@ namespace giac {
   void hessenberg_ortho(std_matrix<gen> & H,std_matrix<gen> & P,GIAC_CONTEXT);
   void hessenberg_ortho(std_matrix<gen> & H,std_matrix<gen> & P,int firstrow,int n,bool compute_P,int already_zero,GIAC_CONTEXT);
   void qr_ortho(std_matrix<gen> & H,std_matrix<gen> & P,GIAC_CONTEXT);
-  void hessenberg_schur(std_matrix<gen> & H,std_matrix<gen> & P,int maxiter,double eps,bool compute_P,GIAC_CONTEXT);
+  void hessenberg_schur(std_matrix<gen> & H,std_matrix<gen> & P,int maxiter,double eps,GIAC_CONTEXT);
   gen _hessenberg(const gen & g0,GIAC_CONTEXT);
 
   vecteur mpcar(const matrice & a,vecteur & B,bool compute_B,GIAC_CONTEXT);
@@ -329,7 +329,7 @@ namespace giac {
 
   // if jordan is false, errors for non diagonalizable matrices
   // if jordan is true, d is a matrix, not a vecteur
-  bool egv(const matrice & m,matrice & p,vecteur & d, GIAC_CONTEXT, bool jordan=false,bool rational_jordan_form=false,bool eigenvalues_only=false);
+  bool egv(const matrice & m,matrice & p,vecteur & d, GIAC_CONTEXT, bool jordan,bool rational_jordan_form,bool eigenvalues_only);
   gen symb_egv(const gen & a);
   matrice megv(const matrice & a,GIAC_CONTEXT);
   gen _egv(const gen & a,GIAC_CONTEXT);
@@ -359,7 +359,8 @@ namespace giac {
   matrice matpow(const matrice & m,const gen & n,GIAC_CONTEXT);
   gen _matpow(const gen & a,GIAC_CONTEXT);
 
-  bool mker(const matrice & a,vecteur & v,GIAC_CONTEXT);
+  bool mker(const matrice & a,vecteur & v,int algorithm,GIAC_CONTEXT);
+  bool mker(const matrice & a,vecteur & v,GIAC_CONTEXT); // algorithm=0
   vecteur mker(const matrice & a,GIAC_CONTEXT);
   gen _ker(const gen & a,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_ker ;

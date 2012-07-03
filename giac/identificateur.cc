@@ -58,10 +58,14 @@ namespace giac {
   gen cst_euler_gamma(_IDNT_euler_gamma);
 
   const char string_pi[]="pi";
-  identificateur _IDNT_pi(string_pi,(double) M_PI);
+  identificateur & _IDNT_pi(){
+    static identificateur * ans=new identificateur(string_pi,(double) M_PI);
+    return * ans;
+  }
+  // identificateur _IDNT_pi(string_pi,(double) M_PI);
   alias_ref_identificateur ref_pi={-1,0,0,string_pi,0,0};
   
-  gen cst_pi(_IDNT_pi);
+  gen cst_pi(_IDNT_pi());
 
   const char string_infinity[]="infinity";
   identificateur & _IDNT_infinity(){
@@ -87,7 +91,9 @@ namespace giac {
 
   const char string_pi[]="pi";
   static const alias_identificateur alias_identificateur_pi={0,0,string_pi,0,0};
-  const identificateur & _IDNT_pi = *(identificateur *) & alias_identificateur_pi;
+  const identificateur & _IDNT_pi(){
+    return *(const identificateur *) & alias_identificateur_pi;
+  }
   const alias_ref_identificateur ref_pi={-1,0,0,string_pi,0,0};
   const define_alias_gen(alias_cst_pi,_IDNT,0,&ref_pi);
   const gen & cst_pi = * (gen *) & alias_cst_pi;

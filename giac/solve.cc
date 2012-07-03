@@ -22,6 +22,7 @@
 using namespace std;
 #include <stdexcept>
 #include <cmath>
+#include <algorithm>
 #include "gen.h"
 #include "solve.h"
 #include "modpoly.h"
@@ -288,6 +289,26 @@ namespace giac {
     if (cplxmode)
       return res;
     return protect_sort(res,contextptr);
+  }
+
+  vecteur protect_find_singularities(const gen & e,const identificateur & x,int cplxmode,GIAC_CONTEXT){
+    vecteur sp;
+#ifdef NO_STDEXCEPT
+    sp=find_singularities(e,x,false,contextptr);
+    if (is_undef(sp)){
+      *logptr(contextptr) << sp << endl;      
+      sp.clear();
+    }
+#else
+    try {
+      sp=find_singularities(e,x,false,contextptr);
+    }
+    catch (std::runtime_error & e){
+      *logptr(contextptr) << e.what() << endl;
+      sp.clear();
+    }
+#endif
+    return sp;
   }
 
   static void solve_ckrange(const identificateur & x,vecteur & v,int isolate_mode,GIAC_CONTEXT){
@@ -1131,6 +1152,10 @@ namespace giac {
     // old code with Groebner basis
     equations.push_back(e);      
     vecteur res=gsolve(equations,listvars,complex_mode(contextptr),contextptr);
+#ifndef NO_STDEXCEPT
+    if (!res.empty() && res.front().type==_STRNG)
+      setsizeerr(*res.front()._STRNGptr);
+#endif
     iterateur it=res.begin(),itend=res.end();
     for (;it!=itend;++it)
       *it=(*it)[0];
@@ -3022,6 +3047,71 @@ namespace giac {
     }
   }
 
+#if 1
+#define inplace_ppz ppz
+#else
+  // find gcd of coefficients of p but aborts and returns 1 if it is small
+  // otherwise divides
+  gen zint_ppz(polynome & p){
+    vector< monomial<gen> >::iterator it=p.coord.begin(),itend=p.coord.end();
+    if (it==itend)
+      return 1;
+    for (;it!=itend;++it){
+      if (it->value.type==_INT_)
+	return 1;
+    }
+    gen res=(itend-1)->value;
+    for (it=p.coord.begin();it!=itend;++it){
+      res=gcd(res,it->value);
+      if (res.type==_INT_)
+	return 1;
+    }
+    for (it=p.coord.begin();it!=itend;++it){
+      if (it->value.type!=_ZINT || it->value.ref_count()>1)
+	it->value=it->value/res; 
+      else
+	mpz_divexact(*it->value._ZINTptr,*it->value._ZINTptr,*res._ZINTptr);
+    }
+    return res;
+  }
+
+  gen inplace_ppz(polynome & p,bool divide=true){
+    vector< monomial<gen> >::iterator it=p.coord.begin(),itend=p.coord.end();
+    if (it==itend)
+      return 1;
+    gen res=(itend-1)->value;
+    for (it=p.coord.begin();it!=itend-1;++it){
+      res=gcd(res,it->value);
+      if (is_one(res))
+	return 1;
+    }
+    if (!divide)
+      return res;
+    if (res.type==_INT_ && res.val>0){
+      for (it=p.coord.begin();it!=itend;++it){
+	if (it->value.type!=_ZINT || it->value.ref_count()>1)
+	  it->value=it->value/res; 
+	else
+	  mpz_divexact_ui(*it->value._ZINTptr,*it->value._ZINTptr,res.val);
+      }
+      return res;
+    }
+    if (res.type==_ZINT){
+      for (it=p.coord.begin();it!=itend;++it){
+	if (it->value.type!=_ZINT || it->value.ref_count()>1)
+	  it->value=it->value/res; 
+	else
+	  mpz_divexact(*it->value._ZINTptr,*it->value._ZINTptr,*res._ZINTptr);
+      }
+      return res;
+    }
+    for (it=p.coord.begin();it!=itend;++it){
+      it->value=it->value/res; 
+    }
+    return res;
+  }
+#endif
+
   polynome spoly(const polynome & p,const polynome & q,environment * env){
     if (p.coord.empty())
       return q;
@@ -3029,156 +3119,23 @@ namespace giac {
       return p;
     const index_t & pi = p.coord.front().index.iref();
     const index_t & qi = q.coord.front().index.iref();
-    index_t lcm= index_lcm(pi,qi);
+    index_t lcm = index_lcm(pi,qi);
     polynome tmp=p.shift(lcm-pi,q.coord.front().value)-q.shift(lcm-qi,p.coord.front().value);
+    // gen g=zint_ppz(tmp); if (debug_infolevel>1) cerr << "spoly ppz " << g << endl;
     return (env && env->moduloon)?smod(tmp,env->modulo):tmp;
   }
 
-
-  static bool GroebnerDiv (const polynome & celuici,const polynome & other, polynome & quo, polynome & rem, bool allowrational = true ) {  
-    if (celuici.coord.empty()){
-      quo=celuici;
-      rem=celuici; 
-      return true;
-    }
-    assert(!other.coord.empty());
-    quo.coord.clear();
-    rem=celuici;
-    const index_m & b_max = other.coord.front().index;
-    const gen & b=other.coord.front().value;
-    std::vector< monomial<gen> >::const_iterator it,itend;
-    for (;;){
-      itend=rem.coord.end();
-      it=rem.coord.begin();
-      // look in rem for a monomial >= b_max
-      for (; it!=itend ;++it){
-	if (it->index>=b_max)
-	  break;
-      }
-      if (it==itend) // no monomial of rem are divisible by LT(b): finished
-	break;
-      gen q=rdiv(it->value,b);
-      if (!allowrational){ // quotient not allowed
-	if ( has_denominator(q) || (!is_zero(q*b - it->value)) )
-	  return false;
-      }
-      quo.coord.push_back(monomial<gen>(q,it->index-b_max));
-      polynome temp=other.shift(it->index-b_max,q);
-      rem = rem-temp;
-    } // end for
-    return(true);    
-  }
-
-
-  template <class T>
-  static void polynome2map(const polynome & p,map<index_t,gen,T> & pmap){
-    std::vector< monomial<gen> >::const_iterator pt=p.coord.begin(),ptend=p.coord.end();
-    pmap.clear();
-    for (;pt!=ptend;++pt){
-      pmap[pt->index.iref()]=pt->value;
-    }
-  }
-
-  // find integer content and divide
-  template <class T>
-  static gen mapppz(map<index_t,gen,T> & pmap){
-    typename std::map< index_t,gen,T>::iterator it=pmap.begin(),itend=pmap.end();
-    gen d;
-    for (;it!=itend;++it){
-      d=gcd(d,it->second);
-      if (is_one(d))
-	return plus_one;
-    }
-    for (it=pmap.begin();it!=itend;++it)
-      it->second=it->second/d;
-    return d;
-  }
-
-  static polynome reduce2(const polynome & p,vectpoly::const_iterator it0,vectpoly::const_iterator itend){
+  // this version of reduce returns in rem the reduction of m*p
+  // other version of reduce do not care about m
+  void reduce(const polynome & p,const polynome * it0,const polynome * itend,polynome & rem,gen & m,environment * env){
+    m=1;
+    if (&p!=&rem)
+      rem=p;
     if (p.coord.empty())
-      return p;
-    typedef std::map< index_t,gen,const std::pointer_to_binary_function < const index_t &, const index_t &, bool> > application;
-    application rem(ptr_fun(p.is_strictly_greater));
-    polynome2map(p,rem);
-    application::const_iterator pt,ptend;
-    vectpoly::const_iterator it;
-    for (;;){
-      ptend=rem.end();
-      // look in rem for a monomial >= to a monomial in it0, then it0+1 
-      for (it=it0; it!=itend ;++it){
-	for (pt=rem.begin();pt!=ptend;++pt){
-	  if (pt->first>=it->coord.front().index)
-	    break;
-	}
-	if (pt!=ptend)
-	  break;
-      }
-      if (it==itend) // no monomial of rem are divisible by LT(b): finished
-	break;
-      gen a(pt->second),b(it->coord.front().value) ;
-      simplify(a,b);
-      if (is_minus_one(b)){
-	a=-a;
-	b=1;
-      }
-      polynome temp=it->shift(pt->first-it->coord.front().index,a);
-      application::iterator pit;
-      if (!is_one(b)){
-	for (pit=rem.begin();pit!=ptend;++pit)
-	  pit->second = b*pit->second;
-      }
-      // substract temp from rem
-      vector< monomial<gen> >::const_iterator jt=temp.coord.begin(),jtend=temp.coord.end();
-      for (;jt!=jtend;++jt){
-	pit=rem.find(jt->index.iref());
-	if (pit==ptend)
-	  rem[jt->index.iref()]=-jt->value;
-	else {
-	  pit->second -= jt->value;
-	  if (is_zero(pit->second)){
-	    rem.erase(pit->first);
-	    ptend=rem.end();
-	  }
-	}
-      }
-      if (!is_one(b))
-	mapppz(rem);
-    }
-    // convert back
-    polynome res(p.dim,p);
-    pt=rem.begin();
-    res.coord.reserve(rem.size());
-    for (;pt!=ptend;++pt){
-      res.coord.push_back(monomial<gen>(pt->second,pt->first));
-    }
-    gen d=ppz(res);
-    if (!is_one(d)) cerr << d << endl;
-    return res;
-  }
-
-  static polynome reducegb(const polynome & p,vectpoly::const_iterator it0,vectpoly::const_iterator itend,environment * env){
-    if (p.coord.empty())
-      return p;
-    polynome rem(p),quo,tmp;
-    for (;it0!=itend;++it0){
-      if (!GroebnerDiv(rem,*it0,quo,tmp,true)){
-#ifdef NO_STDEXCEPT
-	setsizeerr();
-#endif
-	return rem;
-      }
-      rem=tmp;
-      ppz(rem);
-    }
-    return rem;
-  }
-
-  polynome reduce(const polynome & p,vectpoly::const_iterator it0,vectpoly::const_iterator itend,environment * env){
-    if (p.coord.empty())
-      return p;
-    polynome rem(p);
+      return ;
+    polynome TMP1(p.dim,p),TMP2(p.dim,p);
     std::vector< monomial<gen> >::const_iterator pt,ptend;
-    vectpoly::const_iterator it;
+    const polynome * it;
     for (;;){
       ptend=rem.coord.end();
       // look in rem for a monomial >= to a monomial in it0, then it0+1 
@@ -3199,49 +3156,1207 @@ namespace giac {
       }
       else {
 	simplify(a,b);
+	m=b*m;
+#if 0
 	polynome temp=it->shift(pt->index-it->coord.front().index,a);
 	if (is_one(b))
 	  rem = rem-temp;
 	else {
 	  rem = b*rem - temp;
-	  ppz(rem);
+	  inplace_ppz(rem);
 	}
+#else
+	TMP1.coord.clear();
+	TMP2.coord.clear();
+	Shift(it->coord,pt->index-it->coord.front().index,a,TMP1.coord);
+	if (!is_one(b))
+	  rem *= b;
+	rem.TSub(TMP1,TMP2);
+	swap(rem.coord,TMP2.coord);
+#endif
       }
     }
-    if (env && env->moduloon)
-      ;
-    else
-      ppz(rem);
+    m=m/inplace_ppz(rem);
+  }
+
+  polynome reduce(const polynome & p,const polynome * it0,const polynome * itend,environment * env){
+    polynome rem(p.dim,p);
+    gen m;
+    reduce(p,it0,itend,rem,m,env);
     return rem;
   }
 
   polynome reduce(const polynome & p,const vectpoly & v,environment * env){
-    vectpoly::const_iterator it=v.begin(),itend=v.end();
+    const polynome * it=&v.front(),* itend=it+v.size();
     return reduce(p,it,itend,env);
   }
 
   void reduce(vectpoly & res,environment * env){
     if (res.empty())
       return;
+    polynome pred(res.front().dim,res.front());
     sort(res.begin(),res.end(),tensor_is_greater<gen>);
     // reduce res
-    int s=res.size();
-    for (int i=0;i<s-1;){
+    for (int i=res.size()-2;i>=0;){
       polynome & p=res[i];
-      polynome pred=reduce(p,res.begin()+i+1,res.end(),env);
+      gen m;
+      reduce(p,&res.front()+i+1,&res.front()+res.size(),pred,m,env);
       if (pred.coord.empty()){
 	res.erase(res.begin()+i);
-	--s;
+	--i;
 	continue;
       }
-      if (pred.coord.size()==p.coord.size() && pred*p.coord.front().value==p*pred.coord.front().value){
-	++i;
-	continue;
+      if (pred.coord.size()==p.coord.size()){
+	gen & p0=p.coord.front().value;
+	gen & pred0=pred.coord.front().value;
+	vector< monomial<gen> >::const_iterator it=p.coord.begin(),itend=p.coord.end(),jt=pred.coord.begin();
+	for (;it!=itend;++jt,++it){
+	  if (it->index!=jt->index || it->value*pred0 != jt->value*p0)
+	    break;
+	}
+	if (it==itend){
+	  --i;
+	  continue;
+	}
       }
-      res[i]=pred;
-      sort(res.begin()+i,res.end(),tensor_is_greater<gen>);
-      i=0;
+      // find where we must insert pred
+      unsigned j;
+      for (j=i+1;j<res.size();++j){
+	if (pred.is_strictly_greater(pred.coord.front().index,res[j].coord.front().index))
+	  break;
+	else
+	  swap(res[j-1].coord,res[j].coord);
+      }
+      // now we can overwrite res[j-1] (=original res[i]) with pred
+      swap(res[j-1].coord,pred.coord);
+      i=j-2;
     }
+  }
+
+  // Will work for a few order only
+  // add total degree for faster comparisons
+  struct heap_index {
+#if 0
+    unsigned short order:2;
+    unsigned short resi:23; // position in res[G[i]], up to 2^23 monomials allowed
+    unsigned short qi:23; // same for quotients[i]
+    unsigned short tdeg; // total degree of the product of monomial
+#else
+    unsigned short resi; 
+    unsigned short qi; 
+    unsigned short order; 
+    unsigned short tdeg; // total degree of the product of monomial
+#endif
+    unsigned short i; // position in G
+    index_m lm; // records the leading monomial
+    heap_index():resi(0),qi(0),order(0),tdeg(0),i(0) {}
+    heap_index(unsigned _resi,unsigned _qi,unsigned _i):order(_REVLEX_ORDER-2),tdeg(0),resi(_resi),qi(_qi),i(_i){}
+    void dbgprint() { cerr << "index" << lm << " res[G[" << i << "]][" << resi << "], quotients[" << i << "][" << qi << "]" << endl; }
+  };
+
+  bool operator < (const heap_index & b,const heap_index & a){
+    switch(a.order+2){
+    case _TDEG_ORDER:
+      if (b.tdeg!=a.tdeg)
+	return b.tdeg<a.tdeg;
+      return i_total_lex_is_strictly_greater(a.lm,b.lm);
+    case _PLEX_ORDER:
+      return i_lex_is_strictly_greater(a.lm,b.lm);
+    default:
+      if (b.tdeg!=a.tdeg)
+	return b.tdeg<a.tdeg;
+      return i_total_revlex_is_strictly_greater(a.lm,b.lm);
+    }
+  }
+
+#ifdef HEAP_REDUCE
+  void heap_reduce(const polynome & p0,const vectpoly & res,const vector<unsigned> & G,unsigned excluded,polynome & rem,polynome & p,polynome & p2,environment * env){
+    p=p0;
+    vectpoly quotients(G.size(),polynome(p.dim,p)); // init quotients to null poly
+    // first compute quotients using a heap, the heap is the sum_i res[G[i]]*quotients[i]
+    vector<index_m> reslm(G.size());
+    vecteur reslc(G.size());
+    unsigned heapsize=0;
+    for (unsigned j=0;j<G.size();++j){
+      if (j==excluded)
+	continue;
+      heapsize+=res[G[j]].coord.size();
+      if (!res[G[j]].coord.empty()){
+	reslm[j]=res[G[j]].coord.front().index;
+	reslc[j]=res[G[j]].coord.front().value;
+      }
+      if (debug_infolevel>100)
+	reslm[0].dbgprint();
+    }
+    vector<heap_index> heap;
+    heap.reserve(heapsize);
+    for (unsigned j=0;j<G.size();++j){
+      if (j==excluded)
+	continue;
+      for (unsigned k=0;k<res[G[j]].coord.size();++k)
+	heap.push_back(heap_index(k,0,j));
+      if (debug_infolevel>100)
+	heap.front().dbgprint();
+    }
+    unsigned heappos=0;
+    unsigned ppos=0;
+    for (;;){
+      gen topcoeff=0;
+      // find largest monomial between the heap and p.coord[pos]
+      index_m topindex;
+      if (heappos==0){
+	if (ppos>=p.coord.size())
+	  break; // nothing more to do, except copying the rest of p into rem
+	topindex=p.coord[ppos].index;
+	topcoeff=p.coord[ppos].value;
+	++ppos;
+      }
+      else {
+	bool popheap=true;
+	topindex=heap.front().lm;
+	if (ppos<p.coord.size()){
+	  if (topindex==p.coord[ppos].index){
+	    topcoeff=p.coord[ppos].value;
+	    ++ppos;
+	  }
+	  else {
+	    if (p.is_strictly_greater(p.coord[ppos].index,topindex)){
+	      topindex=p.coord[ppos].index;
+	      topcoeff=p.coord[ppos].value;
+	      ++ppos;
+	      popheap=false;
+	    }
+	  }
+	}
+	if (popheap){ // add all coefficients of the heap which have the same leading monomial
+	  for (;;){
+	    heap_index hf=heap.front();
+	    std::pop_heap(heap.begin(),heap.begin()+heappos);
+	    topcoeff -= res[G[hf.i]].coord[hf.resi].value*quotients[hf.i].coord[hf.qi].value;
+	    // replace heap term 
+	    ++hf.qi;
+	    if (hf.qi<quotients[hf.i].coord.size()){
+	      hf.lm = res[G[hf.i]].coord[hf.resi].index + quotients[hf.i].coord[hf.qi].index;
+	      hf.tdeg = total_degree(res[G[hf.i]].coord[hf.resi].index)+total_degree(quotients[hf.i].coord[hf.qi].index);
+	      heap[heappos-1]=hf;
+	      std::push_heap(heap.begin(),heap.begin()+heappos);
+	    }
+	    else { // quotient term unknown
+	      heap[heappos-1]=hf;
+	      --heappos;
+	    }
+	    if (heappos==0 || heap.front().lm!=topindex)
+	      break;
+	  } // end for
+	} // end if popheap
+      } // end else heap.empty()
+      if (is_zero(topcoeff)){
+	continue;
+      }
+      // now we have collected the top coeff and monomial of p-sum_i res[G[i]]*quotients[i]
+      // if we can find a leading monomial in res[G[i]] that is <= to this monomial
+      // add a new quotient term, update the heap
+      // otherwise move the coeff/monomial to rem
+      unsigned j;
+      for (j=0;j<G.size();++j){
+	if (j==excluded)
+	  continue;
+	if (topindex >= reslm[j])
+	  break;
+      }
+      if (j==G.size()){
+	rem.coord.push_back(monomial<gen>(topcoeff,topindex));
+	continue;
+      }
+      // Add a quotient term, 
+      // FIXME, take care of env
+      gen s=reslc[j];
+      simplify(s,topcoeff);
+      if (is_minus_one(s)){ // should check also for i and -i
+	s=-s;
+	topcoeff=-topcoeff;
+      }
+      if (!is_one(s)){ // multiply everything by s, so that no fraction appear
+	rem *= s;
+	p *= s;
+	for (unsigned k=0;k<G.size();++k)
+	  quotients[k] *= s;
+      }
+      index_m qlm=topindex-reslm[j];
+      quotients[j].coord.push_back(monomial<gen>(topcoeff,qlm));
+      // look after the heap for terms with
+      // i==j and qi=quotients[j].coord.size()-1
+      // if multiplied by res[G[i]][0] increment qi, otherwise
+      // their index must be computed and they must be pushed on the heap
+      for (unsigned k=heappos;k<heapsize;++k){
+	heap_index & hf =heap[k];
+	if (hf.i==j && hf.qi==quotients[j].coord.size()-1){
+	  if (hf.resi==0)
+	    ++hf.qi;
+	  else {
+	    hf.lm=qlm+res[G[hf.i]].coord[hf.resi].index;
+	    hf.tdeg=total_degree(qlm)+total_degree(res[G[hf.i]].coord[hf.resi].index);
+	    swap(heap[heappos],hf);
+	    ++heappos;
+	    push_heap(heap.begin(),heap.begin()+heappos);
+	  }
+	}
+      }
+    } // end of division loop
+    gen g=inplace_ppz(rem);
+    if (debug_infolevel>1)
+      cerr << "ppz is " << g << endl;
+  }
+#endif
+
+  // #define LINEAR_COMB
+#ifdef LINEAR_COMB // it's slower, perhaps because a==1 makes new elements
+  // a*A+b*B_shifted -> res
+  void linear_combination(const polynome & A,const gen & a,const polynome & B,const gen & b,const index_m & bshift,polynome & res){
+    vector< monomial<gen> >::const_iterator ait=A.coord.begin(),ait_end=A.coord.end(),
+      bit=B.coord.begin(),bit_end=B.coord.end();
+    for (;;){
+      // If A is finished, fill up with elements from B and stop
+      if (ait == ait_end) {
+	while (bit != bit_end) {
+	  res.coord.push_back(monomial<gen>(b*bit->value,bit->index+bshift));
+	  ++bit;
+	}
+	break;
+      } 
+      // If A is finished, fill up with elements from a and stop
+      if (bit == bit_end) {
+	while (ait != ait_end) {
+	  res.coord.push_back(monomial<gen>(a*ait->value,ait->index));
+	  ++ait;
+	}
+	break;
+      } 
+      index_m pow_b = bit->index+bshift;
+      // ait and b are non-empty, compare powers
+      if (ait->index==pow_b){
+	gen diff = a* ait->value + b* bit->value;
+	if (!is_zero(diff))
+	  res.coord.push_back(monomial<gen>(diff,ait->index));
+	++ait;
+	++bit;
+      }
+      else {
+	while (ait!=ait_end && A.is_strictly_greater(ait->index, pow_b)) {
+	  // a has greater power, get coefficient from a
+	  res.coord.push_back(monomial<gen>(a*ait->value,ait->index));
+	  ++ait;
+	} 
+	if (ait==ait_end || ait->index!=pow_b){
+	  // b has greater power, get coefficient from b
+	  res.coord.push_back(monomial<gen>(b*bit->value,pow_b));
+	  ++bit;
+	} 
+      }
+    }  
+  }
+#endif
+
+  void reduce(const polynome & p,const vectpoly & res,const vector<unsigned> & G,unsigned excluded,polynome & rem,polynome & TMP1, polynome & TMP2,environment * env){
+#ifdef HEAP_REDUCE
+    TMP2.coord.clear();
+    heap_reduce(p,res,G,excluded,TMP2,TMP1,TMP2,env);
+    swap(rem.coord,TMP2.coord);
+    return;
+#endif
+    if (&p!=&rem)
+      rem=p;
+    if (p.coord.empty())
+      return ;
+    std::vector< monomial<gen> >::const_iterator pt,ptend;
+    unsigned i,rempos=0;
+    for (unsigned count=0;;++count){
+      ptend=rem.coord.end();
+#if 1 // this branch search first in all leading coeff of G for a monomial 
+      // <= to the current rem monomial
+      pt=rem.coord.begin()+rempos;
+      if (pt>=ptend)
+	break;
+      for (i=0;i<G.size();++i){
+	if (i==excluded || res[G[i]].coord.empty())
+	  continue;
+	if (pt->index>=res[G[i]].coord.front().index)
+	  break;
+      }
+      if (i==G.size()){ // no leading coeff of G is smaller than the current coeff of rem
+	++rempos;
+	continue;
+      }
+#else
+      // look in rem for a monomial >= to a monomial in it0, then it0+1 
+      for (i=0; i<G.size() ;++i){
+	if (i==excluded || res[G[i]].coord.empty())
+	  continue;
+	const index_m & Gi=res[G[i]].coord.front().index;
+	for (pt=rem.coord.begin();pt!=ptend;++pt){
+	  if (pt->index>=Gi)
+	    break;
+	}
+	if (pt!=ptend)
+	  break;
+      }
+      if (i==G.size()) // no monomial of rem are divisible by LT(b): finished
+	break;
+#endif
+      gen a(pt->value),b(res[G[i]].coord.front().value);
+      if (env && env->moduloon){
+	polynome temp=res[G[i]].shift(pt->index-res[G[i]].coord.front().index,a*invmod(b,env->modulo));
+	rem = smod(rem - temp,env->modulo) ; // FIXME: improve!
+      }
+      else {
+	simplify(a,b);
+	if (b==-1){
+	  b=-b;
+	  a=-a;
+	}
+	TMP1.coord.clear();
+	TMP2.coord.clear();
+#if 0
+	linear_combination(rem,b,res[G[i]],-a,pt->index-res[G[i]].coord.front().index,TMP2);
+#else
+	Shift(res[G[i]].coord,pt->index-res[G[i]].coord.front().index,a,TMP1.coord);
+	if (!is_one(b)){
+	  rem *= -b;
+	  rem.TAdd(TMP1,TMP2);
+	}
+	else
+	  rem.TSub(TMP1,TMP2);
+#endif
+	swap(rem.coord,TMP2.coord);
+	// zint_ppz(rem);
+      }
+    }
+    gen g=inplace_ppz(rem);
+    if (debug_infolevel>1)
+      cerr << "ppz was " << g << endl;
+  }
+
+  void reduce(const polynome & p,const vectpoly & res,const vector<unsigned> & G,unsigned excluded,polynome & rem,environment * env){
+    polynome TMP1(p.dim,p),TMP2(p.dim,p);
+    reduce(p,res,G,excluded,rem,TMP1,TMP2,env);
+  }
+
+  // reduce with respect to itself the elements of res with index in G
+  void reduce(vectpoly & res,vector<unsigned> G,environment * env){
+    if (res.empty() || G.empty())
+      return;
+    polynome pred(res.front().dim,res.front());
+    polynome TMP1(res.front().dim,res.front()),TMP2(res.front().dim,res.front());
+    // reduce res
+    for (int i=0;i<G.size();++i){
+      polynome & p=res[i];
+      reduce(p,res,G,i,pred,TMP1,TMP2,env);
+      swap(res[i].coord,pred.coord);
+    }
+  }
+
+  void ppz(vectpoly & res){
+    vectpoly::iterator it=res.begin(),itend=res.end();
+    for (;it!=itend;++it)
+      inplace_ppz(*it);
+  }
+
+  static void gbasis_update(vector<unsigned> & G,vector< pair<unsigned,unsigned> > & B,vectpoly & res,unsigned pos,environment * env){
+    const polynome & h = res[pos];
+    vector<unsigned> C;
+    C.reserve(G.size());
+    const index_m & h0=h.coord.front().index;
+    index_t tmp1,tmp2;
+    // C is used to construct new pairs
+    // create pairs with h and elements g of G, then remove
+    // -> if g leading monomial is prime with h, remove the pair
+    // -> if g leading monomial is not disjoint from h leading monomial
+    //    keep it only if lcm of leading monomial is not divisible by another one
+    for (unsigned i=0;i<G.size();++i){
+      if (res[G[i]].coord.empty() || disjoint(h0,res[G[i]].coord.front().index))
+	continue;
+      index_lcm(h0,res[G[i]].coord.front().index,tmp1); // h0 and G[i] leading monomial not prime together
+      unsigned j;
+      for (j=0;j<G.size();++j){
+	if (i==j || res[G[j]].coord.empty())
+	  continue;
+	index_lcm(h0,res[G[j]].coord.front().index,tmp2);
+	if (tmp1>=tmp2){
+	  // found another pair, keep the smallest, or the first if equal
+	  if (tmp1!=tmp2)
+	    break; 
+	  if (i>j)
+	    break;
+	}
+      } // end for j
+      if (j==G.size())
+	C.push_back(G[i]);
+    }
+    vector< pair<unsigned,unsigned> > B1;
+    B1.reserve(B.size()+C.size());
+    for (unsigned i=0;i<B.size();++i){
+      if (res[B[i].first].coord.empty() || res[B[i].second].coord.empty())
+	continue;
+      index_lcm(res[B[i].first].coord.front().index,res[B[i].second].coord.front().index,tmp1);
+      if (!(tmp1>=h0)){
+	B1.push_back(B[i]);
+	continue;
+      }
+      index_lcm(res[B[i].first].coord.front().index,h0,tmp2);
+      if (tmp2==tmp1){
+	B1.push_back(B[i]);
+	continue;
+      }
+      index_lcm(res[B[i].second].coord.front().index,h0,tmp2);
+      if (tmp2==tmp1){
+	B1.push_back(B[i]);
+	continue;
+      }
+    }
+    // B <- B union pairs(h,g) with g in C
+    for (unsigned i=0;i<C.size();++i)
+      B1.push_back(pair<unsigned,unsigned>(pos,C[i]));
+    swap(B1,B);
+    // Update G by removing elements with leading monomial >= leading monomial of h
+    C.clear();
+    C.reserve(G.size());
+#if 0 // sort G by leading monomial increasing order
+    bool pospushed=false;
+    for (unsigned i=0;i<G.size();++i){
+      if (!res[G[i]].coord.empty() && !(res[G[i]].coord.front().index>=h0)){
+	// reduce res[G[i]] with respect to h
+	reduce(res[G[i]],&h,&h+1,res[G[i]],env);
+	if (!pospushed && res[G[i]].is_strictly_greater(res[G[i]].coord.front().index,h0)){
+	  pospushed=true;
+	  C.push_back(pos);
+	}
+	C.push_back(G[i]);
+      }
+      // NB: removing all pairs containing i in it does not work
+    }
+    if (!pospushed)
+      C.push_back(pos);
+#else // without sorting G
+    for (unsigned i=0;i<G.size();++i){
+      if (!res[G[i]].coord.empty() && !(res[G[i]].coord.front().index>=h0)){
+	// reduce res[G[i]] with respect to h
+	gen m;
+	reduce(res[G[i]],&h,&h+1,res[G[i]],m,env);
+	C.push_back(G[i]);
+      }
+      // NB: removing all pairs containing i in it does not work
+    }
+    C.push_back(pos);
+#endif
+    swap(C,G);
+  }
+
+  // first occurence in v: i<0 not found, i>=0 means v[i]==idx
+  int find(const vector<index_m> & v,const index_m & idx){
+    unsigned debut=0,fin=v.size(); // search in [debut,fin[
+    if (v.empty() || i_lex_is_strictly_greater(v[0],idx))
+      return -1;
+    if (i_lex_is_strictly_greater(idx,v.back()))
+      return -fin;
+    for (;fin-debut>1;){
+      unsigned i=(fin+debut)/2;
+      if (i_lex_is_greater(v[i],idx)){
+	if (v[i]==idx)
+	  return i;
+	fin=i;
+      }
+      else
+	debut=i;
+    }
+    if (v[debut]==idx)
+      return debut;
+    return -fin;
+  }
+
+  void inplace_division(gen & a,const gen & b){
+#ifndef USE_GMP_REPLACEMENTS
+    if (a.type==_ZINT && a.ref_count()==1){
+      if (b.type==_INT_ && mpz_divisible_ui_p(*a._ZINTptr,b.val)){
+	if (b.val>0)
+	  mpz_divexact_ui(*a._ZINTptr,*a._ZINTptr,b.val);
+	else {
+	  mpz_divexact_ui(*a._ZINTptr,*a._ZINTptr,-b.val);
+	  mpz_neg(*a._ZINTptr,*a._ZINTptr);
+	}
+	return;
+      }
+      if (b.type==_ZINT && mpz_divisible_p(*a._ZINTptr,*b._ZINTptr)){
+	mpz_divexact(*a._ZINTptr,*a._ZINTptr,*b._ZINTptr);
+	return;
+      }
+    }
+    if (a.type==_POLY && a.ref_count()==1){
+      *a._POLYptr /= b;
+      return;
+    }
+#endif
+    a = rdiv(a,b);
+  }
+
+  void inplace_multpoly(const gen & a,polynome & p){
+    vector< monomial<gen> >::iterator jt=p.coord.begin(),jtend=p.coord.end();
+    for (;jt!=jtend;++jt)
+      type_operator_times(a,jt->value,jt->value);
+  }
+
+  void inplace_divpoly(polynome & p,const gen & a){
+    vector< monomial<gen> >::iterator jt=p.coord.begin(),jtend=p.coord.end();
+    for (;jt!=jtend;++jt)
+      inplace_division(jt->value,a);
+  }
+
+  // (a*A+b*B)/c->B, in-place
+  static void inplace_linear_combination(const gen & a,const vecteur & A,const gen & b,vecteur & B,const gen & c,int start,polynome & TMP1, polynome & TMP2){
+    const_iterateur it=A.begin()+start,itend=A.end()-1;
+    iterateur jt=B.begin()+start;
+    gen tmp;
+    for (;it!=itend;++jt,++it){
+      type_operator_times(b,*jt,*jt);
+      type_operator_times(a,*it,tmp);
+      *jt += tmp;
+      inplace_division(*jt,c);
+    }
+    // last operation is polynomial
+    if (it->type==_POLY && jt->type==_POLY){
+      *jt->_POLYptr *= b;
+      TMP1 = *it->_POLYptr;
+      inplace_multpoly(a,TMP1); // TMP1 *= a;
+      TMP2.coord.clear();
+      TMP1.TAdd(*jt->_POLYptr,TMP2);
+      inplace_divpoly(TMP2,c); // TMP2 /= c;
+      swap(TMP2.coord,jt->_POLYptr->coord);
+    }
+    else {
+      type_operator_times(b,*jt,*jt);
+      type_operator_times(a,*it,tmp);
+      *jt += tmp;
+      *jt = *jt/c;
+    }
+  }
+
+  static void inplace_multvecteur(const gen & a,vecteur & A,int start=0){
+    iterateur it=A.begin()+start,itend=A.end()-1;
+    for (;it!=itend;++it){
+      type_operator_times(a,*it,*it);
+    }
+    if (it->type==_POLY){
+      inplace_multpoly(a,*it->_POLYptr);
+      // *it->_POLYptr *= a;
+    }
+    else
+      type_operator_times(a,*it,*it);      
+  }
+
+  static void inplace_divvecteur(vecteur & A,const gen & a,int start=0){
+    iterateur it=A.begin()+start,itend=A.end()-1;
+    for (;it!=itend;++it){
+      inplace_division(*it,a);
+    }
+    if (it->type==_POLY){
+      inplace_divpoly(*it->_POLYptr,a);
+      // *it->_POLYptr /= a;
+    }
+    else
+      inplace_division(*it,a);
+  }
+
+  vecteur coeffs(const polynome & p,vector<index_m> rmonomials,environment * env){
+    vecteur res(rmonomials.size());
+    for (unsigned k=0;k<p.coord.size();++k){
+      int pos=find(rmonomials,p.coord[k].index);
+      if (pos<0 || pos>=res.size())
+	return res; // FIXME error (should not happen)
+      res[pos]=p.coord[k].value;
+    }
+  }
+
+  bool fglm_lex(const vectpoly & G,vectpoly & Glex,unsigned maxpow,environment * env,GIAC_CONTEXT){
+    Glex.clear();
+    if (G.empty())
+      return true;
+    const polynome & G0=G.front();
+    unsigned dim=G0.dim;
+    vector<index_m> rmonomials; 
+    // rmonomials contains the list of indexes of monomials of reducted poly
+    // they are sorted
+    vector<unsigned> positions;
+    // positions[k] is the column of the matrix corresponding to rmonomials[k]
+    // that way we can quickly find a monomial in rmonomials (sorted) and
+    // find the corresponding column in the matrix mat
+    // the two last columns of mat are non-reduced and reduced polynomials
+    matrice mat,matr; vecteur ligne; vecteur pivots;
+    // rows of mat are made of coefficients wrt monomials of reduction wrt G
+    // of the non reduced monomial (last col of G)
+    // then new monomials may be added to rmonomials to take in account reduced[i]
+    // adding new columns of 0 to mat
+    // then reduction of last row by previous ones
+    // ? and reduction of a column by the last row (TODO?)
+    // with same linear combination on the (nonreduced) last column
+    // if the last line is 0 -> new element nonreduced in Glex
+    index_m idxm(dim);
+    index_t idxt(dim),prev;
+    polynome M(G0.dim,G0),R(G0.dim,G0),Rlex(G0.dim),TMP1(G0.dim),TMP2(G0.dim);
+    M.coord.push_back(monomial<gen>(1,idxm));
+    gen m;
+    reduce(M,&G.front(),&G.back()+1,R,m,env);
+    if (R.coord.empty()){
+      Glex.push_back(M);
+      return true;
+    }
+    rmonomials.push_back(idxm);
+    positions.push_back(0);
+    ligne.push_back(1);
+    ligne.push_back(M);
+    mat.push_back(ligne);
+    idxt[dim-1]=1;
+    for (;;){
+      if (sum_degree(idxt)>maxpow)
+	return false;
+      bool found=false;
+      // reduce monomial w.r.t. G (G order)
+      M.coord.clear();
+      idxm=index_t(idxt);
+      M.coord.push_back(monomial<gen>(1,idxm));
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce begin " << M << endl;
+      gen mprev=m;
+      m=1;
+      if (prev.empty())
+	reduce(M,&G.front(),&G.back()+1,R,m,env); // m*M=<G>+R
+      else {
+	vector< monomial<gen> >::iterator it=R.coord.begin(),itend=R.coord.end();
+	for (;it!=itend;++it){
+	  *it=it->shift(idxt-prev);
+	}
+	reduce(R,&G.front(),&G.back()+1,R,m,env); // m*R=<G>+R
+	m=mprev*m;
+      }
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce end " << endl;
+      // 1st check if we need to add new monomials
+      int pos;
+      bool inserted=false;
+      for (unsigned i=0;i<R.coord.size();++i){
+	pos=find(rmonomials,R.coord[i].index);
+	if (pos<0){
+	  // set this monomial at column mat.size()
+	  rmonomials.insert(rmonomials.begin()-pos,R.coord[i].index);
+	  int c=mat.size();
+	  for (unsigned j=0;j<positions.size();++j){
+	    if (positions[j]>=c)
+	      ++positions[j];
+	  }
+	  positions.insert(positions.begin()-pos,c);
+	  for (unsigned j=0;j<mat.size();++j){
+	    vecteur & l=*mat[j]._VECTptr;
+	    l.insert(l.begin()+c,0);
+	  }
+	  inserted=true;
+	}
+      }
+      if (debug_infolevel>0)
+	cerr << clock() << " end insert monomials" << endl;
+      // now make last matrix line
+      ligne.clear();
+      for (unsigned i=0;i<positions.size();++i)
+	ligne.push_back(0);
+      for (unsigned i=0;i<R.coord.size();++i){
+	int pos=find(rmonomials,R.coord[i].index);
+	if (pos<0 || pos>=ligne.size())
+	  return false; // (should not happen)
+	ligne[positions[pos]]=R.coord[i].value;
+      }
+      swap(Rlex.coord,M.coord);
+      Rlex *= m; // no need to sort here
+      ligne.push_back(Rlex);
+      mat.push_back(ligne);
+      // Gauss row reduction on mat
+      gen det,bareiss=1,piv,coeff;
+      int li=0,lmax=mat.size(),c=0,cmax=mat.front()._VECTptr->size()-1;
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce line" << endl;
+      for (;li<lmax-1 && c<cmax;){
+	vecteur & v=*mat[li]._VECTptr;
+	piv=v[c];
+	if (is_zero(piv)){
+	  // ERROR
+	  cerr << "error" << endl;
+	  break;
+	}
+	vecteur & w =*mat[lmax-1]._VECTptr;
+	coeff=w[c];
+	// row combination of mat[lmax-1] and mat[p]
+	if (is_zero(coeff)){
+	  gen x=piv/bareiss,num,den;
+	  if (!is_one(x) && !is_minus_one(x)){
+	    fxnd(x,num,den);
+	    inplace_multvecteur(num,w,c+1);
+	    if (!is_one(den))
+	      inplace_divvecteur(w,den,c+1);
+	  }
+	}
+	else {
+	  w[c]=0;
+	  inplace_linear_combination(-coeff,v,piv,w,bareiss,c+1,TMP1,TMP2);
+	  // linear_combination(piv,*mat[lmax-1]._VECTptr,-coeff,*mat[li]._VECTptr,bareiss,*mat[lmax-1]._VECTptr,0.0,0);
+	}
+	bareiss=piv;
+	++li;
+	++c;
+      }
+#if 0 // creates 0 in column c==lmax-1
+      if (li==lmax-1 && c==li && !is_zero(piv=(*mat[li]._VECTptr)[c])){
+	if (c)
+	  bareiss=(*mat[c-1]._VECTptr)[c-1];
+	else
+	  bareiss=1;
+	for (li=0;li<lmax-1;++li){
+	  vecteur & w=*mat[li]._VECTptr;
+	  coeff=w[c];
+	  vecteur & v =*mat[lmax-1]._VECTptr;
+	  if (is_zero(coeff)){
+	    gen x=piv/bareiss,num,den;
+	    if (!is_one(x) && !is_minus_one(x)){
+	      fxnd(x,num,den);
+	      inplace_multvecteur(num,w,c+1);
+	      if (!is_one(den))
+		inplace_divvecteur(w,den,c+1);
+	    }
+	  }
+	  else {
+	    w[c]=0;
+	    inplace_linear_combination(-coeff,v,piv,w,bareiss,c+1,TMP1,TMP2);
+	  }
+	}
+      }
+#endif
+      const vecteur & l=*mat.back()._VECTptr;
+      if (li==lmax-1 && c<cmax){
+	// search in current line for first non-zero pivot
+	// exchange columns
+	if (is_zero(l[c])){
+	  for (pos=c+1;pos<cmax;++pos){
+	    if (!is_zero(l[pos])){ // if it does not happen, add to Glex
+	      for (unsigned k=0;k<positions.size();++k){
+		if (positions[k]==c)
+		  positions[k]=pos;
+		else {
+		  if (positions[k]==pos)
+		    positions[k]=c;
+		}
+	      }
+	      for (unsigned k=0;k<mat.size();++k){
+		vecteur & w = *mat[k]._VECTptr;
+		swapgen(w[c],w[pos]);
+	      }
+	      break;
+	    }
+	  }
+	}
+      }
+      if (li<lmax-1 && c<cmax){
+	for (unsigned i=0;i<mat.size();++i){
+	  vecteur & v=*mat[i]._VECTptr;
+	  gen g=lgcd(v);
+	  divvecteur(v,g,v);
+	}
+	mrref(mat,matr,pivots,det,0,mat.size(),0,mat.front()._VECTptr->size()-2,
+	      false,0,true,RREF_BAREISS,0,context0);
+	swap(mat,matr);
+      }
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce line end" << endl;
+      // if last line is 0, add element to Glex and remove last line from mat
+      for (pos=0;pos<l.size()-1;++pos){
+	if (!is_zero(l[pos]))
+	  break;
+      }
+      if (pos==l.size()-1){
+	if (l.back().type!=_POLY)
+	  return false; // should not happen
+	Glex.push_back(*l.back()._POLYptr);
+	ppz(Glex.back());
+	if (debug_infolevel>0){
+	  cerr << "Found element " << Glex.back() << endl;
+	}
+	index_t tmp=l.back()._POLYptr->coord.front().index.iref();
+	index_t tmp1(dim);
+	tmp1[0]=tmp[0];
+	if (tmp==tmp1){
+	  reduce(Glex,env);
+	  reverse(Glex.begin(),Glex.end());
+	  return true;
+	}
+	mat.pop_back();
+      }
+      // compute next monomial using lex ordering
+      pos=dim-1;
+      prev=idxt;
+      for (;pos>=0;--pos){
+	++idxt[pos];
+	idxm=idxt;
+	// compare to Glex leading monomial, if >= to one of them -> change var
+	unsigned j=0;
+	for (;j<Glex.size();++j){
+	  if (idxm>=Glex[j].coord.front().index)
+	    break;
+	}
+	if (j==Glex.size())
+	  break;
+	prev.clear();
+	idxt[pos]=0;
+      }
+      if (pos<0) // should not happen
+	return true;
+    }
+    return true;
+  }
+
+#if 0
+  // try to convert a basis G to a lex basis Glex
+  bool fglm1_lex(const vectpoly & G,vectpoly & Glex,unsigned maxpow,environment * env,GIAC_CONTEXT){
+    Glex.clear();
+    if (G.empty())
+      return true;
+    const polynome & G0=G.front();
+    unsigned dim=G0.dim;
+    vector<index_m> monomials,rmonomials; 
+    // monomials contains the list of indexes of input monomials
+    vectpoly reduced; 
+    // reduced[i] is the reduction wrt G of monomials[i]
+    // rmonomials is the list of monomials of all reduced[i]
+    // they are sorted in increasing lex order 
+    index_m idxm(dim);
+    index_t idxt(dim);
+    polynome M(G0.dim,G0),R(G0.dim,G0);
+    M.coord.push_back(monomial<gen>(1,idxm));
+    gen m;
+    reduce(M,&G.front(),&G.back()+1,R,m,env);
+    if (R.coord.empty()){
+      Glex.push_back(M);
+      return true;
+    }
+    monomials.push_back(idxm);
+    rmonomials.push_back(idxm);
+    reduced.push_back(R);
+    matrice lignes,syst,syst0;
+    idxt[dim-1]=1;
+    for (;;){
+      if (sum_degree(idxt)>maxpow)
+	return false;
+      bool found=false;
+      // reduce monomial w.r.t. G (G order)
+      idxm=index_t(idxt);
+      M.coord.front().index=idxm;
+      gen m;
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce begin " << endl;
+      reduce(M,&G.front(),&G.back()+1,R,m,env);
+      if (debug_infolevel>0)
+	cerr << clock() << " reduce end " << endl;
+      if (R.coord.empty()){
+	Glex.push_back(M);
+	break;
+      }
+      R /= m;
+      // can we express the reduction as a linear combination of the preceding ones?
+      // 1st check by updating rmonomial, if we need to add a monomial there answer is no
+      int pos;
+      bool inserted=false;
+      for (unsigned i=0;i<R.coord.size();++i){
+	// cerr << rmonomials << " " << R.coord[i].index << endl;
+	pos=find(rmonomials,R.coord[i].index);
+	if (pos<0){
+	  rmonomials.insert(rmonomials.begin()-pos,R.coord[i].index);
+	  inserted=true;
+	}
+      }
+      // if i==R.coord.size(), solve linear system to find linear. comb.
+      if (!inserted){
+	if (debug_infolevel>0){
+	  if (R==M)
+	    cerr << "R=M " ;
+	  cerr << clock() << " fill matrix " << endl;
+	}
+	lignes.clear();
+	lignes.reserve(reduced.size()+1);
+	for (unsigned k=0;k<reduced.size();k++){
+	  lignes.push_back(coeffs(reduced[k],rmonomials,env));
+	}
+	lignes.push_back(coeffs(R,rmonomials,env));
+	int nunknown=lignes.size();
+	vecteur B;
+	mtran(lignes,syst);
+	int neq=syst.size();
+	bool checked=false;
+#if 0	
+	// scan lines of syst to simplify the system
+	// if a line contains only 1 non-zero coeff (except last col)
+	// we can determine the unknown of that column
+	vecteur sol(nunknown,undef);
+	vecteur syst1(syst);
+	unsigned totalfound=0;
+	for (;;){
+	  unsigned found=0;
+	  for (unsigned i=0;i<syst1.size();++i){
+	    unsigned pos=-1;
+	    const vecteur & current=*syst1[i]._VECTptr;
+	    gen somme;
+	    for (unsigned j=0;j<nunknown-1;j++){
+	      if (is_zero(current[j]))
+		continue;
+	      if (sol[j]==undef){
+		if (pos==-1)
+		  pos=j;
+		else {
+		  pos=-1;
+		  break;
+		}
+	      }
+	      else
+		somme += current[j]*sol[j];
+	    }
+	    if (pos!=-1){
+	      sol[pos]=(current[nunknown-1]-somme)/current[pos];
+	      syst1.erase(syst1.begin()+i);
+	      --i;
+	      ++found;
+	      ++totalfound;
+	      if (totalfound==nunknown-1)
+		break;
+	    }
+	  }
+	  if (found==0 || totalfound==nunknown-1)
+	    break;
+	}
+	if (totalfound==nunknown-1){
+	  sol[nunknown-1]=1;
+	  checked=true;
+	  if (is_zero(multmatvecteur(syst,sol)))
+	    B=vecteur(1,sol);
+	}
+	// lignes.size()== number of unknowns, syst.size()=numbers of equations
+	// first try to solve with number of equations=number of unknowns -1 ?
+	// if the ker is dim 1 we can check that full_syst*ker[0]=0
+	if (neq>nunknown){
+	  syst0=vecteur(syst.begin(),syst.begin()+nunknown-1);
+	  mker(syst0,B,contextptr);
+	  if (B.size()!=1)
+	    B.clear();
+	  else {
+	    checked=true;
+	    if (!is_zero(multmatvecteur(syst,B)))
+	      B.clear();
+	  }
+	}
+#endif
+	if (!checked){
+	  gen m;
+	  for (unsigned i=0;i<syst.size();++i){
+	    lcmdeno(*syst[i]._VECTptr,m,context0);
+	  }
+	  if (debug_infolevel>0)
+	    cerr << clock() << " ker begin " << neq << "*" << nunknown << endl;
+	  mker(syst,B,contextptr);
+	  if (debug_infolevel>0)
+	    cerr << clock() << " ker end " << endl;
+	}
+	if (is_undef(B) || B.empty())
+	  ;
+	else {
+	  // The last element of B must have a non-zero last component
+	  vecteur Bend=*B.back()._VECTptr;
+	  gen last=Bend.back();
+	  if (!is_zero(last)){
+	    // solution found!
+	    // make scalar product of Bend with reduced
+	    polynome res(dim);
+	    res.coord.push_back(monomial<gen>(last,idxm));
+	    for (unsigned k=0;k<reduced.size();++k){
+	      if (!is_zero(Bend[k]))
+		res.coord.push_back(monomial<gen>(Bend[k],monomials[k]));
+	    }
+	    res.tsort();
+	    m=1;
+	    lcmdeno(res,m);
+	    res *= m;
+	    Glex.push_back(res);
+	    if (debug_infolevel>0)
+	      cerr << "Found element beginning with [x1,x2,...]^" << idxt << endl;
+	    // check if we are finished
+	    index_t tmp=res.coord.front().index.iref();
+	    index_t tmp1(dim);
+	    tmp1[0]=tmp[0];
+	    if (tmp==tmp1)
+	      return true;
+	    found=true;
+	  }
+	}
+      }
+      // if monomial not found
+      // add idxm to the list of monomials and R to the list of reduced
+      if (!found){
+	monomials.push_back(idxm);
+	reduced.push_back(R);
+	change_monomial_order(reduced.back(),_PLEX_ORDER);
+      }
+      // compute next monomial using lex ordering
+      pos=dim-1;
+      for (;pos>=0;--pos){
+	++idxt[pos];
+	idxm=idxt;
+	// compare to Glex leading monomial, if >= to one of them -> change var
+	unsigned j=0;
+	for (;j<Glex.size();++j){
+	  if (idxm>=Glex[j].coord.front().index)
+	    break;
+	}
+	if (j==Glex.size())
+	  break;
+	idxt[pos]=0;
+      }
+      if (pos<0) // should not happen
+	return true;
+    }
+    return true;
+  }
+#endif
+
+  bool is_zero_dim(vectpoly & G){
+    if (G.empty())
+      return false;
+    unsigned dim=G.front().dim,count=0;
+    for (unsigned i=0;i<G.size();++i){
+      const index_m & idxm=G[i].coord.front().index;
+      // check if idx is a power of an indeterminate
+      for (unsigned j=0;j<dim;++j){
+	if (idxm[j]==0)
+	  continue;
+	index_t idxt(dim);
+	idxt[j]=idxm[j];
+	if (idxm.iref()==idxt)
+	  ++count;
+	else
+	  break;
+      }
+    }
+    return count==dim;
+  }
+
+  void giac_gbasis(vectpoly & res,const gen & order,environment * env){
+    if (order.val==_PLEX_ORDER){
+      // try first a 0-dim ideal with REVLEX and conversion
+      vectpoly resrev(res),reslex;
+      for (unsigned k=0;k<resrev.size();++k)
+	change_monomial_order(resrev[k],_REVLEX_ORDER);
+      giac_gbasis(resrev,_REVLEX_ORDER,env);
+      if (is_zero_dim(resrev) && fglm_lex(resrev,reslex,1024,env,context0)){
+	reslex.swap(res);
+	return;
+      }
+    }
+    reduce(res,env);
+    sort(res.begin(),res.end(),tensor_is_greater<gen>);
+    reverse(res.begin(),res.end());
+    if (debug_infolevel>6)
+      res.dbgprint();
+#ifndef CAS38_DISABLED
+    if (res.front().dim<12){
+      res=gbasis8(res,env);
+      reduce(res,env);
+      sort(res.begin(),res.end(),tensor_is_greater<gen>);
+      reverse(res.begin(),res.end());
+      return ;
+    }
+#endif
+#if 1
+    vector<unsigned> G;
+    vector< pair<unsigned,unsigned> > B;
+    for (unsigned l=0;l<res.size();++l){
+      gbasis_update(G,B,res,l,env);
+    }
+    for (;!B.empty();){
+      if (debug_infolevel>1)
+	cerr << clock() << " number of pairs: " << B.size() << ", base size: " << G.size() << endl;
+      // find smallest lcm pair in B
+      index_t small,cur;
+      unsigned smallpos;
+      int smalltd=RAND_MAX;
+      for (smallpos=0;smallpos<B.size();++smallpos){
+	if (!res[B[smallpos].first].coord.empty() && !res[B[smallpos].second].coord.empty())
+	  break;
+      }
+      index_lcm(res[B[smallpos].first].coord.front().index,res[B[smallpos].second].coord.front().index,small);
+      for (unsigned i=smallpos+1;i<B.size();++i){
+	if (res[B[i].first].coord.empty() || res[B[i].second].coord.empty())
+	  continue;
+	index_lcm(res[B[i].first].coord.front().index,res[B[i].second].coord.front().index,cur);
+	int curtd=RAND_MAX; // total_degree(cur); // commented otherwise lex is endless
+	if (curtd<smalltd 
+	    || (curtd==smalltd && res.front().is_strictly_greater(small,cur))
+	    ){
+	  smalltd=curtd;
+	  swap(small,cur); // small=cur;
+	  smallpos=i;
+	}
+      }
+      pair<unsigned,unsigned> bk=B[smallpos];
+      if (debug_infolevel>1 && (equalposcomp(G,bk.first)==0 || equalposcomp(G,bk.second)==0))
+	cerr << clock() << " reducing pair with 1 element not in basis " << bk << endl;
+      B.erase(B.begin()+smallpos);
+      polynome h=spoly(res[bk.first],res[bk.second],env);
+      if (debug_infolevel>1)
+	cerr << clock() << " reduce begin, pair " << bk << " remainder size " << h.coord.size() << endl;
+      reduce(h,res,G,-1,h,env);
+      if (debug_infolevel>1){
+	if (debug_infolevel>2){ cerr << h << endl; }
+	cerr << clock() << " reduce end, remainder size " << h.coord.size() << endl;
+      }
+      if (!h.coord.empty()){
+	res.push_back(h);
+	gbasis_update(G,B,res,res.size()-1,env);
+	if (debug_infolevel>2)
+	  cerr << clock() << " basis indexes " << G << " pairs indexes " << B << endl;
+      }
+    }
+    vectpoly newres(G.size(),polynome(res.front().dim,res.front()));
+    for (unsigned i=0;i<G.size();++i)
+      swap(newres[i].coord,res[G[i]].coord);
+    swap(res,newres);
+    reduce(res,env);
+    if (!env || !env->moduloon)
+      ppz(res);
+#else
+    bool notfound=true;
+    for (;notfound;){
+      if (debug_infolevel>6)
+	res.dbgprint();
+      notfound=false;
+      vectpoly::const_iterator it=res.begin(),itend=res.end(),jt;
+      vectpoly newres(res);
+      for (;it!=itend;++it){
+	for (jt=it+1;jt!=itend;++jt){
+	  if (disjoint(it->coord.front().index,jt->coord.front().index))
+	    continue;
+	  polynome toadd(spoly(*it,*jt,env));
+	  toadd=reduce(toadd,newres,env);
+	  if (!toadd.coord.empty()){
+	    newres.push_back(toadd); // should be at the right place
+	    notfound=true;
+	  }
+	}
+      }
+      reduce(newres,env);
+      swap(res,newres);
+    }
+#endif
+    sort(res.begin(),res.end(),tensor_is_greater<gen>);
+    reverse(res.begin(),res.end());
   }
 
   vectpoly gbasis(const vectpoly & v,const gen & order,bool with_cocoa,bool with_f5,environment * env){
@@ -3255,7 +4370,7 @@ namespace giac {
       if (with_cocoa){
 	bool ok=with_f5?f5(res,order):cocoa_gbasis(res,order);
 	if (ok){
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    cerr << res << endl;
 	  return res;
 	}
@@ -3265,26 +4380,7 @@ namespace giac {
       cerr << "Unable to compute gbasis with CoCoA" << endl;
     }
 #endif
-    reduce(res,env);
-    bool notfound=true;
-    for (;notfound;){
-      // cerr << res << endl;
-      notfound=false;
-      vectpoly::const_iterator it=res.begin(),itend=res.end(),jt;
-      vectpoly newres(res);
-      for (;it!=itend;++it){
-	for (jt=it+1;jt!=itend;++jt){
-	  polynome toadd(spoly(*it,*jt,env));
-	  toadd=reduce(toadd,newres,env);
-	  if (!toadd.coord.empty()){
-	    newres.push_back(toadd); // should be at the right place
-	    notfound=true;
-	  }
-	}
-      }
-      reduce(newres,env);
-      res=newres;
-    }
+    giac_gbasis(res,order,env);
     return res;
   }
 
@@ -3393,7 +4489,9 @@ namespace giac {
     vectpoly eqpr(gbasis(eqp,_PLEX_ORDER));
     // should reorder eqpr with lex order here
     // solve from right to left
+    sort(eqpr.begin(),eqpr.end(),tensor_is_greater<gen>);
     reverse(eqpr.begin(),eqpr.end());
+    // reverse(eqpr.begin(),eqpr.end());
     vecteur sols(1,vecteur(0)); // sols=[ [] ]
     vectpoly::const_iterator jt=eqpr.begin(),jtend=eqpr.end();
     for (;jt!=jtend;++jt){
@@ -3483,6 +4581,9 @@ namespace giac {
 	}
       }
     }
+#ifndef HAVE_LIBCOCOA
+    with_cocoa=false;
+#endif
   }
 
 
@@ -3490,11 +4591,11 @@ namespace giac {
     switch (order.val){
       // should be strict, but does not matter since monomials are !=
     case _REVLEX_ORDER: 
-      p.is_strictly_greater=total_revlex_is_greater<deg_t>;
+      p.is_strictly_greater=i_total_revlex_is_strictly_greater;
       p.m_is_greater=std::ptr_fun(m_total_revlex_is_greater<gen>);
       break;
     case _TDEG_ORDER:
-      p.is_strictly_greater=total_lex_is_greater<deg_t>;
+      p.is_strictly_greater=i_total_lex_is_strictly_greater;
       p.m_is_greater=std::ptr_fun(m_total_lex_is_greater<gen>);
       break;
     }
@@ -3525,7 +4626,7 @@ namespace giac {
     vecteur l=vecteur(1,v[1]);
     alg_lvar(v[0],l);
     // v[2] will serve for ordering
-    gen order=_PLEX_ORDER; // _REVLEX_ORDER;
+    gen order=0; // _REVLEX_ORDER; // 0 assumes plex and 0-dimension ideal so that FGLM applies
     bool with_f5=false,with_cocoa=true;
     read_gbargs(v,2,s,order,with_cocoa,with_f5);
     // convert eq to polynomial
@@ -3604,21 +4705,24 @@ namespace giac {
     polynome p(*eq._POLYptr);
     change_monomial_order(p,order);
     vectpoly rescocoa;
-    if (!env.moduloon && cocoa_greduce(vectpoly(1,p),eqp,order,rescocoa))
+    if (!env.moduloon && with_cocoa && cocoa_greduce(vectpoly(1,p),eqp,order,rescocoa))
       return r2e(rescocoa.front(),l,contextptr);
-    gen C(eq._POLYptr->constant_term());
     // FIXME: get constant term, substract one to get the correct constant
-    eq=eq-C+plus_one;
+    // gen C(p.constant_term());
+    // eq=eq-C+plus_one;
+    // p=*eq._POLYptr;
+    // change_monomial_order(p,order);
     // polynome res(env.moduloon?reduce(p,eqp.begin(),eqp.end(),&env):reducegb(p,eqp.begin(),eqp.end(),&env));
-    polynome res(reduce(p,eqp.begin(),eqp.end(),&env));
-    gen C1(res.constant_term());
+    gen C1;
+    reduce(p,&eqp.front(),&eqp.front()+eqp.size(),p,C1,&env);
+    // gen C1(res.constant_term());
     if (env.moduloon){
-      res=invmod(C1,env.modulo)*res;
-      modularize(res,env.modulo);
+      p=invmod(C1,env.modulo)*p;
+      modularize(p,env.modulo);
     }
     else
-      res=res/C1;
-    return r2e(res-plus_one,l,contextptr)+C;
+      p=p/C1;
+    return r2e(p,l,contextptr);
   }
   static const char _greduce_s []="greduce";
   static define_unary_function_eval (__greduce,&_greduce,_greduce_s);

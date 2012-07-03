@@ -2357,7 +2357,7 @@ namespace giac {
       return r2sym(v,l,contextptr);
     else {
       gen tmp(p_content);
-      if (!v.empty() && v.front().mult==1 && (v.size()==1 || v.front().fact.degree(0)==0)){ // for GF factorization
+      if (tmp.type>=_POLY && !v.empty() && v.front().mult==1 && (v.size()==1 || v.front().fact.degree(0)==0)){ // for GF factorization
 	v.front().fact = tmp.type==_POLY?(*tmp._POLYptr*v.front().fact):(tmp*v.front().fact);
 	return r2sym(v,l,contextptr);
       }

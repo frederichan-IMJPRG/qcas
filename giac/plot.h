@@ -287,7 +287,6 @@ namespace giac {
   extern const unary_function_ptr * const  at_plotfunc;
   extern const unary_function_ptr * const  at_funcplot;
   // gen _plot(const gen &);
-  extern const unary_function_ptr * const  at_Bezier;
   extern const unary_function_ptr * const  at_plot;
   gen remove_at_pnt(const gen & e);
 
@@ -801,6 +800,8 @@ namespace giac {
   gen _Oz_3d_unit_vector(const gen & args,GIAC_CONTEXT);
   gen _frame_3d(const gen & args,GIAC_CONTEXT);
   symbolic symb_curve(const gen & source,const gen & plot);
+  extern const unary_function_ptr * const  at_Bezier;
+
 
 #if defined(GIAC_GENERIC_CONSTANTS) || (defined(VISUALC) && !defined(RTOS_THREADX)) || defined(__x86_64__)
   extern unary_function_ptr point_sommet_tab_op[];

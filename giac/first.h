@@ -181,9 +181,8 @@ class init_gmp_memory
 extern init_gmp_memory init_gmp_memory_instance;
 
 #ifdef BCD
-
-//#define CAS38_DISABLED // if defined, disables some CAS in Aspen
-#define ASPEN_GEOMETRY
+#define ASPEN_GEOMETRY // required also here because of name resolution in identificateur.cc
+// #define CAS38_DISABLED
 
 #include <stdlib.h>
 #include "bcd_float.h" 

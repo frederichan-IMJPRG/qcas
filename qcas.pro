@@ -122,7 +122,7 @@ HEADERS += qt/output.h \
 #Hearder for libtommath
            libtommath/tommath.h \
            libtommath/tommath_class.h \
-           libtommath/tommath_superclass.h\
+           libtommath/tommath_superclass.h \
     qt/gui/prefdialog.h \
     qt/gui/plotfunctiondialog.h \
     pthread-win32/semaphore.h \
@@ -311,7 +311,7 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
            libtommath/bn_s_mp_mul_high_digs.c \
            libtommath/bn_s_mp_sqr.c \
            libtommath/bn_s_mp_sub.c \
-           libtommath/bncore.c\
+           libtommath/bncore.c \
     qt/gui/CentralTabWidget.cpp \ # qt/gui/src/qtmmlwidget.cpp \
     qt/gui/prefdialog.cpp \
     qt/geometry.cpp \

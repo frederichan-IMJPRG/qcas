@@ -280,7 +280,8 @@ GraphWidget::GraphWidget(giac::context * context,bool b,MainWindow* main):MainSh
  * @param context The current context
  * @param b is Widget Interactive ?
  */
-GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b):MainSheet(MainSheet::G2D_TYPE){
+GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b,MainWindow *main):MainSheet(MainSheet::G2D_TYPE){
+    mainWindow=main;
     isInteractiveWidget=b;
     canvas=new Canvas2D(this,context);
     initGui();
@@ -1053,7 +1054,7 @@ void GraphWidget::redo(){
     canvas->redo();
 }
 void GraphWidget::setUndoButton(bool b){
-    mainWindow->setUndoButton(b);
+       mainWindow->setUndoButton(b);
 }
 void GraphWidget::setRedoButton(bool b){
 
@@ -1521,30 +1522,31 @@ void Canvas2D::createMenuAction(){
     displayLegendAction->setCheckable(true);
     connect(displayLegendAction,SIGNAL(triggered(bool)),this,SLOT(displayLegend(bool)));
 
-    traceAction=new QAction(tr("Trace activée"),this);
-    traceAction->setCheckable(true);
-    traceAction->setChecked(false);
-    connect(traceAction,SIGNAL(triggered(bool)),this,SLOT(trace(bool)));
+    if (parent->isInteractive()){
+        traceAction=new QAction(tr("Trace activée"),this);
+        traceAction->setCheckable(true);
+        traceAction->setChecked(false);
+        connect(traceAction,SIGNAL(triggered(bool)),this,SLOT(trace(bool)));
 
+        deleteAction=new QAction(tr("Supprimer l'objet"),this);
+        deleteAction->setIcon(QIcon(":/images/delete.png"));
+        connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteObject()));
 
-    deleteAction=new QAction(tr("Supprimer l'objet"),this);
-    deleteAction->setIcon(QIcon(":/images/delete.png"));
-    connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteObject()));
+        renameAction=new QAction(tr("Renommer l'objet"),this);
+        connect(renameAction,SIGNAL(triggered()),this,SLOT(renameObject()));
 
-    renameAction=new QAction(tr("Renommer l'objet"),this);
-    connect(renameAction,SIGNAL(triggered()),this,SLOT(renameObject()));
-
-
+    }
     menuObject=new QMenu(this);
     menuObject->addAction(objectTitleAction);
     menuObject->addSeparator();
     menuObject->addAction(displayObjectAction);
     menuObject->addAction(displayLegendAction);
-    menuObject->addAction(traceAction);
-    menuObject->addAction(renameAction);
-    menuObject->addAction(deleteAction);
 
-
+    if (parent->isInteractive()){
+        menuObject->addAction(traceAction);
+        menuObject->addAction(renameAction);
+        menuObject->addAction(deleteAction);
+    }
 }
 
 void Canvas2D::setActionTool(action a){
@@ -2024,6 +2026,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
               BezierCurve* curve=new BezierCurve(path,this);
               curve->setLevel(evaluationLevel);
               curve->setAttributes(ensemble_attributs);
+              curve->setFillable(fillable);
               scene.append(curve);
             return;
 
@@ -2498,6 +2501,26 @@ void Canvas2D::createScene(const giac::gen & g){
         make_ortho();
         ortho=true;
     }
+
+     double step=(yAxisParam.max-yAxisParam.min)/8;
+     double tenPower=pow(10,floor(log10(step)));
+     int first=floor(step/tenPower);
+     if (step/tenPower-first>0.5) step=(first+1)*tenPower;
+     else step=first*tenPower;
+     yAxisParam.tick=step;
+     if (gridParam.isCartesian)
+         gridParam.y=step;
+     else gridParam.r=step;
+
+     step=(xAxisParam.max-xAxisParam.min)/8;
+     tenPower=pow(10,floor(log10(step)));
+     first=floor(step/tenPower);
+     if (step/tenPower-first>0.5) step=(first+1)*tenPower;
+     else step=first*tenPower;
+     xAxisParam.tick=step;
+     if (gridParam.isCartesian) gridParam.x=step;
+     else gridParam.r=std::max(step,gridParam.r);
+
 
 /*    if (std::isnan(xunit)||std::isnan(yunit)|| (!std::isfinite(xunit)) || (!std::isfinite(yunit))){
       xmin=-5;ymin=-5;xmax=5;ymax=5;
@@ -2980,13 +3003,6 @@ void Canvas2D::drawAxes(QPainter * painter){
         double a,b;
         painter->setPen(QPen(yAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
         double step=yAxisParam.tick;
-        if (!isInteractive()){
-            step=(yAxisParam.max-yAxisParam.min)/8;
-            double tenPower=pow(10,floor(log10(step)));
-            int first=floor(step/tenPower);
-            if (step/tenPower-first>0.5) step=(first+1)*tenPower;
-            else step=first*tenPower;
-        }
         for (int i=floor(yAxisParam.min/step);i<=floor(yAxisParam.max/step);i++){
             double grad=step*i;
             if (grad>yAxisParam.min && grad<yAxisParam.max){
@@ -3035,13 +3051,6 @@ void Canvas2D::drawAxes(QPainter * painter){
         double a,b;
         painter->setPen(QPen(xAxisParam.color,1, Qt::SolidLine ,Qt::RoundCap));
         double step=xAxisParam.tick;
-        if (!isInteractive()){
-            step=(xAxisParam.max-xAxisParam.min)/8;
-            double tenPower=pow(10,floor(log10(step)));
-            int first=floor(step/tenPower);
-            if (step/tenPower-first>0.5) step=(first+1)*tenPower;
-            else step=first*tenPower;
-        }
 
         for (int i=floor(xAxisParam.min/step);i<=floor(xAxisParam.max/step);i++){
             double grad=step*i;
@@ -3097,6 +3106,15 @@ void Canvas2D::drawGrid(QPainter * painter){
     else if (gridParam.line==7) pen.setCapStyle(Qt::SquareCap);
     painter->setPen(pen);
     if (gridParam.isCartesian){
+/*        if (!isInteractive()){
+            step=(yAxisParam.max-yAxisParam.min)/8;
+            double tenPower=pow(10,floor(log10(step)));
+            int first=floor(step/tenPower);
+            if (step/tenPower-first>0.5) step=(first+1)*tenPower;
+            else step=first*tenPower;
+        }
+*/
+
         double i=(int)(xAxisParam.min/gridParam.x)*gridParam.x;
         double a,b,c,d;
         toScreenCoord(0,yAxisParam.min,c,a);
@@ -3449,8 +3467,9 @@ void Canvas2D::moveItem(MyItem* item,const QPointF &p){
     if (item->isPointElement()){
         PointElement* pe=dynamic_cast<PointElement*>(item);
         s=(commands.at(item->getLevel())).command;
-        s.append("+");
+        s.append("+(");
         s.append(pe->getTranslation(p));
+        s.append(")");
     }
     else if (item->isPoint()){
         s.append(commandFreePoint(p));
@@ -4373,6 +4392,7 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
 
         PointElement* p=0;
         Point* origin=dynamic_cast<Point*>(v.at(0));
+
         if (origin !=0){
             p=new PointElement(origin,this);
         }
@@ -4381,9 +4401,10 @@ void Canvas2D::addNewPointElement(const QPointF &pos){
         newCommand.command=s;
         newCommand.attributes=0;
         newCommand.isCustom=false;
-        s.append("+");
+        s.append("+(");
         s.append(p->getTranslation(pos));
-
+        s.append(")");
+    //   qDebug()<<s;
         evaluationLevel=commands.size();
         g=giac::gen(s.toStdString(),context);
         v.clear();
@@ -4783,12 +4804,14 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                         objectTitleAction->setText(s);
                         displayObjectAction->setChecked(focusOwner->isVisible());
                         displayLegendAction->setChecked(focusOwner->legendVisible());
-                        if (focusOwner->isPoint()){
-                            traceAction->setChecked(focusOwner->isTraceActive());
-                            traceAction->setVisible(true);
-                        }
-                        else traceAction->setVisible(false);
 
+                        if (parent->isInteractive()){
+                           if (focusOwner->isPoint()){
+                                traceAction->setChecked(focusOwner->isTraceActive());
+                                traceAction->setVisible(true);
+                            }
+                            else traceAction->setVisible(false);
+                        }
                         menuObject->popup(this->mapToGlobal(e->pos()));
                     }
                     // display classic context menu
@@ -5205,14 +5228,14 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     angle->updateScreenCoords(true);
                     filledItems.append(angle);
                     parent->addToTree(angle);
-                    focusOwner=angle;
+/*                    focusOwner=angle;
                     for (int i=0;i<selectedItems.size();++i){
                         selectedItems.at(i)->addChild(angle);
-                    }
+                    }*/
                     // set Var
                     int id=element.text().indexOf(":=");
                    if (id!=-1){
-                       v.at(0)->setVar(element.text().left(id));
+                       angle->setVar(element.text().left(id));
                    }
 
                     findIDNT(entry,angle);
@@ -5254,6 +5277,32 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
 
 
 
+                }
+                /***********************************
+                 *********      case Multicurve
+                 **************
+                 **/
+                else if (element.attribute("isMultiCurve","0").toInt()){
+                    if (v.isEmpty()) continue;
+                    MyItem* item=v.at(0);
+                     if (v.size()>1) {
+                         item =new MultiCurve(v,this);
+                         item->setLevel(evaluationLevel);
+                         item->setLegend(element.attribute("legend",""));
+                         item->setAttributes(element.attribute("attributes","0").toInt());
+                         item->setValue(v.at(0)->getValue());
+                         findIDNT(entry,item);
+                          id=element.text().indexOf(":=");
+                         if (id!=-1){
+                             item->setVar(element.text().left(id));
+                         }
+                     }
+                     c.item=item;
+                     commands.append(c);
+                     item->updateScreenCoords(true);
+                     lineItems.append(item);
+                     parent->addToTree(item);
+                     parent->updateAllCategories();
                 }
                 else{
 
@@ -5328,6 +5377,11 @@ void Canvas2D::itemToXML(Command c,QDomElement & top , const bool &setLevel){
         command.setAttribute("step",ci->getCursorPanel()->getStep());
         command.setAttribute("value",ci->getCursorPanel()->getValue());
         command.setAttribute("var",ci->getVar());
+    }
+    else if (item->isMultiCurve()){
+        command.setAttribute("isMultiCurve",item->isMultiCurve());
+
+
     }
     QDomText text=top.ownerDocument().createTextNode(s);
     command.appendChild(text);
@@ -5648,7 +5702,9 @@ void PanelProperties::updateTree(){
 
 void PanelProperties::removeFromTree(MyItem * item){
     // Remove from listItem (if it appears)
-    int id=displayPanel->getListItems()->indexOf(item);
+    int id=-1;
+    if (displayPanel->getListItems())
+        id=displayPanel->getListItems()->indexOf(item);
     if (id!=-1) displayPanel->getListItems()->removeAt(id);
 
 

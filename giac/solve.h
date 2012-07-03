@@ -31,6 +31,7 @@ namespace giac {
   gen equal2diff(const gen & g); // rewrite = as -
   vecteur protect_sort(const vecteur & res,GIAC_CONTEXT);
   vecteur find_singularities(const gen & e,const identificateur & x,int cplxmode,GIAC_CONTEXT);
+  vecteur protect_find_singularities(const gen & e,const identificateur & x,int cplxmode,GIAC_CONTEXT);
   // isolate_mode & 1 is complex_mode, isolate_mode & 2 is 0 for principal sol
   vecteur solve(const gen & e,const identificateur & x,int isolate_mode,GIAC_CONTEXT);
   vecteur solve(const gen & e,const gen & x,int isolate_mode,GIAC_CONTEXT);
@@ -79,7 +80,7 @@ namespace giac {
   bool has_mod_coeff(const gen & e,gen & modulo);
 
   polynome spoly(const polynome & p,const polynome & q,environment * env);
-  polynome reduce(const polynome & p,vectpoly::const_iterator it,vectpoly::const_iterator itend,environment * env);
+  polynome reduce(const polynome & p,const polynome * it,const polynome * itend,environment * env);
   polynome reduce(const polynome & p,const vectpoly & v,environment * env);
   void reduce(vectpoly & res,environment * env);
   void change_monomial_order(polynome & p,const gen & order);
@@ -126,7 +127,6 @@ namespace giac {
   // returns an error or the vecteur of coordinates of variables
   // and sets min_value to f at this point
   gen fmin_cobyla(const gen & f,const vecteur & constraints,const vecteur & variables,const vecteur & guess,const gen & eps0,const gen & maxiter0,GIAC_CONTEXT);
-
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

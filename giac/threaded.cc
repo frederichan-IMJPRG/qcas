@@ -4415,21 +4415,21 @@ mpz_class smod(const mpz_class & a,int reduce){
 #endif // RTOS_THREADX
   }
 
-  static vector<int> operator / (const vector<int> & v,const vector<int> & b){
+  vector<int> operator / (const vector<int> & v,const vector<int> & b){
 #ifndef NO_STDEXCEPT
     setsizeerr(gettext("vector<int> operator /"));
 #endif
     return v;
   }
 
-  static vector<int> operator % (const vector<int> & v,const vector<int> & b){
+  vector<int> operator % (const vector<int> & v,const vector<int> & b){
 #ifndef NO_STDEXCEPT
     setsizeerr(gettext("vector<int> operator %"));
 #endif
     return v;
   }
 
-  static bool operator > (const vector<int> & v,double q){
+  bool operator > (const vector<int> & v,double q){
 #ifndef NO_STDEXCEPT
     setsizeerr(gettext("vector<int> operator >"));
 #endif
@@ -4495,7 +4495,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     return res;
   }
 
-  static std::vector<int> operator % (const std::vector<int> & a,int modulo){
+  std::vector<int> operator % (const std::vector<int> & a,int modulo){
     std::vector<int> res(a);
     std::vector<int>::iterator ita=res.begin(),itaend=res.end();
     for (;ita!=itaend;++ita)

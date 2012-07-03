@@ -3834,6 +3834,8 @@ namespace giac {
     case _REAL__REAL:
       return (*a._REALptr)+(*b._REALptr);
     case _IDNT__IDNT:
+      if (a==unsigned_inf && b==unsigned_inf)
+	return undef;
       if (a==undef || a==unsigned_inf)
 	return a;
       if (b==undef || b==unsigned_inf)
@@ -6127,7 +6129,7 @@ namespace giac {
 	return (*a._REALptr)*inv(b,context0);
       if (b.type==_REAL)
 	return a*b._REALptr->inv();
-      if (a.type==_USER || b.type==_USER)
+      if (a.type==_USER || b.type==_USER) 
 	return a*inv(b,context0);
       if (a.type==_FRAC){
 	if ( (b.type!=_SYMB) && (b.type!=_IDNT) )
@@ -6798,6 +6800,8 @@ namespace giac {
       return !e._SPOL1ptr->empty() && is_undef(e._SPOL1ptr->front().exponent);
     case _FLOAT_:
       return fis_nan(e._FLOAT_val);
+    case _DOUBLE_:
+      return my_isnan(e._DOUBLE_val);
     default:
       return false;
     }
@@ -8038,6 +8042,12 @@ namespace giac {
       else
 	return is_positive(a,context0)?a:-a;
     case _ZINT__ZINT:
+#ifndef USE_GMP_REPLACEMENTS
+      if (mpz_cmp(*a._ZINTptr,*b._ZINTptr)>0 && mpz_divisible_p(*a._ZINTptr,*b._ZINTptr))
+	return b;
+      if (mpz_cmp(*b._ZINTptr,*a._ZINTptr)>0 && mpz_divisible_p(*b._ZINTptr,*a._ZINTptr))
+	return a;
+#endif
       res = new ref_mpz_t;
       mpz_gcd(res->z,*a._ZINTptr,*b._ZINTptr);
       return(res);

@@ -288,7 +288,6 @@ void MyItem::setAttributes(const int& c){
         c.setAlpha(36*4);
         setColor(c);
     }
-
 }
 
 QColor MyItem::getFltkColor(int& c) const{
@@ -1576,6 +1575,7 @@ bool ListItem::isUnderMouse(const QRectF& p) const{
 
 }
 void ListItem::updateScreenCoords(const bool b){
+
     for (int i=0;i<list.size();++i){
         list.at(i)->updateScreenCoords(b);
     }
@@ -1599,6 +1599,12 @@ void ListItem::draw(QPainter* painter) const{
         list.at(i)->setAttributes(attributes);
         list.at(i)->draw(painter);
     }
+}
+void ListItem::setAttributes(const int & a){
+    for (int i=0;i<list.size();++i){
+        list.at(i)->setAttributes(a);
+    }
+    MyItem::setAttributes(a);
 }
 bool ListItem::isList() const{
     return true;
@@ -1655,6 +1661,7 @@ void PointElement::setOrigin(Point* p){
 PointElement::PointElement(Point *p, Canvas2D *graph ):Point(graph){
     double a,b;
     origin=QPointF(p->x,p->y);
+  //  qDebug()<<"origin"<<p->x<<p->y;
     g2d->toScreenCoord(p->x,p->y,a,b);
     originScreen=QPointF(a,b);
 }

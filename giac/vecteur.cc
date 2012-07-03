@@ -1,6 +1,5 @@
 // -*- mode:C++ ; compile-command: "g++-3.4 -I.. -I../include -g -c vecteur.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "giacPCH.h"
-
 /*
  *  Copyright (C) 2000,7 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
  *
@@ -1286,7 +1285,16 @@ namespace giac {
     if (lapack_schur(H,P,false,eigenvals,contextptr))
       return true;
 #endif
-    if (francis_schur(H,0,dim,P,SOLVER_MAX_ITERATE,dim*eps,false,false,false,contextptr)){
+    bool complex_schur=false;
+    for (unsigned i=0;!complex_schur && i<H.size();++i){
+      for (unsigned j=0;j<H[i].size();++j){
+	if (H[i][j].type==_CPLX)
+	  complex_schur=true;
+      }
+    }
+    if (!francis_schur(H,0,dim,P,SOLVER_MAX_ITERATE,dim*eps,false,complex_schur,false,contextptr))
+      hessenberg_schur(H,P,SOLVER_MAX_ITERATE,dim*eps,contextptr);
+    if (1){ // FIXME check that H is ok
       eps=dim*dim*eps;
       // read eigenvalues on diagonal of H, using subdiagonal for complex pairs
       for (int i=0;i<dim;++i){
@@ -1447,8 +1455,15 @@ namespace giac {
 	cerr << "Francis algorithm not precise enough for" << v << endl;
     }
     else {
-      if (rprec<50 && int(crystalball.size())==deg)
+      if (rprec<50 && int(crystalball.size())==deg){
+	vecteur dv(derivative(v));
+	for (unsigned j=0;j<deg;++j){
+	  gen num=horner(v,crystalball[j])/horner(dv,crystalball[j]);
+	  if (is_greater(1000*eps,abs(num,context0),context0))
+	    crystalball[j] -= num;
+	}
 	return crystalball;
+      }
     }
 #endif
 #else // HAVE_LIBMPFR
@@ -1990,7 +2005,7 @@ namespace giac {
     case _VECT:
       return is_fully_numeric(*a._VECTptr);
     case _IDNT:
-      return *a._IDNTptr==_IDNT_pi;
+      return strcmp(a._IDNTptr->id_name,"pi")==0;
     default:
       return false;
     }
@@ -2025,7 +2040,7 @@ namespace giac {
     int c=it->_VECTptr->size(); // ncols of a = rows of res
     res.reserve(c);
     // find begin of each row
-#ifdef VISUALC
+#if 1 // def VISUALC
     vecteur::const_iterator * itr=new vecteur::const_iterator[ncolres];
 #else
     vecteur::const_iterator itr[ncolres];
@@ -2036,7 +2051,7 @@ namespace giac {
     for (i=0;(i<n) && (it!=itend);++it,++i)
       itr[i]=it->_VECTptr->begin();
     for (;(i<ncolres) ;++i)
-#ifdef VISUALC
+#if 1 // def VISUALC
       * (int *) &itr[i]=0;
 #else
       itr[i]=(vecteur::const_iterator) NULL;
@@ -2048,7 +2063,7 @@ namespace giac {
       cur_row.reserve(ncolres);
       for (itrcur=itr;itrcur!=itrend;++itrcur){
 	if
-#ifdef VISUALC
+#if 1 // def VISUALC
 	  (* (int *)itrcur!=0)
 #else
 	  (*itrcur!=(vecteur::const_iterator)NULL)
@@ -2062,7 +2077,7 @@ namespace giac {
       }
       res.push_back(cur_row);
     }
-#ifdef VISUALC
+#if 1 // def VISUALC
     delete [] itr;
 #endif
   }
@@ -2684,7 +2699,7 @@ namespace giac {
 	    if (is_one(gcd(factdet,p))) // keep p prime with factdet
 	      break;
 	  }
-	  if (as>10 && debug_infolevel)
+	  if (as>10 && debug_infolevel>1)
 	    cerr << "Modrref, % done " << evalf_double(_evalf(gen(makevecteur(200*ln(pi_p,contextptr)/ln(h2,contextptr),20),_SEQ__VECT),contextptr),1,contextptr)<< ", prime " << p << ", det/lif=" << det << endl;
 	  if (!modrref(a,res,pivots,det_mod_p,l,lmax,c,cmax,
 		       false,dont_swap_below,p,1 /* det */))
@@ -2954,7 +2969,7 @@ namespace giac {
 	  for (int i=0;i<polydim;++i){
 	    summaxdeg[i]=std::min(summaxdeg[i],col_sumpartialdeg[i]);
 	  }
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    cerr << "Total degree " << maxtotaldeg << ", partial degrees " << summaxdeg << endl;
 	  // Now modify algorithm to RREF_LAGRANGE if it's faster
 	  double lagrange_time=std::pow(double(as),2)*(as*10+160); 
@@ -2971,7 +2986,7 @@ namespace giac {
 	    bareiss_time += tmp;
 	  }
 	  bareiss_time *= as; // take account of the size of the coefficients
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    cerr << "lagrange " << lagrange_time << " bareiss " << bareiss_time << endl;
 	  if (lagrange_time<bareiss_time){
 	    algorithm=RREF_LAGRANGE;
@@ -3056,10 +3071,10 @@ namespace giac {
     for (;(l<lmax) && (c<cmax);){
       if ( (!fullreduction) && (l==lmax-1) )
 	break;
-      if (debug_infolevel)
+      if (debug_infolevel>1)
 	cerr <<  "// mrref line " << l << ":" << clock() <<endl;
       pivot=M[l][c];
-      if (debug_infolevel ){
+      if (debug_infolevel>1){
 	cerr << "// ";
 	print_debug_info(pivot);
       }
@@ -3068,7 +3083,7 @@ namespace giac {
       if (l<dont_swap_below){ // scan current line for the best pivot available
 	for (int ctemp=c+1;ctemp<cmax;++ctemp){
 	  temp=M[l][ctemp];
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    print_debug_info(temp);
 	  if (!is_zero(temp,contextptr) && temp.islesscomplexthan(pivot)){
 	    pivot=temp;
@@ -3089,7 +3104,7 @@ namespace giac {
 	else {
 	  for (int ltemp=l+1;ltemp<lmax;++ltemp){
 	    temp=M[ltemp][c];
-	    if (debug_infolevel)
+	    if (debug_infolevel>1)
 	      print_debug_info(temp);
 	    if (!is_zero(temp,contextptr) && temp.islesscomplexthan(pivot)){
 	      pivot=temp;
@@ -3098,7 +3113,7 @@ namespace giac {
 	  }
 	}
       }
-      if (debug_infolevel)
+      if (debug_infolevel>1)
 	cerr << endl;
       //cout << M << endl << pivot << endl;
       if (!is_zero(pivot,contextptr)){
@@ -3138,7 +3153,7 @@ namespace giac {
 	    }
 	  }
 	  if (rref_or_det_or_lu==1 && algorithm!=RREF_GAUSS_JORDAN) {
-	    if (debug_infolevel)
+	    if (debug_infolevel>1)
 	      cerr << "//mrref clear line " << l << endl;
 	    // clear pivot line to save memory
 	    M[l].clear();
@@ -3160,7 +3175,7 @@ namespace giac {
 	    pivots.push_back(r2sym(pivot,lv,contextptr));
 	  else
 	    pivots.push_back(pivot);
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    cerr << pivots.back() << endl;
 	}
       }
@@ -3175,12 +3190,12 @@ namespace giac {
 	  l++;
       }
     } // end for reduction loop
-    if (debug_infolevel)
+    if (debug_infolevel>1)
       cerr << "// mrref reduction end:" << clock() << endl;
     if (algorithm!=RREF_GAUSS_JORDAN){
       int last=min(lmax,cmax);
       det=M[last-1][last-1];
-      if ( (debug_infolevel) && (det.type==_POLY) )
+      if ( (debug_infolevel>1) && (det.type==_POLY) )
 	cerr << "// polynomial size " << det._POLYptr->coord.size() << endl;
       if (rref_or_det_or_lu==1) // erase last line of the matrix
 	M[lmax-1].clear();
@@ -3191,7 +3206,7 @@ namespace giac {
     }
     else {
       // adjust determinant by multiplication by all diagonal coeffs
-      for (int i=linit;i<lmax;++i)
+      for (int i=linit;i<lmax && i<cmax;++i)
 	detnum = detnum * M[i][i];
       det = rdiv(detnum,detden);
       if (convert_internal)
@@ -3205,7 +3220,7 @@ namespace giac {
       vector_int2vecteur(permutation,P);
       pivots.push_back(P);
     }
-    if (debug_infolevel)
+    if (debug_infolevel>1)
       cerr << "// mrref end:" << clock() << " " << M << endl;
     return true;
   }
@@ -3449,7 +3464,7 @@ namespace giac {
 	else {      // scan N current column for the best pivot available
 	  for (int ltemp=l+1;ltemp<lmax;++ltemp){
 	    temp=N[ltemp][c];
-	    if (debug_infolevel)
+	    if (debug_infolevel>1)
 	      print_debug_info(temp);
 	    if (temp){
 	      pivot=smod(temp,modulo);
@@ -3574,7 +3589,7 @@ namespace giac {
       else {      // scan N current column for the best pivot available
 	for (int ltemp=l+1;ltemp<lmax;++ltemp){
 	  temp=N[ltemp][c];
-	  if (debug_infolevel)
+	  if (debug_infolevel>1)
 	    print_debug_info(temp);
 	  if (std::abs(temp)>std::abs(pivot)){
 	    pivot=temp;
@@ -3704,7 +3719,7 @@ namespace giac {
 	else {      // scan M current column for the best pivot available
 	  for (int ltemp=l+1;ltemp<lmax;++ltemp){
 	    temp=M[ltemp][c];
-	    if (debug_infolevel)
+	    if (debug_infolevel>1)
 	      print_debug_info(temp);
 	    if (!is_exactly_zero(temp)){
 	      pivot=temp;
@@ -3782,6 +3797,8 @@ namespace giac {
     gen un(1),zero(0);
     if (!arref.empty() && has_num_coeff(arref)){
       gen tmp=arref.front()._VECTptr->front();
+      if (is_zero(tmp))
+	tmp= tmp+1;
       un=tmp/tmp;
       zero=tmp-tmp;
     }
@@ -4634,7 +4651,7 @@ namespace giac {
     }
     // compute all possibles i*i det with columns 0..i sing (i-1)*(i-1) det
     for (int i=2;i<n;++i){
-      if (debug_infolevel)
+      if (debug_infolevel>1)
 	cerr << "// Computing " << i+1 << "*" << i+1 << "minors " << clock() << endl;
       swap(old_tab,tab_mineurs);
       tab_mineurs.clear();
@@ -4673,7 +4690,7 @@ namespace giac {
 	  index[j+1]=index[j]+1;
       }
     }
-    if (debug_infolevel)
+    if (debug_infolevel>1)
       cerr << "// Computation done " << clock() << endl;
     if (convert_internal)
       return r2sym(res,lv,contextptr);
@@ -5254,6 +5271,109 @@ namespace giac {
     }
   }
 
+  // NB: Wilkinson strategy would be choose the eigenvalue of last 2x2 block closest to last element
+  void francis_schur_iterate(std_matrix<gen> & H,double eps,const gen & l1,int n_orig,int n1,int n2,std_matrix<gen> & P,bool compute_P,GIAC_CONTEXT){
+    // compute (H-l1) on n1-th basis vector
+    gen x=H[n1][n1]-l1,y=H[n1+1][n1];
+    // make x real
+    gen xr,xi;
+    reim(x,xr,xi,contextptr);
+    x = sqrt(xr*xr+xi*xi,contextptr);
+    gen xy = gen(xr/x,-xi/x);
+    y = y*xy;
+    xy=sqrt(x*x+y*conj(y,contextptr),contextptr);
+    // normalize eigenvector
+    x = x/xy; y = y/xy;	
+    // compute reflection matrix such that Q*[1,0]=[x,y]
+    // hence column 1 is [x,y] and column2 is [conj(y),-x]
+    // apply Q on H and P: line operations on H and P
+    gen c11=x, c12=conj(y,contextptr),
+      c21=y, c22=-x,tmp1,tmp2;
+    vecteur v1(n_orig),v2(n_orig);
+    linear_combination(c11,H[n1],c12,H[n1+1],v1,0,eps);
+    linear_combination(c21,H[n1],c22,H[n1+1],v2,0,eps);
+    swap(H[n1],v1);
+    swap(H[n1+1],v2);
+    if (compute_P){
+      linear_combination(c11,P[n1],c12,P[n1+1],v1,0,eps);
+      linear_combination(c21,P[n1],c22,P[n1+1],v2,0,eps);
+      swap(P[n1],v1);
+      swap(P[n1+1],v2);
+    }
+    // now columns operations on H (not on P)
+    for (int j=0;j<n_orig;++j){
+      vecteur & Hj=H[j];
+      gen & Hjm1=Hj[n1];
+      gen & Hjm2=Hj[n1+1];
+      tmp1=Hjm1*c11+Hjm2*c21;
+      tmp2=Hjm1*c12+Hjm2*c22;
+      Hjm1=tmp1;
+      Hjm2=tmp2;
+    }
+  }
+
+  void francis_schur_iterate_real(std_matrix<gen> & H,int n_orig,int n1,int n2,std_matrix<gen> & P,bool compute_P,GIAC_CONTEXT){
+    vecteur v1(n_orig),v2(n_orig),v3(n_orig);
+    gen tmp1,tmp2,tmp3;
+    gen s,p; // s=l1+l2, p=l1*l2
+    s=H[n2-2][n2-2]+H[n2-1][n2-1];
+    p=H[n2-2][n2-2]*H[n2-1][n2-1]-H[n2-1][n2-2]*H[n2-2][n2-1];
+    // compute (H-l2)(H-l1)=(H-s)*H+p on n1-th basis vector (if n1==0, on [1,0,...,0])
+    gen ha=H[n1][n1],hb=H[n1][n1+1],
+      hd=H[n1+1][n1],he=H[n1+1][n1+1],
+      hh=H[n1+2][n1+1];
+    gen x=hb*hd+ha*(ha-s)+p,y=hd*(he-s+ha),z=hd*hh;
+    // normalize, substract [1,0,0] and normalize again
+    gen xyz=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr)+z*conj(z,contextptr),contextptr);
+    // if x/xyz is near 1, improve precision:
+    // x/xyz-1 = ((x/xyz)^2-1)/(x/xyz+1)=-((y/xyz)^2+(z/xyz)^2)/(x/xyz+1)
+    x=x/xyz; y=y/xyz; z=z/xyz;
+    if (fabs(evalf_double(re(x,contextptr)-1,1,contextptr)._DOUBLE_val)<0.5)
+      x=-(y*y+z*z)/(x+1);
+    else
+      x-=1;
+    xyz=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr)+z*conj(z,contextptr),contextptr);
+    x=x/xyz; y=y/xyz; z=z/xyz;
+    // compute reflection matrix let n=[[x],[y],[z]] trn(n)=conj([[x,y,z]])
+    // Q=idn(3)-2*n*trn(n);
+    // i.e. [[ 1-2x*conj(x), -2x*conj(y),   -2x*conj(z)  ],
+    //       [ -2*y*conj(x), 1-2*y*conj(y), -2*y*conj(z) ],
+    //       [ -2*z*conj(x), -2*z*conj(y),  1-2*z*conj(z)]]
+    // apply Q on H and P: line operations on H and P
+    gen c11=1-2*x*conj(x,contextptr),c12=-2*x*conj(y,contextptr),c13=-2*x*conj(z,contextptr);
+    gen c21=-2*y*conj(x,contextptr),c22=1-2*y*conj(y,contextptr),c23=-2*y*conj(z,contextptr);
+    gen c31=-2*z*conj(x,contextptr),c32=-2*z*conj(y,contextptr),c33=1-2*z*conj(z,contextptr);
+    // cerr << "[[" << c11 <<"," << c12 << "," << c13 << "],[" <<  c21 <<"," << c22 << "," << c23 << "],[" << c31 <<"," << c32 << "," << c33 << "]]" << endl;
+    tri_linear_combination(c11,H[n1],c12,H[n1+1],c13,H[n1+2],v1);
+    tri_linear_combination(c21,H[n1],c22,H[n1+1],c23,H[n1+2],v2);
+    tri_linear_combination(c31,H[n1],c32,H[n1+1],c33,H[n1+2],v3);
+    swap(H[n1],v1);
+    swap(H[n1+1],v2);
+    swap(H[n1+2],v3);
+    // cerr << H << endl;
+    if (compute_P){
+      tri_linear_combination(c11,P[n1],c12,P[n1+1],c13,P[n1+2],v1);
+      tri_linear_combination(c21,P[n1],c22,P[n1+1],c23,P[n1+2],v2);
+      tri_linear_combination(c31,P[n1],c32,P[n1+1],c33,P[n1+2],v3);
+      swap(P[n1],v1);
+      swap(P[n1+1],v2);
+      swap(P[n1+2],v3);
+    }
+    // now columns operations on H (not on P)
+    for (int j=0;j<n_orig;++j){
+      vecteur & Hj=H[j];
+      gen & Hjm1=Hj[n1];
+      gen & Hjm2=Hj[n1+1];
+      gen & Hjm3=Hj[n1+2];
+      tmp1=Hjm1*c11+Hjm2*c21+Hjm3*c31;
+      tmp2=Hjm1*c12+Hjm2*c22+Hjm3*c32;
+      tmp3=Hjm1*c13+Hjm2*c23+Hjm3*c33;
+      Hjm1=tmp1;
+      Hjm2=tmp2;
+      Hjm3=tmp3;
+    }
+  }
+  
   // Francis algorithm on submatrix rows and columns n1..n2-1
   // Invariant: trn(P)*H*P=orig matrix
   bool francis_schur(std_matrix<gen> & H,int n1,int n2,std_matrix<gen> & P,int maxiter,double eps,bool is_hessenberg,bool complex_schur,bool compute_P,GIAC_CONTEXT){
@@ -5273,59 +5393,14 @@ namespace giac {
     if (n2-n1==2){ // 2x2 submatrix, we know how to diagonalize
       gen l1,l2;
       if (eigenval2(H,n2,l1,l2,contextptr) || complex_schur){
-	// [[a,b],[c,d]] -> [b,l1-a] or [l1-d,c] as first eigenvector
-	gen a=H[n2-2][n2-2],b=H[n2-2][n2-1],c=H[n2-1][n2-2],d=H[n2-1][n2-1];
-	gen l1a=l1-a,l1d=l1-d,x,y,xy;
-	if (is_greater(abs(l1a,contextptr),abs(l1d,contextptr),contextptr)){
-	  x=b; y=l1a;
-	}
-	else {
-	  x=l1d; y=c;
-	}
-	xy=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr),contextptr);
-	// normalize eigenvector
-	x = x/xy; y = y/xy;
-	if (is_greater(eps,abs(y,contextptr),contextptr))
-	  return true;
-	if (fabs(evalf_double(re(x-1,contextptr),1,contextptr)._DOUBLE_val)<0.5)
-	  x=-y*y/(x+1);
+	// choose l1 or l2 depending on H[n1][n1]-l1, H[n1][n1+1]
+	if (is_greater(abs(H[n1][n1]-l1,contextptr),abs(H[n1][n1]-l2,contextptr),contextptr))
+	  francis_schur_iterate(H,eps,l1,n_orig,n1,n2,P,compute_P,contextptr);
 	else
-	  x-=1;
-	xy=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr),contextptr);
-	x = x/xy; y=y/xy;
-	// compute reflection matrix let n=[[x],[y]] trn(n)=conj([[x,y]])
-	// Q=idn(2)-2*n*trn(n);
-	// i.e. [[ 1-2x*conj(x), -2x*conj(y)   ]   -2x*conj(z)  ],
-	//       [ -2*y*conj(x), 1-2*y*conj(y) ]]
-	// apply Q on H and P: line operations on H and P
-	gen c11=1-2*x*conj(x,contextptr), c12=-2*x*conj(y,contextptr),
-	  c21=conj(c12,contextptr), c22=1-2*y*conj(y,contextptr),tmp1,tmp2;
-	vecteur v1(n_orig),v2(n_orig);
-	linear_combination(c11,H[n1],c12,H[n1+1],v1,0,eps);
-	linear_combination(c21,H[n1],c22,H[n1+1],v2,0,eps);
-	swap(H[n1],v1);
-	swap(H[n1+1],v2);
-	if (compute_P){
-	  linear_combination(c11,P[n1],c12,P[n1+1],v1,0,eps);
-	  linear_combination(c21,P[n1],c22,P[n1+1],v2,0,eps);
-	  swap(P[n1],v1);
-	  swap(P[n1+1],v2);
-	}
-	// now columns operations on H (not on P)
-	for (int j=0;j<n_orig;++j){
-	  vecteur & Hj=H[j];
-	  gen & Hjm1=Hj[n1];
-	  gen & Hjm2=Hj[n1+1];
-	  tmp1=Hjm1*c11+Hjm2*c21;
-	  tmp2=Hjm1*c12+Hjm2*c22;
-	  Hjm1=tmp1;
-	  Hjm2=tmp2;
-	}
+	  francis_schur_iterate(H,eps,l2,n_orig,n1,n2,P,compute_P,contextptr);
       }
       return true;
     }
-    vecteur v1(n_orig),v2(n_orig),v3(n_orig);
-    gen tmp1,tmp2,tmp3;
     for (int niter=0;n2-n1>2 && niter<maxiter;niter++){
       // make 0 below subdiagonal
       for (int i=2;i<n_orig;i++){
@@ -5354,63 +5429,15 @@ namespace giac {
       }
       // now H is proper hessenberg (indices n1 to n2-1)
       // find eigenvalues l1 and l2 of last 2x2 matrix, they will be taken as shfits
-      gen s,p; // s=l1+l2, p=l1*l2
-      s=H[n2-2][n2-2]+H[n2-1][n2-1];
-      p=H[n2-2][n2-2]*H[n2-1][n2-1]-H[n2-1][n2-2]*H[n2-2][n2-1];
-      // compute (H-l2)(H-l1)=(H-s)*H+p on n1-th basis vector (if n1==0, on [1,0,...,0])
-      gen ha=H[n1][n1],hb=H[n1][n1+1],
-	hd=H[n1+1][n1],he=H[n1+1][n1+1],
-	hh=H[n1+2][n1+1];
-      gen x=hb*hd+ha*(ha-s)+p,y=hd*(he-s+ha),z=hd*hh;
-      // normalize, substract [1,0,0] and normalize again
-      gen xyz=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr)+z*conj(z,contextptr),contextptr);
-      // if x/xyz is near 1, improve precision:
-      // x/xyz-1 = ((x/xyz)^2-1)/(x/xyz+1)=-((y/xyz)^2+(z/xyz)^2)/(x/xyz+1)
-      x=x/xyz; y=y/xyz; z=z/xyz;
-      if (fabs(evalf_double(re(x,contextptr)-1,1,contextptr)._DOUBLE_val)<0.5)
-	x=-(y*y+z*z)/(x+1);
+      // FIXME for complex matrices, direct reflection with eigenvector of l1 or l2
+      if (complex_schur){
+	gen l1=H[n2-1][n2-1];
+	// eigenval2(H,n2,l1,l2,contextptr);
+	//  FIXME: if H[n1][n1]-l1 is almost zero and H[n1][n1+1] also -> precision problem
+	francis_schur_iterate(H,eps,l1,n_orig,n1,n2,P,compute_P,contextptr);
+      }
       else
-	x-=1;
-      xyz=sqrt(x*conj(x,contextptr)+y*conj(y,contextptr)+z*conj(z,contextptr),contextptr);
-      x=x/xyz; y=y/xyz; z=z/xyz;
-      // compute reflection matrix let n=[[x],[y],[z]] trn(n)=conj([[x,y,z]])
-      // Q=idn(3)-2*n*trn(n);
-      // i.e. [[ 1-2x*conj(x), -2x*conj(y),   -2x*conj(z)  ],
-      //       [ -2*y*conj(x), 1-2*y*conj(y), -2*y*conj(z) ],
-      //       [ -2*z*conj(x), -2*z*conj(y),  1-2*z*conj(z)]]
-      // apply Q on H and P: line operations on H and P
-      gen c11=1-2*x*conj(x,contextptr),c12=-2*x*conj(y,contextptr),c13=-2*x*conj(z,contextptr);
-      gen c21=-2*y*conj(x,contextptr),c22=1-2*y*conj(y,contextptr),c23=-2*y*conj(z,contextptr);
-      gen c31=-2*z*conj(x,contextptr),c32=-2*z*conj(y,contextptr),c33=1-2*z*conj(z,contextptr);
-      // cerr << "[[" << c11 <<"," << c12 << "," << c13 << "],[" <<  c21 <<"," << c22 << "," << c23 << "],[" << c31 <<"," << c32 << "," << c33 << "]]" << endl;
-      tri_linear_combination(c11,H[n1],c12,H[n1+1],c13,H[n1+2],v1);
-      tri_linear_combination(c21,H[n1],c22,H[n1+1],c23,H[n1+2],v2);
-      tri_linear_combination(c31,H[n1],c32,H[n1+1],c33,H[n1+2],v3);
-      swap(H[n1],v1);
-      swap(H[n1+1],v2);
-      swap(H[n1+2],v3);
-      // cerr << H << endl;
-      if (compute_P){
-	tri_linear_combination(c11,P[n1],c12,P[n1+1],c13,P[n1+2],v1);
-	tri_linear_combination(c21,P[n1],c22,P[n1+1],c23,P[n1+2],v2);
-	tri_linear_combination(c31,P[n1],c32,P[n1+1],c33,P[n1+2],v3);
-	swap(P[n1],v1);
-	swap(P[n1+1],v2);
-	swap(P[n1+2],v3);
-      }
-      // now columns operations on H (not on P)
-      for (int j=0;j<n_orig;++j){
-	vecteur & Hj=H[j];
-	gen & Hjm1=Hj[n1];
-	gen & Hjm2=Hj[n1+1];
-	gen & Hjm3=Hj[n1+2];
-	tmp1=Hjm1*c11+Hjm2*c21+Hjm3*c31;
-	tmp2=Hjm1*c12+Hjm2*c22+Hjm3*c32;
-	tmp3=Hjm1*c13+Hjm2*c23+Hjm3*c33;
-	Hjm1=tmp1;
-	Hjm2=tmp2;
-	Hjm3=tmp3;
-      }
+	francis_schur_iterate_real(H,n_orig,n1,n2,P,compute_P,contextptr);
       if (n1==100)
 	dbg_schur(H,P);
       // cerr << H << endl;
@@ -6043,7 +6070,7 @@ namespace giac {
 	if (j==i) continue;
 #ifndef GIAC_HAS_STO_38
 	if (ans && j==i-1 && is_greater(abs(di[j]/di[j+1],contextptr),eps,contextptr)){
-	  *logptr(contextptr) << "Schur row " << j << " " << d[i] << endl;
+	  *logptr(contextptr) << "Low accuracy for Schur row " << j << " " << d[i] << endl;
 	  ans=false;
 	}
 #endif
@@ -6378,28 +6405,36 @@ namespace giac {
       std_matrix<gen> H,P;
       matrice2std_matrix_gen(m,H);
       int dim(H.size());
+      matrice pid(midn(dim));
+      matrice2std_matrix_gen(pid,P);
       matrix_double H1,P1;
       if (!eigenvalues_only){
-	matrice p(midn(dim));
-	matrice2std_matrix_gen(p,P);
 	std_matrix_gen2std_matrix_giac_double(P,P1);
       }
-      std_matrix_gen2std_matrix_giac_double(H,H1);
-      bool ans=francis_schur(H1,0,dim,P1,SOLVER_MAX_ITERATE,dim*eps,false,false,!eigenvalues_only);
-      if (eigenvalues_only){
-	vecteur res;
-	ans = ans && schur_eigenvalues(H1,res,eps,contextptr);
-	gen tmp=_diag(res,contextptr);
-	if (tmp.type!=_VECT)
-	  return false;
-	d=*tmp._VECTptr;
-	return ans;
+      if (std_matrix_gen2std_matrix_giac_double(H,H1)){
+	bool ans=francis_schur(H1,0,dim,P1,SOLVER_MAX_ITERATE,dim*eps,false,false,!eigenvalues_only);
+	if (eigenvalues_only){
+	  vecteur res;
+	  ans = ans && schur_eigenvalues(H1,res,eps,contextptr);
+	  gen tmp=_diag(res,contextptr);
+	  if (tmp.type!=_VECT)
+	    return false;
+	  d=*tmp._VECTptr;
+	  return ans;
+	}
+	else {
+	  std_matrix_giac_double2std_matrix_gen(H1,H);
+	  std_matrix_giac_double2std_matrix_gen(P1,P);
+	  // finish Schur with complex entries
+	  ans=francis_schur(H,0,dim,P,SOLVER_MAX_ITERATE,dim*eps,true,true,true,contextptr);
+	  std_matrix_gen2matrice(P,p);
+	  std_matrix_gen2matrice(H,d);
+	  schur_eigenvectors(p,d,eps,contextptr);
+	  return ans;
+	}
       }
       else {
-	std_matrix_giac_double2std_matrix_gen(H1,H);
-	std_matrix_giac_double2std_matrix_gen(P1,P);
-	// finish Schur with complex entries
-	ans=francis_schur(H,0,dim,P,SOLVER_MAX_ITERATE,dim*eps,true,true,true,contextptr);
+	bool ans=francis_schur(H,0,dim,P,SOLVER_MAX_ITERATE,dim*eps,false,true,true,contextptr);
 	std_matrix_gen2matrice(P,p);
 	std_matrix_gen2matrice(H,d);
 	return ans && schur_eigenvectors(p,d,eps,contextptr);
@@ -6674,7 +6709,7 @@ namespace giac {
   matrice megv(const matrice & e,GIAC_CONTEXT){
     matrice m;
     vecteur d;
-    if (!egv(e,m,d,contextptr))
+    if (!egv(e,m,d,contextptr,false,false,false))
       *logptr(contextptr) << gettext("Low accuracy") << endl;
     return m;
   }
@@ -6716,7 +6751,7 @@ namespace giac {
   vecteur mjordan(const matrice & e,bool rational_jordan,GIAC_CONTEXT){
     matrice m;
     vecteur d;
-    if (!egv(e,m,d,contextptr,true,rational_jordan))
+    if (!egv(e,m,d,contextptr,true,rational_jordan,false))
       *logptr(contextptr) << "Low accuracy" << endl;
     return makevecteur(m,d);
   }
@@ -6784,7 +6819,7 @@ namespace giac {
     bool cplx=complex_mode(contextptr),sqrtb=withsqrt(contextptr);
     complex_mode(true,contextptr);
     withsqrt(true,contextptr);
-    if (!egv(m,p,d,contextptr,true))
+    if (!egv(m,p,d,contextptr,true,false,false))
       return vecteur(1,gensizeerr(contextptr));
     complex_mode(cplx,contextptr);
     withsqrt(sqrtb,contextptr);
@@ -6838,13 +6873,13 @@ namespace giac {
   }
 
   // return a vector which elements are the basis of the ker of a
-  bool mker(const matrice & a,vecteur & v,GIAC_CONTEXT){
+  bool mker(const matrice & a,vecteur & v,int algorithm,GIAC_CONTEXT){
     v.clear();
     gen det;
     vecteur pivots;
     matrice res;
     if (!mrref(a,res,pivots,det,0,a.size(),0,a.front()._VECTptr->size(),
-	  true,0,true,1,0,
+	  true,0,true,algorithm,0,
 	       contextptr))
       return false;
     mdividebypivot(res);
@@ -6880,6 +6915,10 @@ namespace giac {
       }
     }
     return true;
+  }
+
+  bool mker(const matrice & a,vecteur & v,GIAC_CONTEXT){
+    return mker(a,v,1,contextptr);
   }
 
   vecteur mker(const matrice & a,GIAC_CONTEXT){
@@ -7205,6 +7244,7 @@ namespace giac {
 
   gen lu(const gen &args,GIAC_CONTEXT){
     matrice L,U,P;
+    if (abs_calc_mode(contextptr)!=38){
 #ifdef HAVE_LIBLAPACK
     if (ckmatrix(args) && is_fully_numeric(args)){
       
@@ -7334,6 +7374,7 @@ namespace giac {
       return gen(makevecteur(P,L,U),_SEQ__VECT);
     }
 #endif // HAVE_LIBGSL
+    } // end abs_calc_mode!=38
     if (args.type!=_VECT)
       return gentypeerr(contextptr);
     // Giac LU decomposition
@@ -7392,9 +7433,8 @@ namespace giac {
       args=args_orig;
     if (!ckmatrix(args))
       return symbolic(at_qr,args);
-    if (!is_zero(im(args,contextptr),contextptr))
-      return gensizeerr(gettext("Complex entry!"));
-    if (method<0 || !is_fully_numeric(evalf_double(args,1,contextptr))){
+    // if (!is_zero(im(args,contextptr),contextptr)) return gensizeerr(gettext("Complex entry!"));
+    if (method<0 || !is_fully_numeric(evalf_double(args,1,contextptr)) || !is_zero(im(args,contextptr),contextptr)){
       matrice r;
       if (is_fully_numeric(args)){ 
 	// qr decomposition using rotations, numerically stable
@@ -7628,8 +7668,7 @@ namespace giac {
       args=args_orig;
     if (!ckmatrix(args))
       return symbolic(at_svd,args);
-    if (!is_zero(im(args,contextptr),contextptr))
-      return gensizeerr(gettext("Complex entry!"));
+    // if (!is_zero(im(args,contextptr),contextptr)) return gensizeerr(gettext("Complex entry!"));
     if (method>=0 && is_fully_numeric(evalf_double(args,1,contextptr))){
 #ifdef HAVE_LIBLAPACK
       if (!CAN_USE_LAPACK
@@ -7728,10 +7767,13 @@ namespace giac {
 #endif // HAVE_LIBGSL
     }    
     // non numeric code
-    matrice tm,mtm,p,d,pd,invpd,v,tv;
-    mtran(*args._VECTptr,tm);
+    matrice mtm,p,d,pd,invpd,v;
+    gen tmg=_trn(args,contextptr); // mtran(*args._VECTptr,tm);
+    if (!ckmatrix(tmg))
+      return gensizeerr(contextptr);
+    const matrice & tm=*tmg._VECTptr;
     mmult(*args._VECTptr,tm,mtm);
-    if (!egv(mtm,p,d,contextptr,true,false))
+    if (!egv(mtm,p,d,contextptr,true,false,false))
       return gensizeerr(contextptr);
     // should reorder eigenvalue (decreasing order)
     int s=d.size();
@@ -7752,8 +7794,8 @@ namespace giac {
     mmult(p,d,pd);
     invpd=minv(pd,contextptr);
     mmult(invpd,*args._VECTptr,v);
-    mtran(v,tv);
-    return gen(makevecteur(p,tv,svl),_SEQ__VECT); // M=p*diag(svl)*tran(tv)
+    gen tv=_trn(v,contextptr);
+    return gen(makevecteur(p,tv,svl),_SEQ__VECT); // M=p*diag(svl)*trn(tv)
   }
   static const char _svd_s []="svd";
   static define_unary_function_eval (__svd,&giac::_svd,_svd_s);

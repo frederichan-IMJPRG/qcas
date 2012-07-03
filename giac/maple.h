@@ -19,6 +19,9 @@
 #ifndef _GIAC_MAPLE_H
 #define _GIAC_MAPLE_H
 #include "first.h"
+#ifndef HAVE_PNG_H
+#undef HAVE_LIBPNG
+#endif
 #ifdef HAVE_LIBPNG
 #include <png.h>
 #endif

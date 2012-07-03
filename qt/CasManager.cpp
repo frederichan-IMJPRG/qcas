@@ -236,7 +236,6 @@ void CasManager::evaluate(){
 
     }
 
-
     // Add result to history
     giac::history_in(context).push_back(expression);
     giac::history_out(context).push_back(answer);
@@ -398,7 +397,7 @@ OutputWidget* CasManager::createDisplay(){
         return new OutputWidget();
       }
       else {
-        return new GraphWidget(answer,context,false);
+        return new GraphWidget(answer,context,false,mainWindow);
     }
   }
   else if(answer.is_symb_of_sommet(at_pnt)){
@@ -406,7 +405,7 @@ OutputWidget* CasManager::createDisplay(){
 
         }
         else {
-            return new GraphWidget(answer,context,false);
+            return new GraphWidget(answer,context,false,mainWindow);
         }
     }
 /*    if (evaled_g.is_symb_of_sommet(at_pnt) || anim){

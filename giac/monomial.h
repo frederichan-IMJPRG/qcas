@@ -32,6 +32,13 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
+  int powmod(int a,unsigned long n,int m);
+
+  template<class T,class U>
+  std::ostream & operator << (std::ostream & os,const std::pair<T,U> & p){
+    return os << "<" << p.first << "," << p.second << ">";
+  }
+
   extern int debug_infolevel;
 
 #ifndef NO_STDEXCEPT
@@ -399,13 +406,15 @@ namespace giac {
     return res ;
   }
 
+  typedef bool (* m_strictly_greater_t)(const index_m &,const index_m &);
+
   template <class T>
   void Add ( typename std::vector< monomial<T> >::const_iterator & a,
 	     typename std::vector< monomial<T> >::const_iterator & a_end,
 	     typename std::vector< monomial<T> >::const_iterator & b,
 	     typename std::vector< monomial<T> >::const_iterator & b_end,
 	     std::vector< monomial<T> > & new_coord,
-	     bool (* is_strictly_greater)( const index_t &, const index_t &)) {
+	     bool (* is_strictly_greater)( const index_m &, const index_m &)) {
     if ( (a!=a_end && new_coord.begin()==a) || (b!=b_end && new_coord.begin()==b)){
       std::vector< monomial<T> > tmp;
       Add(a,a_end,b,b_end,tmp,is_strictly_greater);
@@ -428,7 +437,6 @@ namespace giac {
 	break;
       } 
       const index_m & pow_a = a->index;
-    
       // If b is empty, fill up with elements from a and stop
       if (b == b_end) {
 	while (a != a_end) {
@@ -437,12 +445,10 @@ namespace giac {
 	}
 	break;
       } 
-
       const index_m & pow_b = b->index;
-        
       // a and b are non-empty, compare powers
       if (pow_a!=pow_b){
-	if (is_strictly_greater(pow_a.iref(), pow_b.iref())) {
+	if (is_strictly_greater(pow_a, pow_b)) {
 	  // a has lesser power, get coefficient from a
 	  new_coord.push_back(*a);
 	  ++a;
@@ -470,7 +476,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Add(a,a_end,b,b_end,res,lex_is_greater<int>);
+    Add(a,a_end,b,b_end,res,i_lex_is_greater);
     return res ;
   }
 
@@ -480,7 +486,7 @@ namespace giac {
 	     typename std::vector< monomial<T> >::const_iterator & b,
 	     typename std::vector< monomial<T> >::const_iterator & b_end,
 	     std::vector< monomial<T> > & new_coord,
-	     bool (* is_strictly_greater)( const index_t &, const index_t &)) {
+	     bool (* is_strictly_greater)( const index_m &, const index_m &)) {
     if ((a!=a_end && new_coord.begin()==a) || (b!=b_end && new_coord.begin()==b)){
       std::vector< monomial<T> > tmp;
       Sub(a,a_end,b,b_end,tmp,is_strictly_greater);
@@ -499,7 +505,6 @@ namespace giac {
 	break;
       } 
       const index_m & pow_a = a->index;
-    
       // If b is empty, fill up with elements from a and stop
       if (b == b_end) {
 	while (a != a_end) {
@@ -509,10 +514,9 @@ namespace giac {
 	break;
       } 
       const index_m & pow_b = b->index;
-        
       // a and b are non-empty, compare powers
       if (pow_a!=pow_b){
-	if (is_strictly_greater(pow_a.iref(), pow_b.iref())) {
+	if (is_strictly_greater(pow_a, pow_b)) {
 	  // a has lesser power, get coefficient from a
 	  new_coord.push_back(*a);
 	  ++a;
@@ -538,7 +542,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Sub(a,a_end,b,b_end,res,lex_is_greater<int>);
+    Sub(a,a_end,b,b_end,res,i_lex_is_greater);
     return res ;
   }
 
@@ -561,12 +565,12 @@ namespace giac {
 
   struct ltindex
   {
-    bool (* is_strictly_greater)( const index_t &, const index_t &);
-    inline bool operator()(const index_t & s1, const index_t & s2) const
+    bool (* is_strictly_greater)( const index_m &, const index_m &);
+    inline bool operator()(const index_m & s1, const index_m & s2) const
     {
       return is_strictly_greater(s1, s2) ;
     }
-    ltindex(bool (* my_is_strictly_greater)( const index_t &, const index_t &)) : is_strictly_greater(my_is_strictly_greater) {};
+    ltindex(bool (* my_is_strictly_greater)( const index_m &, const index_m &)) : is_strictly_greater(my_is_strictly_greater) {};
   };
 
   template <class T>
@@ -575,7 +579,7 @@ namespace giac {
 	     typename std::vector< monomial<T> >::const_iterator & itb,
 	     typename std::vector< monomial<T> >::const_iterator & itb_end,
 	     std::vector< monomial<T> > & new_coord,
-	     bool (* is_strictly_greater)( const index_t &, const index_t &),
+	     bool (* is_strictly_greater)( const index_m &, const index_m &),
 	     const std::pointer_to_binary_function < const monomial<T> &, const monomial<T> &, bool> m_is_greater
 	     ) {
     if (ita==ita_end || itb==itb_end){
@@ -620,8 +624,8 @@ namespace giac {
 #endif
 
     /* other algorithm using a map to avoid reserving too much space */
-    typedef std::map< index_t,T,const std::pointer_to_binary_function < const index_t &, const index_t &, bool> > application;
-    application produit(ptr_fun(is_strictly_greater));
+    typedef std::map< index_t,T,const std::pointer_to_binary_function < const index_m &, const index_m &, bool> > application;
+    application produit(std::ptr_fun(is_strictly_greater));
     // typedef std::map<index_t,T> application;
     // application produit;
     index_t somme(ita->index.size());
@@ -735,7 +739,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Mul(a,a_end,b,b_end,res,lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,res,i_lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
     return res ;
   }
 
@@ -743,17 +747,31 @@ namespace giac {
   std::vector< monomial<T> > & operator *= (std::vector< monomial<T> > & v,const std::vector< monomial<T> > & w){
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
-    Mul(a,a_end,b,b_end,v,lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,v,i_lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
     return v;
   }
 
 
   template <class T>
-  void Shift (const std::vector< monomial<T> > & v,const index_m &i, const T & fois, std::vector< monomial<T> > & new_coord){
+  void Shift (const std::vector< monomial<T> > & v,const index_m &i, std::vector< monomial<T> > & new_coord){
     new_coord.clear();
     typename std::vector< monomial<T> >::const_iterator itend=v.end();
     for (typename std::vector< monomial<T> >::const_iterator it=v.begin();it!=itend;++it)
-      new_coord.push_back( it->shift(i,fois) );
+      new_coord.push_back( it->shift(i) );
+  }
+
+  template <class T>
+  void Shift (const std::vector< monomial<T> > & v,const index_m &i, const T & fois, std::vector< monomial<T> > & new_coord){
+    new_coord.clear();
+    typename std::vector< monomial<T> >::const_iterator itend=v.end();
+    if (is_one(fois)){
+      for (typename std::vector< monomial<T> >::const_iterator it=v.begin();it!=itend;++it)
+	new_coord.push_back( it->shift(i) );
+    }
+    else {
+      for (typename std::vector< monomial<T> >::const_iterator it=v.begin();it!=itend;++it)
+	new_coord.push_back( it->shift(i,fois) );
+    }
   }
 
   template <class T>
@@ -765,20 +783,12 @@ namespace giac {
   }
 
   template <class T>
-  void Shift (const std::vector< monomial<T> > & v,const index_m &i, std::vector< monomial<T> > & new_coord){
-    new_coord.clear();
-    typename std::vector< monomial<T> >::const_iterator itend=v.end();
-    for (typename std::vector< monomial<T> >::const_iterator it=v.begin();it!=itend;++it)
-      new_coord.push_back( it->shift(i) );
-  }
-
-  template <class T>
   T Content (const std::vector< monomial<T> > & v){
     typename std::vector< monomial<T> >::const_iterator it=v.begin();
     typename std::vector< monomial<T> >::const_iterator itend=v.end();
     if (it==itend)
       return 1;
-    T res=it->value;
+    T res=(itend-1)->value;
     for (;it!=itend ;++it){
       res=gcd(res,it->value);
       if (is_one(res))

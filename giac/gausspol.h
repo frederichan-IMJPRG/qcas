@@ -68,14 +68,14 @@ namespace giac {
 		 std::vector< monomial<gen> >::const_iterator & b,
 		 std::vector< monomial<gen> >::const_iterator & b_end,
 		 std::vector< monomial<gen> > & new_coord,
-		 bool (* is_strictly_greater)( const index_t &, const index_t &)) ;
+		 bool (* is_strictly_greater)( const index_m &, const index_m &)) ;
   polynome operator + (const polynome & th,const polynome & other);
   void Sub_gen ( std::vector< monomial<gen> >::const_iterator & a,
 		 std::vector< monomial<gen> >::const_iterator & a_end,
 		 std::vector< monomial<gen> >::const_iterator & b,
 		 std::vector< monomial<gen> >::const_iterator & b_end,
 		 std::vector< monomial<gen> > & new_coord,
-		 bool (* is_strictly_greater)( const index_t &, const index_t &)) ;
+		 bool (* is_strictly_greater)( const index_m &, const index_m &)) ;
   polynome operator - (const polynome & th,const polynome & other);
   // Fast multiplication using hash maps, might also use an int for reduction
   // but there is no garantee that res is smod-ed modulo reduce

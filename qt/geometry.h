@@ -101,7 +101,7 @@ public:
 
   Qt::PenCapStyle getPenStyle();
   Qt::PenStyle getLineType();
-  void setAttributes(const int &);
+  virtual void setAttributes(const int &);
   int getAttributes() const;
   bool isFilled() const;
   QColor getColor() const;
@@ -352,6 +352,7 @@ public:
     virtual void updateScreenCoords(const bool);
     virtual void draw(QPainter*) const;
     virtual bool isList() const;
+    virtual void setAttributes(const int &);
     virtual void toXML(QDomElement &);
     virtual QString getType() const;
     virtual bool isFillable() const;

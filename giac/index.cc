@@ -86,6 +86,15 @@ namespace giac {
     return res;
   }
 
+  void index_lcm(const index_m & a,const index_m & b,index_t & res){
+    index_t::const_iterator ita=a.begin(),itaend=a.end(),itb=b.begin();
+    unsigned s=itaend-ita;
+    res.resize(s);
+    index_t::iterator itres=res.begin();  
+    for (;ita!=itaend;++itb,++itres,++ita)
+      *itres=max(*ita,*itb);
+  }
+
   // index and monomial ordering/operations implementation
 
   index_t operator + (const index_t & a, const index_t & b){
@@ -619,6 +628,10 @@ namespace giac {
     return(i_lex_is_greater(v1,v2));
   }
 
+  bool i_total_lex_is_strictly_greater(const index_m & v1, const index_m & v2){ 
+    return !i_total_lex_is_greater(v2,v1); 
+  }
+
   bool i_total_revlex_is_greater(const index_m & v1, const index_m & v2){
     int d1=sum_degree(v1);
     int d2=sum_degree(v2);
@@ -628,7 +641,34 @@ namespace giac {
       else
 	return(false);
     }
-    return !i_lex_is_strictly_greater(v1,v2);
+    // find order with variables reversed then reverse order
+    // return !i_lex_is_strictly_greater(v1,v2);
+    index_t::const_iterator it1=v1.end()-1;
+    index_t::const_iterator it2=v2.end()-1;
+    index_t::const_iterator it1end=v1.begin()-1;
+#ifdef DEBUG_SUPPORT
+    if (it1-it1end!=signed(v2.size()))
+      setsizeerr(gettext("index.cc index_m i_total_revlex_is_greater"));
+#endif
+    for (;it1!=it1end;--it1){
+      if ( *it1 != *it2 )
+	return *it1<*it2;
+      --it2;
+    }
+    return true;
+  }
+
+  bool i_total_revlex_is_strictly_greater(const index_m & v1, const index_m & v2){ 
+    return !i_total_revlex_is_greater(v2,v1); 
+  }
+
+  bool disjoint(const index_m & a,const index_m & b){
+    index_t::const_iterator it=a.begin(),itend=a.end(),jt=b.begin();
+    for (;it!=itend;++jt,++it){
+      if (*it && *jt)
+	return false;
+    }
+    return true;
   }
 
 #ifndef NO_NAMESPACE_GIAC

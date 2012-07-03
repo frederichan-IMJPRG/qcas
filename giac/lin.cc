@@ -729,6 +729,8 @@ namespace giac {
   }
 
   static gen ln_expand0(const gen & e,GIAC_CONTEXT){
+    if (e.type==_FRAC)
+      return ln(e._FRACptr->num,contextptr)-ln(e._FRACptr->den,contextptr);
     if (e.type!=_SYMB)
       return ln(e,contextptr);
     if (e._SYMBptr->sommet==at_prod)

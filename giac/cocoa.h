@@ -32,6 +32,11 @@ namespace giac {
   vecteur cocoa_in_ideal(const vectpoly & g,const vectpoly & v,const gen & ordre);
   bool cocoa_greduce(const vectpoly & r,const vectpoly & v,const gen & order,vectpoly & res);
 
+#ifndef CAS38_DISABLED
+  // giac code for poly up to 7 (revlex/tdeg) or 8 variables (plex)
+  vectpoly gbasis8(const vectpoly & v,environment * env);
+#endif
+
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac
 #endif // NO_NAMESPACE_GIAC

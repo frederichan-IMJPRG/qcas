@@ -187,7 +187,19 @@ namespace giac {
       else
 	return(false);
     }
-    return(!lex_is_strictly_greater<T>(v1,v2));
+    // return(!lex_is_strictly_greater<T>(v1,v2)); but starting from end
+    typename std::vector<T>::const_iterator it1=v1.end()-1,it1end=v1.begin()-1;
+    typename std::vector<T>::const_iterator it2=v2.end()-1;
+    for (;it1!=it1end;--it2,--it1){
+      if ( *it1 != *it2 )
+	return *it1<*it2;
+    }
+    return true;
+  }
+
+  template <class T>
+  bool total_revlex_is_strictly_greater(const std::vector<T> & v1, const std::vector<T> & v2){
+    return !total_revlex_is_greater<T>(v2,v1);
   }
 
   //*****************************************
@@ -256,8 +268,12 @@ namespace giac {
     index_t iref() const { return riptr->i;} ;
     index_t::iterator begin() { return riptr->i.begin(); }
     index_t::iterator end() { return riptr->i.end(); }
+    index_t::reverse_iterator rbegin() { return riptr->i.rbegin(); }
+    index_t::reverse_iterator rend() { return riptr->i.rend(); }
     index_t::const_iterator begin() const { return riptr->i.begin(); }
     index_t::const_iterator end() const { return riptr->i.end(); }
+    index_t::const_reverse_iterator rbegin() const { return riptr->i.rbegin(); }
+    index_t::const_reverse_iterator rend() const { return riptr->i.rend(); }
     deg_t & front() { return *begin(); }
     deg_t front() const { return *begin(); }
     deg_t & back() { return *(end()-1); }
@@ -511,7 +527,9 @@ namespace giac {
   bool i_lex_is_greater(const index_m & v1, const index_m & v2);
   bool i_lex_is_strictly_greater(const index_m & v1, const index_m & v2);
   bool i_total_revlex_is_greater(const index_m & v1, const index_m & v2);
+  bool i_total_revlex_is_strictly_greater(const index_m & v1, const index_m & v2);
   bool i_total_lex_is_greater(const index_m & v1, const index_m & v2);
+  bool i_total_lex_is_strictly_greater(const index_m & v1, const index_m & v2);
 
   template <class T> T pow(const std::vector<T> & x, const index_m & n ){
     assert(x.size()==n.size());
@@ -523,6 +541,9 @@ namespace giac {
     }
     return res;
   }
+
+  void index_lcm(const index_m & a,const index_m & b,index_t & res);
+  bool disjoint(const index_m & a,const index_m & b);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

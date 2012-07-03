@@ -5010,7 +5010,7 @@ namespace giac {
       return chk_not_unit(mksa_reduce(evalf(g/f,1,contextptr),contextptr))*f;
     }
     if (s==3 && f.type==_INT_ ){
-      if (f.val==_BASE && v.back().type==_INT_ ){
+      if (f.val==_BASE && is_integer(v.back()) ){
 	if (is_integer(g)){
 	  // convert(integer,base,integer)
 	  bool positif=is_positive(g,contextptr);

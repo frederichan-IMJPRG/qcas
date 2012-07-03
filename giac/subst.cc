@@ -350,6 +350,8 @@ namespace giac {
     int s=v.size();
     if ( (s>1) && (v[1]==i) ){
       vecteur l(*_lname(newi,contextptr)._VECTptr);
+      if (!l.empty() && l.front()==cst_pi)
+	l.erase(l.begin());
       if (l.empty())
 	return gensizeerr(contextptr);
       v[1]=l.front();
@@ -370,9 +372,9 @@ namespace giac {
 	else
 	  v[2]=limit(w.front(),t,v[2],0,contextptr);	  
       }
-      return symbolic(at_integrate,v);
+      return symbolic(at_integrate,gen(v,_SEQ__VECT));
     }
-    return symbolic(at_integrate,subst(v,i,newi,quotesubst,contextptr));
+    return symbolic(at_integrate,gen(subst(v,i,newi,quotesubst,contextptr),_SEQ__VECT));
   }
 
   static gen subst_derive(const gen & e,const gen & i,const gen & newi,bool quotesubst,GIAC_CONTEXT){

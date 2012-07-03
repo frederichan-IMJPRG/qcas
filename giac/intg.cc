@@ -2430,22 +2430,7 @@ namespace giac {
       else
 	res=limit(primitive,*x._IDNTptr,borne_sup,0,contextptr)-limit(primitive,*x._IDNTptr,borne_inf,0,contextptr);
     }
-    vecteur sp;
-#ifdef NO_STDEXCEPT
-    sp=find_singularities(primitive,*x._IDNTptr,false,contextptr);
-    if (is_undef(sp)){
-      *logptr(contextptr) << sp << endl;      
-      sp.clear();
-    }
-#else
-    try {
-      sp=find_singularities(primitive,*x._IDNTptr,false,contextptr);
-    }
-    catch (std::runtime_error & e){
-      *logptr(contextptr) << e.what() << endl;
-      sp.clear();
-    }
-#endif
+    vecteur sp=protect_find_singularities(primitive,*x._IDNTptr,false,contextptr);
     // FIXME if v depends on an integer parameter, find values in inf,sup
     int sps=sp.size();
     for (int i=0;i<sps;i++){

@@ -4536,6 +4536,8 @@ namespace giac {
     return false;
   }
   gen Iquo(const gen & f0,const gen & b0){
+    if (f0.type==_VECT)
+      return apply1st(f0,b0,Iquo);
     gen f(f0),b(b0);
     if (!is_integral(f) || !is_integral(b) )
       return gensizeerr(gettext("Iquo")); // return symbolic(at_iquo,args);
@@ -4670,6 +4672,13 @@ namespace giac {
   // symbolic symb_rem(const gen & a,const gen & b){    return symbolic(at_rem,makevecteur(a,b));  }
   gen _rem(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type==_VECT && args._VECTptr->size()>=3 && args[2].type==_VECT){
+      vecteur v = *args._VECTptr;
+      gen g(_WITH_COCOA);
+      g.subtype=_INT_GROEBNER;
+      v.push_back(symb_equal(g,0));
+      return _greduce(gen(v,_SEQ__VECT),contextptr);
+    }
     return _quorem(args,contextptr)[1];
   }
   static const char _rem_s []="rem";
@@ -4839,7 +4848,9 @@ namespace giac {
 
   // static symbolic symb_round(const gen & a){    return symbolic(at_round,a);  }
   gen _round(const gen & args,GIAC_CONTEXT){
-    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if ( is_undef(args))
+      return args;
+    if (args.type==_STRNG && args.subtype==-1) return  args;
     if (is_equal(args))
       return apply_to_equal(args,_round,contextptr);
     if (is_inf(args)||is_undef(args))
@@ -5302,7 +5313,7 @@ namespace giac {
       if (res.type==_REAL || res.type==_CPLX)
 	res=accurate_evalf(res,digits2bits(a._VECTptr->back().val));
       set_decimal_digits(save_decimal_digits,contextptr);
-      if (ndigits<14)
+      if (ndigits<14 && !is_undef(res))
 	res=_round(gen(makevecteur(res,ndigits),_SEQ__VECT),contextptr);
       return res;
     }

@@ -2039,10 +2039,7 @@ namespace giac {
 	return _l2norm(args,contextptr);
       return gentypeerr(contextptr);
     }
-    matrice mt,mmt;
-    mtran(*args._VECTptr,mt);
-    mmult(*args._VECTptr,mt,mmt);
-    return sqrt(_SPECRAD(mmt,contextptr),contextptr);
+    return _max(_SVL(*args._VECTptr,contextptr),contextptr);
   }
   static const char _SPECNORM_s[]="SPECNORM";
   static define_unary_function_eval (__SPECNORM,&giac::_SPECNORM,_SPECNORM_s); // FIXME
@@ -2462,10 +2459,10 @@ namespace giac {
     if (!ckmatrix(v0) || v1.type!=_VECT)
       return gentypeerr(contextptr);
     int neq=v0._VECTptr->size(); // neq equations
-    v0=_tran(v0,contextptr);
+    v0=_trn(v0,contextptr);
     matrice A=*v0._VECTptr,B;
     if (ckmatrix(v1))
-      B=mtran(*v1._VECTptr);
+      B=gen2vecteur(_trn(v1,contextptr));
     else
       B=vecteur(1,v1);
     if (int(B[0]._VECTptr->size())!=neq)
@@ -2479,7 +2476,7 @@ namespace giac {
       for (int i=0;i<bs;++i){
 	gen Bi=B[i];
 	A[as]=Bi;
-	matrice At=mtran(A);
+	matrice At=gen2vecteur(_trn(A,contextptr));
 	vecteur B=mker(At,contextptr);
 	if (is_undef(B) || B.empty())
 	  return undef;
@@ -2504,7 +2501,7 @@ namespace giac {
 	}
 	res.push_back(Rtmp);
       }
-      res=mtran(res);
+      res=gen2vecteur(_trn(res,contextptr));
       return res;
     }
     // orthogonal projection of each vector of B on image of A
@@ -2518,7 +2515,7 @@ namespace giac {
       }
       res.push_back(tmp);
     }
-    res=mtran(res);
+    res=gen2vecteur(_trn(res,contextptr));
     return mmult(*inv(r,contextptr)._VECTptr,res);
   }
   static const char _LSQ_s[]="LSQ";

@@ -259,7 +259,7 @@ class GraphWidget:public OutputWidget,public MainSheet{
 
   public:
     GraphWidget(giac::context*, bool , MainWindow *main);
-    GraphWidget(const  giac::gen &, giac::context*,bool );
+    GraphWidget(const  giac::gen &, giac::context*,bool,MainWindow*main );
     QList<MyItem*> getTreeSelectedItems();
     void removeFromTree(MyItem * );
     void clearSelection();

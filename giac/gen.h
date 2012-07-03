@@ -80,6 +80,7 @@ namespace giac {
 #undef HAVE_LIBMPFR
 #endif
 
+
   extern bool try_parse_test_i;
 
   class gen ; 
@@ -133,7 +134,6 @@ namespace giac {
     return smod(R,m);
   }
 #endif
-  int powmod(int a,unsigned long n,int m);
   int gcd(int a,int b);
   int smod(int a,int b); // where b is assumed to be positive
   inline int smod(longlong r,int m){
@@ -185,7 +185,14 @@ namespace giac {
   template <class T> class tensor;
   typedef tensor<gen> polynome;
   typedef std::vector< facteur< polynome > > factorization;
-  typedef std::vector<polynome> vectpoly;
+  class vectpoly:public std::vector<polynome> {
+  public:
+    vectpoly():std::vector<polynome>::vector() {};
+    vectpoly(int i,const polynome & p):std::vector<polynome>::vector(i,p) {};
+    void dbgprint(){ 
+      std::cerr << *this << std::endl;
+    }
+  };
   template<class T> class Tref_tensor; // in poly.h
   typedef Tref_tensor<gen> ref_polynome;
   typedef Tfraction<gen> fraction;

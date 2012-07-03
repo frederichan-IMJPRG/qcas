@@ -930,6 +930,13 @@ namespace giac {
       eo=is_even_odd(gm,x,contextptr);
     }
     if (eo==2){
+#if 0 // set to 1 if you want to check for singularities before returning 0
+      vecteur sp=find_singularities(g,*x._IDNTptr,false,contextptr);
+      for (int i=0;i<sp.size();++i){
+	if (is_greater(sp[i],a,contextptr) && is_greater(b,sp[i],contextptr))
+	  return false;
+      }
+#endif
       res=0;
       return true;
     }
@@ -938,7 +945,7 @@ namespace giac {
     if (is_zero(gm)){
       // do it only if g0 depends on potentially periodical functions exp/sin/cos/tan
       vecteur vx=lvarx(g0,x);
-      for (int i=0;i<vx.size();++i){
+      for (unsigned i=0;i<vx.size();++i){
 	if (vx[i].type!=_SYMB || (vx[i]._SYMBptr->sommet!=at_exp && vx[i]._SYMBptr->sommet!=at_sin && vx[i]._SYMBptr->sommet!=at_cos && vx[i]._SYMBptr->sommet!=at_tan))
 	  gm=1;
       }

@@ -1972,7 +1972,7 @@ namespace giac {
     if (has_num_coeff(m))
       m=*evalf(m,1,contextptr)._VECTptr;
     matrice P,Pinv,D;
-    egv(m,P,D,contextptr,true,false);
+    egv(m,P,D,contextptr,true,false,false);
     Pinv=minv(P,contextptr);
     if (is_undef(Pinv))
       return Pinv;

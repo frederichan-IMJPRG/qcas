@@ -2088,7 +2088,7 @@ namespace giac {
       if (ch=='X' || ch=='Y')
 	++XY;
     }
-    if (xy){ // priority to x/y
+    if (xy || !XY){ // priority to x/y
       gen idx(identificateur("x")),idy(identificateur("y"));
       vecteur v(makevecteur(idx,idy));
       vecteur argv(makevecteur(args0,idx,idy));
@@ -2107,7 +2107,7 @@ namespace giac {
 
   gen _droite(const gen & args0,GIAC_CONTEXT){
     if (is_undef(args0)) return args0;
-    if (args0.type==_SYMB){
+    if (args0.type==_SYMB || args0.type==_IDNT){
       // eval args with x/y or X/Y quoted
       vecteur argv=eval_with_xy_quoted(args0,contextptr);
       return droite_by_equation(argv,false,contextptr);
@@ -2122,7 +2122,7 @@ namespace giac {
     if (s<1)
       return gendimerr(contextptr);
     gen & v0=args._VECTptr->front();
-    if ( v0.type==_SYMB && v0._SYMBptr->sommet==at_equal)
+    if ( v0.type==_IDNT || (v0.type==_SYMB && v0._SYMBptr->sommet==at_equal))
       return droite_by_equation(*args._VECTptr,false,contextptr);
     if (s<2)
       return gendimerr(contextptr);
@@ -4323,7 +4323,7 @@ namespace giac {
 	rewrite_with_t_real(eq,v[1],contextptr);
 	vecteur sol;
 	if (has_num_coeff(eq)){
-	  vecteur eqv(makevecteur(eq,v[1]));
+      vecteur eqv(makevecteur(eq,v[1],re(p,contextptr)));
 	  sol=gen2vecteur(in_fsolve(eqv,contextptr));
 	}
 	else
@@ -5166,10 +5166,13 @@ namespace giac {
     gen res;
     if (v.size()<2) return gensizeerr(gettext("plot.cc/parameter2point"));
     gen t=v.back(); // was v[1], fixed for G:=plotfunc(1/t,t);element(G,t)
-    gen geo_obj=remove_at_pnt(v[0]);
+    gen v0=v[0];
+    if (v0.type==_VECT && !v0._VECTptr->empty())
+      v0=v0._VECTptr->front();
+    gen geo_obj=remove_at_pnt(v0);
     gen attribut=default_color(contextptr);
-    if (v[0].is_symb_of_sommet(at_pnt) && v[0]._SYMBptr->feuille.type==_VECT && v[0]._SYMBptr->feuille._VECTptr->size()>1)
-      attribut=(*v[0]._SYMBptr->feuille._VECTptr)[1];
+    if (v0.is_symb_of_sommet(at_pnt) && v0._SYMBptr->feuille.type==_VECT && v0._SYMBptr->feuille._VECTptr->size()>1)
+      attribut=(*v0._SYMBptr->feuille._VECTptr)[1];
     // geo_obj.type = _VECT (ligne brisee), _SYMB (at_cercle), symb_curve
     if (geo_obj.type==_VECT){
       vecteur ligne=*geo_obj._VECTptr;
@@ -5198,8 +5201,8 @@ namespace giac {
       return symb_pnt(centre+normal(rayon,contextptr)*exp(cst_i*t,contextptr),attribut,contextptr);
     }
     if ( (geo_obj.type==_SYMB) && (geo_obj._SYMBptr->sommet==at_curve)){
-      vecteur v(*geo_obj._SYMBptr->feuille._VECTptr->front()._VECTptr);
-      gen res=subst(v[0],v[1],t,false,contextptr);
+      vecteur w(*geo_obj._SYMBptr->feuille._VECTptr->front()._VECTptr);
+      gen res=subst(w[0],w[1],t,false,contextptr);
       if (res.type==_VECT && res._VECTptr->size()==2)
 	res=res._VECTptr->front()+cst_i*res._VECTptr->back();
       return res;
@@ -5237,6 +5240,8 @@ namespace giac {
     }
     if (v.size()==1)
       v.push_back(plus_one_half);
+    if (v[1].is_symb_of_sommet(at_pnt))
+      v[1]=plus_one_half;
     gen s=remove_at_pnt(parameter2point(v,contextptr));
     if (is_undef(s))
       return s;
@@ -5256,7 +5261,7 @@ namespace giac {
     int s=read_attributs(v,attributs,contextptr);
     if (!s)
       return gendimerr(contextptr);
-    if (s==1)
+    if (s==1 && (args.type!=_VECT || args.subtype==_SEQ__VECT))
       g=v.front();
     else
       g=gen(vecteur(v.begin(),v.begin()+s),_SEQ__VECT);
@@ -5367,6 +5372,10 @@ namespace giac {
 	  // (x+fx/fxx)^2 + (y+fy/fxx)^2 = (fx^2+fy^2- 2c fxx)/fxx^2
 	  gen centre=ratnormal(-(fx+cst_i*fy)/fxx);
 	  gen rayon2( ratnormal((fx*fx+fy*fy-2*c*fxx)/(fxx*fxx)) );
+	  if (is_strictly_positive(-rayon2,contextptr)){
+	    g=vecteur(0);
+	    return true;
+	  }
 	  gen rayon(normal(sqrt(rayon2,contextptr),contextptr));
 	  g=symbolic(at_cercle,gen(makevecteur(gen(makevecteur(centre-rayon,centre+rayon),_GROUP__VECT),0,cst_two_pi),_PNT__VECT));
 	  return true;
@@ -12517,6 +12526,8 @@ namespace giac {
     gen c,diametre;
     if (g.is_symb_of_sommet(at_pnt)){
       g=remove_at_pnt(g);
+      if (est_aligne(e,f,g,contextptr))
+	return gensizeerr("Collinear points");
       gen tmp=_circonscrit(gen(makevecteur(e,f,g),_SEQ__VECT),contextptr),tmp2,r;
       centre_rayon(tmp,c,r,false,contextptr);
       tmp=arg((f-c)/(e-c),contextptr);
@@ -13848,28 +13859,27 @@ namespace giac {
   static define_unary_function_eval (__inter,&_inter,_inter_s);
   define_unary_function_ptr5( at_inter ,alias_at_inter,&__inter,0,true);
 
-  extern const unary_function_ptr * const  at_Bezier;
   gen _Bezier(const gen & args,GIAC_CONTEXT){
     return symbolic(at_Bezier,args);
   }
-  gen _bezier(const gen & args,GIAC_CONTEXT){
-      if (is_undef(args)) return args;
-      vecteur v(gen2vecteur(args));
-      if (v.empty())
-        return gensizeerr(contextptr);
-      vecteur attributs(1,default_color(contextptr));
-      int s=read_attributs(v,attributs,contextptr);
-      for (int i=0;i<s;++i)
-        v[i]=remove_at_pnt(v[i]);
-      return pnt_attrib(symbolic(at_Bezier,gen(vecteur(v.begin(),v.begin()+s),_GROUP__VECT)),attributs,contextptr);
-    }
-  static const char _bezier_s []="bezier";
-    static define_unary_function_eval (__bezier,&_bezier,_bezier_s);
-    define_unary_function_ptr5( at_bezier ,alias_at_bezier,&__bezier,0,true);
-
   static const char _Bezier_s []="Bezier";
   static define_unary_function_eval (__Bezier,&_Bezier,_Bezier_s);
   define_unary_function_ptr5( at_Bezier ,alias_at_Bezier,&__Bezier,0,true);
+
+  gen _bezier(const gen & args,GIAC_CONTEXT){
+    if (is_undef(args)) return args;
+    vecteur v(gen2vecteur(args));
+    if (v.empty())
+      return gensizeerr(contextptr);
+    vecteur attributs(1,default_color(contextptr));
+    int s=read_attributs(v,attributs,contextptr);
+    for (int i=0;i<s;++i)
+      v[i]=remove_at_pnt(v[i]);
+    return pnt_attrib(symbolic(at_Bezier,gen(vecteur(v.begin(),v.begin()+s),_GROUP__VECT)),attributs,contextptr);
+  }
+  static const char _bezier_s []="bezier";
+  static define_unary_function_eval (__bezier,&_bezier,_bezier_s);
+  define_unary_function_ptr5( at_bezier ,alias_at_bezier,&__bezier,0,true);
 
 #if defined(GIAC_GENERIC_CONSTANTS) || (defined(VISUALC) && !defined(RTOS_THREADX)) || defined(__x86_64__)
   unary_function_ptr plot_sommets[]={*at_pnt,*at_parameter,*at_cercle,*at_curve,*at_animation,0};

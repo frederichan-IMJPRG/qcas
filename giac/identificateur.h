@@ -46,7 +46,7 @@ namespace giac {
   extern identificateur _IDNT_euler_gamma;
   extern gen cst_euler_gamma;
   extern const char string_pi[];
-  extern identificateur _IDNT_pi;
+  identificateur & _IDNT_pi();
   extern alias_ref_identificateur ref_pi;
   extern gen cst_pi;
   extern const char string_infinity[];
@@ -62,7 +62,7 @@ namespace giac {
   extern const gen & cst_euler_gamma;
 
   extern const char string_pi[];
-  extern const identificateur & _IDNT_pi;
+  const identificateur & _IDNT_pi();
   extern const alias_ref_identificateur ref_pi;
   extern const alias_gen alias_cst_pi;
   extern const gen & cst_pi;

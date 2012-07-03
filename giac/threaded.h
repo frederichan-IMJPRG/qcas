@@ -60,6 +60,11 @@
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
+  std::vector<int> operator % (const std::vector<int> & a,int modulo);
+  std::vector<int> operator / (const std::vector<int> & v,const std::vector<int> & b);
+  std::vector<int> operator % (const std::vector<int> & v,const std::vector<int> & b);
+  bool operator > (const std::vector<int> & v,double q);
+
   class gen;
   class context;
   gen _heap_mult(const gen & g0,const context *);

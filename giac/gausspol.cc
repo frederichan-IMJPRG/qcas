@@ -186,7 +186,7 @@ namespace giac {
 		 std::vector< monomial<gen> >::const_iterator & b,
 		 std::vector< monomial<gen> >::const_iterator & b_end,
 		 std::vector< monomial<gen> > & new_coord,
-		 bool (* is_strictly_greater)( const index_t &, const index_t &)) {
+		 bool (* is_strictly_greater)( const index_m &, const index_m &)) {
     if ( (a!=a_end && new_coord.begin()==a) || (b!=b_end && new_coord.begin()==b)){
       std::vector< monomial<gen> > tmp;
       Add_gen(a,a_end,b,b_end,tmp,is_strictly_greater);
@@ -216,7 +216,7 @@ namespace giac {
       const index_m & pow_b = b->index;
       // a and b are non-empty, compare powers
       if (pow_a!=pow_b){
-	if (is_strictly_greater(pow_a.iref(), pow_b.iref())) {
+	if (is_strictly_greater(pow_a, pow_b)) {
 	  // a has lesser power, get coefficient from a
 	  new_coord.push_back(*a);
 	  ++a;
@@ -263,7 +263,7 @@ namespace giac {
 		 std::vector< monomial<gen> >::const_iterator & b,
 		 std::vector< monomial<gen> >::const_iterator & b_end,
 		 std::vector< monomial<gen> > & new_coord,
-		 bool (* is_strictly_greater)( const index_t &, const index_t &)) {
+		 bool (* is_strictly_greater)( const index_m &, const index_m &)) {
     if ( (a!=a_end && new_coord.begin()==a) || (b!=b_end && new_coord.begin()==b)){
       std::vector< monomial<gen> > tmp;
       Sub_gen(a,a_end,b,b_end,tmp,is_strictly_greater);
@@ -293,7 +293,7 @@ namespace giac {
       const index_m & pow_b = b->index;
       // a and b are non-empty, compare powers
       if (pow_a!=pow_b){
-	if (is_strictly_greater(pow_a.iref(), pow_b.iref())) {
+	if (is_strictly_greater(pow_a, pow_b)) {
 	  // a has lesser power, get coefficient from a
 	  new_coord.push_back(*a);
 	  ++a;
@@ -723,7 +723,7 @@ namespace giac {
 		 std::vector< monomial<gen> >::const_iterator & itb,
 		 std::vector< monomial<gen> >::const_iterator & itb_end,
 		 std::vector< monomial<gen> > & new_coord,
-		 bool (* is_strictly_greater)( const index_t &, const index_t &),
+		 bool (* is_strictly_greater)( const index_m &, const index_m &),
 		 const std::pointer_to_binary_function < const monomial<gen> &, const monomial<gen> &, bool> m_is_greater
 	     ) {
     if (ita==ita_end || itb==itb_end){
@@ -2112,7 +2112,43 @@ namespace giac {
   }
 
   gen ppz(polynome & p,bool divide){
+#ifdef USE_GMP_REPLACEMENTS
     return Tppz(p,divide);
+#else
+    vector< monomial<gen> >::iterator it=p.coord.begin(),itend=p.coord.end();
+    if (it==itend)
+      return 1;
+    gen res=(itend-1)->value;
+    for (it=p.coord.begin();it!=itend-1;++it){
+      res=gcd(res,it->value);
+      if (is_one(res))
+	return 1;
+    }
+    if (!divide)
+      return res;
+    if (res.type==_INT_ && res.val>0){
+      for (it=p.coord.begin();it!=itend;++it){
+	if (it->value.type!=_ZINT || it->value.ref_count()>1)
+	  it->value=it->value/res; 
+	else
+	  mpz_divexact_ui(*it->value._ZINTptr,*it->value._ZINTptr,res.val);
+      }
+      return res;
+    }
+    if (res.type==_ZINT){
+      for (it=p.coord.begin();it!=itend;++it){
+	if (it->value.type!=_ZINT || it->value.ref_count()>1)
+	  it->value=it->value/res; 
+	else
+	  mpz_divexact(*it->value._ZINTptr,*it->value._ZINTptr,*res._ZINTptr);
+      }
+      return res;
+    }
+    for (it=p.coord.begin();it!=itend;++it){
+      it->value=it->value/res; 
+    }
+    return res;
+#endif
   }
 
   // Find the content of p with respect to the 1st variable
@@ -3222,7 +3258,7 @@ namespace giac {
       // gcd in Z[X]
       return gcd_modular(p_simp,q_simp,d,p_simp,q_simp,compute_cofactors);
     }
-    bool allowrational = pt>=_POLY || qt>=_POLY;
+    bool allowrational = (pt>=_POLY || qt>=_POLY) && (pt!=_EXT && qt!=_EXT);
     if (!(p_deg>q_deg)){
       polynome quo(p_simp.dim);
       if (exactquotient(q_simp,p_simp,quo,allowrational)){
@@ -4476,6 +4512,12 @@ namespace giac {
     factorization::const_iterator it=fsqff.begin(),itend=fsqff.end();
     for (;it!=itend;++it){
       polynome pcur=it->fact;
+      // normalize leading term
+      if (pcur.coord.front().value.type==_EXT){
+	gen pcur0=inv_EXT(pcur.coord.front().value),num,den;
+	fxnd(pcur0,num,den);
+	pcur=num*pcur;
+      }
       int mult=it->mult;
       int d=pcur.lexsorted_degree();
       if (!d)

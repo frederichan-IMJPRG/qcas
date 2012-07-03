@@ -3173,7 +3173,7 @@ static define_unary_function_eval (__center2interval,&_center2interval,_center2i
 #ifndef WIN32
     io_graph(old_iograph,contextptr);
 #endif
-    return gen(res,_SEQ__VECT);
+    return res; // gen(res,_SEQ__VECT);
   }
   gen _histogram(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
