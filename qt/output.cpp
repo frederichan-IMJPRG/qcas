@@ -5897,20 +5897,29 @@ void DisplayProperties::initGui(){
     connect (displayObjectPanel,SIGNAL(visibleChanged(bool)),this,SLOT(updateVisible(bool)));
 }
 void DisplayProperties::updateVisible(bool b){
-    parent->getUndoStack()->beginMacro("visibleAttributes" );
-    for (int i=0;i<listItems->count();++i){
-        DisplayObjectCommand * doc;
-        if (!listItems->at(i)->isFromInter()){
-             doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent);
+    if (parent->isInteractive()){
+        parent->getUndoStack()->beginMacro("visibleAttributes" );
+        for (int i=0;i<listItems->count();++i){
+            DisplayObjectCommand * doc;
+            if (!listItems->at(i)->isFromInter()){
+                 doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent);
+            }
+            else{
+                MyItem *inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
+                int id=inter->getChildren().indexOf(listItems->at(i));
+                doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent,id);
+            }
+            parent->getUndoStack()->push(doc);
         }
-        else{
-            MyItem *inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
-            int id=inter->getChildren().indexOf(listItems->at(i));
-            doc=new DisplayObjectCommand(listItems->at(i)->getLevel(),listItems->at(i)->isVisible(),b,parent,id);
-        }
-        parent->getUndoStack()->push(doc);
+        parent->getUndoStack()->endMacro();
     }
-    parent->getUndoStack()->endMacro();
+    else{
+        for (int i=0;i<listItems->count();++i){
+                 listItems->at(i)->setVisible(b);
+        }
+        parent->updatePixmap(false);
+        parent->repaint();
+    }
 }
 
 
@@ -5934,23 +5943,29 @@ void DisplayProperties::updateAttributes(int c){
             color.setAlpha(listItems->at(i)->getColor().alpha());
             listItems->at(i)->setColor(color);
         }
-        ModifyAttributesCommand* mac;
-        if (!listItems->at(i)->isFromInter())
-               mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent);
-        else {
-            MyItem* inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
-            int id=inter->getChildren().indexOf(listItems->at(i));
-            mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent,id);
-        }
-        bool b=false;
-        if (parent->getUndoStack()->index()>0){
-            b=mac->mergeWith(parent->getUndoStack()->command(parent->getUndoStack()->index()-1));
-        }
+        if (parent->isInteractive()){
+            ModifyAttributesCommand* mac;
+            if (!listItems->at(i)->isFromInter())
+                   mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent);
+            else {
+                MyItem* inter=parent->getCommands().at(listItems->at(i)->getLevel()).item;
+                int id=inter->getChildren().indexOf(listItems->at(i));
+                mac=new ModifyAttributesCommand(listItems->at(i)->getLevel(),old, listItems->at(i)->getAttributes(),parent,id);
+            }
+            bool b=false;
+            if (parent->getUndoStack()->index()>0){
+                b=mac->mergeWith(parent->getUndoStack()->command(parent->getUndoStack()->index()-1));
+            }
 
-        if  (!b) parent->getUndoStack()->push(mac);
-        else {
-            parent->getUndoStack()->undo();
-            parent->getUndoStack()->push(mac);
+            if  (!b) parent->getUndoStack()->push(mac);
+            else {
+                parent->getUndoStack()->undo();
+                parent->getUndoStack()->push(mac);
+            }
+        }
+        else{
+            parent->updatePixmap(false);
+            parent->repaint();
         }
 
     }
