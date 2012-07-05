@@ -3377,7 +3377,10 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             vv.clear();
             addToVector(protecteval(g,1,context),vv);
             Point* newPoint=dynamic_cast<Point*>(vv.at(0));
-            pe->updateValueFrom(newPoint);
+            if (newPoint!=0)
+                pe->updateValueFrom(newPoint);
+            // Case undefItem
+            else pe->setUndef(true);
             delete origin;
             delete newPoint;
 
@@ -3390,8 +3393,12 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
         addToVector(answer,vv);
         // Not the particular case of an intersection point or tangent lines
         if (!v.at(i)->isInter()){
-            v.at(i)->updateValueFrom(vv.at(0));
-            delete vv.at(0);
+            if (vv.isEmpty())
+                v.at(i)->setUndef(true);
+            else {
+                v.at(i)->updateValueFrom(vv.at(0));
+                delete vv.at(0);
+            }
         }
         else{
             QVector<MyItem*> children=v.at(i)->getChildren();
@@ -4788,7 +4795,7 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 }
                 else  {
                     // defining the last point for a polygon or a bezier curve:
-                    if ((currentActionTool==POLYGON)||(currentActionTool==PLOT_BEZIER)){
+                    if ((!selectedItems.isEmpty())&&((currentActionTool==POLYGON)||(currentActionTool==PLOT_BEZIER))){
                         if (focusOwner!=0) selectedItems<<focusOwner;
                         else{
                             addNewPoint(e->pos());
@@ -5035,9 +5042,11 @@ void Canvas2D::paintEvent(QPaintEvent * ){
         MyItem* item =selectedItems.at(i);
         // focusOwner will be drawn just after this.
         if (item==focusOwner) continue;
-        item->setHighLighted(true);
-        item->draw(&painter);
-        item->setHighLighted(false);
+        if (!item->isUndef()) {
+            item->setHighLighted(true);
+            item->draw(&painter);
+            item->setHighLighted(false);
+        }
     }
     // If there is another object under mouse
     if (focusOwner!=0){
@@ -5101,12 +5110,13 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
 
                 QString vars=element.attribute("interVariables","");
                 if (!vars.isEmpty()){
-                    bool isTangent=(c.command.indexOf(":=tangent(")!=-1);
+                    bool isTangent=(c.command.indexOf("tangent(")!=-1);
                     InterItem* inter=0;
                     if (!isTangent)
                         inter=new InterItem(false,this);
                     else inter=new InterItem(true,this);
-                        inter->setLevel(evaluationLevel);
+
+                    inter->setLevel(evaluationLevel);
 
                       // inter command
                       if (!isTangent)
@@ -5173,19 +5183,36 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                  ******* Case PointElement
                  ***/
                 else if(element.attribute("isPointElement","0").toInt()){
-                    QString s=QString("%1+i*%2").arg(element.attribute("originX","0")).arg(element.attribute("originX","0"));
-                    Point* p=new Point(gen(s.toStdString(),context),this);
+                    QString tmp=QString("%1+i*%2").arg(element.attribute("originX","0")).arg(element.attribute("originY","0"));
+                    gen origin(tmp.toStdString(),context);
+                    gen value(element.attribute("value","0").toStdString(),context);
+                    QString translation =QString::fromStdString(giac::print(value-origin,context));
+
+                    s.append("+(");
+                    s.append(translation);
+                    s.append(");");
+                    entry=gen(s.toStdString(),context);
+                    answer=protecteval(entry,1,context);
+                    v.clear();
+                    addToVector(answer,v);
+
+                    Point* p=new Point(origin,this);
                     PointElement *pe=new PointElement(p,this);
                     delete p;
-                    pe->setValue(gen(element.attribute("value","0").toStdString(),context));
+
+                    pe->updateValueFrom(v.at(0));
+//                    pe->setValue(gen(element.attribute("value","0").toStdString(),context));
                     pe->setAttributes(element.attribute("attribute","0").toInt());
                     pe->setLevel(evaluationLevel);
                     pe->setLegend(element.attribute("legend",""));
 
                     int id=element.text().indexOf(":=");
-                   if (id!=-1){
+                    if (id!=-1){
                        pe->setVar(element.text().left(id));
-                   }
+                    }
+
+
+
                     pe->setMovable(true);
                     findIDNT(entry,pe);
                     c.item=pe;
@@ -5274,9 +5301,6 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     findFreeVar(varLine);
                     connect (cp,SIGNAL(valueChanged()),this,SLOT(updateAllChildrenFrom()));
                     connect(cp,SIGNAL(deletePanel()),this,SLOT(deleteCursorPanel()));
-
-
-
                 }
                 /***********************************
                  *********      case Multicurve
@@ -5305,10 +5329,9 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                      parent->updateAllCategories();
                 }
                 else{
-
-                findIDNT(entry,v.at(0));
-                 id=element.text().indexOf(":=");
-                if (id!=-1){
+                    findIDNT(entry,v.at(0));
+                     id=element.text().indexOf(":=");
+                    if (id!=-1){
                     v.at(0)->setVar(element.text().left(id));
                 }
                 c.item=v.at(0);

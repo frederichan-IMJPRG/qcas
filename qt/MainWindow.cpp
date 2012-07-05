@@ -152,7 +152,7 @@ void MainWindow::createAction(){
     connect(undoAction,SIGNAL(triggered()),this,SLOT(undo()));
 
     redoAction=new QAction(tr("&Rétablir"),this);
-    redoAction->setShortcut(tr("Maj+Ctrl+Z"));
+    redoAction->setShortcut(tr("Shift+Ctrl+Z"));
     redoAction->setStatusTip(tr("Rétablir"));
     redoAction->setIcon(QIcon(":/images/edit-redo.png"));
     connect(redoAction,SIGNAL(triggered()),this,SLOT(redo()));
@@ -212,9 +212,9 @@ void MainWindow::createMenus(){
     fileMenu->addAction(exitAction);
 
     editMenu=menuBar()->addMenu(tr("Edition"));
-    editMenu->addAction(pasteAction);
     editMenu->addAction(cutAction);
     editMenu->addAction(copyAction);
+    editMenu->addAction(pasteAction);
     editMenu->addAction(undoAction);
     editMenu->addAction(redoAction);
     editMenu->addAction(deleteLevelAction);
@@ -283,17 +283,23 @@ void MainWindow::open(){
 }
 
 bool MainWindow::loadFile(const QString &fileName){
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
     QDomDocument doc("xml");
-     QFile file(fileName);
-     if (!file.open(QIODevice::ReadOnly))
-         return false;
-     if (!doc.setContent(&file)) {
-         file.close();
-         return false;
-     }
-     file.close();
-//     qDebug()<<"Loading...";
-//     qDebug()<<doc.toString();
+
+    QDataStream dataIn(&file);
+    QByteArray compByteArray;
+    dataIn >> compByteArray;
+    QByteArray xmlByteArray = qUncompress(compByteArray);
+    QString xmlString =QString::fromUtf8(xmlByteArray.data(), xmlByteArray.size());
+    qDebug()<<xmlString;
+    if (!doc.setContent(xmlString)){
+        file.close();
+        return false;
+    }
+    file.close();
+
 
      QDomElement root = doc.documentElement();
      if (root.tagName()!="qcas") return false;
@@ -410,9 +416,45 @@ bool MainWindow::saveFile(const QString &fileName){
     QFile file(fileName);
     if (file.open(QIODevice::WriteOnly))
     {
-    QTextStream out(&file);
+        QString xmlString;
+        QTextStream textOut(&xmlString);
+        doc.save(textOut,1);
+        QByteArray xmlByteArray = qCompress(xmlString.toUtf8());
+        QDataStream dataOut(&file);
+        dataOut.writeBytes(xmlByteArray.data(), xmlByteArray.size());
+
+
+
+
+
+/*        QTextStream out(&file);
     doc.save(out, 4);
+    */
     file.close();
+/*    -------------------------------------
+
+
+    Uncompressing xml-Data to QDomDocument doc:
+    ===========================================
+    QDataStream dataIn(&inFile);
+    QByteArray compByteArray;
+    dataIn >> compByteArray;
+    QByteArray xmlByteArray = qUncompress(compByteArray);
+    QString xmlString =
+        QString::fromUtf8(xmlByteArray.data(), xmlByteArray.size());
+    doc.setContent(xmlString, &errorMsg, &errorLine, &errorColumn);
+
+
+    ------------------------------
+    file.open(QIODevice::ReadOnly);
+    QByteArray ba = file.readAll();
+    QFile out("test.gz");
+         file.open(QIODevice::WriteOnly);
+         QDataStream out(&amp;file);
+         out << qCompress(ba);
+  */
+
+
     }
     else
     return(false);

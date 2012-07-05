@@ -78,7 +78,7 @@ void Highlighter::highlightBlock(const QString &text){
             start=close+2;
         }
     }
-
+    setCurrentBlockState(-1);
     QChar c;
     int  key=-1;
     int slash=-1;
