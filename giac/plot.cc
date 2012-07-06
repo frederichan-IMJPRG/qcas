@@ -4322,10 +4322,29 @@ namespace giac {
 	// should expand and assume that tt is real
 	rewrite_with_t_real(eq,v[1],contextptr);
 	vecteur sol;
-	if (has_num_coeff(eq)){
+    if (has_num_coeff(eq)){
+         gen rep=re(p,contextptr);
+         // first try bisection near re(p) if re(v[0])==v[1]
+         if (re(v[0],contextptr)==v[1]){
+           gen dx=(gnuplot_xmax-gnuplot_xmin)/2; // or maybe v[3]-v[2]?
+           int iszero=-1;
+           vecteur sol1=bisection_solver(eq,v[1],rep-dx,rep+dx,iszero,contextptr);
+           // keep only solutions, no sign reversal
+           for (unsigned i=0;i<sol1.size();++i){
+             if (is_greater(1e-4,subst(eq,v[1],sol1[i],false,contextptr),contextptr))
+          sol.push_back(sol1[i]);
+           }
+         }
+         if (sol.empty()){
+           vecteur eqv(makevecteur(eq,v[1],re(p,contextptr)));
+           sol=gen2vecteur(in_fsolve(eqv,contextptr));
+         }
+     }
+
+/*	if (has_num_coeff(eq)){
       vecteur eqv(makevecteur(eq,v[1],re(p,contextptr)));
 	  sol=gen2vecteur(in_fsolve(eqv,contextptr));
-	}
+    }*/
 	else
 	  sol=solve(eq,v[1],0,contextptr);
 	sol.push_back(v[3]);
