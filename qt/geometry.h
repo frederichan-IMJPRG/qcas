@@ -310,6 +310,7 @@ public:
     double getStartAngle() const;
     double getEndAngle() const;
 private:
+    bool isArc;
     QPointF center;
     double diametre;
     double startAngle;

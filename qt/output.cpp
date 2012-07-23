@@ -839,7 +839,7 @@ void GraphWidget::loadInteractiveXML(QDomElement & sheet){
 }
 void GraphWidget::XML2Axis(QDomElement & element){
     AxisParam axisParam;
-    axisParam.isVisible=(element.attribute("isVisible","0")!=0);
+    axisParam.isVisible=element.attribute("isVisible","0").toInt();
     axisParam.legend=element.attribute("legend","");
     axisParam.unitSuffix=element.attribute("unitSuffix","");
     axisParam.max=element.attribute("max","5").toDouble();
@@ -5070,6 +5070,7 @@ void Canvas2D::resizeEvent(QResizeEvent * ev){
 
 }
 void Canvas2D::loadInteractiveXML(QDomElement & sheet){
+    bool isOrtho=sheet.attribute("ortho","0").toInt();
     QDomNode first=sheet.firstChild();
     while(!first.isNull()){
         QDomElement element=first.toElement();
@@ -5089,8 +5090,6 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 if (id!=-1){
                     s.insert(id,QString(",display=%1").arg(element.attribute("attributes","0")));
                 }
-
-
 
                 c.isCustom=false;
 
@@ -5414,6 +5413,7 @@ void Canvas2D::itemToXML(Command c,QDomElement & top , const bool &setLevel){
 
 
 void Canvas2D::toInteractiveXML(QDomElement & top){
+    top.setAttribute("ortho",ortho);
     gridToXML(top);
     axisToXML(top);
     for(int i=0;i<commands.size();++i){

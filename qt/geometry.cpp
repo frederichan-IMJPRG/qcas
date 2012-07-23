@@ -1348,6 +1348,8 @@ Circle::Circle(const QPointF &p, const double &d, const double &st, const double
     diametre=d;
     startAngle=st*180/3.14159;
     endAngle=end*180/3.14159;
+    isArc=true;
+    if (endAngle-startAngle>6.28) isArc=false;
 }
 QString Circle::getDisplayValue(){
     QString mml("<math mode=\"display\">\n");
@@ -1422,6 +1424,11 @@ void Circle::updateScreenCoords(const bool compute){
         p=QPainterPath();
         p.moveTo(start);
         p.arcTo(QRectF(leftUp,rightBottom),startAngle,endAngle-startAngle);
+        if (isFilled()){
+            g2d->toScreenCoord(center.x(),center.y(),a,b);
+            p.lineTo(a,b);
+            p.closeSubpath();
+        }
     }
     QPainterPathStroker stroke;
     stroke.setWidth(getPenWidth()+1);
