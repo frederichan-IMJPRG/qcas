@@ -43,6 +43,7 @@ using namespace std;
 #include "input_parser.h"
 #include "input_lexer.h"
 #include "maple.h"
+#include "quater.h"
 #include "giacintl.h"
 
 #ifndef NO_NAMESPACE_GIAC
@@ -487,7 +488,20 @@ namespace giac {
       x=v.back();
       p=v.front();
     }
+    if (p.type==_POLY){
+      if (x.type==_INT_ && x.val>=0 && x.val<p._POLYptr->dim)
+	return p._POLYptr->degree(x.val);
+      else {
+	vecteur res(p._POLYptr->dim);
+	index_t idx(p._POLYptr->degree());
+	for (int i=0;i<p._POLYptr->dim;++i)
+	  res[i]=idx[i];
+	return res;
+      }
+    }
     vecteur lv(1,x);
+    if (x.type==_VECT)
+      lv=*x._VECTptr;
     lvar(p,lv);
     gen aa=e2r(p,lv,contextptr),aan,aad;
     if (is_zero(aa))
@@ -1081,7 +1095,7 @@ namespace giac {
     matrice r;
     gen det;
     mrref(res,r,v,det,0,s+1,0,s*s,
-	  false,1,true,1,0,
+	  /* fullreduction */0,1,true,1,0,
 	  contextptr);
     // find 1st line with zeros (except in the last col)
     const_iterateur it=r.begin(),itend=r.end();
@@ -1105,6 +1119,46 @@ namespace giac {
       if (proba_epsilon(contextptr) && probabilistic_pmin(m,w,true,contextptr))
 	return w;
       return pmin(m,contextptr);
+    }
+    if (is_integer(g) || g.type==_MOD)
+      return makevecteur(1,g);
+    if (g.type==_USER){
+      if (galois_field * gf=dynamic_cast<galois_field *>(g._USERptr)){
+	if (gf->a.type!=_VECT || gf->P.type!=_VECT || !is_integer(gf->p))
+	  return gensizeerr("Bad GF element");
+	environment env;
+	env.modulo=gf->p;
+	env.pn=env.modulo;
+	env.moduloon=true;
+	// compute 1,a,a^2,...,a^n in lines then transpose and find ker
+	int n=gf->P._VECTptr->size()-1;
+	vecteur & A=*gf->a._VECTptr;
+	vecteur current(1,1),suivant,temp;
+	matrice m(n+1);
+	m[0]=vecteur(n);
+	m[0]._VECTptr->front()=1; 
+	// put constant term in first column (row) to avoid cancellation problems
+	for (int i=1;i<=n;++i){
+	  mulmodpoly(current,A,&env,temp);
+	  suivant=operator_mod(temp,*gf->P._VECTptr,&env);
+	  m[i]=new ref_vecteur(n);
+	  for (unsigned j=0;j<suivant.size();++j){
+	    (*m[i]._VECTptr)[j]=makemod(suivant[suivant.size()-1-j],gf->p);
+	  }
+	  swap(current,suivant);
+	}
+	vecteur noyau;
+	m=mtran(m);
+	mker(m,noyau,0,contextptr);
+	if (noyau.empty() || noyau.front().type!=_VECT)
+	  return gensizeerr("Internal error, no relation found");
+	temp=*noyau.front()._VECTptr;
+	for (;!temp.empty() && is_zero(temp.back());)
+	  temp.pop_back();
+	reverse(temp.begin(),temp.end());
+	mulmodpoly(temp,inv(temp.front(),contextptr),0,temp);
+	return gen(temp,_POLY1__VECT);
+      }
     }
     if (g.type!=_VECT || g._VECTptr->size()!=2)
       return symbolic(at_pmin,g);
@@ -4297,11 +4351,11 @@ static define_unary_function_eval (__hamdist,&_hamdist,_hamdist_s);
     return gensizeerr(gettext(""));
   }
   static const char _plotarea_s []="plotarea";
-static define_unary_function_eval (__plotarea,&_plotarea,_plotarea_s);
+  static define_unary_function_eval (__plotarea,&_plotarea,_plotarea_s);
   define_unary_function_ptr5( at_plotarea ,alias_at_plotarea,&__plotarea,0,true);
 
   static const char _areaplot_s []="areaplot";
-static define_unary_function_eval (__areaplot,&_plotarea,_areaplot_s);
+  static define_unary_function_eval (__areaplot,&_plotarea,_areaplot_s);
   define_unary_function_ptr5( at_areaplot ,alias_at_areaplot,&__areaplot,0,true);
 
   gen _add_language(const gen & args,GIAC_CONTEXT){
@@ -4369,6 +4423,179 @@ static define_unary_function_eval (__show_language,&_show_language,_show_languag
   static const char _os_version_s []="os_version";
 static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
   define_unary_function_ptr5( at_os_version ,alias_at_os_version,&__os_version,0,true);
+
+#ifndef GIAC_HAS_STO_38
+  gen plotproba(const gen & args,const vecteur & positions,const vecteur & attributs,GIAC_CONTEXT){
+    matrice m (*args._VECTptr);
+    // check if there is a row of legende strings
+    gen leg;
+    if (!is_squarematrix(m)){
+      if (!ckmatrix(m) || m.empty())
+	return gensizeerr(contextptr);
+      int r=m.size();
+      int c=m[0]._VECTptr->size();
+      if (c==r+1){
+	m=mtran(m);
+	c=r;
+      }
+      else {
+	if (r!=c+1)
+	  return gensizeerr(contextptr);
+      }
+      // first or last row?
+      gen m00=m[0][0];
+      if (m00.type==_IDNT || m00.type==_STRNG){
+	leg=m.front();
+	m=vecteur(m.begin()+1,m.end());
+      }
+      else {
+	leg=m.back();
+	m.pop_back();
+      }
+    }
+    int ms=m.size();
+    if (ms<2)
+      return gendimerr(contextptr);
+    // check if coeffs>=0 and sum coeffs = 1 on rows or on columns
+    gen g=_sum(args,contextptr);
+    if (g!=vecteur(ms,1)){
+      m=mtran(m);
+      ms=m.size();
+      g=_sum(m,contextptr);
+      if (g!=vecteur(ms,1))
+	*logptr(contextptr) << "Warning: not a graph matrix!" << endl;
+    }
+    // first make points, 
+    vecteur l(ms),pos(ms),col(ms,_BLACK);
+    switch (ms){
+    case 2:
+      l[0]=0.; pos[0]=_QUADRANT3;
+      l[1]=1.; pos[1]=_QUADRANT4; col[1]=35;
+      break;
+    case 3:
+      l[0]=0.0; pos[0]=_QUADRANT3;
+      l[1]=1.0; pos[1]=_QUADRANT4;col[1]=35;
+      l[2]=gen(0.5,std::sqrt(3.0)/2); pos[2]=_QUADRANT1; col[2]=11;
+      break;
+    case 4:
+      l[0]=0.; pos[0]=_QUADRANT3;
+      l[1]=1; pos[1]=_QUADRANT4;col[1]=35;
+      l[2]=gen(0.5,0.5*std::sqrt(3.0));  pos[2]=_QUADRANT1; col[2]=11;
+      l[3]=(l[1]+l[2])/3; // isobarycenter
+      col[3]=58;
+      break;
+    case 5:
+      l[0]=0.; pos[0]=_QUADRANT3;
+      l[1]=3.; pos[1]=_QUADRANT4;col[1]=35;
+      l[2]=gen(1.5,1.5*std::sqrt(3.0));  pos[2]=_QUADRANT1; col[2]=11;
+      l[3]=gen(1.,.75); col[3]=58;
+      l[4]=gen(2.,.75); col[4]=_MAGENTA;
+      break;
+    case 6:
+      l[0]=0.; pos[0]=_QUADRANT3;
+      l[1]=3.; pos[1]=_QUADRANT4;col[1]=35;
+      l[2]=gen(1.5,1.5*std::sqrt(3.0));  pos[2]=_QUADRANT1; col[2]=11;
+      l[3]=gen(1.,.5); col[3]=58;
+      l[4]=gen(2.,.5); col[4]=_MAGENTA;
+      l[5]=gen(1.5,1.36602540378); col[5]=220;
+      break;
+    default:
+      l[0]=0.; pos[0]=_QUADRANT3;
+      l[1]=3.; pos[1]=_QUADRANT4;col[1]=35;
+      l[2]=gen(1.5,1.5*std::sqrt(3.0));  pos[2]=_QUADRANT1; col[2]=11;
+      l[3]=gen(1.,.5); col[3]=58;
+      l[4]=gen(2.,.5); col[4]=_MAGENTA;
+      l[5]=gen(1.5,1.36602540378); col[5]=220;
+      l[6]=gen(1.36,0.97); col[6]=_RED;
+      break;
+    }
+    if (int(positions.size())==ms){
+      vecteur tmp=positions;
+      for (int i=0;i<ms;++i){
+	tmp[i]=eval(tmp[i],1,contextptr);
+	gen p=evalf_double(tmp[i],1,contextptr);
+	tmp[i]=remove_at_pnt(p);
+	if (tmp[i].type<_POLY){
+	  l[i]=tmp[i];
+	  // adjust color and position
+	  if (p.is_symb_of_sommet(at_pnt) && p._SYMBptr->feuille.type==_VECT && p._SYMBptr->feuille._VECTptr->size()>1){
+	    p=(*p._SYMBptr->feuille._VECTptr)[1];
+	    if (p.type==_VECT && !p._VECTptr->empty())
+	      p=p._VECTptr->front();
+	    p=exact(p,contextptr);
+	    if (p.type==_INT_){
+	      if ((p.val & 0xffff)){
+		pos[i]=0;
+		col[i]=p.val;
+	      }
+	      else
+		pos[i]=p.val;
+	    }
+	  }
+	}
+      }
+    }
+    else {
+      if (ms>7)
+	return gendimerr(contextptr);
+    }
+    if (!attributs.empty() && attributs[0].type==_VECT && int(attributs[0]._VECTptr->size())==ms)
+      col=*attributs[0]._VECTptr;
+    // then link if matrix cell is not 0
+    vecteur res;
+    res.reserve(2*ms*ms+ms);
+    for (int i=0;i<ms;++i){
+      string s;
+      if (leg.type==_VECT && int(leg._VECTptr->size())>i)
+	s=leg[i].print(contextptr);
+      else {
+	if (int(positions.size())>i && positions[i].type==_IDNT)
+	  s = positions[i].print(contextptr);
+	else
+	  s+=('A'+i);
+      }
+      gen mii=m[i][i];
+      if (!is_zero(mii))
+	s += ':'+mii.print();
+      gen legende=symb_equal(at_legende,string2gen(s,false));
+      pos[i].subtype=_INT_PLOT;
+      col[i].subtype=_INT_PLOT;
+      gen aff=symb_equal(at_display,pos[i]+col[i]);
+      res.push_back(_point(gen(makevecteur(l[i],legende,aff),_SEQ__VECT),contextptr));
+    }
+    for (int i=0;i<ms;++i){
+      for (int j=0;j<ms;++j){
+	if (i==j)
+	  continue;
+	gen mij=m[i][j];
+	if (mij!=0){
+	  gen legende=symb_equal(at_legende,mij);
+	  gen aff=symb_equal(at_display,col[j]);
+	  res.push_back(_arc(gen(makevecteur(l[i],l[j],0.4,2,legende,aff),_SEQ__VECT),contextptr));
+	}
+      }
+    }
+    return res;
+  }
+
+  // plotproba(matrix)
+  // display a graph from a weight matrix
+  gen _plotproba(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    vecteur attributs(1,default_color(contextptr));
+    vecteur v(seq2vecteur(args));
+    int s=read_attributs(v,attributs,contextptr);
+    if (!s || s>2 || (s==2 && v[1].type!=_VECT) )
+      return gendimerr(contextptr);
+    v.front()=eval(v.front(),1,contextptr);
+    if (s==1)
+      return plotproba(v.front(),vecteur(0),attributs,contextptr);
+    return plotproba(v[0],*v[1]._VECTptr,attributs,contextptr);
+  }
+  static const char _plotproba_s []="plotproba";
+  static define_unary_function_eval_quoted (__plotproba,&_plotproba,_plotproba_s);
+  define_unary_function_ptr5( at_plotproba ,alias_at_plotproba,&__plotproba,_QUOTE_ARGUMENTS,true);
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -85,19 +85,20 @@ enum Fl_Color {	// standard colors
   FL_COLOR_CUBE		= 56
 };
 #else // GIAC_HAS_STO_38
+#include "../../graphics/colors.h"
 enum Fl_Color {
-  FL_BLACK = 7,
-  FL_WHITE = 0,
-  FL_RED = 2, // grey1
-  FL_YELLOW = 2, // grey1
-  FL_CYAN = 4, // grey2
-  FL_BLUE = 4, // grey2
-  FL_GREEN  = 4,
-  FL_MAGENTA = 2,
-  FL_TRANSPARENT = 1, // transparent
-  FL_DARK1		= 2,	
-  FL_GRAY		= 4,	
-  FL_LIGHT1		= 7,	
+  FL_BLACK = ColorBlack,
+  FL_WHITE = ColorWhite,
+  FL_RED = ColorRed, // grey1
+  FL_YELLOW = ColorYellow, // grey1
+  FL_CYAN = ColorCyan, // grey2
+  FL_BLUE = ColorBlue, // grey2
+  FL_GREEN  = ColorGreen,
+  FL_MAGENTA = ColorMagenta,
+  FL_TRANSPARENT = ColorTransparent, // transparent
+  FL_DARK1		= ColorDarkGrey,	
+  FL_GRAY		= ColorGrey,	
+  FL_LIGHT1		= ColorWhite,	
 
 };
 

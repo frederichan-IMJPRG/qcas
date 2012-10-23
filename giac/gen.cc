@@ -1608,7 +1608,7 @@ namespace giac {
       // evaluate _FUNCndary in RPN mode, f must be of type _FUNC
   static gen rpneval_FUNC(const gen & f,GIAC_CONTEXT){
     // int s=history_out(contextptr).size();
-      int nargs=max(f.subtype,0);
+      int nargs=giacmax(f.subtype,0);
       if (!nargs){
 	gen res=(*f._FUNCptr)(gen(history_out(contextptr),_RPN_STACK__VECT),contextptr);
 	if ( (res.type!=_VECT) || (res.subtype!=_RPN_STACK__VECT))
@@ -1867,7 +1867,7 @@ namespace giac {
     gen tmp=evalf_double(g,1,context0);
     gen G=g;
     if (tmp.type==_DOUBLE_ && tmp._DOUBLE_val!=0)
-      round2(G,nbits-std::log(std::abs(tmp._DOUBLE_val))/std::log(2.0));
+      round2(G,int(nbits-std::log(std::abs(tmp._DOUBLE_val))/std::log(2.0)));
     return G;
 #endif
   }
@@ -2040,7 +2040,7 @@ namespace giac {
       gen a,b;
       if (has_evalf(*g._EXTptr,a,level,contextptr) && has_evalf(*(g._EXTptr+1),b,level,contextptr)){
 	a=alg_evalf(a,b,contextptr);
-	return has_evalf(a,res,level,contextptr);
+	return a.type==_EXT?false:has_evalf(a,res,level,contextptr);
       }
       return false;
     }
@@ -2215,6 +2215,8 @@ namespace giac {
   }
 
   gen gen::evalf_double(int level,const context * contextptr) const{
+    if (type==_DOUBLE_)
+      return *this;
     gen g;
     if (has_evalf(*this,g,level,contextptr)){
       if (g.type==_CPLX)
@@ -3459,7 +3461,7 @@ namespace giac {
 	return arg_CPLX(a,contextptr);
 	// return new symbolic(at_arg,a);
     case _USER:
-      return a._USERptr->arg();
+      return a._USERptr->arg(contextptr);
     case _FRAC:
       return arg(a._FRACptr->num,contextptr)-arg(a._FRACptr->den,contextptr);
     default:
@@ -3495,7 +3497,7 @@ namespace giac {
     case _ZINT:
       return mpz_sizeinbase(*_ZINTptr,2)+1;
     case _CPLX: 
-      return max(_CPLXptr->bindigits(),(_CPLXptr+1)->bindigits() ) ;
+      return giacmax(_CPLXptr->bindigits(),(_CPLXptr+1)->bindigits() ) ;
     default:
 #ifndef NO_STDEXCEPT
       settypeerr(gettext("Bindigits"));
@@ -4951,7 +4953,9 @@ namespace giac {
       if (abs_calc_mode(contextptr)==38 && (a.subtype==_MATRIX__VECT ||b.subtype==_MATRIX__VECT) && ckmatrix(a) && ckmatrix(b)){
 	if (a._VECTptr->front()._VECTptr->size()!=b._VECTptr->size())
 	  return gendimerr(contextptr);
-	return gen(mmult(*a._VECTptr,*b._VECTptr),_MATRIX__VECT);
+	gen res(new ref_vecteur(0),_MATRIX__VECT);
+	mmult(*a._VECTptr,*b._VECTptr,*res._VECTptr);
+	return res;
       }
       if ( (a.subtype==_POLY1__VECT) || (b.subtype==_POLY1__VECT) )
 	return multgen_poly(*a._VECTptr,*b._VECTptr);
@@ -5508,6 +5512,8 @@ namespace giac {
 	}
 	return _vector(vector2vecteur(*tmp._VECTptr)*b,contextptr);
       }
+      if ((b.type==_SYMB) && equalposcomp(plot_sommets,b._SYMBptr->sommet))
+	return gensizeerr(gettext("Unable to multiply two graphic objects"));
       return symbolic_plot_makevecteur(a._SYMBptr->sommet,a._SYMBptr->feuille*b,false,contextptr);
     }
     if ((b.type==_SYMB) && equalposcomp(plot_sommets,b._SYMBptr->sommet)){
@@ -6129,6 +6135,8 @@ namespace giac {
 	return (*a._REALptr)*inv(b,context0);
       if (b.type==_REAL)
 	return a*b._REALptr->inv();
+      if (a.type==_USER && b.type!=_USER)
+	return (*a._USERptr)/b;
       if (a.type==_USER || b.type==_USER) 
 	return a*inv(b,context0);
       if (a.type==_FRAC){
@@ -7053,8 +7061,8 @@ namespace giac {
 	  if (type==_STRNG)
 	    return string2gen('"'+_STRNGptr->substr(debut,fin-debut+1)+'"');
 	  if (type==_VECT){
-	    debut=max(debut,0);
-	    fin=min(fin,_VECTptr->size()-1);
+	    debut=giacmax(debut,0);
+	    fin=giacmin(fin,_VECTptr->size()-1);
 	    return gen(vecteur(_VECTptr->begin()+debut,_VECTptr->begin()+fin+1),subtype);
 	  }
 	}
@@ -7079,8 +7087,8 @@ namespace giac {
 	    if (fin<debut)
 	      swap(debut,fin);
 	    if (res.type==_VECT){
-	      debut=max(debut,0);
-	      fin=min(fin,res._VECTptr->size()-1);
+	      debut=giacmax(debut,0);
+	      fin=giacmin(fin,res._VECTptr->size()-1);
 	      iterateur jt=res._VECTptr->begin()+debut,jtend=_VECTptr->begin()+fin+1;
 	      gen fin_it(vecteur(it+1,itend),_SEQ__VECT);
 	      vecteur v;
@@ -7675,14 +7683,14 @@ namespace giac {
       return a;
   }
 
-  int min(int a, int b){
+  int giacmin(int a, int b){
     if (a<b)
       return a;
     else
       return b;
   }
 
-  int max(int a, int b){
+  int giacmax(int a, int b){
     if (a<b)
       return b;
     else
@@ -7771,10 +7779,11 @@ namespace giac {
   }
 
   int smod(int r,int m){
-    if (!m)
-      return r;
-    if (m<0)
+    if (m<=0){
+      if (!m)
+	return r;
       m=-m;
+    }
     r = r % m;
     longlong tmp= longlong(r)+r;
     if (tmp>m)
@@ -8044,9 +8053,9 @@ namespace giac {
     case _ZINT__ZINT:
 #ifndef USE_GMP_REPLACEMENTS
       if (mpz_cmp(*a._ZINTptr,*b._ZINTptr)>0 && mpz_divisible_p(*a._ZINTptr,*b._ZINTptr))
-	return b;
+	return abs(b,context0);
       if (mpz_cmp(*b._ZINTptr,*a._ZINTptr)>0 && mpz_divisible_p(*b._ZINTptr,*a._ZINTptr))
-	return a;
+	return abs(a,context0);
 #endif
       res = new ref_mpz_t;
       mpz_gcd(res->z,*a._ZINTptr,*b._ZINTptr);
@@ -8340,7 +8349,9 @@ namespace giac {
     switch ( (a.type<< _DECALAGE) | b.type ) {
     case _INT___INT_: 
       return smod(a.val,b.val);
-    case _ZINT__INT_: case _INT___ZINT: case _ZINT__ZINT: 
+    case _ZINT__INT_: 
+      return smod(modulo(*a._ZINTptr,b.val),b.val);
+    case _INT___ZINT: case _ZINT__ZINT: 
       _ZINTsmod(a,b,rem);
       return(rem);
     case _CPLX__INT_: case _CPLX__ZINT:
@@ -8467,17 +8478,20 @@ namespace giac {
       m.uncoerce();
     if ( (a.type!=_ZINT) || (m.type!=_ZINT) )
       return false;
+    unsigned prealloc=mpz_sizeinbase(*m._ZINTptr,2);
     mpz_t u,d,u1,d1,absd1,sqrtm,q,ur,r,tmp;
-    mpz_init_set_si(u,0);
+    mpz_init2(u,prealloc);
+    mpz_set_si(u,0);
     mpz_init_set(d,*m._ZINTptr);
-    mpz_init_set_si(u1,1);
+    mpz_init2(u1,prealloc);
+    mpz_set_si(u1,1);
     mpz_init_set(d1,*a._ZINTptr);
     mpz_init(absd1);
     mpz_init(sqrtm);
     mpz_init(q);
-    mpz_init(ur);
-    mpz_init(r);
-    mpz_init(tmp);
+    mpz_init2(ur,prealloc);
+    mpz_init2(r,prealloc);
+    mpz_init2(tmp,prealloc);
     mpz_tdiv_q_2exp(q,*m._ZINTptr,1);
     mpz_sqrt(sqrtm,q);
     // int signe;
@@ -8490,10 +8504,17 @@ namespace giac {
       mpz_mul(tmp,q,u1);
       mpz_sub(ur,u,tmp);
       // u1 -> u, ur -> u1 ; v1 -> v, vr -> v1, d1 -> d, r -> d1
+#ifdef USE_GMP_REPLACEMENTS
       mpz_set(u,u1);
       mpz_set(u1,ur);
       mpz_set(d,d1);
       mpz_set(d1,r);
+#else
+      mpz_swap(u,u1);
+      mpz_swap(u1,ur);
+      mpz_swap(d,d1);
+      mpz_swap(d1,r);
+#endif
     }
     // u1*a+v1*m=d1 -> a=d1/u1 modulo m
     gen num(d1);
@@ -8501,8 +8522,10 @@ namespace giac {
     mpz_set(q,*m._ZINTptr);
     mpz_gcd(r,q,u1);
     bool ok=mpz_cmp_ui(r,1)==0;
-    if (!ok)
+    if (!ok){
+      cerr << "Bad reconstruction " << a_orig << " " << modulo << " " << gen(r) << endl;
       simplify3(num,den);
+    }
     mpz_clear(d);
     mpz_clear(u);
     mpz_clear(u1);
@@ -9309,7 +9332,7 @@ namespace giac {
     sprintf(s,"%.14g",d);
     return s;
 #else
-    string form("%."+print_INT_(min(decimal_digits(contextptr),13)));
+    string form("%."+print_INT_(giacmin(decimal_digits(contextptr),13)));
     int sf=scientific_format(contextptr); 
     switch (sf){
     case 0: case 2:
@@ -9573,9 +9596,13 @@ namespace giac {
 
   string printinner_VECT(const vecteur & v, int subtype,GIAC_CONTEXT){
     string s;
+    return add_printinner_VECT(s,v,subtype,contextptr);
+  }
+
+  string & add_printinner_VECT(string & s,const vecteur &v,int subtype,GIAC_CONTEXT){
     vecteur::const_iterator it=v.begin(), itend=v.end();
     if (it==itend)
-      return "";
+      return s;
     for(;;){
       if ( (subtype==_RPN_FUNC__VECT) && (it->type==_SYMB) && (it->_SYMBptr->sommet==at_quote))
 	s += "'"+it->_SYMBptr->feuille.print(contextptr)+"'";
@@ -9583,7 +9610,7 @@ namespace giac {
 	if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_sto) )
 	  s += "("+it->print(contextptr)+")";
 	else
-	  s += it->print(contextptr);
+	  add_print(s,*it,contextptr); // s += it->print(contextptr);
       }
       ++it;
       if (it==itend){
@@ -10781,10 +10808,10 @@ namespace giac {
 	int j1=chaine.find_last_of('+',i+nchar+4*(i==0));
 	int j2=chaine.find_last_of('-',i+nchar+4*(i==0));
 	int j3=chaine.find_last_of(',',i+nchar+4*(i==0));
-	j=max(j1,max(j2,j3));
+	j=giacmax(j1,giacmax(j2,j3));
 	if ((j-i)<(nchar/2))
 	  j=i+nchar+4*(i==0);
-	ligne_end.push_back(pos+min(j,l));
+	ligne_end.push_back(pos+giacmin(j,l));
 	res += chaine.substr(i,j-i);
 	i=j;
 	if (i<l){
@@ -10802,7 +10829,7 @@ namespace giac {
     endlines.clear();
     positions.clear();
     int s_in=history_in.size(),s_out=history_out.size();
-    int s=max(s_in,s_out);
+    int s=giacmax(s_in,s_out);
     for (int i=0;i<s;++i){
       string chaine;
       if (rpn_mode(context0))
@@ -10903,11 +10930,11 @@ namespace giac {
 
   static void find_left(const string & s,int & pos1,int & pos2){
     int l=s.size();
-    pos1=min(max(pos1,0),l);
+    pos1=giacmin(giacmax(pos1,0),l);
     int pos1orig=pos1;
     if (!pos1)
       return;
-    pos2=max(min(pos2,l),0);
+    pos2=giacmax(giacmin(pos2,l),0);
     int counter1=0,counter2=0;
     if (pos2==l){
       int i=pos2;
@@ -10970,8 +10997,8 @@ namespace giac {
 
   static void find_right(const string & s,int & pos1,int & pos2){
     int l=s.size();
-    pos1=min(max(pos1,0),l);
-    pos2=max(min(pos2,l),0);
+    pos1=giacmin(giacmax(pos1,0),l);
+    pos2=giacmax(giacmin(pos2,l),0);
     int pos2orig=pos2;
     int counter1=0,counter2=0;
     for (int i=pos1;(i<pos2-1) && (i<l);++i){
@@ -11513,7 +11540,7 @@ namespace giac {
       return add(*ptr,*this);
 #ifdef HAVE_LIBMPFR
     mpfr_t sum;
-    mpfr_init2(sum,min(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
+    mpfr_init2(sum,giacmin(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
     mpfr_add(sum,this->inf,g.inf,GMP_RNDN);
     real_object res(sum);
     mpfr_clear(sum);
@@ -11602,7 +11629,7 @@ namespace giac {
       return add(-*ptr,*this);
 #ifdef HAVE_LIBMPFR
     mpfr_t sum;
-    mpfr_init2(sum,min(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
+    mpfr_init2(sum,giacmin(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
     mpfr_sub(sum,this->inf,g.inf,GMP_RNDN);
     real_object res(sum);
     mpfr_clear(sum);
@@ -12049,7 +12076,7 @@ namespace giac {
       return mul(*ptr,*this);
 #ifdef HAVE_LIBMPFR
     mpfr_t sum;
-    mpfr_init2(sum,min(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
+    mpfr_init2(sum,giacmin(mpfr_get_prec(this->inf),mpfr_get_prec(g.inf)));
     mpfr_mul(sum,this->inf,g.inf,GMP_RNDN);
     real_object res(sum);
     mpfr_clear(sum);

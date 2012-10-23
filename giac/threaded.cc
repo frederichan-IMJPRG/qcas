@@ -139,7 +139,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     return tmp;
   }
 
-  static void wait_1ms(context * contextptr){
+  void wait_1ms(context * contextptr){
     usleep(1000);
   }
 
@@ -1014,7 +1014,9 @@ mpz_class smod(const mpz_class & a,int reduce){
   // eval p at x with respect to all but the last variable
   template<class T>
   static bool horner(const std::vector< T_unsigned<T,hashgcd_U> > & p,const std::vector<int> & x,const std::vector<hashgcd_U> & vars,std::vector<T> & px,int modulo){
-    int s=x.size(),xback=x.back(),vs=vars.size();
+    int s=x.size();
+    // int xback=x.back();
+    int vs=vars.size();
     if (s+1!=vs || vs<2)
       return false; // setdimerr();
     hashgcd_U var=vars[vs-2],var2=vars.back();
@@ -1139,6 +1141,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     }
   }
 
+#if 0
   static void convert(const vector< T_unsigned<int,hashgcd_U> > & p,short int var,vector<int> & v,int modulo){
     vector< T_unsigned<int,hashgcd_U> >::const_iterator it=p.begin(),itend=p.end();
     if (it==itend){
@@ -1155,6 +1158,7 @@ mpz_class smod(const mpz_class & a,int reduce){
       v[s-(it->u >> var)]=it->g<0?it->g+modulo:it->g;
     }
   }
+#endif
 
   /*
   void convert(const vector< T_unsigned<int,hashgcd_U> > & p,hashgcd_U var,vector<int> & v){
@@ -1474,6 +1478,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     }
   }
 
+#if 0
   static void distmult(const vector<int> & p,const vector<int> & v,vector< vector<int> > & pv,int modulo){
     vector<int>::const_iterator it=p.begin(),itend=p.end(),jt=v.begin(),jtend=v.end();
     pv.clear();
@@ -1519,12 +1524,13 @@ mpz_class smod(const mpz_class & a,int reduce){
 	w.push_back(smod(*jt * m,modulo));
     }
   }
+#endif
 
   // if all indices are == return -2
   // if all indices corr. to u1 are <= to u2 return 1,
   // if all are >= to u2 return 0
   // otherwise return -1
-  static int compare(hashgcd_U u1,hashgcd_U u2,const vector<hashgcd_U> & vars){
+  int compare(hashgcd_U u1,hashgcd_U u2,const vector<hashgcd_U> & vars){
     if (u1==u2)
       return -2;
     std::vector<hashgcd_U>::const_iterator it=vars.begin(),itend=vars.end();
@@ -1648,6 +1654,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     }
   }
 
+#if 0
   static void smallmult1(const vector< T_unsigned<int,hashgcd_U> > & p,const vector< T_unsigned<int,hashgcd_U> > & q,vector< T_unsigned<int,hashgcd_U> > & res,hashgcd_U var,int modulo){
     vector<int> p1,q1,r1;
     convert(p,var,p1,modulo);
@@ -1656,6 +1663,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     smallmult(p1.begin(),p1.end(),q1.begin(),q1.end(),r1,modulo);
     convert_back(r1,var,res);
   }
+#endif
 
   static void convert(const vector< T_unsigned<int,hashgcd_U> > & p,hashgcd_U var,hashgcd_U var2,vector< vector<int> > & v,int modulo){
     if (p.empty()){
@@ -1808,15 +1816,16 @@ mpz_class smod(const mpz_class & a,int reduce){
     int dim=vars.size()-1;
     if (dim<=0)
       return false; // setdimerr();
-    double as=a.size(),bs=b.size(),ps=p.size();
+    // double as=a.size(),bs=b.size();
+    double ps=p.size();
     hashgcd_U var2=vars[dim-1];
     if (dim==1){
       // ? dense vector<int> multiplication or sparse mult ?
       unsigned adeg=a.front().u/var2,bdeg=b.front().u/var2,pdeg=p.front().u/var2;
       if (pdeg!=adeg+bdeg && int(pdeg)!=maxtotaldeg)
 	return false;
-      double timesparse=as*bs*std::log(ps);
-      double timedense=(adeg+1)*(bdeg+1);
+      // double timesparse=as*bs*std::log(ps);
+      // double timedense=(adeg+1)*(bdeg+1);
       if (true
 	  // timedense<timesparse
 	  ){
@@ -1836,13 +1845,13 @@ mpz_class smod(const mpz_class & a,int reduce){
     int shift_var=find_shift(var),shift_var2=find_shift(var2);
     unsigned adeg=degree_xn(a,shift_var,shift_var2),bdeg=degree_xn(b,shift_var,shift_var2),pdeg=degree_xn(p,shift_var,shift_var2);
     int ntests=std::min(int(pdeg),maxtotaldeg);
-    if (pdeg!=adeg+bdeg && pdeg!=maxtotaldeg)
+    if (pdeg!=adeg+bdeg && int(pdeg)!=maxtotaldeg)
       return false;
     // multiplication requires as*bs*ln(ps) operations
     // alternative is checking pdeg+1 values of x=xn
     // time for 1 check: ps+as+bs (horner)+ dim^2*as/adeg*bs/bdeg*ln(ps)
-    double timemult=3*as*bs*std::log(ps);
-    double timeeval=(ntests+1)*(ps+as+bs+dim*dim*as/adeg*bs/bdeg*std::log(ps));
+    // double timemult=3*as*bs*std::log(ps);
+    // double timeeval=(ntests+1)*(ps+as+bs+dim*dim*as/adeg*bs/bdeg*std::log(ps));
     if (false
 	// timemult<timeeval
 	){
@@ -2103,7 +2112,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     int modulo = ptr->modulo;
     const vector<hashgcd_U> & vars = * ptr->vars;
     vector<hashgcd_U> & vars_truncated = * ptr->vars_truncated;
-    index_t & shift_vars = *ptr->shift_vars;
+    // index_t & shift_vars = *ptr->shift_vars;
     index_t & shift_vars_truncated = *ptr->shift_vars_truncated;
     bool compute_cof = ptr->compute_cof;
     bool compute_qcofactor = ptr->compute_qcofactor;
@@ -2112,11 +2121,11 @@ mpz_class smod(const mpz_class & a,int reduce){
     // Eval p and q at xn=alpha
     if (dim2){
       horner_back(pv,alpha1,dim2palpha,modulo,-1,true);
-      if ( dim2palpha.size()-1 != pdeg.front())
+      if ( int(dim2palpha.size())-1 != pdeg.front())
 	return 0;
       // convert(dim2palpha,varxn,palpha);
       horner_back(qv,alpha1,dim2qalpha,modulo,-1,true);
-      if ( dim2qalpha.size()-1 != qdeg.front())
+      if ( int(dim2qalpha.size())-1 != qdeg.front())
 	return 0;
       // convert(dim2qalpha,varxn,qalpha);
     }
@@ -2314,7 +2323,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  bnext[i]=std::rand() % modulo;
 	if (bnext!=b){ b=bnext; break; }
       }
-      if (pb.size()!=pxndeg+1 || qb.size()!=qxndeg+1)
+      if (int(pb.size())!=pxndeg+1 || int(qb.size())!=qxndeg+1)
 	continue;
       gcdsmallmodpoly(pb,qb,modulo,db);
       int dbdeg=db.size()-1;
@@ -2388,12 +2397,12 @@ mpz_class smod(const mpz_class & a,int reduce){
     // if sumdeg<(gcddeg+%age^dim*(1-%age)^dim*size) do full lifting
     int Deltadeg = Delta.size()-1,liftdeg=(compute_qcofactor?qxndeg:pxndeg)+Deltadeg;
     int gcddeg_plus_delta=gcddeg+Deltadeg;
-    int liftdeg0=max(liftdeg-gcddeg,gcddeg_plus_delta);
+    int liftdeg0=giacmax(liftdeg-gcddeg,gcddeg_plus_delta);
     // once liftdeg0 is reached we can replace g/gp/gq computation
     // by a check that d*dp=dxn*lcoeff(d*dp)/Delta at alpha
     // and d*dq=dxn*lcoeff(d*dq)/lcoeff(qxn) at alpha
     int sumdeg = pxndeg+qxndeg;
-    double percentage = double(gcddeg)/min(pxndeg,qxndeg);
+    double percentage = double(gcddeg)/giacmin(pxndeg,qxndeg);
     int sumsize = p.size()+q.size();
     // ? add a malus factor for division
     double gcdlift=gcddeg+std::pow(percentage,dim)*std::pow(1-percentage,dim)*sumsize;
@@ -2406,8 +2415,8 @@ mpz_class smod(const mpz_class & a,int reduce){
     int ptotaldeg=degree(p,shift_vars,pdeg);
     int qtotaldeg=degree(q,shift_vars,qdeg);
     if (debug_infolevel>20-dim){
-      cerr << "pdeg " << pdeg << endl;
-      cerr << "qdeg " << qdeg << endl;
+      cerr << "pdeg " << pdeg << " " << ptotaldeg << endl;
+      cerr << "qdeg " << qdeg << " " << qtotaldeg << endl;
     }
     if (debug_infolevel>20-dim)
       cerr << "gcdmod degree end " << "dim " << dim << " " << clock() << endl;
@@ -2628,7 +2637,8 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  pp_mod(d,0,modulo,varxn,var2,tmpcont);
 	  pp_mod(dp,0,modulo,varxn,var2,tmpcont);
 	  // check xn degrees of d+dp=degree(pxn), d+dq=degree(qxn)
-	  int dxndeg=degree_xn(d,shiftxn,shift2),dpxndeg=degree_xn(dp,shiftxn,shift2),dqxndeg=degree_xn(dq,shiftxn,shift2);
+	  int dxndeg=degree_xn(d,shiftxn,shift2),dpxndeg=degree_xn(dp,shiftxn,shift2);
+	  // int dqxndeg=degree_xn(dq,shiftxn,shift2);
 	  if ( dxndeg+dpxndeg==pdeg.back() ){
 	    smallmult(d,dcont,d,modulo,0);
 	    if (compute_pcofactor){
@@ -2873,12 +2883,14 @@ mpz_class smod(const mpz_class & a,int reduce){
     return mod_gcd(p_orig,q_orig,modulo,d,pcofactor,qcofactor,vars,compute_cofactors,compute_cofactors,nthreads);
   }
 
+#if 0
   static void smod(vector< T_unsigned<int,hashgcd_U> > & p_orig,int modulo){
     vector< T_unsigned<int,hashgcd_U> >::iterator it=p_orig.begin(),itend=p_orig.end();
     for (;it!=itend;++it){
       it->g=smod(it->g,modulo);
     }
   }
+#endif
 
   static void smod(const vector< T_unsigned<gen,hashgcd_U> > & p_orig,int modulo,vector< T_unsigned<int,hashgcd_U> > & p){
     p.clear();
@@ -4197,7 +4209,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   }
 
   static vecteur interp_tk(const vecteur & interp_ancien,const gen & ancienpi,const vecteur & interp_tk,int tk,int modulo){
-    int as=interp_ancien.size(),bs=interp_tk.size(),cs=max(as,bs);
+    int as=interp_ancien.size(),bs=interp_tk.size(),cs=giacmax(as,bs);
     vecteur res(cs);
     gen pi(hornermod(ancienpi,tk,modulo));
     if (pi.type!=_INT_)
@@ -4401,7 +4413,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  cerr << clock() << " algmodgcd hashdivrem failure" << endl;
       }
     } // end extension.type==_POLY
-    int dim=vars.size();
+    // int dim=vars.size();
     vector< T_unsigned<vector<int>,hashgcd_U> > p_orig,q_orig,d,pcof,qcof;
     if (!gentoint(p0,p_orig) || !gentoint(q0,q_orig))
       return 0; 
@@ -4666,11 +4678,11 @@ mpz_class smod(const mpz_class & a,int reduce){
     const vector<int> & pmin = *ptr->pminptr;
     const vector<hashgcd_U> & vars = * ptr->vars;
     vector<hashgcd_U> & vars_truncated = * ptr->vars_truncated;
-    index_t & shift_vars = *ptr->shift_vars;
+    // index_t & shift_vars = *ptr->shift_vars;
     index_t & shift_vars_truncated = *ptr->shift_vars_truncated;
     bool compute_cof = ptr->compute_cof;
     bool compute_qcofactor = ptr->compute_qcofactor;
-    bool dim2 = ptr->dim2;
+    // bool dim2 = ptr->dim2;
     int nthreads = ptr->nthreads;
     // Eval p and q at xn=alpha
     if (!horner(p,alpha1,vars,palpha,modulo,-1))
@@ -4798,7 +4810,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  bnext[i]=std::rand() % modulo;
 	if (bnext!=b){ b=bnext; break; }
       }
-      if (pb.size()!=pxndeg+1 || qb.size()!=qxndeg+1)
+      if (int(pb.size())!=pxndeg+1 || int(qb.size())!=qxndeg+1)
 	continue;
       if (!gcdsmallmodpoly_ext(pb,qb,pmin,modulo,db))
 	continue;
@@ -4879,12 +4891,12 @@ mpz_class smod(const mpz_class & a,int reduce){
     // if sumdeg<(gcddeg+%age^dim*(1-%age)^dim*size) do full lifting
     int Deltadeg = Delta.size()-1,liftdeg=(compute_qcofactor?qxndeg:pxndeg)+Deltadeg;
     int gcddeg_plus_delta=gcddeg+Deltadeg;
-    int liftdeg0=max(liftdeg-gcddeg,gcddeg_plus_delta);
+    int liftdeg0=giacmax(liftdeg-gcddeg,gcddeg_plus_delta);
     // once liftdeg0 is reached we can replace g/gp/gq computation
     // by a check that d*dp=dxn*lcoeff(d*dp)/Delta at alpha
     // and d*dq=dxn*lcoeff(d*dq)/lcoeff(qxn) at alpha
     int sumdeg = pxndeg+qxndeg;
-    double percentage = double(gcddeg)/min(pxndeg,qxndeg);
+    double percentage = double(gcddeg)/giacmin(pxndeg,qxndeg);
     int sumsize = p.size()+q.size();
     // ? add a malus factor for division
     double gcdlift=gcddeg+std::pow(percentage,dim)*std::pow(1-percentage,dim)*sumsize;
@@ -4897,8 +4909,8 @@ mpz_class smod(const mpz_class & a,int reduce){
     int ptotaldeg=degree(p,shift_vars,pdeg);
     int qtotaldeg=degree(q,shift_vars,qdeg);
     if (debug_infolevel>20-dim){
-      cerr << "pdeg " << pdeg << endl;
-      cerr << "qdeg " << qdeg << endl;
+      cerr << "pdeg " << pdeg << " " << ptotaldeg << endl;
+      cerr << "qdeg " << qdeg << " " << qtotaldeg << endl;
     }
     if (debug_infolevel>20-dim)
       cerr << "gcdmod degree end " << "dim " << dim << " " << clock() << endl;
@@ -5066,7 +5078,8 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  pp_mod(d,&pmin,modulo,varxn,var2,tmpcont);
 	  pp_mod(dp,&pmin,modulo,varxn,var2,tmpcont);
 	  // check xn degrees of d+dp=degree(pxn), d+dq=degree(qxn)
-	  int dxndeg=degree_xn(d,shiftxn,shift2),dpxndeg=degree_xn(dp,shiftxn,shift2),dqxndeg=degree_xn(dq,shiftxn,shift2);
+	  int dxndeg=degree_xn(d,shiftxn,shift2),dpxndeg=degree_xn(dp,shiftxn,shift2);
+	  // int dqxndeg=degree_xn(dq,shiftxn,shift2);
 	  if ( dxndeg+dpxndeg==pdeg.back() ){
 	    smallmult(d,dcont,d,pminmodulo,0);
 	    if (compute_pcofactor){

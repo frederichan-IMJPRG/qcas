@@ -154,8 +154,13 @@ namespace giac {
   // ==-4: write static_lexer.h, static_lexer_.h and static_extern.h
   // ==-5: do not throw on errors
   extern int threads;
+  extern unsigned short int GIAC_PADIC;
 
   extern bool CAN_USE_LAPACK;
+#ifndef RTOS_THREADX
+  extern int CALL_LAPACK; // lapack is used if dim of matrix is >= CALL_LAPACK
+  // can be changed using shell variable GIAC_LAPACK in icas
+#endif
   extern int FACTORIAL_SIZE_LIMIT;
   extern int LIST_SIZE_LIMIT;
   extern int NEWTON_DEFAULT_ITERATION;

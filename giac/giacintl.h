@@ -7,7 +7,7 @@
 
 #include "first.h"
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if (defined(__APPLE__) && !defined(INT128)) || defined(__FreeBSD__)
 #include <libintl.h>
 #endif
 

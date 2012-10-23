@@ -387,6 +387,7 @@ namespace giac {
       // N/D=2*re(true_poly_part)+2*re(n/d)-re(n(0)/d(0))
       // where d has no poles in C^+ and X tends to 0 at inf in C^+
       vecteur vX(1,X);
+      lvar(Xfact,vX);
       gen ND=sym2r(Xfact,vX,contextptr);
       gen N,D;
       fxnd(ND,N,D);
@@ -406,9 +407,10 @@ namespace giac {
 	int Dval=Dp.valuation(0);
 	if (Dval!=Qd)
 	  return false; // setsizeerr();
-	index_t decal(1,-Dval);
+	index_t decal(vX.size());
+	decal[0]=-Dval;
 	Dp=Dp.shift(decal);
-	polynome XQd(gen(1),1),U(1),V(1),C(1);
+	polynome XQd(gen(1),vX.size()),U(vX.size()),V(vX.size()),C(vX.size());
 	decal[0]=Dval;
 	XQd=XQd.shift(decal);
 	Tabcuv(Dp,XQd,R,U,V,C); // C*Np=Dp*U+X^Dval*V
@@ -444,7 +446,7 @@ namespace giac {
 	return true;
       }
       // check that each factor has degree 1
-      polynome D1(gen(1),1);
+      polynome D1(gen(1),vX.size());
       factorization::const_iterator f_it=fd.begin(),f_itend=fd.end();
       for (;f_it!=f_itend;++f_it){
 	if (f_it->fact.degree(0)>1){
@@ -468,9 +470,10 @@ namespace giac {
       R=V; // back to integrating 2*Re(R/Dp)
       // find R/Dp at 0, real part should be substracted
       vecteur Rv(polynome2poly1(R,1)),Dv(polynome2poly1(Dp,1)),Qv(polynome2poly1(Q,1));
-      Rv=*r2sym(Rv,vecteur(0),contextptr)._VECTptr;
-      Dv=*r2sym(Dv,vecteur(0),contextptr)._VECTptr;
-      Qv=*r2sym(Qv,vecteur(0),contextptr)._VECTptr;
+      vecteur vX1(vX.begin()+1,vX.end());
+      Rv=*r2sym(Rv,vX1,contextptr)._VECTptr;
+      Dv=*r2sym(Dv,vX1,contextptr)._VECTptr;
+      Qv=*r2sym(Qv,vX1,contextptr)._VECTptr;
       gen correc=re(Rv.back()/Dv.back(),contextptr);
       xfact=xfact*(2*(horner(Rv,expx)/horner(Dv,expx)+horner(Qv,expx))-correc);
       res=0;
@@ -490,7 +493,7 @@ namespace giac {
 	  coeff=1;
 	}
 	else {
-	  if (is_positive(im(v[i],contextptr),contextptr))
+	  if (ck_is_positive(im(v[i],contextptr),contextptr))
 	    coeff=2;
 	}
 	if (!is_zero(coeff)){

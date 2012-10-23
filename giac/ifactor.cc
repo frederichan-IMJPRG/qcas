@@ -215,7 +215,7 @@ namespace giac {
 
   static void printbool(ostream & os,const vector<unsigned> & v,int C=1){
     if (C)
-      C=min(C,v.size());
+      C=giacmin(C,int(v.size()));
     else
       C=v.size();
     for (int c=0;c<C;++c){
@@ -226,9 +226,9 @@ namespace giac {
     os << endl;
   }
 
-  static void printbool(ostream & os,const vector< vector<unsigned> > & m,int L=32){
+  void printbool(ostream & os,const vector< vector<unsigned> > & m,int L=32){
     if (L)
-      L=min(L,m.size());
+      L=giacmin(L,int(m.size()));
     else
       L=m.size();
     for (int l=0;l<L;++l){
@@ -368,7 +368,7 @@ namespace giac {
     return C;
   }
 #else
-  inline int modulo(const mpz_t & a,unsigned b){
+  int modulo(const mpz_t & a,unsigned b){
     return mpz_fdiv_ui(a,b);
   }
 #endif
@@ -405,7 +405,7 @@ namespace giac {
 #endif
     int shiftpos;
     pui_t first,second; // indexes in the "puissancestab" table
-    axbinv(ushort_t a_,int shiftpos_,ushort_t b_,pui_t f_,pui_t s_):aindex(a_),shiftpos(shiftpos_),bindex(b_),first(f_),second(s_) {};
+    axbinv(ushort_t a_,int shiftpos_,ushort_t b_,pui_t f_,pui_t s_):aindex(a_),bindex(b_),shiftpos(shiftpos_),first(f_),second(s_) {};
     axbinv() {};
   };
 
@@ -450,7 +450,7 @@ namespace giac {
   struct lp_entry_t {
     ushort_t pos;
     ushort_t p;
-    lp_entry_t():p(0),pos(0) {};
+    lp_entry_t():pos(0),p(0) {};
     lp_entry_t(ushort_t pos_,ushort_t p_):pos(pos_),p(p_) {};
   };
   typedef vector<lp_entry_t> lp_tab_t;
@@ -477,14 +477,6 @@ namespace giac {
 	n++;
     }
     return 0;
-  }
-
-  static inline unsigned sizeinbase2(unsigned n){
-    unsigned i=0;
-    for (;n;++i){
-      n >>= 1;
-    }
-    return i;
   }
 
   // #define SQRTMOD_OUTSIDE
@@ -582,7 +574,7 @@ namespace giac {
   // return position of last prime sieved (useful when large prime hashtable is enabled
   static inline basis_t * core_sieve(slicetype * slice,int ss,basis_t * bit,basis_t * bitend)  {
     register unsigned char nbits=sizeinbase2(bit->p);
-    int next=1 << nbits;
+    // int next=1 << nbits;
     for (;bit!=bitend;++bit){
       // first root is at bit->root1
       register ushort_t p=bit->p;
@@ -671,7 +663,7 @@ namespace giac {
     int shiftss=absint(shift+ss),absshift=absint(shift);
     int nbits=mpz_sizeinbase(*isqrtN._ZINTptr,2)+sizeinbase2(absshift>shiftss?absshift:shiftss);
     // int nbits1=int(0.5+std::log(evalf_double(isqrtN,1,context0)._DOUBLE_val/2.*(absshift>shiftss?absshift:shiftss))/std::log(2.));
-    int curbits=0;
+    // int curbits=0;
     int bs=basis.size();
     double up_to=1.5;
     if (nbits>70)
@@ -863,7 +855,7 @@ namespace giac {
 	  register int bi=basisptr->p;
 	  // check if we have a root 
 	  register int check=bi-(posss%bi); 
-	  if (check!=bi && check!=basisptr->root1 && check!=basisptr->root2)
+	  if (check!=bi && check!=int(basisptr->root1) && check!=int(basisptr->root2))
 	    continue;
 	  if (check==bi && basisptr->root1 && basisptr->root2)
 	    continue;
@@ -874,16 +866,16 @@ namespace giac {
 	lp_tab_t::const_iterator lpit=lp_tab.begin(),lpend=lp_tab.end();
 	int hash_pos=recheck.size();
 	for (;lpit!=lpend;++lpit){
-	  if (pos==lpit->pos){
+	  if (pos==int(lpit->pos)){
 	    recheck.push_back(lpit->p);
 	  }
 	}
-	if (recheck.size()>hash_pos+1)
+	if (int(recheck.size())>hash_pos+1)
 	  sort(recheck.begin(),recheck.end());
 #endif
 	// now divide first by product of elements of recheck
 	double prod=1,nextprod=1;
-	for (int k=0;k<recheck.size();++k){
+	for (unsigned k=0;k<recheck.size();++k){
 	  nextprod=prod*recheck[k];
 	  if (nextprod< 2147483648. )
 	    prod=nextprod;
@@ -921,12 +913,12 @@ namespace giac {
 	}
 	// then set curpuissances
 	bool small_=false;
-	div_t qr;
 	int Z1=0;
-	for (int k=0;k<recheck.size();++k){
+	for (unsigned k=0;k<recheck.size();++k){
 	  int j=0;
 	  int bi=recheck[k];
 #ifdef USE_GMP_REPLACEMENTS
+	  div_t qr;
 	  if (!small_){
 	    small_=mpz_sizeinbase(z1,2)<32;
 	    if (small_)
@@ -994,7 +986,7 @@ namespace giac {
 	  if (debug_infolevel>6)
 	    *logptr(contextptr) << clock() << " true relation " << endl;
 	  axbmodn.push_back(axbinv(sqrtavals.size()-1,shiftpos,bvals.size()-1,puissancesptr-puissancesbegin,(puissancesptr-puissancesbegin)+curpuissances.size()));	
-	  for (int i=0;i<curpuissances.size();++puissancesptr,++i){
+	  for (unsigned i=0;i<curpuissances.size();++puissancesptr,++i){
 	    if (puissancesptr>=puissancesend)
 	      return -1;
 	    *puissancesptr=curpuissances[i];
@@ -1028,7 +1020,7 @@ namespace giac {
 #endif
 #endif
 	    curpuissances.push_back(P);
-	    for (int i=0;i<curpuissances.size();++puissancesptr,++i){
+	    for (unsigned i=0;i<curpuissances.size();++puissancesptr,++i){
 	      if (puissancesptr>=puissancesend)
 		return -1;
 	      *puissancesptr=curpuissances[i];
@@ -1047,7 +1039,7 @@ namespace giac {
 	      additional_primes_twice[Ppos]=true;
 	    } else {
 	      // add a prime in additional_primes if <=QS_B_BOUND
-	      if (additional_primes.size()>=4*bs 
+	      if (int(additional_primes.size())>=4*bs 
 #ifdef RTOS_THREADX
 		  || bs+additional_primes.size()>700
 #endif
@@ -1066,7 +1058,7 @@ namespace giac {
 #endif
 	    curpuissances.push_back(P);
 	    axbmodn.push_back(axbinv(sqrtavals.size()-1,shiftpos,bvals.size()-1,(puissancesptr-puissancesbegin),(puissancesptr-puissancesbegin)+curpuissances.size()));
-	    for (int i=0;i<curpuissances.size();++puissancesptr,++i){
+	    for (unsigned i=0;i<curpuissances.size();++puissancesptr,++i){
 	      if (puissancesptr>=puissancesend)
 		return -1;
 	      *puissancesptr=curpuissances[i];
@@ -1216,8 +1208,8 @@ namespace giac {
     // r0=b=ab*a+1*b
     // r1=a=aa*a+0*b
     int aa(1),ab(0),ar(0);
-    ushort_t q,r;
 #if 0
+    ushort_t q,r;
     while (a){
       q=b/a;
       ar=ab-q*aa;
@@ -1289,7 +1281,7 @@ namespace giac {
     int nmodp=modulo(*n._ZINTptr,8),knmodp;
     // init scores and set value for 2
     double ln2=std::log(2.0);
-    for (int i=0;i<nmult;++i){
+    for (unsigned i=0;i<nmult;++i){
       knmodp=(mult[i]*nmodp)%8;
       scores[i]=0.5*std::log(double(mult[i]));
       switch(knmodp){
@@ -1305,11 +1297,11 @@ namespace giac {
       }
     }
     // now compute contribution for giac_primes[1..300]
-    for (int i=1;i<=300;++i){
+    for (unsigned i=1;i<=300;++i){
       int p=giac_primes[i];
       double contrib=std::log(double(p))/(p-1);
       nmodp=modulo(*n._ZINTptr,p);
-      for (int j=0;j<nmult;++j){
+      for (unsigned j=0;j<nmult;++j){
 	knmodp=(nmodp*mult[j])%p;
 	if (knmodp==0)
 	  scores[j] -= contrib;
@@ -1322,14 +1314,14 @@ namespace giac {
     // select the smallest scores
     int pos=0; 
     double minscore=scores[0]-0.1;
-    for (int i=1;i<nmult;++i){
+    for (unsigned i=1;i<nmult;++i){
       if (scores[i]<minscore){
 	minscore=scores[i];
 	pos=i;
       }
     }
     if (debug_infolevel>6){
-      for (int i=0;i<nmult;++i){
+      for (unsigned i=0;i<nmult;++i){
 	*logptr(contextptr) << "multiplier " << int(mult[i]) << " score " << scores[i] << endl;
       }
     }
@@ -1342,9 +1334,9 @@ namespace giac {
   }
 
   void add_relation(vector<line_t> relations,unsigned j,ushort_t * curpui,ushort_t * curpuiend,const vector<basis_t> & basis,const vector<additional_t> & additional_primes){
-    int curpuisize=curpuiend-curpui;
+    unsigned curpuisize=curpuiend-curpui;
     bool done=false;
-    int i=0; // position in basis
+    unsigned i=0; // position in basis
     unsigned k=0; // position in curpui
     additional_t p=0; // prime
     unsigned bs=basis.size();
@@ -1383,7 +1375,7 @@ namespace giac {
       else {
 	int c=1;
 	for (;k+1<curpuisize;c++){
-	  if (curpui[k+1]==p)
+	  if (curpui[k+1]==unsigned(p))
 	    ++k;
 	  else
 	    break;
@@ -1393,7 +1385,7 @@ namespace giac {
       }
       // advance to next i in basis
       for (;i<bs;++i){
-	if (basis[i].p==p)
+	if (basis[i].p==unsigned(p))
 	  break;
       }
       if (i<bs){
@@ -1677,11 +1669,11 @@ namespace giac {
 	// PREFETCH(bvpos+4);
 	register unsigned p=basisptr->p;
 	register int r=basisptr->root1+(*bvpos);
-	if (r>p)
+	if (r>int(p))
 	  r-=p;
 	basisptr->root1=r;
 	r=basisptr->root2+(*bvpos);
-	if (r>p)
+	if (r>int(p))
 	  r-=p;
 	basisptr->root2=r;
       }
@@ -1902,7 +1894,7 @@ namespace giac {
     mpz_t zx,zy,zq,zr;
     mpz_init(zx); mpz_init(zy); mpz_init(zq); mpz_init(zr);
     // fastsmod_prepare(N,zx,zy,zr,N256);
-    for (i=1;i<sizeof(giac_primes)/sizeof(short);++i){
+    for (i=1;i<int(sizeof(giac_primes)/sizeof(short));++i){
       if (ctrl_c)
 	break;
       ushort_t j=giac_primes[i];
@@ -2079,13 +2071,13 @@ namespace giac {
     double logprod=std::log10(seuil);
     if (logprod<9){  
       afixed=0; 
-      afact=std::ceil(logprod/3);
+      afact=int(std::ceil(logprod/3));
       if (logprod-3*afact<-1)
 	afixed=1;
     }
     else {
       double logfixed=std::log10(double(basis[pos0].p));
-      int maxfixed=logprod/logfixed-2;
+      int maxfixed=int(logprod/logfixed)-2;
       if (maxfixed==0) maxfixed=1;
       double curseuil=1e10;
       afact=0;
@@ -2189,7 +2181,7 @@ namespace giac {
     vecteur bvalues; // will contain values of b if afact<=afact0 or components of b if afact>afact0
     // array for efficient polynomial switch (same a change b) when at least afact0 factors/a
 #ifdef PRIMES32
-    const unsigned afact0=3;
+    const int afact0=3;
     vector<int> bainv2((afact-1)*bs);
     vector<longlong> up1tmp;
 #endif
@@ -2210,14 +2202,14 @@ namespace giac {
       end_pos1=pos1+100;
     if (avar>2)
       end_pos1=pos1+30;
-    if (lp_basis_pos<end_pos1)
+    if (int(lp_basis_pos)<end_pos1)
       end_pos1=lp_basis_pos;
     for (;puissancesptr<puissancesend;++pos.back()){
       double bpos2=1;
-      if (pos.back()>=end_pos1 || basis[pos.back()].p>=45000){
+      if (int(pos.back())>=end_pos1 || basis[pos.back()].p>=45000){
 	int i=afact-2;
 	for (;i>afixed;--i){
-	  if (pos[i]<end_pos1-(afact-i)){
+	  if (int(pos[i])<end_pos1-(afact-i)){
 	    ++pos[i];
 	    for (int j=i+1;j<afact;++j)
 	      pos[j]=pos[i]+(j-i);
@@ -2245,9 +2237,9 @@ namespace giac {
       if (afixed){
 	// move "fixed" factors so that Mval becomes closer to Mtarget
 	// NB: for later threads, afixed should be >=3, so that we can move pos[1] by thread
-	while (Mval>1.1*Mtarget && pos[afixed-1]<pos1-10){
+	while (Mval>1.1*Mtarget && int(pos[afixed-1])<int(pos1)-10){
 	  // Mval is too large, hence one factor of a is too small, increase it
-	  if (pos[0]<pos0){
+	  if (int(pos[0])<pos0){
 	    ++pos[0];
 	    double coeff=basis[pos[0]].p/double(basis[pos[0]-1].p);
 	    Mval=Mval/(coeff*coeff);
@@ -2332,7 +2324,7 @@ namespace giac {
 	int p=basis[pos[i]].p;
 	longlong p2=p*longlong(p); 
 	// Hensel lift s to be a sqrt of n mod p^2: (s+p*r)^2=s^2+2p*r*s=n => r=(n-s^2)/p*inv(2*s mod p)
-	int r=p<37000?((modulo(*N._ZINTptr,p2)-s*s)/p):((smod(N,p2)-s*s)/p).val;
+	int r=p<37000?int((modulo(*N._ZINTptr,p2)-s*s)/p):((smod(N,p2)-s*s)/p).val;
 	r=(r*invmod(2*s,p))%p;
 	// overflow should not happen because p is a factor of a hence choosen
 	// in the 1000 range (perhaps up to 10 000, but not much larger)
@@ -2393,7 +2385,7 @@ namespace giac {
 	if (afact>afact0){
 	  if (i==0){
 	    b=0;
-	    for (int j=0;j<bvalues.size();j++)
+	    for (unsigned j=0;j<bvalues.size();j++)
 	      b += bvalues[j];
 	  }
 	  else {
@@ -2461,7 +2453,7 @@ namespace giac {
 	    *logptr(contextptr) << cl << " Init large prime hashtables " << endl;
 	  }
 	  int total=(nslices << (afact-1));
-	  if (lp_map.size() < total)
+	  if (int(lp_map.size()) < total)
 	    lp_map.resize(total);
 	  for (int k=0;k< total;++k)
 	    lp_map[k].clear();
@@ -2511,11 +2503,11 @@ namespace giac {
 		for (;bvpos<bvposend;++basisptr,++bvpos){
 		  register unsigned p=basisptr->p;
 		  register int r=basisptr->root1+(*bvpos);
-		  if (r>p)
+		  if (r>int(p))
 		    r-=p;
 		  basisptr->root1=r;
 		  r=basisptr->root2+(*bvpos);
-		  if (r>p)
+		  if (r>int(p))
 		    r-=p;
 		  basisptr->root2=r;
 		}
@@ -2525,7 +2517,7 @@ namespace giac {
 #endif // LP_TAB_TOGETHER
 	} // end else of if i==0
 #if defined(LP_TAB_SIZE) && !defined(LP_TAB_TOGETHER)
-	if (lp_map.size() < nslices)
+	if (int(lp_map.size()) < nslices)
 	  lp_map.resize(nslices);
 	for (int k=0;k< nslices;++k)
 	  lp_map[k].clear();
@@ -2654,7 +2646,7 @@ namespace giac {
       *logptr(contextptr) << clock() << " removing additional primes" << endl;
     // remove relations with additional primes which are used only once
     int lastp=axbmodn.size()-1,lasta=additional_primes.size()-1;
-    for (unsigned i=0;i<=lastp;++i){
+    for (int i=0;i<=lastp;++i){
       ushort_t * curbeg=puissancestab+axbmodn[i].first, * curend=puissancestab+axbmodn[i].second;
       bool done=false;
       for (;curbeg!=curend;++curbeg){
@@ -2707,7 +2699,7 @@ namespace giac {
       *ptr=0;
     int l32=C32*32;
     vector< line_t > relations(axbmodn.size());
-    for (int i=0;i<axbmodn.size();++i){
+    for (unsigned i=0;i<axbmodn.size();++i){
       relations[i].tab=tab+i*C32;
     }
     for (unsigned j=0;j<axbmodn.size();j++){
@@ -2793,8 +2785,8 @@ namespace giac {
       mpz_set_ui(zx,1);
       mpz_set_ui(zy,1);
       vector<short_t> p(bs), add_p(additional_primes.size());
-      for (unsigned j=0;int(j)<l32;++j){
-	if (j<axbmodn.size() && (i==j || (relations2[j] && (relations2[j][i/32] & (1<<(i%32)))))){
+      for (int j=0;j<l32;++j){
+	if (j<int(axbmodn.size()) && (i==j || (relations2[j] && (relations2[j][i/32] & (1<<(i%32)))))){
 	  update_xy(axbmodn[j],zx,zy,p,add_p,N,basis,additional_primes,sqrtavals,bvals,puissancestab,zq,zr,alloc1,alloc2,alloc3,alloc4,alloc5);
 #ifdef ADDITIONAL_PRIMES_HASHMAP
 	  unsigned u=largep(axbmodn[j],puissancestab);
@@ -3145,7 +3137,7 @@ namespace giac {
       return gendimerr(contextptr);
     if (i==0)
       return 1;
-    if (i<=sizeof(giac_primes)/sizeof(short int))
+    if (i<=int(sizeof(giac_primes)/sizeof(short int)))
       return giac_primes[i-1];
     return symb_ithprime(g);
   }
@@ -3194,13 +3186,12 @@ namespace giac {
       mpz_init(alloc3);
       mpz_init(alloc4);
       mpz_init(alloc5);
-      for (i=0;i<sizeof(giac_primes)/sizeof(short int);++i){
+      for (i=0;i<int(sizeof(giac_primes)/sizeof(short int));++i){
 	if (mpz_cmp_si(cur->z,1)==0) 
 	  break;
 	prime=giac_primes[i];
 	mpz_set_ui(div,prime);
 #ifdef USE_GMP_REPLACEMENTS
-	mp_digit c;
 	for (p=0;;p++){
 	  mp_grow(&alloc1,cur->z.used+2);
 	  mpz_set_ui(alloc1,0);
@@ -3242,7 +3233,7 @@ namespace giac {
       n=cur;
     }
     else {
-      for (i=0;i<sizeof(giac_primes)/sizeof(short int);++i){
+      for (i=0;i<int(sizeof(giac_primes)/sizeof(short int));++i){
 	if (n==1) 
 	  break;
 	a.val=giac_primes[i];
@@ -3367,8 +3358,8 @@ namespace giac {
 
   void mergeifactors(const vecteur & f,const vecteur &g,vecteur & h){
     h=f;
-    for (int i=0;i<g.size();i+=2){
-      int j=0;
+    for (unsigned i=0;i<g.size();i+=2){
+      unsigned j=0;
       for (;j<f.size();j+=2){
 	if (f[j]==g[i])
 	  break;
@@ -3453,7 +3444,7 @@ namespace giac {
 	return g;
       sort(g.begin(),g.end(),islesscomplexthanf);
       gen last=0; int p=0;
-      for (int i=0;i<g.size();++i){
+      for (unsigned i=0;i<g.size();++i){
 	if (g[i]==last)
 	  ++p;
 	else {
@@ -3577,9 +3568,7 @@ namespace giac {
       return ifactors(*args._CPLXptr,*(args._CPLXptr+1),args,contextptr);
     return gentypeerr(gettext("ifactors"));
   }
-  static symbolic symb_ifactors(const gen & args){
-    return symbolic(at_ifactors,args);
-  }
+
   gen _ifactors(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type==_VECT)
@@ -3598,9 +3587,6 @@ namespace giac {
   define_unary_function_ptr5( at_facteurs_premiers ,alias_at_facteurs_premiers,&__facteurs_premiers,0,true);
 
   static const char _maple_ifactors_s []="maple_ifactors";
-  static symbolic symb_maple_ifactors(const gen & args){
-    return symbolic(at_maple_ifactors,args);
-  }
   gen _maple_ifactors(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type==_VECT)
@@ -3832,9 +3818,6 @@ namespace giac {
       res = res * (p-plus_one)*pow(p,n-1);
       ++it;
     }
-  }
-  static symbolic symb_euler(const gen & args){
-    return symbolic(at_euler,args);
   }
   static const char _euler_s []="euler";
   gen _euler(const gen & args,GIAC_CONTEXT){

@@ -17,7 +17,9 @@ namespace giac {
   // Convert a pari GEN to a giac gen, pari pointer are not modified
   // gen GEN2gen(const GEN & G,const vecteur & vars);
 
-  std::string pari_isprime(const gen & e);
+  gen pari_isprime(const gen & e,int certif=0);
+  // FIXME for pari 2.2 use 1 instead of 2, 2 is for APRCL test
+
   std::string pari_ifactor(const gen & e);
   gen pari_gamma(const gen & e);
   gen pari_zeta(const gen & e);

@@ -130,6 +130,8 @@ namespace giac {
   gen lcoeffn(const polynome & p);
   gen lcoeff1(const polynome & p);
   polynome ichinrem(const polynome &p,const polynome & q,const gen & pmod,const gen & qmod);
+  // set i to i+(j-i)*B mod A, inplace operation
+  void ichrem_smod_inplace(mpz_t * Az,mpz_t * Bz,mpz_t * iz,mpz_t * tmpz,gen & i,const gen & j);
   polynome resultant(const polynome & p,const polynome & q);
   polynome lgcd(const polynome & p);
   gen ppz(polynome & p,bool divide=true);
@@ -437,7 +439,7 @@ namespace giac {
     int k;
     int count=0;
 #if defined(GIAC_NO_OPTIMIZATIONS) || ((defined(VISUALC) || defined(__APPLE__)) && !defined(GIAC_VECTOR))
-    if (0){ 1; }
+    if (0){ count=0; }
 #else
     if (pdim<=POLY_VARS){
       deg_t i[POLY_VARS+1];
@@ -449,13 +451,13 @@ namespace giac {
       for (--prevu;it!=itend;++it,++jt){
 	u=it->u;
 	if (prevu<=u+*iitback){
-	  *iitback -= prevu-u;
+	  *iitback -= deg_t(prevu-u);
 	  prevu=u;
 	}
 	else {
 	  if (pdim>1 && (*iitbackm1)>0 && prevu<=u+*ditbeg+*iitback){
 	    --(*iitbackm1);
-	    *iitback += (u+(*ditbeg))-prevu;
+	    *iitback += deg_t((u+(*ditbeg))-prevu);
 	    prevu=u;
 	  }
 	  else 

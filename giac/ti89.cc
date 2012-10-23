@@ -424,34 +424,41 @@ namespace giac {
   gen _randPoly(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     vecteur v(gen2vecteur(g));
-    int s=v.size();
+    int vs=v.size(),deg=10;
     gen x=vx_var;
-    if (!s){
-      s=100;
-    } 
+    gen f=0;
+    if (vs==1){
+      if (v[0].type==_INT_)
+	deg=v[0].val;
+      else {
+	x=v[0];
+	deg=10;
+      }
+    }
     else {
-      if (s==1){
-	if (v[0].type==_INT_)
-	  s=v[0].val;
+      if (vs>=2){
+	if (v[0].type==_INT_){
+	  deg=v[0].val;
+	  if (v[1].type==_IDNT)
+	    x=v[1];
+	  else
+	    f=v[1];
+	}
 	else {
+	  if (v[1].type==_INT_)
+	    deg=v[1].val;
+	  else
+	    f=v[1];
 	  x=v[0];
-	  s=100;
 	}
       }
-      else {
-	if (v[0].type==_INT_){
-	  s=v[0].val;
-	  x=v[1];
-	}
-	else {
-	  s=v[1].val;
-	  x=v[0];
-	}
+      if (vs>=3){
+	f=v[2];
       }
     }
     vecteur w;
     for (;;){
-      w=vranm(absint(s)+1,0,0);
+      w=vranm(absint(deg)+1,f,contextptr);
       if (!is_exactly_zero(w.front()))
 	break;
     }
@@ -471,7 +478,7 @@ namespace giac {
 
   gen _nInt(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-    if (g.type!=_VECT && g._VECTptr->size()!=4)
+    if (g.type!=_VECT || g._VECTptr->size()!=4)
       return gensizeerr(contextptr);
     return evalf(symbolic(at_integrate,g),1,contextptr);
   }
@@ -670,7 +677,7 @@ namespace giac {
       return string2gen(v[0]._STRNGptr->substr(0,v[1].val),false);
     if (v[0].type==_VECT){
       const_iterateur it=v[0]._VECTptr->begin(),itend=v[0]._VECTptr->end();
-      int length=max(0,min(itend-it,v[1].val));
+      int length=giacmax(0,giacmin(itend-it,v[1].val));
       return gen(vecteur(it,it+length),v[0].subtype);
     }
     return g;
@@ -695,12 +702,12 @@ namespace giac {
     if (v[0].type==_STRNG){
       string & s=*v[0]._STRNGptr;
       int l=s.size();
-      int m=min(max(v[1].val,0),l);
+      int m=giacmin(giacmax(v[1].val,0),l);
       return string2gen(s.substr(l-m,m),false);
     }
     if (v[0].type==_VECT){
       const_iterateur it=v[0]._VECTptr->begin(),itend=v[0]._VECTptr->end();
-      int length=max(0,min(itend-it,v[1].val));
+      int length=giacmax(0,giacmin(itend-it,v[1].val));
       return gen(vecteur(itend-length,itend),v[0].subtype);
     }
     return g;
@@ -729,14 +736,14 @@ namespace giac {
       string & s=*v[0]._STRNGptr;
       if (debut>=signed(s.size()) || debut<0)
 	return string2gen("",false);
-      int m=min(max(nbre,0),s.size());
+      int m=giacmin(giacmax(nbre,0),s.size());
       return string2gen(s.substr(debut,m),false);
     }
     if (v[0].type==_VECT){
       const_iterateur it=v[0]._VECTptr->begin(),itend=v[0]._VECTptr->end();
       if (debut>=itend-it || debut<0)
 	return gen(vecteur(0),v[0].subtype);
-      int length=max(0,min(itend-it-debut,nbre));
+      int length=giacmax(0,giacmin(itend-it-debut,nbre));
       return gen(vecteur(it+debut,it+debut+length),v[0].subtype);
     }
     return g;
@@ -780,7 +787,7 @@ namespace giac {
     }
     if (a.type==_VECT){
       const_iterateur it=a._VECTptr->begin(),itend=a._VECTptr->end();
-      nbre=min(nbre,itend-it);
+      nbre=giacmin(nbre,itend-it);
       if (shift){
 	if (right)
 	  return gen(mergevecteur(vecteur(it+nbre,itend),vecteur(nbre,undef)),a.subtype);
@@ -793,7 +800,7 @@ namespace giac {
     if (a.type==_STRNG){
       string & s=*a._STRNGptr;
       int l=s.size();
-      nbre=min(nbre,l);
+      nbre=giacmin(nbre,l);
       if (shift){
 	if (right)
 	  return string2gen(s.substr(nbre,l-nbre)+string(nbre,' '),false);
@@ -896,7 +903,7 @@ namespace giac {
     if (g.subtype!=_SEQ__VECT || v.size()!=2 || v[0].type!=_VECT || taille.type!=_DOUBLE_)
       return vecteur(1,v);
     vecteur res;
-    int nbre=max(1,int(taille._DOUBLE_val));
+    int nbre=giacmax(1,int(taille._DOUBLE_val));
     const_iterateur it=v[0]._VECTptr->begin(),itend=v[0]._VECTptr->end();
     for (;it!=itend;it+=nbre){
       if (itend-it<nbre){
@@ -1353,10 +1360,10 @@ namespace giac {
     vecteur pivots;
     matrice res;
     mrref(*a._VECTptr,res,pivots,det,0,a._VECTptr->size(),0,a._VECTptr->front()._VECTptr->size(),
-	  false,0,true,1,0,
+	  /* fullreduction */0,0,true,1,0,
 	  contextptr);
     bool reducelast = a._VECTptr->size()!=a._VECTptr->front()._VECTptr->size()-1;
-    mdividebypivot(res,reducelast);
+    mdividebypivot(res,reducelast?-1:-2);
     return res;
   }
   static const char _ref_s[]="ref";
@@ -1379,31 +1386,31 @@ namespace giac {
     if (v.size()>2 && v[1].is_symb_of_sommet(at_interval)){
       gen & f = v[1]._SYMBptr->feuille;
       if (f.type==_VECT && f._VECTptr->size()==2 && f._VECTptr->front().type==_INT_ && f._VECTptr->back().type==_INT_){
-	lignedeb=max(1,f._VECTptr->front().val+!shift);
-	lignefin=max(1,f._VECTptr->back().val+!shift);
+	lignedeb=giacmax(1,f._VECTptr->front().val+!shift);
+	lignefin=giacmax(1,f._VECTptr->back().val+!shift);
       }
       if (v[2].is_symb_of_sommet(at_interval)){
 	gen & f = v[2]._SYMBptr->feuille;
 	if (f.type==_VECT && f._VECTptr->size()==2 && f._VECTptr->front().type==_INT_ && f._VECTptr->back().type==_INT_){
-	  colonnedeb=max(1,f._VECTptr->front().val+!shift);
-	  colonnefin=max(1,f._VECTptr->back().val+!shift);
+	  colonnedeb=giacmax(1,f._VECTptr->front().val+!shift);
+	  colonnefin=giacmax(1,f._VECTptr->back().val+!shift);
 	}
       }
     }
     if (v.size()>2 && v[1].type==_VECT && v[1]._VECTptr->size()==2 && v[2].type==_VECT && v[2].type==_VECT){
-      lignedeb=max(1,v[1]._VECTptr->front().val+!shift);
-      colonnedeb=max(1,v[1]._VECTptr->back().val+!shift);
-      lignefin=max(1,v[2]._VECTptr->front().val+!shift);
-      colonnefin=max(1,v[2]._VECTptr->back().val+!shift);
+      lignedeb=giacmax(1,v[1]._VECTptr->front().val+!shift);
+      colonnedeb=giacmax(1,v[1]._VECTptr->back().val+!shift);
+      lignefin=giacmax(1,v[2]._VECTptr->front().val+!shift);
+      colonnefin=giacmax(1,v[2]._VECTptr->back().val+!shift);
     }
     if (v.size()>1 && v[1].type==_INT_)
-      lignedeb=max(1,v[1].val+!shift);
+      lignedeb=giacmax(1,v[1].val+!shift);
     if (v.size()>2 && v[2].type==_INT_)
-      colonnedeb=max(1,v[2].val+!shift);
+      colonnedeb=giacmax(1,v[2].val+!shift);
     if (v.size()>3 && v[3].type==_INT_)
-      lignefin=max(min(lignefin,v[3].val+!shift),lignedeb);
+      lignefin=giacmax(giacmin(lignefin,v[3].val+!shift),lignedeb);
     if (v.size()>4 && v[4].type==_INT_)
-      colonnefin=max(colonnedeb,min(colonnefin,v[4].val+!shift));
+      colonnefin=giacmax(colonnedeb,giacmin(colonnefin,v[4].val+!shift));
     return matrice_extract(*v[0]._VECTptr,lignedeb-1,colonnedeb-1,lignefin-lignedeb+1,colonnefin-colonnedeb+1);
   }
   static const char _subMat_s[]="subMat";
@@ -1859,7 +1866,7 @@ namespace giac {
     int s=v.size();
     if (s<2 || v[0].type!=_STRNG || v[1].type!=_INT_)
       return gensizeerr(contextptr);
-    int n=max(absint(v[1].val),1);
+    int n=giacmax(absint(v[1].val),1);
     double delay=1.0;
     if (s>2 && v[2].type==_DOUBLE_)
       delay=v[2]._DOUBLE_val;
@@ -1873,7 +1880,7 @@ namespace giac {
 #endif
     int repete=1;
     if (s>3 && v[3].type==_INT_)
-      repete=max(absint(v[3].val),1);
+      repete=giacmax(absint(v[3].val),1);
     int direction=1;
     if (s>4 && is_minus_one(v[4]))
       direction=-1;

@@ -2131,7 +2131,7 @@ namespace giac {
     if (f.type==_VECT){
       if (f.subtype==_POLYEDRE__VECT || f.subtype==_POINT__VECT)
 	return true;
-      if (f._VECTptr->size()==3 && f.subtype!=_GROUP__VECT){
+      if (f._VECTptr->size()==3 && f.subtype!=_GROUP__VECT && f.subtype!=_LINE__VECT && f.subtype!=_HALFLINE__VECT){
 	vecteur & v =*f._VECTptr;
 	return v[0].type!=_CPLX && v[1].type!=_CPLX && v[2].type!=_CPLX;
       }

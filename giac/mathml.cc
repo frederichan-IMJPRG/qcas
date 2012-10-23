@@ -155,7 +155,10 @@ namespace giac {
   static string _VECT2mathml(const vecteur & v, unsigned char type,string &svg,GIAC_CONTEXT){
     string s("<mfenced open=\"");
     if (type==_SEQ__VECT) s.append("(\" close=\")\">");
-    else s.append("[\" close=\"]\">");
+    else {
+      if (type==_SET__VECT) s.append("{\" close=\"}\">");
+      else s.append("[\" close=\"]\">");
+    }
     s.append("<mrow>");
     vecteur::const_iterator it=v.begin(),itend=v.end();
     for (;it!=itend;){
@@ -281,10 +284,12 @@ namespace giac {
     return   "<msqrt>"+gen2mathml(g,contextptr)+"</msqrt>";
   }
 
+#if 0
   //-------------- inutile ? -------------------------
   static string mathml_printassqr(const gen & g,GIAC_CONTEXT){
     return "<msup><mrow>"+gen2mathml(g,contextptr)+"</mrow><mn>2</mn></msup>";
   }
+#endif
 
   static string mathml_printasre(const gen & g,GIAC_CONTEXT){
     return "<mi>Re</mi><mrow><mo>(</mo>"+gen2mathml(g,contextptr)+"<mo>)</mo></mrow>";   
@@ -578,6 +583,7 @@ namespace giac {
     return "black";
   }
 
+#if 0
   static int color_int(string color){
     if (color=="black" || color=="noir")
       return 0;
@@ -591,7 +597,7 @@ namespace giac {
       return 4;
     return 0;
   }
-
+#endif
  
   static void svg_text(gen A, string legende, int color,GIAC_CONTEXT){
     static gen right_space((gnuplot_xmax-gnuplot_xmin)/50);
@@ -996,6 +1002,8 @@ namespace giac {
 	  return "<mn>0.0</mn>";
 	else
 	  return "<mn>"+e.print(contextptr)+"</mn>"; 
+      case _REAL:                        
+	  return "<mn>"+e.print(contextptr)+"</mn>"; 
       case _CPLX:
 	if (!is_zero(re(e,contextptr)))
 	    part_re="<mn>"+re(e,contextptr).print(contextptr)+"</mn>";
@@ -1023,9 +1031,9 @@ namespace giac {
       case _SYMB:                        
 	return symbolic2mathml(*e._SYMBptr, svg,contextptr);
       case _VECT:                        
-    if (e.subtype==_SPREAD__VECT)
+	if (e.subtype==_SPREAD__VECT)
 	  return spread2mathml(*e._VECTptr,1,contextptr); //----------------v??rifier le 2??me param??tre
-	if (ckmatrix(*e._VECTptr))
+	if (e.subtype!=_SEQ__VECT && ckmatrix(*e._VECTptr))
 	  return matrix2mathml(*e._VECTptr,contextptr);
     else return _VECT2mathml(*e._VECTptr,e.subtype, svg,contextptr);
       case _POLY:

@@ -385,7 +385,7 @@ namespace giac {
       vecteur pivots;
       gen det;
       mrref(m,m_red,pivots,det,0,na*nb,0,na*nb+3,
-	    true,0,true,1,0,
+	    /* fullreduction */1,0,true,1,0,
 	    contextptr);
       m=m_red;
       // the reduced matrix m should have the form
@@ -946,8 +946,17 @@ namespace giac {
     for (;it!=itend;++it){
       if (ck_is_strictly_greater(*it,range[1],contextptr) || ck_is_strictly_greater(range[0],*it,contextptr))
 	continue;
+#ifdef NO_STDEXCEPT
       gen tmp=limit(expr,*var._IDNTptr,*it,direction,contextptr);
-      if (is_undef(tmp))
+#else
+      gen tmp;
+      try {
+	tmp=limit(expr,*var._IDNTptr,*it,direction,contextptr);
+      } catch (std::runtime_error & err){
+	tmp=undef;
+      }
+#endif
+      if (is_undef(tmp) || tmp==unsigned_inf)
 	continue;
       if (tmp==resmax && !equalposcomp(xmax,*it))
 	xmax.push_back(*it);

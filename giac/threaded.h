@@ -1479,6 +1479,9 @@ namespace giac {
 	if (d2<0) // first partial degree too small
 	  continue;
 	it2=(*v2ptr)[d2]; // first monomial of second poly having a compatible partial degree
+	it2end=(*v2ptr)[d2+1];
+	if (it2==it2end)
+	  continue;
 	u2=it2->u;
 	if (int(u2/degdiv+d1)!=d)
 	  continue;
@@ -1780,6 +1783,8 @@ namespace giac {
       }
       prev_deg=cur_deg;
     }
+    for (int i=prev_deg-1;i>=0;--i)
+      v2it.push_back(it);
     v2it.push_back(it);
     // degree of product wrt to the main variable
     // will launch deg1v+1 threads to compute each degree
@@ -1805,14 +1810,15 @@ namespace giac {
 	arg[i].current_deg=i;
 	arg[i].reduce=reduce;
 	arg[i].status=0;
-	arg[i].use_heap=use_heap;
 	arg[i].prod=prod;
 	if (use_heap){
+	  arg[i].use_heap=use_heap;
 	  arg[i].heapptr=heapptr;
 	  arg[i].vindexptr=vindexptr;
 	  arg[i].vsmallindexptr=vsmallindexptr;
 	}
 	else {
+	  arg[i].use_heap=false;
 	  arg[i].heapptr=0;
 	  arg[i].vindexptr=0;
 	  arg[i].vsmallindexptr=0;
@@ -1838,14 +1844,15 @@ namespace giac {
 	arg[i].current_deg=i;
 	arg[i].reduce=reduce;
 	arg[i].status=0;
-	arg[i].use_heap=use_heap;
 	arg[i].prod=prod;
 	if (use_heap){
+	  arg[i].use_heap=use_heap;
 	  arg[i].heapptr=new U_unsigned<U>[v1si];
 	  arg[i].vindexptr=smallindex?0:(new std::vector< vector_size64< std::pair<unsigned,unsigned> > >(v1si));
 	  arg[i].vsmallindexptr=smallindex?(new std::vector< vector_size32< std::pair<unsigned short,unsigned short> > >(v1si)):0;
 	}
 	else {
+	  arg[i].use_heap=false;
 	  arg[i].heapptr=0;
 	  arg[i].vindexptr=0;
 	  arg[i].vsmallindexptr=0;

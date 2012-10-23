@@ -126,7 +126,11 @@ namespace giac {
     long * Gp=int_MSW(G);
     gen res;
     for (int i=0;i<=Gpl;++i){
+#ifdef INT128
+      res=res*pow2sizeof_long+int128_t((ulonglong)*Gp);
+#else
       res=res*pow2sizeof_long+longlong(unsigned(*Gp));
+#endif
       Gp=int_precW(Gp);
     }
     return Gs<0?-res:res;
@@ -165,11 +169,11 @@ namespace giac {
     reverse(res.begin(),res.end());
     long vn=varn(G);
     gen x;
-    if (vn<vars.size()){
+    if (vn<long(vars.size())){
       x=vars[vn];
       return symb_horner(res,x);
     }
-    if (!vars.empty() && vn==vars.size()){
+    if (!vars.empty() && vn==long(vars.size())){
       x=vars[vn-1];
       return symb_horner(res,x);
     }
@@ -391,7 +395,7 @@ namespace giac {
     else
       count=count/(8*sizeof(GEN))+2;
     GEN G=cgetg(count,t_INT);
-    size_t countp;
+    //size_t countp;
     // mpz_export(&G[2],&countp,-1,sizeof(GEN),0,0,*zz);
     setlgefint(G,count);
     setsigne(G,sgn);
@@ -519,17 +523,16 @@ namespace giac {
       setsizeerr(gettext("PARI locked by another thread. Try again later.\nIf PARI is locked by a cancelled thread, you can unlock it with pari_unlock()"));
   }
 
-  string pari_isprime(const gen & e){
-    string s;
+  gen pari_isprime(const gen & e,int certif){
+    gen tmp;
     abort_if_locked();
     pthread_cleanup_push(pari_cleanup, (void *) pari_mutex_ptr);
     long av=avma;
-    // FIXME for pari 2.2 use 1 instead of 2, 2 is for APRCL test
-    s=GEN2string(gisprime(gen2GEN(e,vecteur(0),0),2));
+    tmp=GEN2gen(gisprime(gen2GEN(e,vecteur(0),0),certif),vecteur(0));
     avma=av;
     if (pari_mutex_ptr) pthread_mutex_unlock(pari_mutex_ptr);    
     pthread_cleanup_pop(0);
-    return s;
+    return tmp;
   }
 
   string pari_ifactor(const gen & e){
@@ -940,8 +943,8 @@ namespace giac {
     return undeferr(gettext("Not implemented, please recompile giac with PARI"));
   }
 
-  std::string pari_isprime(const gen & e){
-    return "please recompile giac with PARI";
+  gen pari_isprime(const gen & e,int certif){
+    return string2gen("please recompile giac with PARI",false);
   }
   std::string pari_ifactor(const gen & e){
     return "please recompile giac with PARI";

@@ -677,16 +677,41 @@ namespace giac {
       return g*g;
     const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();    
     gen res(0);
-    for (;it!=itend;++it)
-      res = res + (*it)*(*it);
+    mpz_t tmpz;
+    mpz_init(tmpz);
+    for (;it!=itend;++it){
+      if (res.type==_ZINT && is_integer(*it)){
+#if defined(INT128) && !defined(USE_GMP_REPLACEMENTS)
+	if (it->type==_INT_)
+	  mpz_add_ui(*res._ZINTptr,*res._ZINTptr,longlong(it->val)*(it->val));
+	else {
+	  mpz_mul(tmpz,*it->_ZINTptr,*it->_ZINTptr);
+	  mpz_add(*res._ZINTptr,*res._ZINTptr,tmpz);
+	}
+#else
+	if (it->type==_INT_){
+	  mpz_set_si(tmpz,it->val);
+	  mpz_mul(tmpz,tmpz,tmpz);
+	}
+	else 
+	  mpz_mul(tmpz,*it->_ZINTptr,*it->_ZINTptr);
+	mpz_add(*res._ZINTptr,*res._ZINTptr,tmpz);
+#endif
+      }
+      else
+	res +=  (*it)*(*it);
+    }
+    mpz_clear(tmpz);
     return res;
   }
 
   gen square_hadamard_bound(const matrice & m){
     const_iterateur it=m.begin(),itend=m.end();
     gen prod(1);
-    for (;it!=itend;++it)
-      prod=prod*l2norm2(*it);
+    for (;it!=itend;++it){
+      type_operator_times(prod,l2norm2(*it),prod);
+      // prod=prod*l2norm2(*it);
+    }
     return prod;
   }
 

@@ -345,7 +345,7 @@ namespace giac {
     int n=-1;
     for (;it!=itend;++it){
       if (*it==y)
-	n=max(n,0);
+	n=giacmax(n,0);
       if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_derive) ){
 	gen & g=it->_SYMBptr->feuille;
 	int m=-1,nder=1;
@@ -360,7 +360,7 @@ namespace giac {
 	else 
 	  m=diffeq_order(g,y);
 	if (m>=0)
-	  n=max(n,m+nder);
+	  n=giacmax(n,m+nder);
       }
     }
     return n;
@@ -708,7 +708,7 @@ namespace giac {
 	  gen P=simplify(exp(integrate_without_lnabs(f,y,contextptr),contextptr),contextptr);
 	  gen F=P*integrate_without_lnabs(M,x,contextptr);
 	  // D_y(F)=P*N
-	  F=F+integrate_without_lnabs(normal(P*N-derive(F,y,contextptr),contextptr),y,contextptr);
+	  F=F+integrate_without_lnabs(normal(P*N-derive(F,y,contextptr),contextptr),y,contextptr)+diffeq_constante(0,contextptr);
 	  sol=mergevecteur(sol,solve(F,*y._IDNTptr,3,contextptr));
 	  continue;
 	}

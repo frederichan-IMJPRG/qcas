@@ -326,9 +326,9 @@ namespace giac {
   bool alpha_order(const aide & a1,const aide & a2){
     string s1 =a1.cmd_name;
     string s2 =a2.cmd_name;
-    for (int i=0;i<s1.size();++i) 
+    for (unsigned i=0;i<s1.size();++i) 
       s1[i]=tolower(s1[i]);
-    for (int i=0;i<s2.size();++i) 
+    for (unsigned i=0;i<s2.size();++i) 
       s2[i]=tolower(s2[i]);
     if (s1!=s2)
       return s1<s2;

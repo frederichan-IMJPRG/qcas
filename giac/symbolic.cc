@@ -42,7 +42,7 @@ namespace giac {
   const unary_function_ptr * archive_function_tab(){
     static const unary_function_ptr archive_function_tab_ptr[]={*at_plus,*at_neg,*at_binary_minus,*at_prod,*at_division,*at_inv,*at_pow,*at_exp,*at_ln,*at_abs,*at_arg,*at_pnt,*at_point,*at_segment,*at_sto,*at_sin,
 								*at_cos,*at_tan,*at_asin,*at_acos,*at_atan,*at_sinh,*at_cosh,*at_tanh,*at_asinh,*at_acos,*at_atanh,*at_interval,*at_union,*at_minus,*at_intersect,*at_not,
-								*at_and,*at_ou,*at_inferieur_strict,*at_inferieur_egal,*at_superieur_strict,*at_superieur_egal,*at_different,*at_equal,*at_rpn_prog,*at_local,*at_return,*at_Dialog,*at_double_deux_points,*at_pointprod,*at_pointdivision,*at_pointpow,*at_hash,*at_pourcent,*at_tilocal,*at_break,*at_continue,*at_ampersand_times,*at_maple_lib,*at_unit,*at_plot_style,*at_xor,*at_check_type,*at_quote_pow,*at_case,*at_dollar,*at_IFTE,*at_RPN_CASE,*at_RPN_LOCAL,*at_RPN_FOR,*at_RPN_WHILE,*at_NOP,*at_unit,*at_ifte,*at_for,*at_bloc,*at_program,*at_same,*at_increment,*at_decrement,*at_multcrement,*at_divcrement,*at_sq,*at_display,*at_of,*at_at,0};
+								*at_and,*at_ou,*at_inferieur_strict,*at_inferieur_egal,*at_superieur_strict,*at_superieur_egal,*at_different,*at_equal,*at_rpn_prog,*at_local,*at_return,*at_Dialog,*at_double_deux_points,*at_pointprod,*at_pointdivision,*at_pointpow,*at_hash,*at_pourcent,*at_tilocal,*at_break,*at_continue,*at_ampersand_times,*at_maple_lib,*at_unit,*at_plot_style,*at_xor,*at_check_type,*at_quote_pow,*at_case,*at_dollar,*at_IFTE,*at_RPN_CASE,*at_RPN_LOCAL,*at_RPN_FOR,*at_RPN_WHILE,*at_NOP,*at_unit,*at_ifte,*at_for,*at_bloc,*at_program,*at_same,*at_increment,*at_decrement,*at_multcrement,*at_divcrement,*at_sq,*at_display,*at_of,*at_at,*at_normalmod,0};
     archive_function_tab_length=sizeof(archive_function_tab_ptr)/sizeof(const unary_function_ptr *);
     return archive_function_tab_ptr;
   }
@@ -83,7 +83,7 @@ namespace giac {
     // 152
     alias_at_decrement,alias_at_multcrement,alias_at_divcrement,alias_at_sq,alias_at_display,
     // 162
-    alias_at_of,alias_at_at,
+    alias_at_of,alias_at_at,alias_at_normalmod,
     0
   };
   const unary_function_ptr * _archive_function_tab = (const unary_function_ptr *) &archive_function_tab_alias;
@@ -479,6 +479,11 @@ namespace giac {
     int l=s.size();
     if (g.type==_INT_ && g.subtype==0)
       return add_print_int(s,g.val,contextptr);
+    if (g.type==_VECT && g.subtype==0){
+      s+='[';
+      add_printinner_VECT(s,*g._VECTptr,0,contextptr);
+      return s+=']';
+    }
     if (g.type==_FRAC && g._FRACptr->num.type==_INT_ && g._FRACptr->den.type==_INT_){
       add_print(s,g._FRACptr->num,contextptr);
       s += "/";
@@ -931,7 +936,7 @@ namespace giac {
 	      for (unsigned i=1;i<tmp._VECTptr->size();++i)
 		argl.push_back(0);
 	      destination=(gen *)&argl.front()+pos;
-	      for (int i=0;;){
+	      for (unsigned i=0;;){
 		*destination=(*tmp._VECTptr)[i];
 		++i;
 		if (i==tmp._VECTptr->size())
@@ -1002,7 +1007,7 @@ namespace giac {
 	    // for var in list/string
 	    res=eval(res._SYMBptr->feuille._VECTptr->back(),1,contextptr);
 	    if (res.type==_VECT){
-	      if (res._VECTptr->size()>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
+	      if (int(res._VECTptr->size())>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
 		res=res[nr_eval_for_stack[nr_eval_for_stack.size()-2]];
 		sto(res,destination->_SYMBptr->feuille._VECTptr->front(),contextptr);
 		res=1;
@@ -1012,7 +1017,7 @@ namespace giac {
 	    }
 	    else {
 	      if (res.type==_STRNG){
-		if (res._STRNGptr->size()>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
+		if (int(res._STRNGptr->size())>nr_eval_for_stack[nr_eval_for_stack.size()-2]){
 		  res=string2gen(string(1,(*res._STRNGptr)[nr_eval_for_stack[nr_eval_for_stack.size()-2]]),false);
 		  sto(res,destination->_SYMBptr->feuille._VECTptr->front(),contextptr);
 		  res=1;

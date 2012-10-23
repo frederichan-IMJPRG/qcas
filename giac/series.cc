@@ -459,6 +459,7 @@ namespace giac {
       final_seq.push_back(monome(undef, c_max));
     return true;
     cout << final_seq.back().coeff << endl;
+    return true;
   }
 
   sparse_poly1 spmul(const sparse_poly1 & a,const sparse_poly1 &b,GIAC_CONTEXT){
@@ -639,7 +640,18 @@ namespace giac {
       w.push_back(num);
       w.push_back(den);
       // replace common by lcm of common and den
+#ifndef USE_GMP_REPLACEMENTS
+      if (common.type==_ZINT && common.ref_count()==1 && is_integer(den)){
+	if (den.type==_ZINT)
+	  mpz_lcm(*common._ZINTptr,*common._ZINTptr,*den._ZINTptr);
+	else
+	  mpz_lcm_ui(*common._ZINTptr,*common._ZINTptr,absint(den.val));
+      }
+      else
+	common = lcm(common,den);
+#else
       common = lcm(common,den);
+#endif
     }
     // compute e and recompute v
     e=r2sym(common,l,contextptr);
@@ -1608,11 +1620,11 @@ namespace giac {
     return s;
   }
 
-  static void inutile(sparse_poly1 & s){
 #ifdef DEBUG_SUPPORT
+  static void inutile(sparse_poly1 & s){
     s.dbgprint();
-#endif
   }
+#endif
 
   // ***********************
   // LIMITS

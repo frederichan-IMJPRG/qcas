@@ -52,6 +52,7 @@ namespace giac {
   bool is_equal(const gen & g);
   gen apply_to_equal(const gen & g,const gen_op & f);
   gen apply_to_equal(const gen & g,gen (* f) (const gen &, GIAC_CONTEXT),GIAC_CONTEXT);
+  gen apply_unit(const gen & args,const gen_op_context & f,GIAC_CONTEXT);
   gen _id(const gen & args,GIAC_CONTEXT);
   gen _not(const gen & args,GIAC_CONTEXT);
   gen _neg(const gen & args,GIAC_CONTEXT);

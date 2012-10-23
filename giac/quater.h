@@ -62,12 +62,13 @@ namespace giac {
     }
     galois_field(const galois_field & q);
     galois_field(const gen p_,const gen & P_,const gen & x_,const gen & a_);
-    galois_field(const gen & g);
+    galois_field(const gen & g,GIAC_CONTEXT);
     void reduce(); // reduce a
     virtual gen operator + (const gen & g) const;
     virtual gen operator - (const gen & g) const;
     virtual gen operator - () const;
     virtual gen operator * (const gen & g) const;
+    virtual gen operator / (const gen & g) const;
     virtual gen inv () const ;
     virtual std::string print (GIAC_CONTEXT) const ;
     virtual bool operator == (const gen &) const ;
@@ -85,16 +86,18 @@ namespace giac {
     virtual gen polygcd (const polynome &,const polynome &,polynome &) const ;
     virtual gen makegen(int i) const ;
     virtual gen polyfactor (const polynome & p,factorization & f) const ;
-    virtual gen conj(GIAC_CONTEXT) { return *this;}
-    virtual gen re(GIAC_CONTEXT) { return *this;}
-    virtual gen im(GIAC_CONTEXT) {  return 0;}
+    virtual gen conj(GIAC_CONTEXT) const { return *this;}
+    virtual gen re(GIAC_CONTEXT) const { return *this;}
+    virtual gen im(GIAC_CONTEXT) const {  return 0;}
+    virtual gen sqrt(GIAC_CONTEXT) const;
+    virtual gen rand(GIAC_CONTEXT) const;
     polynome poly_reduce(const polynome & p) const ;
   };
 
   // Is the polynomial v irreducible and primitive modulo p?
   // If it is only irreducible, returns 2 and sets vmin
   int is_irreducible_primitive(const vecteur & v,const gen & p,vecteur & vmin);
-  vecteur find_irreducible_primitive(int p,int m);
+  vecteur find_irreducible_primitive(int p,int m,GIAC_CONTEXT);
   gen _galois_field(const gen & args,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC

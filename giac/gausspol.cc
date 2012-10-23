@@ -169,7 +169,7 @@ namespace giac {
   }
 
   // instantiation of dbgprint for poly
-  static void dbg(const polynome & p){
+  void dbg(const polynome & p){
     p.dbgprint();
   }
 
@@ -359,7 +359,7 @@ namespace giac {
     return res;
   }
 
-  static ostream & operator << (ostream & os,const int_unsigned & i){
+  ostream & operator << (ostream & os,const int_unsigned & i){
     return os << i.g << ":" << i.u ;
   }
 
@@ -477,7 +477,47 @@ namespace giac {
     return res;
   }
 
-  static void ichrem_smod_inplace(mpz_t * Az,mpz_t * Bz,mpz_t * iz,mpz_t * tmpz,gen & i,const gen & j){
+#if 0
+  // set i to i+((((j-i)* mod addprime)*u) mod addprime)*targetprime, inplace operation
+  // (where u*targetprime+unknow_integer*addprime=1)
+  static void ichrem_smod_inplace(int addprime,int u,const gen &targetprime,gen & i,const gen & j){
+    longlong tmp=longlong(j.val)-((i.type==_ZINT)?modulo(*i._ZINTptr,addprime):i.val);
+    tmp=(tmp*u)%addprime;
+    if (targetprime.type==_ZINT && i.type==_ZINT){
+      if (tmp>0)
+	mpz_addmul_ui(*i._ZINTptr,*targetprime._ZINTptr,int(tmp));
+      else
+	mpz_submul_ui(*i._ZINTptr,*targetprime._ZINTptr,-int(tmp));
+    }
+    else
+      i += int(tmp)*targetprime;
+  }
+
+  static gen ichrem_smod(int addprime,int u,const gen &targetprime,longlong i,int j,mpz_t * tmpz){
+    longlong tmp=longlong(j)-i%addprime;
+    tmp=(tmp*u)%addprime;
+    gen I(i);
+    I.uncoerce();
+    // now return I+tmp*targetprime
+    if (targetprime.type==_INT_){
+      tmp *= targetprime.val; // no overflow since tmp<2^31 and targetprime.val also
+      longlong2mpz(tmp,tmpz);
+      mpz_add(*I._ZINTptr,*I._ZINTptr,*tmpz);
+    }
+    else {
+      if (tmp>=0)
+	mpz_addmul_ui(*I._ZINTptr,*targetprime._ZINTptr,tmp);
+      else
+	mpz_submul_ui(*I._ZINTptr,*targetprime._ZINTptr,-tmp);
+    }
+    return I;
+  }
+#endif
+
+  // set i to i+(i-j)*B mod A, inplace operation
+  void ichrem_smod_inplace(mpz_t * Az,mpz_t * Bz,mpz_t * iz,mpz_t * tmpz,gen & i,const gen & j){
+    if (i==j)
+      return;
     if (i.type==_ZINT)
       mpz_set(*iz,*i._ZINTptr);
     else
@@ -518,6 +558,7 @@ namespace giac {
     }
   }
 
+#if 0
   // smod(B*(i-j)+i,A);  
   static gen ichrem_smod(const gen & A,const gen & B,const gen & i,const gen & j){
     if (i==j)
@@ -564,6 +605,7 @@ namespace giac {
       return i;
     return ichrem_smod(A,B,gen(i),gen(j));
   }
+#endif
 
   template<class T,class U>
   static void ichrem(const vector< T_unsigned<T,U> > & add,int addprime,const vector< T_unsigned<longlong,U> > & init,vector< T_unsigned<gen,U> > & target,gen & targetprime){
@@ -579,6 +621,8 @@ namespace giac {
     // it->g - jt->g = u*addprime - v*targetprime
     // v=(jt->g-it->g)*B
     // hence c=it->g+(jt->g-it->g)*B*targetprime mod addprime*targetprime
+    // IMPROVE c=it->g+(((jt->g-it->g) mod addprime)*B mod addprime)*targetprime
+    // int b=B.type==_ZINT?mpz_get_si(*B._ZINTptr):B.val;
     A=addprime*targetprime;
     B=-targetprime*B;
     mpz_t z1,z2;
@@ -596,6 +640,7 @@ namespace giac {
       for (;kt!=ktend && jt!=jtend;){
 	if (kt->u==jt->u){
 	  // it->g=smod(B*(it->g-jt->g)+it->g,A);
+	  // target.push_back(T_unsigned<gen,U>(ichrem_smod(addprime,b,targetprime,kt->g,jt->g,&z1),jt->u));
 	  target.push_back(T_unsigned<gen,U>(ichrem_smod(A._ZINTptr,B._ZINTptr,&z1,&z2,kt->g,jt->g),jt->u));
 	  ++kt; ++jt;
 	}
@@ -620,12 +665,14 @@ namespace giac {
 	if (it->u==jt->u){
 	  // it->g=smod(B*(it->g-jt->g)+it->g,A);
 	  ichrem_smod_inplace(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,jt->g);
+	  // ichrem_smod_inplace(addprime,b,targetprime,it->g,jt->g);
 	  // it->g=ichrem_smod(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,jt->g);
 	  ++it; ++jt;
 	}
 	else {
 	  if (it->u>jt->u){
 	    ichrem_smod_inplace(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,0);
+	    // ichrem_smod_inplace(addprime,b,targetprime,it->g,0);
 	    // it->g=ichrem_smod(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,0);
 	    ++it;
 	  }
@@ -658,6 +705,7 @@ namespace giac {
       for (;it!=itend;++it){
 	// it->g=ichrem_smod(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,0);
 	ichrem_smod_inplace(A._ZINTptr,B._ZINTptr,&z1,&z2,it->g,0);
+	// ichrem_smod_inplace(addprime,b,targetprime,it->g,0);
       }
     } // end target empty at beginning
     targetprime = addprime*targetprime;
@@ -801,7 +849,7 @@ namespace giac {
     if (my_isinf(r) || my_isnan(r) || r>1e9)
       new_coord.reserve(itend-it);
     else
-      new_coord.reserve(min(int(r),itend-it));
+      new_coord.reserve(giacmin(int(r),itend-it));
     // add terms with same power
     addsamepower_gen(it,itend,new_coord);
     if (debug_infolevel)
@@ -894,7 +942,7 @@ namespace giac {
 	  // Modular multiplication, convert everything to integers
 	  vector< int_unsigned > p1,p2,p;
 	  if (convert(th,d,p1,reduce.val) && convert(other,d,p2,reduce.val)){
-	    if (10*lagrtime<double(c1)*c2*std::log(double(max(c1,c2))))
+	    if (10*lagrtime<double(c1)*c2*std::log(double(giacmax(c1,c2))))
 	      smallmulpoly_interpolate(p1,p2,p,d,reduce.val);
 	    else
 	      smallmult(p1,p2,p,reduce.val,int(c1c2));
@@ -911,7 +959,7 @@ namespace giac {
 	  vector< T_unsigned<longlong,unsigned> > p1d,p2d,pd;
 	  if (convert_int(th,d,p1d,maxp1) && convert_int(other,d,p2d,maxp2) ){
 	    double maxp1p2=double(maxp1)*maxp2;
-	    unsigned minc1c2=min(c1,c2);
+	    unsigned minc1c2=giacmin(c1,c2);
 	    double un63=double(ulonglong (1) << 63);
 	    double res_size=double(minc1c2)*maxp1p2;
 	    // Check number of required primes: 
@@ -936,7 +984,7 @@ namespace giac {
 	      vector< T_unsigned<gen,unsigned> > target;
 	      convert(pD,target);
 	      double primed=3037000499.; // floor(2^31.5)
-	      primed /= std::sqrt(double(max(minc1c2,4)));
+	      primed /= std::sqrt(double(giacmax(minc1c2,4)));
 	      gen targetprime = pow(plus_two,128);
 	      int prime2=prevprime(int(std::floor(primed))).val;
 	      for (;res_size>=1;){
@@ -985,7 +1033,7 @@ namespace giac {
 		// convert(pd,target);
 		int prime1=2147483647;
 		double primed=3037000499.; // floor(2^31.5)
-		primed /= std::sqrt(double(max(minc1c2,4)));
+		primed /= std::sqrt(double(giacmax(minc1c2,4)));
 		// the product of the two poly mod prime2 can be computed
 		// without mod computation
 		int prime2=prevprime(int(std::floor(primed))).val;
@@ -1045,7 +1093,7 @@ namespace giac {
 	    vector< T_unsigned<longlong,unsigned> > p1d,p2d,pd;
 	    if (convert_int(p1m,d,p1d,maxp1) && convert_int(p2m,d,p2d,maxp2) ){
 	      double maxp1p2=double(maxp1)*maxp2;
-	      unsigned minc1c2=min(c1,c2);
+	      unsigned minc1c2=giacmin(c1,c2);
 	      double un63=double(ulonglong (1) << 63);
 	      double res_size=double(minc1c2)*maxp1p2;
 	      // Check if mod may be done only at the end
@@ -1080,7 +1128,7 @@ namespace giac {
 	  }
 	}
 	// FIXME : the comparison 10*lagr_time is not good at all for e.g int/double args
-	if (is_zero(reduce) && 100*lagrtime<double(c1)*c2*std::log(double(max(c1,c2)))){
+	if (is_zero(reduce) && 100*lagrtime<double(c1)*c2*std::log(double(giacmax(c1,c2)))){
 	  vector< T_unsigned<gen,unsigned> > p1,p2,p;
 	  convert<gen,unsigned>(th,d,p1); 
 	  convert<gen,unsigned>(other,d,p2);
@@ -1147,7 +1195,7 @@ namespace giac {
 	    cerr << clock() << "longlong mult ulonglong convert begin " << clock() << endl;
 	  if (convert_int(th,d,p1d,maxp1) && convert_int(other,d,p2d,maxp2) ){
 	    double maxp1p2=double(maxp1)*maxp2;
-	    unsigned minc1c2=min(c1,c2);
+	    unsigned minc1c2=giacmin(c1,c2);
 	    double un63=double(ulonglong (1) << 63);
 	    double res_size=double(minc1c2)*maxp1p2;
 	    // Check number of required primes: 
@@ -1172,7 +1220,7 @@ namespace giac {
 	      vector< T_unsigned<gen,ulonglong> > target;
 	      convert(pD,target);
 	      double primed=3037000499.; // floor(2^31.5)
-	      primed /= std::sqrt(double(max(minc1c2,4)));
+	      primed /= std::sqrt(double(giacmax(minc1c2,4)));
 	      gen targetprime = pow(plus_two,128);
 	      int prime2=prevprime(int(std::floor(primed))).val;
 	      for (;res_size>=1;){
@@ -2770,7 +2818,7 @@ namespace giac {
     // a and b are the primitive part of p and q
     divremmod(p,dp,modulo,a,r);
     divremmod(q,dq,modulo,b,r);
-    if (modulo.val>=4*min(p.lexsorted_degree(),q.lexsorted_degree())){
+    if (modulo.val>=4*giacmin(p.lexsorted_degree(),q.lexsorted_degree())){
       mod_gcdmod(a,b,modulo,prim);
       return ;
     }
@@ -2828,7 +2876,7 @@ namespace giac {
     }
     // Check that there are enough points for interpolation
     // Otherwise PSR
-    if (modulo.val>=4*min(p.lexsorted_degree(),q.lexsorted_degree())){
+    if (modulo.val>=4*giacmin(p.lexsorted_degree(),q.lexsorted_degree())){
       polynome d(p.dim),pcof(p.dim),qcof(p.dim);
       if (modgcd(p,q,modulo,d,pcof,qcof,false))
 	return d;
@@ -2860,7 +2908,7 @@ namespace giac {
     qq=q/qlgcd;
     gcdlgcd=gcd(plgcd,qlgcd);
     gen gcdfirstcoeff(gcd(pp.coord.front().value, qq.coord.front().value));
-    int gcddeg= min(pp.lexsorted_degree(),qq.lexsorted_degree());
+    int gcddeg= giacmin(pp.lexsorted_degree(),qq.lexsorted_degree());
     gen bound(pow(gen(2),gcddeg+1)* abs(gcdfirstcoeff,context0) * min(pp.norm(), qq.norm(),context0));
     gen modulo(nextprime(max(gcdfirstcoeff+1,gen(30000),context0))); 
     gen productmodulo(1);
@@ -3378,7 +3426,7 @@ namespace giac {
       }
       return true;
     }
-    int Dbdeg=min(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
+    int Dbdeg=giacmin(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
     bool est_reel=poly_is_real(p_simp) && poly_is_real(q_simp);    // FIXME: should check for extensions!
     if (debug_infolevel>=2)
       cerr << "//Gcdheu " << p_deg << " " << p_simp.coord.size() << " " << q_deg << " " << q_simp.coord.size() << endl;
@@ -3526,7 +3574,7 @@ namespace giac {
 	gcdmodpoly(pp,qq,env,_gcdmod);
 	if (is_undef(_gcdmod))
 	  return false;
-	Dbdeg=min(Dbdeg,_gcdmod.size()-1);
+	Dbdeg=giacmin(Dbdeg,_gcdmod.size()-1);
 	if (!Dbdeg)
 	  break;
       }
@@ -3546,12 +3594,12 @@ namespace giac {
     // PSR complexity is proportionnal to 
     // #iteration*deg_var_n*(total_deg_other_vars*#iteration)^(2*#other_var)
     // MODGCD to product of all (part_deg_of_gcd+1+part_deg_of_gcd_lcoeff)
-    int maxpqdeg0=max(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
-    int minpqdeg0=min(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
+    int maxpqdeg0=giacmax(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
+    int minpqdeg0=giacmin(p_simp.lexsorted_degree(),q_simp.lexsorted_degree());
     index_t maxpqdeg(p_simp.dim);
     double sparsenessp=p_simp.coord.size(),sparsenessq=q_simp.coord.size();
     for (int i=0;i<p_simp.dim;++i){
-      maxpqdeg[i]=max(p_deg[i],q_deg[i]);
+      maxpqdeg[i]=giacmax(p_deg[i],q_deg[i]);
       sparsenessp /= (p_deg[i]+i+1);
       sparsenessp *= (i+1);
       sparsenessq /= (q_deg[i]+i+1);
@@ -3562,7 +3610,7 @@ namespace giac {
     for (int i=0;i<p_simp.dim;++i){
       heugcddigits *= maxpqdeg[i] ; 
       minmodop *= Dbdeg+1; // approximation!!! should be partial degree[gcd]
-      maxmodop *= min(p_deg[i],q_deg[i])+1+p_deg[i]+q_deg[i];
+      maxmodop *= giacmin(p_deg[i],q_deg[i])+1+p_deg[i]+q_deg[i];
       total_deg_other_var += maxpqdeg[i];
     }
     double psrstep=minpqdeg0-Dbdeg;
@@ -3684,7 +3732,7 @@ namespace giac {
 	if (!gcddeg)
 	  gcddeg=Dbdeg;
 	else
-	  gcddeg=min(Dbdeg,gcddeg);
+	  gcddeg=giacmin(Dbdeg,gcddeg);
       }
     }
     return Tgcdpsr<gen>(p,q,gcddeg);
@@ -3788,7 +3836,7 @@ namespace giac {
 	smax=k;
       }
       if (k==smax)
-	total_deg=max(total_deg,total-k);
+	total_deg=giacmax(total_deg,total-k);
     }
     reverse(res.begin(),res.end());
     return trim(res,0);
@@ -3797,11 +3845,11 @@ namespace giac {
   static bool exchange_variables(polynome & p,const index_t & pdeg,polynome & q,const index_t & qdeg,std::vector<int> & permutation){
     if (p.dim<2)
       return false;
-    int pd=pdeg.front(),qd=qdeg.front(),res=min(pd,qd),pos=0,tmp; 
+    int pd=pdeg.front(),qd=qdeg.front(),res=giacmin(pd,qd),pos=0,tmp; 
     // Find first lowest degree position
     vector<int> vpos(1,0);
     for (int j=1;j<p.dim;++j){
-      if ( (tmp=min(pdeg[j],qdeg[j])) <res){
+      if ( (tmp=giacmin(pdeg[j],qdeg[j])) <res){
 	res=tmp;
 	vpos=vector<int>(1,j);
       }
@@ -4083,6 +4131,7 @@ namespace giac {
   static void partialsquarefree_fp(const polynome & p,unsigned n,polynome & c,factorization & v){
     v.clear();
     polynome y(p.derivative()),w(p);
+    y=smod(y,gen(int(n)));
     c=simplify(w,y);
     // If p=p_1*p_2^2*...*p_n^n, 
     // then c=gcd(p,p')=Pi_{i s.t. i%n!=0} p_i^{i-1} Pi_{i s.t. i%n==0} p_i^i
@@ -4191,7 +4240,7 @@ namespace giac {
     // Now factorize each factor
     factorization::const_iterator it=sqff_f.begin(),itend=sqff_f.end();
     for (;it!=itend;++it){
-      const facteur<polynome> & fp=*it;
+      // const facteur<polynome> & fp=*it;
       const polynome & itfact = it->fact;
       if (itfact.lexsorted_degree()<=1){
 	f.push_back(*it);
@@ -5120,12 +5169,69 @@ namespace giac {
 	int nfact=0;
 	for (;it!=itend;++it)
 	  nfact += it->mult;
-	nfactbound=min(nfactbound,nfact);
+	nfactbound=giacmin(nfactbound,nfact);
       }
       if (essai<2){
 	f.push_back(facteur<polynome>(pcur,mult));
 	continue;
       }
+      // check if pcur is a homogeneous polynomial
+      if (sum_degree(pcur.coord.back().index)){
+	int xdeg=sum_degree(pcur.coord.back().index);
+	vector< monomial<gen> >::iterator it=pcur.coord.begin(),itend=pcur.coord.end();
+	for (;it!=itend;++it){
+	  if (sum_degree(it->index)!=xdeg){
+	    break;
+	  }
+	}
+	if (it==itend){
+	  // set x[j]=x[0]*x[j] for all vars, divide by x[0]^xdeg, 
+	  // remove old x[0] variable
+	  polynome pcurh(pcur.trunc1());
+	  pcurh.tsort();
+	  // factor it
+	  polynome pcur_cont;
+	  factorization pcur_f,ppcur_f;
+	  do_factor(pcurh,pcur_cont,pcur_f,false,with_sqrt,complexmode,1);
+	  // factorize (recursivly) pcur_cont
+	  for (int innerdim=1;innerdim<pcur.dim && !pcur_cont.coord.empty() && sum_degree(pcur_cont.coord.front().index);++innerdim){
+	    polynome pp=pcur_cont.trunc1();
+	    do_factor(pp,pcur_cont,ppcur_f,false,with_sqrt,complexmode,1);
+	    for (unsigned i=0;i<ppcur_f.size();++i){
+	      polynome tmp(ppcur_f[i].fact.untrunc1());
+	      for (int j=1;j<innerdim;++j){
+		tmp=tmp.untrunc1();
+	      }
+	      pcur_f.push_back(facteur<polynome>(tmp,ppcur_f[i].mult));
+	    }
+	  }
+	  if (pcur_f.size()==1){
+	    f.push_back(facteur<polynome>(pcur,mult));
+	    continue;
+	  }
+	  // for each factor multiply by x[0]^degree in x[j] of factor, 
+	  // and set x[j]=x[j]/x[0], and put in v
+	  for (unsigned i=0;i<pcur_f.size();++i){
+	    polynome & P=pcur_f[i].fact;
+	    it=P.coord.begin(); itend=P.coord.end();
+	    int jdeg=0;
+	    for (;it!=itend;++it)
+	      jdeg=giacmax(jdeg,sum_degree(it->index));
+	    it=P.coord.begin();
+	    for (;it!=itend;++it){
+	      index_t idx=it->index.iref();
+	      idx.insert(idx.begin(),jdeg-sum_degree(idx));
+	      it->index=idx;
+	    }
+	    P.tsort();
+	    // adjust sign
+	    if (is_strictly_positive(-P.coord.front().value,context0))
+	      P=-P;
+	    f.push_back(facteur<polynome>(P,mult));
+	  }
+	  continue;
+	} // end homogeneous poly
+      } // end if (sum_degrees(...)
       if (try_sparse_factor(pcur,v,mult,f))
 	continue;
       /* Try Hensel lift factorization */
@@ -5487,16 +5593,26 @@ namespace giac {
     egcdpsr(p.fact,fprime,u,v,d); // f*u+f'*v=d
     tensor<gen> usave(u),vsave(v);
     int initial_mult=p.mult-1;
-    gen currentden=p.den.coord.front().value/pow(p.fact.coord.front().value,p.mult,context0);
+    gen currentden=p.den/pow(p.fact,p.mult); // p.den.coord.front().value/pow(p.fact.coord.front().value,p.mult,context0);
     p.den=tensor<gen>(monomial<gen>(1,p.fact.dim));
     while (p.mult>1){
       egcdtoabcuv(p.fact,fprime,p.num,u,v,d,C);
       p.mult--;
-      currentden=gen(p.mult)*C*currentden;
+      if (currentden.type==_POLY)
+	currentden=gen(p.mult)*C*(*currentden._POLYptr);
+      else
+	currentden=gen(p.mult)*C*currentden;
       p.num=u*gen(p.mult)+v.derivative();
       if (!residue){ // resnum/resden + (-v*p.den)/currentden -> resnum/resden
 	dengcd=simplify3(resden,currentden);
-	resnum=resnum*currentden-resden*v*p.den;
+	if (currentden.type==_POLY)
+	  resnum=resnum*(*currentden._POLYptr);
+	else
+	  resnum=resnum*currentden;
+	if (resden.type==_POLY)
+	  resnum=resnum-(*resden._POLYptr)*v*p.den;
+	else
+	  resnum=resnum-resden*v*p.den;
 	resden=dengcd*resden*currentden;
 	currentden = dengcd*currentden; // restore currentden
 	p.den=p.den*p.fact;
@@ -5504,8 +5620,11 @@ namespace giac {
       // simplify from time to time
       if (p.mult%5 ==1){
 	gen gn=lgcd(p.num);
-	gn=simplify3(gn,currentden);
-	p.num/=gn;
+	gen gn1=simplify3(gn,currentden);
+	if (gn1.type==_POLY)
+	  p.num = p.num / *gn1._POLYptr;
+	else
+	  p.num/=gn1;
       }
       if (p.mult==1)
 	break;
@@ -5513,11 +5632,11 @@ namespace giac {
       v=vsave;
     }
     if (!residue){
-      p.den=resden*p.den;
+      p.den=resden.type==_POLY?(*resden._POLYptr)*p.den:resden*p.den;
       TsimplifybyTlgcd(resnum,p.den);
       intdecomp.push_back(pf<gen>(resnum,p.den,p.fact,initial_mult));
     }
-    p.den=currentden*p.fact;
+    p.den=(currentden.type==_POLY)?(*currentden._POLYptr)*p.fact:currentden*p.fact;
     return pf<gen>(p);
   }
 
@@ -5630,9 +5749,9 @@ namespace giac {
       cerr << "foisplus begin " << clock() << endl;
 #ifndef RTOS_THREADX
     index_t da=a.degree(),db=b.degree(),dc=c.degree(),dd=d.degree(),de(a.dim);
-    ulonglong ans=0;
+    double ans=1;
     for (int i=0;i<a.dim;++i){
-      de[i]=max(da[i]+db[i]+1,dc[i]+dd[i]+1);
+      de[i]=giacmax(da[i]+db[i]+1,dc[i]+dd[i]+1);
       ans = ans*unsigned(de[i]);
       if (ans/RAND_MAX>RAND_MAX)
 	break;
@@ -5650,6 +5769,7 @@ namespace giac {
       convert<gen,unsigned>(pb,de,res->t);
       if (debug_infolevel >= 20-a.dim)
 	cerr << "foisplus end " << clock() << endl;
+      // cerr << res->t-(a*b+c*d) << endl;
       return res;
     }
     if (ans/RAND_MAX<RAND_MAX){
@@ -5662,7 +5782,8 @@ namespace giac {
       convert<gen,ulonglong>(d,de,pd);
       smallmult<gen,ulonglong>(pc,pd,pa,0,100);
       smalladd<gen,ulonglong>(p,pa,pb);
-      convert<gen,ulonglong>(p,de,res->t);
+      convert<gen,ulonglong>(pb,de,res->t);
+      // cerr << res->t << endl << (a*b+c*d) << endl;
       return res;
     }
 #endif
@@ -5999,6 +6120,7 @@ namespace giac {
     return fraction(numer,global_deno);
   }
 
+#if 0
   /* Not used anymore */
   static factorization vector2factorization(const vectpoly & v){
     vectpoly::const_iterator it=v.begin(),itend=v.end();
@@ -6009,7 +6131,7 @@ namespace giac {
     }
     return res;
   }
-
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

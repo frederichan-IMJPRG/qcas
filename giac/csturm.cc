@@ -153,6 +153,7 @@ namespace giac {
     return res;
   }
 
+#if 0
   // compute vertex index at a (==0 unless s(a)==0) 
   static int csturm_vertex_a(const modpoly & s,const modpoly & r,const gen & a,int direction,GIAC_CONTEXT){
     int j;
@@ -169,6 +170,7 @@ namespace giac {
     gen tmp=sign(sa,contextptr)*sign(horner(r,a),contextptr);
     return tmp.val*((j%2)?-1:1);
   }
+#endif
 
   void change_scale(modpoly & p,const gen & l){
     int n=p.size();
@@ -222,7 +224,8 @@ namespace giac {
     if (n==1){
       gen T0=t0,T1=t1,T2;
       int s0=fastsign(csturm_horner(R,T0),contextptr);
-      int s1=fastsign(csturm_horner(R,T1),contextptr),s2;
+      // int s1=fastsign(csturm_horner(R,T1),contextptr);
+      int s2;
       gen delta=evalf_double(log((T1-T0)*abs(b,contextptr)/eps,contextptr)/log(2.,contextptr),1,contextptr);
       if (delta.type!=_DOUBLE_){
 	realroots=vecteur(1,gentypeerr(contextptr));
@@ -570,6 +573,7 @@ namespace giac {
     return true;
   }
 
+#if 0
   // check that arg is >=pi/8 (assumes im(g)>=0)
   static bool arg_geq_pi_8(const gen & g){
     gen gr=re(g,context0),gi=im(g,context0);
@@ -712,6 +716,7 @@ namespace giac {
     }
     return false;
   }
+#endif
 
   void round2(gen & x,int n){
     gen deuxn=pow(plus_two,n,context0);
@@ -1537,8 +1542,8 @@ namespace giac {
   }
 
   gen bisection(const modpoly & p,const gen & a0,const gen &b0,double eps,GIAC_CONTEXT){
-    int nsteps=std::ceil(std::log(evalf_double(b0-a0,1,contextptr)._DOUBLE_val/eps)/M_LN2);
-    int trynewtonstep=nsteps-std::log(bisection_newton_eps/eps)/M_LN2;
+    int nsteps=int(std::ceil(std::log(evalf_double(b0-a0,1,contextptr)._DOUBLE_val/eps)/M_LN2));
+    int trynewtonstep=int(nsteps-std::log(bisection_newton_eps/eps)/M_LN2);
     gen a(a0),b(b0),m,eps2;
     modpoly dp=derivative(p);
     int s1=fastsign(horner(p,a),contextptr);

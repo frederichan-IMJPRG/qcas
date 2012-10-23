@@ -755,6 +755,16 @@ namespace giac {
   static bool sym2rxroot(gen & num,gen & den,int n,int d,const vecteur & l,GIAC_CONTEXT){
     if (is_zero(num))
       return true;
+    if (den.type==_CPLX){
+      gen denr,deni,numr,numi;
+      reim(den,denr,deni,contextptr);
+      den=denr*denr+deni*deni;
+      num=num*(denr-cst_i*deni);
+      reim(num,numr,numi,contextptr);
+      deni=gcd(gcd(numr,denr),numi);
+      num=num/deni;
+      den=den/deni;
+    }
     bool sign_changed=false;
     if (d<0){
       n=-n;
@@ -1503,7 +1513,7 @@ namespace giac {
       gen c=1;
       vecteur v(*fn._SYMBptr->feuille._VECTptr);
       fn=1;
-      for (int i=0;i<v.size();++i){
+      for (unsigned i=0;i<v.size();++i){
 	if (v[i].type==_INT_){
 	  c=c*v[i];
 	  simplify(c,fd);
@@ -1555,6 +1565,7 @@ namespace giac {
     return p._VECTptr->front()*x+p._VECTptr->back();
   }
 
+  /*
   static gen ckdeg2_rootof(const gen & p,const gen & pmin,GIAC_CONTEXT){
     if ( p.type!=_VECT || pmin.type!=_VECT)
       return gensizeerr(gettext("sym2poly.cc/ckdeg2_rootof"));
@@ -1569,9 +1580,18 @@ namespace giac {
       return gensizeerr(gettext("No root found for pmin"));
     return p._VECTptr->front()*v.front()+p._VECTptr->back();
   }
+  */
 
   // check that an _EXT e is root of a second order poly
   // return 0 if not, 2 if pmin(e) is 2nd order, 1 otherwise
+  // FIXME: if pmin has integer coeffs as well as e
+  // translate so that we just need to find the sign
+  // then we are reduced to find the sign of P(alpha) where alpha is the
+  // largest real root of a polynomial Q
+  // Using VAS [csturm.cc: gen complexroot(const gen & g,bool complexe,GIAC_CONTEXT)]
+  // find isolation interval for roots of Q, select the largest one,
+  // find isolation interval for roots of P, if they intersect with previous one
+  // improve precision by dichotomy until sign is resolved
   static int is_root_of_deg2(const gen & e,vecteur & v){
     // find a,b,c such that a*e*e+b*e+c=0
 #ifdef DEBUG_SUPPORT
@@ -1608,6 +1628,35 @@ namespace giac {
     v.push_back(b);
     v.push_back(-c);
     return true;
+  }
+
+  static gen randassume(const vecteur & boundaries,GIAC_CONTEXT){
+    if (boundaries.empty())
+      return 0;
+    if (boundaries[0].type==_VECT)
+      return randassume(*boundaries[0]._VECTptr,contextptr);
+    if (boundaries.size()<2)
+      return 0;
+    gen a=boundaries[0],b=boundaries[1];
+    if (a==minus_inf){
+      if (b==plus_inf)
+	return _rand(makevecteur(-100,100),contextptr);
+      return _rand(makevecteur(b-100,b-1),contextptr);
+    }
+    if (b==plus_inf)
+      return _rand(makevecteur(a+1,a+100),contextptr);
+    return _rand(boundaries,contextptr);
+  }
+
+  static void check_assume(vecteur & vzero,const vecteur & vassume,GIAC_CONTEXT){
+    for (unsigned i=0;i<vzero.size();++i){
+      gen assi=vassume[i];
+      if (assi.type==_VECT && assi.subtype==_ASSUME__VECT && assi._VECTptr->size()==3){
+	if((*assi._VECTptr)[1].type==_VECT && !(*assi._VECTptr)[1]._VECTptr->empty()){
+	  vzero[i]=randassume(*(*assi._VECTptr)[1]._VECTptr,contextptr);
+	}
+      }
+    }
   }
   
   static gen r2sym(const gen & p, const const_iterateur & lt, const const_iterateur & ltend,GIAC_CONTEXT){
@@ -1662,11 +1711,18 @@ namespace giac {
 	  vecteur vinit(lt,ltend);
 	  if (lt!=ltend && vinit.front().type==_VECT)
 	    vinit=*vinit.front()._VECTptr;
+	  vecteur vassume(vinit);
+	  for (unsigned i=0;i<vassume.size();++i){
+	    if (vinit[i].type==_IDNT)
+	      vinit[i]._IDNTptr->in_eval(0,vinit[i],vassume[i],contextptr);
+	  }
 	  gen vinitd;
 	  vecteur vzero=vecteur(vinit.size());
 	  bool tst=has_evalf(vinit,vinitd,1,contextptr);
 	  if (tst)
 	    vzero=*vinitd._VECTptr;
+	  else 
+	    check_assume(vzero,vassume,contextptr);
 	  gen tmp0=r2sym(*pp._EXTptr,lt,ltend,contextptr);
 	  gen tmp1=r2sym(f,lt,ltend,contextptr);
 	  for (int ntry=0;ntry<10;++ntry,tst=false){
@@ -1690,6 +1746,7 @@ namespace giac {
 	    }
 	    // tmp2 and tmp3 are identical or tmp0 is not real, retry
 	    vzero=vranm(vzero.size(),0,contextptr);
+	    check_assume(vzero,vassume,contextptr);
 	  }
 #ifndef NO_STDEXCEPT
 	}
@@ -2714,7 +2771,7 @@ namespace giac {
 	return 0;
       return is_program(g._SYMBptr->feuille);
     }
-    for (int i=0;i<v.size();++i){
+    for (unsigned i=0;i<v.size();++i){
       int res=is_program(v[i]);
       if (res)
 	return res;
@@ -2851,7 +2908,7 @@ namespace giac {
     fxnd(f2,f2_num,f2_den);
     if ( (f1_num.type==_POLY) && (f2_num.type==_POLY))
       return r2sym(gen(resultant(*f1_num._POLYptr,*f2_num._POLYptr)),l,contextptr);
-    return zero;
+    return 1;
   }
   static define_unary_function_eval (__resultant,&giac::_resultant,_resultant_s);
   define_unary_function_ptr5( at_resultant ,alias_at_resultant,&__resultant,0,true);
@@ -2926,6 +2983,7 @@ namespace giac {
       args.push_back(gentypeerr(contextptr));
   }
 
+#if 0
   /* Functions below are not used anymore */
   // rewrite embedded fraction inside g as num/den
   static void reduce_alg_ext(const gen & g,gen & num,gen & den){
@@ -2955,6 +3013,7 @@ namespace giac {
       embeddings_s.pop_back();
     }    
   }
+#endif
 
   // check in g all ext1 ext and rewrite them with ext2 
   static void remove_ext_copies(gen & g,const gen & ext1,const gen & ext2){

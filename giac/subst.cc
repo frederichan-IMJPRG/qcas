@@ -1794,7 +1794,8 @@ namespace giac {
       newl[i]=res;
     }
     g=subst(g,l,newl,false,contextptr);
-    return normal(g,contextptr);  // ratnormal(g);
+    g=normal(g,contextptr); 
+    return g;// ratnormal(g);
   }
   gen tsimplify(const gen & e,GIAC_CONTEXT){
     // replace trig/inv trig expressions with exp/ln
@@ -2607,6 +2608,50 @@ namespace giac {
   static const char _polar2rectangular_s []="polar2rectangular";
   static define_unary_function_eval (__polar2rectangular,&_polar2rectangular,_polar2rectangular_s);
   define_unary_function_ptr5( at_polar2rectangular ,alias_at_polar2rectangular,&__polar2rectangular,0,true);
+
+  // x,y,z->rho,theta in [-pi/2..pi/2],psi
+  // x=rho*cos(theta)*cos(phi), y=rho*cos(theta)*sin(phi), z=rho*sin(theta)
+  // rho=sqrt(x^2+y^2+z^2)
+  static gen rectangular2spherical(const gen & g,const context * contextptr){
+    if (g.type!=_VECT || g._VECTptr->size()!=3)
+      return gensizeerr(contextptr);
+    vecteur & v =*g._VECTptr;
+    gen x =v[0],y=v[1],z=v[2];
+    gen rho2=x*x+y*y+z*z;
+    gen rho=sqrt(rho2,contextptr);
+    gen theta=asin(z/rho,contextptr);
+    gen phi=arg(x+cst_i*y,contextptr);
+    return makevecteur(rho,theta,phi);
+  }
+
+  gen _rectangular2spherical(const gen & args,const context * contextptr){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type==_VECT && args._VECTptr->size()==3 && args._VECTptr->front().type!=_VECT)
+      return rectangular2spherical(args,contextptr);
+    return apply(args,rectangular2spherical,contextptr);
+  }
+  static const char _rectangular2spherical_s []="rectangular2spherical";
+  static define_unary_function_eval (__rectangular2spherical,&_rectangular2spherical,_rectangular2spherical_s);
+  define_unary_function_ptr5( at_rectangular2spherical ,alias_at_rectangular2spherical,&__rectangular2spherical,0,true);
+
+  static gen spherical2rectangular(const gen & g,const context * contextptr){
+    if (g.type!=_VECT || g._VECTptr->size()!=3)
+      return gensizeerr(contextptr);
+    vecteur & v =*g._VECTptr;
+    gen rho=v[0],theta=v[1],phi=v[2];
+    gen rhocos=rho*cos(theta,contextptr);
+    return makevecteur(rhocos*cos(phi,contextptr),rhocos*sin(phi,contextptr),rho*sin(theta,contextptr));
+  }
+
+  gen _spherical2rectangular(const gen & args,const context * contextptr){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type==_VECT && args._VECTptr->size()==3 && args._VECTptr->front().type!=_VECT)
+      return spherical2rectangular(args,contextptr);
+    return apply(args,spherical2rectangular,contextptr);
+  }
+  static const char _spherical2rectangular_s []="spherical2rectangular";
+  static define_unary_function_eval (__spherical2rectangular,&_spherical2rectangular,_spherical2rectangular_s);
+  define_unary_function_ptr5( at_spherical2rectangular ,alias_at_spherical2rectangular,&__spherical2rectangular,0,true);
 
   static gen heavisidetosign(const gen & args,GIAC_CONTEXT){
     return (1+sign(args,contextptr))/2;

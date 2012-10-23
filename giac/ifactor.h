@@ -29,6 +29,14 @@
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
+  inline unsigned sizeinbase2(unsigned n){
+    unsigned i=0;
+    for (;n;++i){
+      n >>= 1;
+    }
+    return i;
+  }
+
   extern const short int giac_primes[];
   gen _ithprime(const gen & args,GIAC_CONTEXT);
   gen _ifactors(const gen & args,GIAC_CONTEXT);
@@ -50,6 +58,7 @@ namespace giac {
   gen idivis(const gen & n,GIAC_CONTEXT);
   gen _idivis(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_idivis ;
+  int modulo(const mpz_t & a,unsigned b);
 
   vecteur pfacprem(gen & n,bool addlast,GIAC_CONTEXT);
 

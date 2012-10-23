@@ -269,7 +269,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #ifdef __SGI_CPP_LIMITS
   static double _epsilon_=100*numeric_limits<double>::epsilon();
 #else
-  static double _epsilon_=1e-10;
+  static double _epsilon_=1e-12;
 #endif
   double & epsilon(GIAC_CONTEXT){
     if (contextptr && contextptr->globalptr )
@@ -734,9 +734,12 @@ extern "C" void Sleep(unsigned int miliSecond);
     static thread_param * ans=new thread_param();
     return ans;
   }
+
+#if 0
   static thread_param & context0_thread_param(){
     return *context0_thread_param_ptr();
   }
+#endif
 
   thread_param * thread_param_ptr(const context * contextptr){
     return (contextptr && contextptr->globalptr)?contextptr->globalptr->_thread_param_ptr:context0_thread_param_ptr();
@@ -1198,6 +1201,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   bool center_history=false;
   bool in_texmacs=false;
   bool block_signal=false;
+  bool CAN_USE_LAPACK = true;
   int history_begin_level=0; 
   // variable used to avoid copying the whole history between processes 
 #ifdef WIN32 // Temporary
@@ -1210,8 +1214,8 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
   int threads=sysconf (_SC_NPROCESSORS_ONLN);
 #endif
+  unsigned short int GIAC_PADIC=50;
   const char cas_suffixe[]=".cas";
-  bool CAN_USE_LAPACK = true;
 #ifdef RTOS_THREADX
   int LIST_SIZE_LIMIT = 1000 ;
   int FACTORIAL_SIZE_LIMIT = 254 ;
@@ -1233,6 +1237,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   int MAX_RECURSION_LEVEL=9;
   const int BUFFER_SIZE=512;
 #else
+  int CALL_LAPACK=400;
   int LIST_SIZE_LIMIT = 100000000 ;
 #ifdef USE_GMP_REPLACEMENTS
   int FACTORIAL_SIZE_LIMIT = 10000 ;
@@ -1308,6 +1313,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     return string2gen(string(error.what()),false);
   }
 
+#if 0
   static vecteur subvect(const vecteur & v,int i){
     int s=v.size();
     if (i<0)
@@ -1317,6 +1323,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       res.push_back(undef);
     return vecteur(res.begin(),res.begin()+i);
   }
+#endif
 
 #ifdef HAVE_SIGNAL_H_OLD
   static bool running_file=false;
@@ -2414,7 +2421,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (!ww.empty()){
       sort(ww.begin(),ww.end(),islesscomplexthanf);
       gen prec=ww[0];
-      for (int i=1;i<ww.size();++i){
+      for (unsigned i=1;i<ww.size();++i){
 	if (ww[i]==prec)
 	  continue;
 	w.push_back(prec);
@@ -2636,6 +2643,18 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   std::string read_env(GIAC_CONTEXT,bool verbose){
+#ifndef RTOS_THREADX
+    if (getenv("GIAC_LAPACK")){
+      giac::CALL_LAPACK=atoi(getenv("GIAC_LAPACK"));
+      if (verbose)
+	cerr << "// Will call lapack if dimension is >=" << CALL_LAPACK << endl;
+    }
+    if (getenv("GIAC_PADIC")){
+      giac::GIAC_PADIC=atoi(getenv("GIAC_PADIC"));
+      if (verbose)
+	cerr << "// Will use p-adic algorithm if dimension is >=" << giac::GIAC_PADIC << endl;
+    }
+#endif
     if (getenv("XCAS_RPN")){
       if (verbose)
 	cerr << "// Setting RPN mode" << endl;
@@ -3310,7 +3329,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #ifdef BCD
 		     _bcd_decpoint_('.'|('E'<<16)|(' '<<24)),_bcd_mantissa_(12+(15<<8)), _bcd_flags_(0),
 #endif
-		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-10), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
+		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
     _turtle_stack_.push_back(_turtle_);
     _debug_ptr=new debug_struct;
     _thread_param_ptr=new thread_param;
@@ -3449,8 +3468,8 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (d>=maxdouble || d<=-maxdouble)
       return d;
     if (d<0)
-      return longlong(d);
-    double k=longlong(d);
+      return double(longlong(d));
+    double k=double(longlong(d));
     if (k==d)
       return k;
     else

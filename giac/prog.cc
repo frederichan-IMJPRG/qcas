@@ -753,12 +753,12 @@ namespace giac {
       *logptr(contextptr) << gettext("// Parsing ") << d << endl;
       if (c.is_symb_of_sommet(at_derive))
 	*logptr(contextptr) << gettext("Warning, defining a derivative function should be done with function_diff or unapply: ") << c << endl;
-       if (c.type==_SYMB && c._SYMBptr->sommet!=at_local && c._SYMBptr->sommet!=at_bloc ){
+       if (c.type==_SYMB && c._SYMBptr->sommet!=at_local && c._SYMBptr->sommet!=at_bloc && c._SYMBptr->sommet!=at_when && c._SYMBptr->sommet!=at_for && c._SYMBptr->sommet!=at_ifte){
 	 vecteur lofc=lop(c,at_of);
 	 vecteur lofc_no_d;
 	 vecteur av=gen2vecteur(a);
 	 for (unsigned i=0;i<lofc.size();++i){
-	   if (lofc[i][1]!=d && !equalposcomp(av,lofc[i][1]))
+	   if (lofc[i][1]!=d && !equalposcomp(av,lofc[i][1]) )
 	     lofc_no_d.push_back(lofc[i]);
 	 }
 	 if (!lofc_no_d.empty()){
@@ -1279,9 +1279,6 @@ namespace giac {
 	res += indent(contextptr)+"EndIf ";
     }
     return res;
-  }
-  static symbolic symb_ifte(const gen & e){
-    return symbolic(at_ifte,e);
   }
   symbolic symb_ifte(const gen & test,const gen & oui, const gen & non){
     return symbolic(at_ifte,makevecteur(test,oui,non));
@@ -2367,9 +2364,6 @@ namespace giac {
     }
     return gensizeerr(contextptr);
   }
-  static gen symb_feuille(const gen & args){
-    return symbolic(at_feuille,args);
-  }
   gen _feuille(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
     if (args.type==_VECT){
@@ -2378,7 +2372,7 @@ namespace giac {
       return gen(*args._VECTptr,_SEQ__VECT);
     }
     if (args.type!=_SYMB)
-      return symb_feuille(args);
+      return args;
     gen tmp=args._SYMBptr->feuille;
     if (tmp.type==_VECT)
       tmp.subtype=_SEQ__VECT;
@@ -2404,13 +2398,10 @@ namespace giac {
   static define_unary_function_eval2 (__maple_op,&_maple_op,_maple_op_s,&printasmaple_subs);
   define_unary_function_ptr( at_maple_op ,alias_at_maple_op ,&__maple_op);
   
-  static gen symb_sommet(const gen & args){
-    return symbolic(at_sommet,args);
-  }
   gen _sommet(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
     if (args.type!=_SYMB)
-      return symb_sommet(args);
+      return at_id;
     int nargs;
     if (args._SYMBptr->feuille.type==_VECT)
         nargs=args._SYMBptr->feuille._VECTptr->size();
@@ -2551,9 +2542,6 @@ namespace giac {
   static define_unary_function_eval (__prepend,&_prepend,_prepend_s);
   define_unary_function_ptr5( at_prepend ,alias_at_prepend,&__prepend,0,true);
 
-  static gen symb_contains(const gen & args){
-    return symbolic(at_contains,args);
-  }
   gen _contains(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
     if ( (args.type!=_VECT) || (args._VECTptr->size()!=2) || (args._VECTptr->front().type!=_VECT) )
@@ -2781,23 +2769,26 @@ namespace giac {
   static gen symb_rand(const gen & args){
     return symbolic(at_rand,args);
   }
-  static gen rand_interval(const vecteur & v,GIAC_CONTEXT){
+  static gen rand_integer_interval(const gen & x1,const gen & x2,GIAC_CONTEXT){
+    static gen rand_max_plus_one=gen(rand_max2)+1;
+    if (is_strictly_positive(x1-x2,contextptr))
+      return rand_integer_interval(x2,x1,contextptr);
+    int n=(x2-x1).bindigits()/gen(rand_max2).bindigits()+1;
+    // Make n random numbers
+    gen res=zero;
+    for (int i=0;i<n;++i)
+      res=rand_max_plus_one*res+giac_rand(contextptr);
+    // Now res is in [0,(RAND_MAX+1)^n-1]
+    // Rescale in x1..x2
+    return x1+_iquo(makevecteur(res*(x2-x1),pow(rand_max_plus_one,n)),contextptr);
+  }
+  static gen rand_interval(const vecteur & v,bool entier,GIAC_CONTEXT){
     static gen rand_max_plus_one=gen(rand_max2)+1;
     gen x1=v.front(),x2=v.back();
     if (x1==x2)
       return x1;
-    if (xcas_mode(contextptr)==1 && is_integer(x1) && is_integer(x2) ){
-      if (is_positive(x1-x2,contextptr))
-	swapgen(x1,x2);
-      int n=(x2-x1).bindigits()/gen(rand_max2).bindigits()+1;
-      // Make n random numbers
-      gen res=zero;
-      for (int i=0;i<n;++i)
-	res=rand_max_plus_one*res+giac_rand(contextptr);
-      // Now res is in [0,(RAND_MAX+1)^n-1]
-      // Rescale in x1..x2
-      return x1+_iquo(makevecteur(res*(x2-x1),pow(rand_max_plus_one,n)),contextptr);
-    }
+    if ((entier || xcas_mode(contextptr)==1) && is_integer(x1) && is_integer(x2) )
+      return rand_integer_interval(x1,x2,contextptr);
 #ifdef HAVE_LIBMPFR
     if (x1.type==_REAL && x2.type==_REAL){
       int n=mpfr_get_prec(x1._REALptr->inf);
@@ -2840,7 +2831,9 @@ namespace giac {
 	return (xcas_mode(contextptr)==3 || abs_calc_mode(contextptr)==38)+int(args.val*(giac_rand(contextptr)/(rand_max2+1.0)));
     }
     if (args.type==_ZINT)
-      return rand_interval(makevecteur(zero,args),contextptr);
+      return rand_integer_interval(zero,args,contextptr);
+    if (args.type==_USER)
+      return args._USERptr->rand(contextptr);
     if (args.type==_VECT){ 
       if (args._VECTptr->empty())
 	return giac_rand(contextptr);
@@ -2853,7 +2846,7 @@ namespace giac {
 	if ( (v.back().type==_SYMB) && (v.back()._SYMBptr->sommet==at_interval) ){
 	  // arg1=loi, arg2=intervalle
 	}
-	return rand_interval(v,contextptr);
+	return rand_interval(v,args.subtype==0,contextptr);
       }
       if (s==3 && v[0].type==_INT_ && v[1].type==_INT_ && v[2].type==_INT_){ 
 	// 3 integers expected, rand(n,min,max) choose n in min..max
@@ -4490,7 +4483,7 @@ namespace giac {
       args=int(g._DOUBLE_val);    
     if (args.type!=_INT_)
       return threads;
-    threads=max(absint(args.val),1);
+    threads=giacmax(absint(args.val),1);
     parent_cas_setup(contextptr);
     return args;
   }
@@ -4518,7 +4511,7 @@ namespace giac {
 #ifdef GNUWINCE
     return undef;
 #else
-    decimal_digits(contextptr)=max(absint(n),1);
+    decimal_digits(contextptr)=giacmax(absint(n),1);
     // deg2rad_g=evalf(cst_pi,1,0)/180;
     // rad2deg_g=inv(deg2rad_g);
 #endif
@@ -4638,6 +4631,8 @@ namespace giac {
     if (args.type!=_VECT)
       return gensizeerr(contextptr);
     vecteur & w=*args._VECTptr;
+    if (w.empty())
+      return cas_setup(contextptr);
     if (!cas_setup(w,contextptr))
       return gendimerr(contextptr);
 #ifdef HAVE_SIGNAL_H_OLD
@@ -5628,12 +5623,12 @@ namespace giac {
     if (vs<2)
       return gentypeerr(contextptr);
     if (vs==2 && v[0].type==_INT_ && v[1].type==_VECT){
-      int l=max(v[0].val,0);
+      int l=giacmax(v[0].val,0);
       vecteur res(l);
       vecteur w(*v[1]._VECTptr);
       if (ckmatrix(w))
 	aplatir(*v[1]._VECTptr,w);
-      int s=min(l,w.size());
+      int s=giacmin(l,w.size());
       for (int i=0;i<s;++i)
 	res[i]=w[i];
       return res;
@@ -5644,7 +5639,7 @@ namespace giac {
     }
     if ( (v[0].type!=_INT_) || (v[1].type!=_INT_) )
       return gensizeerr(contextptr);
-    int l(max(v[0].val,0)),c(max(v[1].val,0));
+    int l(giacmax(v[0].val,0)),c(giacmax(v[1].val,0));
     bool transpose=(vs>3);
     if (transpose){ // try to merge arguments there
       // v[2]..v[vs-1] represents flattened submatrices 
@@ -5672,7 +5667,7 @@ namespace giac {
 	int ss=0;
 	if (s)
 	  ss=w[0]._VECTptr->size();
-	int ll=min(l,s);
+	int ll=giacmin(l,s);
 	for (int i=0;i<ll;++i){
 	  if (ss<c)
 	    w[i]=mergevecteur(*w[i]._VECTptr,vecteur(c-ss));
@@ -7972,7 +7967,7 @@ namespace giac {
   gen whentopiecewise(const gen & g,GIAC_CONTEXT){
     return symbolic(at_piecewise,g);
   }
-  const unsigned long when_tab_alias[]={(long)&__when,0};
+  const unsigned long when_tab_alias[]={(unsigned long)&__when,0};
   const unary_function_ptr * const when_tab=(const unary_function_ptr * const)when_tab_alias;
   const gen_op_context when2piecewise_tab[]={whentopiecewise,0};
   gen when2piecewise(const gen & g,GIAC_CONTEXT){

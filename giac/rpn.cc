@@ -198,9 +198,6 @@ namespace giac {
     roll(i,history_out(contextptr));
   }
 
-  static gen symb_ROLL(const gen & args){
-    return symbolic(at_ROLL,args);
-  }
   gen _ROLL(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args._VECTptr->empty())
@@ -237,9 +234,6 @@ namespace giac {
     rolld(i,history_in(contextptr));
     rolld(i,history_out(contextptr));
   }
-  static gen symb_ROLLD(const gen & args){
-    return symbolic(at_ROLLD,args);
-  }
   gen _ROLLD(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args._VECTptr->empty())
@@ -272,9 +266,6 @@ namespace giac {
     stack_swap(history_out(contextptr));
   }
 
-  static gen symb_SWAP(const gen & args){
-    return symbolic(at_SWAP,args);
-  }
   gen _SWAP(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     stack_swap(*args._VECTptr);
@@ -287,9 +278,6 @@ namespace giac {
   void dup(vecteur & v){
     if (!v.empty())
       v.push_back(v.back());
-  }
-  static gen symb_DUP(const gen & args){
-    return symbolic(at_DUP,args);
   }
   gen _DUP(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -305,9 +293,6 @@ namespace giac {
     if (s>=2)
       v.push_back(v[s-2]);
   }
-  static gen symb_OVER(const gen & args){
-    return symbolic(at_OVER,args);
-  }
   gen _OVER(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     over(*args._VECTptr);
@@ -321,9 +306,6 @@ namespace giac {
     int s=v.size();
     if ((i>=1) && (s>=i))
       v.push_back(v[s-i]);
-  }
-  static gen symb_PICK(const gen & args){
-    return symbolic(at_PICK,args);
   }
   gen _PICK(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -345,9 +327,6 @@ namespace giac {
     if (v.empty())
       return;
     v.pop_back();
-  }
-  static gen symb_DROP(const gen & args){
-    return symbolic(at_DROP,args);
   }
   gen _DROP(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -753,9 +732,6 @@ namespace giac {
 
 #endif // RTOS_THREADX
 
-  static gen symb_RCL(const gen & a){
-    return symbolic(at_RCL,a);
-  }
   gen _RCL(const gen & args,const context * contextptr) {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     // stack level 2=condition
@@ -768,9 +744,6 @@ namespace giac {
   static define_unary_function_eval (__RCL,&_RCL,_RCL_s);
   define_unary_function_ptr5( at_RCL ,alias_at_RCL ,&__RCL,0,T_RPN_OP);
 
-  static gen symb_VARS(const gen & a){
-    return symbolic(at_VARS,a);
-  }
 #if defined(__APPLE__) // || defined(__FreeBSD__)
   static int int_one (struct dirent *unused){
     return 1;
@@ -850,9 +823,6 @@ namespace giac {
   static define_unary_function_eval (__VARS,&_VARS,_VARS_s);
   define_unary_function_ptr( at_VARS ,alias_at_VARS ,&__VARS);
 
-  static gen symb_purge(const gen & a){
-    return symbolic(at_purge,a);
-  }
   gen _purge(const gen & args,const context * contextptr) {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (rpn_mode(contextptr) && (args.type==_VECT)){
@@ -971,9 +941,6 @@ namespace giac {
       return "invalid /";
     return "\\frac{"+gen2tex(feuille._VECTptr->front(),contextptr)+"}{"+gen2tex(feuille._VECTptr->back(),contextptr)+"}";
   }
-  static gen symb_division(const gen & a,const gen & b){
-    return symbolic(at_division,makevecteur(a,b));
-  }
   static gen symb_division(const gen & args){
     return symbolic(at_division,args);
   }
@@ -998,9 +965,6 @@ namespace giac {
   static define_unary_function_eval4_index (10,__division,&_division,_division_s,&printasdivision,&texprintasdivision);
   define_unary_function_ptr( at_division ,alias_at_division ,&__division);
 
-  static gen symb_binary_minus(const gen & a,const gen & b){
-    return symbolic(at_binary_minus,makevecteur(a,b));
-  }
   static gen symb_binary_minus(const gen & args){
     return symbolic(at_binary_minus,args);
   }
@@ -1458,8 +1422,8 @@ namespace giac {
 	  return gendimerr(contextptr);
 	// create w
 	vecteur & v0=*v[0]._VECTptr;
-	newl=min(newl,v0.size());
-	int nc=min(newc,v0.front()._VECTptr->size()),j;
+	newl=giacmin(newl,v0.size());
+	int nc=giacmin(newc,v0.front()._VECTptr->size()),j;
 	for (int i=0;i<newl;++i){
 	  vecteur & cur = *v0[i]._VECTptr;
 	  for (j=0;j<nc;++j){
@@ -1538,7 +1502,7 @@ namespace giac {
     }
     if (ckmatrix(v[2]))
       aplatir(*v[2]._VECTptr,w2);
-    int w0s=w0.size(),w2s=w2.size(),i=max(pos,0),j=0;
+    int w0s=w0.size(),w2s=w2.size(),i=giacmax(pos,0),j=0;
     for (;i<w0s && j<w2s;++j,++i){
       w0[i]=w2[j];
     }
@@ -2091,7 +2055,7 @@ namespace giac {
 #ifdef HAVE_LIBMPFR
       res= _hessenberg(gen(makevecteur(args,epsilon(contextptr)),_SEQ__VECT),contextptr); 
 #else
-      res= _hessenberg(gen(makevecteur(evalf_double(args,1,contextptr),1e-11),_SEQ__VECT),contextptr); 
+      res= _hessenberg(gen(makevecteur(args,1e-12),_SEQ__VECT),contextptr); 
 #endif
     }
     else
@@ -2426,7 +2390,7 @@ namespace giac {
     is_integral(v2);
     if (v1.type!=_INT_ || v2.type!=_INT_ || v1.val<1 || v2.val<1)
       return gensizeerr(contextptr);
-    int l=max(v1.val,1),c=max(v2.val,1);
+    int l=giacmax(v1.val,1),c=giacmax(v2.val,1);
     if (longlong(l)*c>LIST_SIZE_LIMIT)
       return gendimerr(contextptr);
     identificateur idI("I"),idJ("J");
@@ -2782,7 +2746,7 @@ namespace giac {
 
   // 0: ok, -1: invalid view, >0: #errors
   int parse_program(const wchar_t * source,const wchar_t * progname,vecteur & assignation_by_equal,vecteur & undeclared_global_vars,vecteur & declared_global_vars,vecteur & exported_function_names,vecteur & exported_variable_names,vecteur & unknown_exported,vecteur & unexported,vecteur & unexported_declared_global_vars,vecteur & views,vecteur & errors,gen & parsed,GIAC_CONTEXT){
-    unsigned utfs = max(utf8length(source),utf8length(progname)); 
+    unsigned utfs = giacmax(utf8length(source),utf8length(progname)); 
     char * utf8source = new char[utfs+1];
     unicode2utf8(source,utf8source,wstrlen(source));
     string s(utf8source);

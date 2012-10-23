@@ -148,7 +148,11 @@ typedef unsigned long long ulonglong;
 #define INT128 1
 #endif
 #endif // __x86_64__
+
+// do not define PSEUDO_MOD if a negative unsigned longlong >> 63 is != 0xffffffffffffffff
+#define PSEUDO_MOD 
 #endif // __VISUALC__
+
 
 #ifndef __x86_64__
 #ifdef SMARTPTR64

@@ -68,7 +68,7 @@ namespace giac {
       setsizeerr(gettext("Error index.cc index_gcd"));
 #endif // DEBUG_SUPPORT
     for (;ita!=itaend;++itb,++itres,++ita)
-      *itres=min(*ita,*itb);
+      *itres=giacmin(*ita,*itb);
     return res;
   }
 
@@ -82,7 +82,7 @@ namespace giac {
       setsizeerr(gettext("index.cc index_lcm"));
 #endif // DEBUG_SUPPORT
     for (;ita!=itaend;++itb,++itres,++ita)
-      *itres=max(*ita,*itb);
+      *itres=giacmax(*ita,*itb);
     return res;
   }
 
@@ -92,7 +92,7 @@ namespace giac {
     res.resize(s);
     index_t::iterator itres=res.begin();  
     for (;ita!=itaend;++itb,++itres,++ita)
-      *itres=max(*ita,*itb);
+      *itres=giacmax(*ita,*itb);
   }
 
   // index and monomial ordering/operations implementation

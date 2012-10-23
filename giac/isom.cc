@@ -285,9 +285,6 @@ namespace giac {
     }
     return 0;
   }
-  static gen symb_mkisom(const gen & q,const gen & x){
-    return symbolic(at_mkisom,makevecteur(q,x));
-  }
   static gen symb_mkisom(const gen & args){
     return symbolic(at_mkisom,args);
   }

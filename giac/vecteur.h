@@ -67,13 +67,14 @@ namespace giac {
   ref_vecteur * makenewvecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i);
 
   // numeric root utilities
-  bool francis_schur(std_matrix<gen> & H,int n1,int n2,std_matrix<gen> & P,int maxiter,double eps,bool is_hessenberg,bool complex_schur,bool compute_P,GIAC_CONTEXT);
+  bool francis_schur(std_matrix<gen> & H,int n1,int n2,std_matrix<gen> & P,int maxiter,double eps,bool is_hessenberg,bool complex_schur,bool compute_P,bool no_lapack,GIAC_CONTEXT);
 
   class matrix_double:public std::vector< std::vector<giac_double> >{    
   public:
     // inherited constructors
     matrix_double() : std::vector< std::vector<giac_double> >() { };
     matrix_double(int i) : std::vector< std::vector<giac_double> >(i) { };
+    matrix_double(int i,const std::vector<giac_double> v) : std::vector< std::vector<giac_double> >(i,v) { };
     void dbgprint() const ;
   };
   
@@ -82,10 +83,12 @@ namespace giac {
     // inherited constructors
     matrix_complex_double() : std::vector< std::vector<complex_double> >() { };
     matrix_complex_double(int i) : std::vector< std::vector<complex_double> >(i) { };
+    matrix_complex_double(int i,const std::vector<complex_double> v) : std::vector< std::vector<complex_double> >(i,v) { };
     void dbgprint() const ;
   };
   
-  bool francis_schur(matrix_double & H,int n1,int n2,matrix_double & P,int maxiter,double eps,bool is_hessenberg,bool complex_schur,bool compute_P);
+  bool francis_schur(matrix_double & H,int n1,int n2,matrix_double & P,int maxiter,double eps,bool is_hessenberg,bool compute_P);
+  bool francis_schur(matrix_complex_double & H,int n1,int n2,matrix_complex_double & P,int maxiter,double eps,bool is_hessenberg,bool compute_P);
 
   bool matrice2lapack(const matrice & m,double * A,GIAC_CONTEXT);
   void lapack2matrice(double * A,unsigned rows,unsigned cols,matrice & R);
@@ -241,17 +244,19 @@ namespace giac {
   // rref_or_det_or_lu = 0 for rref, 1 for det, 2 for lu, 3 lu w/o permutation
   // if unsure fullreduction=true, dont_swap_below=0, convert_internal=true
   // algorithm=1, rref_or_det_or_lu=0
-  bool mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
-	     bool fullreduction,int dont_swap_below,bool convert_internal,int algorithm,int rref_or_det_or_lu,GIAC_CONTEXT);
+  // Returns 0 on failure, 1 on success, 2 if success inverting and no need to remove identity
+  int mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
+	     int fullreduction,int dont_swap_below,bool convert_internal,int algorithm,int rref_or_det_or_lu,GIAC_CONTEXT);
+  bool in_modrref(const matrice & a, std::vector< std::vector<int> > & N,matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,const gen & mult_by_det_mod_p,bool inverting,bool no_initial_mod);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
 	       int fullreduction,int dont_swap_below,const gen & modulo,int rref_or_det_or_lu);
   bool mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,GIAC_CONTEXT);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,const gen& modulo);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,const gen & modulo,int rref_or_det_or_lu);
-  void smallmodrref(std::vector< std::vector<int> > & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,longlong & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu);
+  void smallmodrref(std::vector< std::vector<int> > & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,longlong & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,bool reset=true);
   void doublerref(matrix_double & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,double & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int rref_or_det_or_lu);
   void modlinear_combination(vecteur & v1,const gen & c2,const vecteur & v2,const gen & modulo,int cstart,int cend=0);
-  void modlinear_combination(std::vector<int> & v1,int c2,const std::vector<int> & v2,int modulo,int cstart,int cend=0);
+  void modlinear_combination(std::vector<int> & v1,int c2,const std::vector<int> & v2,int modulo,int cstart,int cend,bool pseudo);
   vecteur fracmod(const vecteur & v,const gen & modulo);
   gen modproduct(const vecteur & v, const gen & modulo);
   matrice mrref(const matrice & a,GIAC_CONTEXT);
@@ -262,8 +267,9 @@ namespace giac {
   bool remove_identity(matrice & res);
   bool remove_identity(std::vector< std::vector<int> > & res,int modulo);
 
-  void mdividebypivot(matrice & a,bool uselast=true); // in-place div by pivots
-  gen first_non_zero(const vecteur & v,bool uselast=true);   // returns 0 if all 0
+  void mdividebypivot(matrice & a,int lastcol=-1); // in-place div by pivots
+  // if lastcol==-1, divide last col, if lastcol==-2 do not divide last col
+  // if lastcol>=0 stop dividing at lastcol
   void midn(int n,matrice & res);
   matrice midn(int n);
   gen _idn(const gen & e,GIAC_CONTEXT);
@@ -282,12 +288,12 @@ namespace giac {
   // solve a*x=b where a and b have integer coeffs
   // using a p-adic algorithm, n is the precision required
   // c must be the inverse of a mod p 
-  vecteur padic_linsolve(const matrice & a,const vecteur & b,const matrice & c,unsigned n,const gen & p);
+  vecteur padic_linsolve(const matrice & a,const vecteur & b,const matrice & c,unsigned n,const gen & p,unsigned reconstruct=0);
   // solve a*x=b where a and b have integer coeffs using a p-adic algorithm
   // lcmdeno of the answer may be used to give an estimate of the 
   // least divisor element of a if b is random
   // returns 0 if no invertible found, -1 if det==0, 1 otherwise
-  int padic_linsolve(const matrice & a,const vecteur & b,vecteur & res,gen & p,gen & det_mod_p,unsigned reconstruct=0,int maxtry=4);
+  int padic_linsolve(const matrice & a,const vecteur & b,vecteur & res,gen & p,gen & det_mod_p,gen & h2,unsigned reconstruct=0,int maxtry=4);
   // a is a matrix with integer coeffs
   // find p such that a mod p has the same rank
   // rankline and rankcols are the lines/cols used for the submatrix
@@ -314,10 +320,10 @@ namespace giac {
   vecteur mpcar_hessenberg(const matrice & A,int modulo,GIAC_CONTEXT);
   gen _pcar_hessenberg(const gen & g,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_pcar_hessenberg ;
-  void mhessenberg(std::vector< std::vector<int> > & H,std::vector< std::vector<int> > & P,int modulo);
+  void mhessenberg(std::vector< std::vector<int> > & H,std::vector< std::vector<int> > & P,int modulo,bool compute_P);
   void hessenberg(std_matrix<gen> & H,std_matrix<gen> & P,GIAC_CONTEXT);
   void hessenberg_ortho(std_matrix<gen> & H,std_matrix<gen> & P,GIAC_CONTEXT);
-  void hessenberg_ortho(std_matrix<gen> & H,std_matrix<gen> & P,int firstrow,int n,bool compute_P,int already_zero,GIAC_CONTEXT);
+  void hessenberg_ortho(std_matrix<gen> & H,std_matrix<gen> & P,int firstrow,int n,bool compute_P,int already_zero,double eps,GIAC_CONTEXT);
   void qr_ortho(std_matrix<gen> & H,std_matrix<gen> & P,GIAC_CONTEXT);
   void hessenberg_schur(std_matrix<gen> & H,std_matrix<gen> & P,int maxiter,double eps,GIAC_CONTEXT);
   gen _hessenberg(const gen & g0,GIAC_CONTEXT);

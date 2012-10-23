@@ -187,12 +187,18 @@ namespace giac {
       g.push_back(polynome2ringelem(*it,x));
     }
   }
+#if 0
   static vector<CoCoA::RingElem> vector_polynome2vector_ringelem(const vectpoly & v,const CoCoA::SparsePolyRing & Qx){
     vector<CoCoA::RingElem> g;
     vector_polynome2vector_ringelem(v,Qx,g);
     return g;
   }
-
+  static vectpoly vector_ringelem2vector_polynome(const vector<CoCoA::RingElem> & g,const gen & order){
+    vectpoly res;
+    vector_ringelem2vector_polynome(g,res,order);
+    return res;
+  }
+#endif
   static void vector_ringelem2vector_polynome(const vector<CoCoA::RingElem> & g, vectpoly & res,const gen & order){
     vector<CoCoA::RingElem>::const_iterator it=g.begin(),itend=g.end();
     res.reserve(itend-it);
@@ -200,11 +206,6 @@ namespace giac {
       res.push_back(ringelem2polynome(*it,order));
     sort(res.begin(),res.end(),tensor_is_greater<gen>);
     reverse(res.begin(),res.end());    
-  }
-  static vectpoly vector_ringelem2vector_polynome(const vector<CoCoA::RingElem> & g,const gen & order){
-    vectpoly res;
-    vector_ringelem2vector_polynome(g,res,order);
-    return res;
   }
 
   static Qx_I get_or_make_idealptr(const vectpoly & v,const gen & order){
@@ -271,7 +272,7 @@ namespace giac {
     vectpoly::iterator it=v.begin(),itend=v.end();
     int d=0;
     for (;it!=itend;++it){
-      d=max(d,total_degree(*it));
+      d=giacmax(d,total_degree(*it));
     }
     for (it=v.begin();it!=itend;++it){
       homogeneize(*it,d);
@@ -528,11 +529,11 @@ namespace giac {
     if (order==_REVLEX_ORDER || order==_TDEG_ORDER)
       ++ptr;
     if (order==_REVLEX_ORDER){
-      for (unsigned i=1;i<=dim;++ptr,++i)
+      for (int i=1;i<=dim;++ptr,++i)
 	idx[dim-i]=-*ptr;
     }
     else {
-      for (unsigned i=0;i<dim;++ptr,++i)
+      for (int i=0;i<dim;++ptr,++i)
 	idx[i]=*ptr;
     }
   }
@@ -765,7 +766,7 @@ namespace giac {
       TMP1(res.front().order,res.front().dim),
       TMP2(res.front().order,res.front().dim);
     // reduce res
-    for (int i=0;i<G.size();++i){
+    for (unsigned i=0;i<G.size();++i){
       poly8 & p=res[i];
       reduce(p,res,G,i,pred,TMP1,TMP2,env);
       swap(res[i].coord,pred.coord);

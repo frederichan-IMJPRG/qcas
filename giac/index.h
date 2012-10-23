@@ -320,10 +320,14 @@ namespace giac {
 #if (HAS_POLY_VARS_OTHER==1)
 	* (unsigned long *) other = * (unsigned long *) im.other;	
 #endif
-#if (HAS_POLY_VARS_OTHER>1)
+#if (HAS_POLY_VARS_OTHER==2)
+	* (unsigned long *) other = * (unsigned long *) im.other;	
+	* (((unsigned long *) other)+1) = * (((unsigned long *) im.other)+1);	
+#endif
+#if (HAS_POLY_VARS_OTHER>2)
 	unsigned long * target = (unsigned long *) other, * end = target + POLY_VARS_OTHER/(sizeof(unsigned long)/sizeof(deg_t));
 	const unsigned long * source = (unsigned long *) im.other;
-	for (;target!=end;++target)
+	for (;target!=end;++target,++source)
 	  *target=*source;
 #endif
       } else {
@@ -354,7 +358,11 @@ namespace giac {
 #if (HAS_POLY_VARS_OTHER==1)
 	* (unsigned long *) other =0;
 #endif
-#if (HAS_POLY_VARS_OTHER>1)
+#if (HAS_POLY_VARS_OTHER==2)
+	* (unsigned long *) other =0;
+	* (((unsigned long *) other)+1) =0;
+#endif
+#if (HAS_POLY_VARS_OTHER>2)
 	unsigned long * target = (unsigned long *) other ;
 	unsigned long * end = target + POLY_VARS_OTHER/(sizeof(unsigned long)/sizeof(deg_t));
 	for (;target!=end;++target)
@@ -393,7 +401,13 @@ namespace giac {
       ++source;
       * (unsigned long *) other = *source;
 #endif
-#if (HAS_POLY_VARS_OTHER>1)
+#if (HAS_POLY_VARS_OTHER==2)
+      ++source;
+      * (unsigned long *) other = *source;
+      ++source;
+      * (((unsigned long *) other)+1) = *source;
+#endif
+#if (HAS_POLY_VARS_OTHER>2)
       unsigned long * target = (unsigned long *) other ;
       unsigned long * end = target + POLY_VARS_OTHER/(sizeof(unsigned long)/sizeof(deg_t));
       for (++source;target!=end;++source,++target)
@@ -424,7 +438,11 @@ namespace giac {
 #if (HAS_POLY_VARS_OTHER==1)
 	* (unsigned long *) this->other = * (unsigned long *) other.other;
 #endif
-#if (HAS_POLY_VARS_OTHER>1)
+#if (HAS_POLY_VARS_OTHER==2)
+	* (unsigned long *) this->other = * (unsigned long *) other.other;
+	* (((unsigned long *) this->other)+1) = * (((unsigned long *) other.other)+1);
+#endif
+#if (HAS_POLY_VARS_OTHER>2)
 	const unsigned long * source = (unsigned long * ) other.other;
 	unsigned long * target = (unsigned long *) this->other; 
 	unsigned long * end = target + POLY_VARS_OTHER/(sizeof(unsigned long)/sizeof(deg_t));

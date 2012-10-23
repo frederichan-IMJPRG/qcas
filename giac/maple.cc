@@ -72,7 +72,7 @@ namespace giac {
     vecteur & w2=*v[2]._VECTptr;
     int s1=w1.size(),s2=w2.size();
     vecteur res;
-    int ss=min(s1,s2),i=0;
+    int ss=giacmin(s1,s2),i=0;
     res.reserve(ss);
     for (;i<ss;++i)
       res.push_back(_zip(gen(makevecteur(f,w1[i],w2[i]),_SEQ__VECT),contextptr));
@@ -450,7 +450,7 @@ namespace giac {
       }
       else {
 	lmin -= shift;
-	l2=max(0,min(lmin,ml-1));
+	l2=giacmax(0,giacmin(lmin,ml-1));
 	l1=l2;
       }
     }
@@ -680,6 +680,8 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (is_equal(args))
       return apply_to_equal(args,_trunc,contextptr);
+    if (args.is_symb_of_sommet(at_unit))
+      return apply_unit(args,_trunc,contextptr);
     if (args.type==_VECT) {
       if (args.subtype==_SEQ__VECT && args._VECTptr->size()==2 && args._VECTptr->back().type==_INT_){
 #ifdef BCD
@@ -1593,7 +1595,7 @@ namespace giac {
       int l,c;
       mdims(*v[1]._VECTptr,l,c);
       vecteur w(1,makevecteur(v.size()==2?1:4,c,l));
-      for (int i=1;i<v.size();++i){
+      for (unsigned i=1;i<v.size();++i){
 	if (i==3 && v.size()==4)
 	  w.push_back(vecteur(l,vecteur(c,255)));
 	w.push_back(v[i]);
@@ -1727,7 +1729,7 @@ namespace giac {
   static bool rsolve_particular(const modpoly & vnext,const modpoly & v,const modpoly & vcst,modpoly & sol,GIAC_CONTEXT){
     // find majoration of degree for solution
     int vnextdeg=vnext.size()-1,vdeg=v.size()-1,vcstdeg=vcst.size()-1,soldeg;
-    soldeg=vcstdeg-max(vnextdeg,vdeg);
+    soldeg=vcstdeg-giacmax(vnextdeg,vdeg);
     if (vnextdeg==vdeg && is_zero(vnext.front()+v.front()))
       soldeg++;
     if (soldeg<0)

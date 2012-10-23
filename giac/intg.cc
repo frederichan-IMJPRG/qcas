@@ -1,5 +1,6 @@
 // -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c intg.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "giacPCH.h"
+// #define LOGINT
 
 /*
  *  Copyright (C) 2000,7 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
@@ -427,7 +428,7 @@ namespace giac {
 	return true;
       }
     }
-    gen c=-b/a;
+    gen c=normal(-b/a,contextptr);
     if (d!=n && n%d==0){ 
       // rescale and check cyclotomic
       gen tw=pow(*it/v.front(),-n/d)*v.back();
@@ -486,7 +487,7 @@ namespace giac {
     }
     else {
       // int(num/(a*X^n+b),X)=sum(x=rootof(-b/a),num*x/(-n*b)*ln(X-x))
-      gen N=r2e(num,l,contextptr)*X/(-n*r2e(b,l,contextptr));
+      gen N=r2e(num,l,contextptr)*X/(r2e(-n*b,l,contextptr));
       if (complex_mode(contextptr) && !residue_only){
 	c=pow(c,inv(n,contextptr),contextptr);
 	for (int i=0;i<n;++i){
@@ -947,8 +948,8 @@ namespace giac {
 	  return true;
 	}
 	int k=tmpv._VECTptr->size()-1;
-	n=max(n,k*(l+1)-2);
-	n=max(n,k-1);
+	n=giacmax(n,k*(l+1)-2);
+	n=giacmax(n,k-1);
 	if (n){
 	  lrdm(colP,n);
 	  gen yprime=(1-2*l)*derive(y,gen_x,contextptr);
@@ -1204,8 +1205,8 @@ namespace giac {
     polynome delta(s),atannum(s),alpha(s);
     for (;it!=itend;++it){
       int deg=it->fact.lexsorted_degree();
-      polynome & itnum=it->num;
-      polynome & itden=it->den;
+      // polynome & itnum=it->num;
+      // polynome & itden=it->den;
       gen Delta;
       switch (deg) { 
       case 1: // 1st order
@@ -1251,8 +1252,8 @@ namespace giac {
     remains_to_integrate=0;
     for (;it!=itend;++it){
       int deg=it->fact.lexsorted_degree();
-      polynome & itnum=it->num;
-      polynome & itden=it->den;
+      // polynome & itnum=it->num;
+      // polynome & itden=it->den;
       gen Delta;
       switch (deg) { 
       case 1: // 1st order
@@ -1603,6 +1604,7 @@ namespace giac {
 
   static const gen_op_context primitive_tab_primitive[]={giac::int_sin,giac::int_cos,giac::int_tan,giac::int_exp,giac::int_sinh,giac::int_cosh,giac::int_tanh,giac::int_asin,giac::int_acos,giac::int_atan,giac::xln_x};
 
+#if 0
   static void insure_real_deno(gen & n,gen & d,GIAC_CONTEXT){
     gen i=im(d,contextptr),c=conj(d,contextptr);
     if (!is_zero(i)){
@@ -1610,6 +1612,7 @@ namespace giac {
       d=d*c;
     }
   }
+#endif
 
   static bool in_is_rewritable_as_f_of(const gen & fu,const gen & u,gen & fx,const gen & gen_x,GIAC_CONTEXT){
     if (fu.type==_VECT){
@@ -1804,7 +1807,7 @@ namespace giac {
   gen integrate_gen_rem(const gen & e_orig,const gen & x_orig,gen & remains_to_integrate,GIAC_CONTEXT){
     if (x_orig.type!=_IDNT){
       identificateur x(" x");
-      gen e=subst(e,x_orig,x,false,contextptr);
+      gen e=subst(e_orig,x_orig,x,false,contextptr);
       e=integrate_id_rem(e,x,remains_to_integrate,contextptr);
       remains_to_integrate=quotesubst(remains_to_integrate,x,x_orig,contextptr);
       return quotesubst(e,x,x_orig,contextptr);
@@ -2297,7 +2300,7 @@ namespace giac {
       gen res=_integrate(gen(v,_SEQ__VECT),contextptr);
       return quotesubst(res,t,x,contextptr);
     }
-    int quoted;
+    int quoted=0;
     if (x._IDNTptr->quoted){
       quoted=*x._IDNTptr->quoted;
       *x._IDNTptr->quoted=1;
@@ -2314,7 +2317,8 @@ namespace giac {
     }
     gen rem,borne_inf,borne_sup,res;
     if (s==4){
-      if ( (v[2].type==_FLOAT_ || v[2].type==_DOUBLE_ || v[2].type==_REAL ||
+      if ( (has_num_coeff(v[0]) ||
+	    v[2].type==_FLOAT_ || v[2].type==_DOUBLE_ || v[2].type==_REAL ||
 	    v[3].type==_FLOAT_ || v[3].type==_DOUBLE_ || v[3].type==_REAL) &&
 	   lidnt(v[0])==vecteur(1,v[1])
 	   )
@@ -2692,9 +2696,6 @@ namespace giac {
     *logptr(contextptr) << "Unable to find numeric integral using Romberg method, returning the last computed line of approximations" << endl;
     return cur_line;
   }
-  static gen symb_romberg(const gen & a){
-    return symbolic(at_romberg,a);
-  }
   gen _romberg(const gen & args,GIAC_CONTEXT) {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if ( (args.type!=_VECT) || (args._VECTptr->size()<2) )
@@ -2929,7 +2930,7 @@ namespace giac {
     vector<pf1>::const_iterator jtend=shiftfree_pfdecomp.end();
     for (;jt!=jtend;++jt){
       vecteur & jtfact = jt->fact;
-      vecteur & jtnum = jt->num;
+      // vecteur & jtnum = jt->num;
       vecteur & jtden = jt->den;
       if (jtfact.size()!=2){ // add to remains_to_sum
 	remains_to_sum=remains_to_sum+rdiv(r2e(poly12polynome(jt->num,1,vdim),v,contextptr),r2e(poly12polynome(jt->den,1,vdim),v,contextptr));
@@ -3017,7 +3018,7 @@ namespace giac {
     gen qq=Tfirstcoeff<gen>(Q),rr=Tfirstcoeff<gen>(R);
     if (q==r && qq==rr){ // cancellation
       ++p;
-      y=p-max(q,r);
+      y=p-giacmax(q,r);
       if (q>0){
 	vecteur vq=polynome2poly1(Q,1),vr=polynome2poly1(R,1);
 	gen ydeg=(vr[q-1]-vq[q-1])/qq;
@@ -3028,7 +3029,7 @@ namespace giac {
       }
     }
     else
-      y=p-max(q,r);
+      y=p-giacmax(q,r);
     if (y<0)
       return false;
     // Then solve a linear system with p+1 equations and y+1 unknowns
@@ -3199,12 +3200,12 @@ namespace giac {
       return isprod?1:0;
     int debut=1,fin=s;
     if (v[0].type==_VECT && g.subtype==_SEQ__VECT && s>1 && v[1].type==_INT_){
-      debut=max(1,v[1].val);
+      debut=giacmax(1,v[1].val);
       if (s>2 && v[2].type==_INT_)
 	fin=v[2].val;
       v=*v[0]._VECTptr;
       s=v.size();
-      fin=min(s,fin);
+      fin=giacmin(s,fin);
     }
     gen res;
     if (isprod){
@@ -3221,6 +3222,7 @@ namespace giac {
     return res;
   }
 
+#if 0
   static void local_sto(const gen & value,const identificateur & i,GIAC_CONTEXT){
     if (contextptr)
       (*contextptr->tabptr)[i.id_name]=value;
@@ -3248,6 +3250,7 @@ namespace giac {
     else
       i.localvalue->back().val += value;
   }
+#endif
 
   // type=0 for seq, 1 for prod, 2 for sum
   gen seqprod(const gen & g,int type,GIAC_CONTEXT){
@@ -3315,6 +3318,7 @@ namespace giac {
     return res;// return gen(res,_SEQ__VECT);
   }
 
+#if 0
   static identificateur independant_identificateur(const gen & g){
     string xname(" x"+g.print(context0));
     identificateur x(xname);
@@ -3431,6 +3435,7 @@ namespace giac {
       return _plus(res,contextptr);
     return res;// return gen(res,_SEQ__VECT);
   }
+#endif
 
   bool maple_sum_product_unquote(vecteur & v,GIAC_CONTEXT){
     bool res=false;
@@ -3735,27 +3740,37 @@ namespace giac {
 #endif
     return 0;
   }
+#endif // HAVE_LIBGSL
+
+  double rk_error(const vecteur & v,const vecteur & w_final,const vecteur & w_init,GIAC_CONTEXT){
+    double err=0,derr;
+    unsigned dim=v.size();
+    for (unsigned i=0;i<dim;++i){
+      gen wf=w_final[i],wi=w_init[i];
+      double wfa=abs(wf,contextptr)._DOUBLE_val; 
+      double wia=abs(wi,contextptr)._DOUBLE_val;
+      double sci=1+((wfa<wia)?wia:wfa);
+      derr = abs(wf-v[i],contextptr)._DOUBLE_val/sci;
+      derr *= derr;
+      err += derr;
+    }
+    err = std::sqrt(err/dim);
+    return err;
+  }
+
   // solve dy/dt=f(t,y) with initial value y(t0)=y0 to final value t1
   // returns by default y[t1] or a vector of [t,y[t]]
   // if return_curve is true stop as soon as y is outside ymin,ymax
   // f is eitheir a prog (t,y) -> f(t,y) or a _VECT [f(t,y) t y]
   gen odesolve(const gen & t0orig,const gen & t1orig,const gen & f,const gen & y0orig,double tstep,bool return_curve,double * ymin,double * ymax,int maxstep,GIAC_CONTEXT){
-#ifndef HAVE_LIBGSL
-    return gentypeerr(gettext("GSL not available"));
-#endif
-    gen t0_e=t0orig.evalf(1,contextptr);
-    gen t1_e=t1orig.evalf(1,contextptr);
-    if ( (t0_e.type!=_DOUBLE_)|| (t1_e.type!=_DOUBLE_))
+    bool iscomplex=false; 
+    // switch to false if GSL is installed or true to force using giac code for real ode
+    gen t0_e=evalf_double(t0orig.evalf(1,contextptr),1,contextptr);
+    gen t1_e=evalf_double(t1orig.evalf(1,contextptr),1,contextptr);
+    // Now accept t0 and t1 complex!
+    if ( (t0_e.type!=_DOUBLE_ && t0_e.type!=_CPLX)|| (t1_e.type!=_DOUBLE_ && t1_e.type!=_CPLX))
       return gensizeerr(contextptr);
-    double t0=t0_e._DOUBLE_val;
-    double t1=t1_e._DOUBLE_val;
-    bool time_reverse=(t1<t0);
-    if (time_reverse){
-      t0=-t0;
-      t1=-t1;
-    }
-    double t=t0;
-    gen y0=y0orig.evalf(1,contextptr);
+    gen y0=evalf_double(y0orig.evalf(1,contextptr),1,contextptr);
     if (y0.type!=_VECT)
       y0=vecteur(1,y0);
     vecteur y0v=*y0._VECTptr;
@@ -3764,19 +3779,24 @@ namespace giac {
       if (dim==2)
 	tstep=(gnuplot_xmax-gnuplot_xmin)/100;
       else {
-	if (return_curve && t1>1e300)
-	  tstep=fabs(t0)/100;
+	if (return_curve && abs(t1_e,contextptr)._DOUBLE_val>1e300)
+	  tstep=abs(t0_e,contextptr)._DOUBLE_val/100;
 	else
-	  tstep=(t1-t0)/100;
+	  tstep=abs(t1_e-t0_e,contextptr)._DOUBLE_val/100;
       }
     }
+    if (tstep>abs(t1_e-t0_e,contextptr)._DOUBLE_val)
+      tstep=abs(t1_e-t0_e,contextptr)._DOUBLE_val;
     double * y=new double[dim];
     for (int i=0;i<dim;i++){
-      if (y0v[i].type!=_DOUBLE_)
+      if (y0v[i].type!=_DOUBLE_ && y0v[i].type!=_CPLX)
 	return gensizeerr(contextptr);
-      y[i]=y0v[i]._DOUBLE_val;
+      if (y0v[i].type==_DOUBLE_)
+	y[i]=y0v[i]._DOUBLE_val;
+      else
+	iscomplex=true;
     }
-    identificateur t_id(" t");
+    identificateur t_id(" odesolve_t");
     vecteur yv;
     gen tmp;
     if (f.type==_VECT){
@@ -3800,87 +3820,240 @@ namespace giac {
 	yv.push_back(identificateur(" y"+print_INT_(i)));
       tmp=f(gen(makevecteur(t_id,yv),_SEQ__VECT),contextptr);
     }
-    odesolve_param * par=new odesolve_param;
-    par->odesolve_t=t_id;
-    par->odesolve_y=yv;
-    par->contextptr=contextptr;
-    if (time_reverse)
-      tmp=-subst(tmp,t_id,-t_id,false,contextptr);
-    if (tmp.type!=_VECT) 
-      par->odesolve_f=vecteur(1,tmp);
-    else
-      par->odesolve_f=*tmp._VECTptr;
-    if (signed(par->odesolve_f.size())!=dim)
-      return gendimerr(contextptr);
-    gen diff1=derive(par->odesolve_f,yv,contextptr),diff2=derive(par->odesolve_f,t_id,contextptr);
-    if (is_undef(diff1) || diff1.type!=_VECT || is_undef(diff2) || diff2.type!=_VECT)
-      return diff1+diff2;
-    par->odesolve_fy=*diff1._VECTptr;
-    par->odesolve_ft=*diff2._VECTptr;
-    par->odesolve_system.function=gsl_odesolve_function;
-    par->odesolve_system.dimension=dim;
-    par->odesolve_system.jacobian=gsl_odesolve_jacobian;
-    par->odesolve_system.params=par;
-    // GSL call
-    const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;    
-    gsl_odeiv_step * s   = gsl_odeiv_step_alloc (T, dim);
-    gsl_odeiv_control * c = gsl_odeiv_control_y_new (1e-7, 1e-7);
-    gsl_odeiv_evolve * e = gsl_odeiv_evolve_alloc (dim);
-    double h;
-    if (return_curve){
-      h=fabs(t);
-      if (h<1e-4)
-	h=1e-4;
-    }
-    else
-      h=(t1-t)/1e4;
-    double oldt=t0;
-    vecteur resv;
+    vecteur resv; // contains the curve
     if (return_curve)
-      resv.push_back(makevecteur((time_reverse?-t0:t0),double2vecteur(y,dim)));
-    bool do_while=true;
-    for (int nstep=0;nstep<maxstep && do_while && t<t1;++nstep) {
-      if (h>tstep)
-	h=tstep;
-      int status = gsl_odeiv_evolve_apply (e, c, s,
-					   &par->odesolve_system,
-					   &t, t1, &h,
-					   y);
-      if (status != GSL_SUCCESS)
-	return gensizeerr(gettext("RK8 evolve not successfull"));
-      if (return_curve)  {
-	if ( (t-oldt)> tstep/2 || t==t1){
-	  oldt=t;
-	  if (time_reverse)
-	    resv.push_back(makevecteur(-t,double2vecteur(y,dim)));
-	  else
-	    resv.push_back(makevecteur(t,double2vecteur(y,dim)));
-	}
-	for (int i=0;i<dim;++i){
-	  // cerr << y[i] << endl;
-	  if ( ymin && ymax && ( y[i]<ymin[i] || y[i]>ymax[i]) )
-	    do_while=false;
+      resv.push_back(makevecteur(t0_e,y0v));
+#ifdef HAVE_LIBGSL
+    if (!iscomplex && t0_e.type==_DOUBLE_ && t1_e.type==_DOUBLE_ && is_zero(im(tmp,contextptr))){
+      double t0=t0_e._DOUBLE_val;
+      double t1=t1_e._DOUBLE_val;
+      bool time_reverse=(t1<t0);
+      double t=t0;
+      if (time_reverse){
+	t0=-t0;
+	t1=-t1;
+      }
+      if (time_reverse)
+	tmp=-subst(tmp,t_id,-t_id,false,contextptr);
+      vecteur odesolve_f;
+      if (tmp.type!=_VECT) 
+	odesolve_f=vecteur(1,tmp);
+      else
+	odesolve_f=*tmp._VECTptr;
+      if (signed(odesolve_f.size())!=dim)
+	return gendimerr(contextptr);
+      // N.B.: GSL implementation uses Dormand-Prince method of orders 8/9
+      // which is explicit and does not require Jacobian...
+      gen diff1=derive(odesolve_f,yv,contextptr),diff2=derive(odesolve_f,t_id,contextptr);
+      if (is_undef(diff1) || diff1.type!=_VECT || is_undef(diff2) || diff2.type!=_VECT)
+	return diff1+diff2;
+      odesolve_param * par=new odesolve_param;
+      par->odesolve_t=t_id;
+      par->odesolve_y=yv;
+      par->contextptr=contextptr;
+      par->odesolve_f=odesolve_f;
+      par->odesolve_fy=*diff1._VECTptr;
+      par->odesolve_ft=*diff2._VECTptr;
+      par->odesolve_system.function=gsl_odesolve_function;
+      par->odesolve_system.dimension=dim;
+      par->odesolve_system.jacobian=gsl_odesolve_jacobian;
+      par->odesolve_system.params=par;
+      // GSL call
+      const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;    
+      gsl_odeiv_step * s   = gsl_odeiv_step_alloc (T, dim);
+      gsl_odeiv_control * c = gsl_odeiv_control_y_new (1e-7, 1e-7);
+      gsl_odeiv_evolve * e = gsl_odeiv_evolve_alloc (dim);
+      double h;
+      if (return_curve){
+	h=fabs(t);
+	if (h<1e-4)
+	  h=1e-4;
+      }
+      else
+	h=(t1-t)/1e4;
+      double oldt=t0;
+      bool do_while=true;
+      for (int nstep=0;nstep<maxstep && do_while && t<t1;++nstep) {
+	if (h>tstep)
+	  h=tstep;
+	int status = gsl_odeiv_evolve_apply (e, c, s,
+					     &par->odesolve_system,
+					     &t, t1, &h,
+					     y);
+	if (status != GSL_SUCCESS)
+	  return gensizeerr(gettext("RK8 evolve not successfull"));
+	if (debug_infolevel>5)
+	  cerr << nstep << ":" << t << ",y5=" << double2vecteur(y,dim) << endl;
+	if (return_curve)  {
+	  if ( (t-oldt)> tstep/2 || t==t1){
+	    oldt=t;
+	    if (time_reverse)
+	      resv.push_back(makevecteur(-t,double2vecteur(y,dim)));
+	    else
+	      resv.push_back(makevecteur(t,double2vecteur(y,dim)));
+	  }
+	  for (int i=0;i<dim;++i){
+	    // cerr << y[i] << endl;
+	    if ( ymin && ymax && ( y[i]<ymin[i] || y[i]>ymax[i]) )
+	      do_while=false;
+	  }
 	}
       }
+      gsl_odeiv_evolve_free(e);
+      gsl_odeiv_control_free(c);
+      gsl_odeiv_step_free(s);
+      delete par;
+      if (return_curve)
+	return resv;
+      else {
+	if (t!=t1)
+	  return makevecteur(t,double2vecteur(y,dim));
+	return double2vecteur(y,dim);
+      }
     }
-    gsl_odeiv_evolve_free(e);
-    gsl_odeiv_control_free(c);
-    gsl_odeiv_step_free(s);
-    delete par;
+#endif // HAVE_LIBGSL
+    vecteur odesolve_f;
+    if (tmp.type!=_VECT) 
+      odesolve_f=vecteur(1,tmp);
+    else
+      odesolve_f=*tmp._VECTptr;
+    if (signed(odesolve_f.size())!=dim)
+      return gendimerr(contextptr);
+    // solve vector ode y'=f(t,y) with respect to time variable t_id in t0..t1
+    // f is stored in odesolve_f, symbolic y in yv, initial value in a double array y
+    /* Butcher tableau for Dormand/Prince 4/5
+       0      |
+       1/5    | 1/5
+       3/10   | 3/40 	      9/40
+       4/5    | 44/45 	      −56/15 	  32/9
+       8/9    | 19372/6561  −25360/2187  64448/6561 	−212/729
+       1      | 9017/3168    −355/33 	 46732/5247 	49/176 	       −5103/18656
+       1      | 35/384 	        0 	  500/1113 	125/192 	−2187/6784 	11/84 
+       ===============================================================================	
+       RK5    |  35/384 	0 	500/1113 	125/192 	−2187/6784 	11/84 	0
+       RK4      5179/57600 	0 	7571/16695 	393/640 	−92097/339200 	187/2100 	1/40
+       RK4 is used for computation of the tstep variable 
+       RK4 error being estimated by |RK5-RK4|
+       Step is determined by the following algorithm 
+       (cf. Ernst Hairer http://www.unige.ch/~hairer/poly/chap3.pdf, p.67 in French)
+       initialization: use h=tstep
+       compute RK5_final and RK4_final, then 
+       err=|| RK5-RK4 || = sqrt(1/dim*sum(((RK5[i]-RK4[i])/(1+max(RK5[i]_init,RK5[i]_final)))^2,i=1..dim))
+       and hoptimal = 0.9*h*(tolerance/||RK5-RK4||)^(1/5)
+       if (err<=hoptimal) then time += h; y_init=RK5_final; h=min(hoptimal,t_final-t_current)
+       else h=hoptimal
+     */
+    gen tolerance=epsilon(contextptr)>1e-12?epsilon(contextptr):1e-12;
+    vecteur yt(dim+1),ytvar(yv);
+    for (int i=0;i<dim;++i)
+      yt[i]=y0v[i];
+    gen t_e(t0_e);
+    yt[dim]=t_e;
+    vecteur yt1(dim+1);
+    ytvar.push_back(t_id);
+    bool do_while=true;
+    double butcher_c[]={0,0.2,0.3,4./5,8./9,1.,1.};
+    double butcher_a[]={1./5,
+			3./40,9./40,
+			44./45,-56./15,32./9,
+			19372./6561,-25360./2187,64448./6561,-212./729,
+			9017./3168,-355./33,46732./5247,49./176,-5103./18656,
+			35./384,0,500./1113,125./192,-2187./6784,11./84};
+    // double butcher_b5[]={35./384,0,500./1113,125./192,-2187./6784,11./84,0};
+    double butcher_b4[]={5179./57600,0,7571./16695,393./640,-92097./339200,187./2100,1./40};
+    vecteur y_final5(dim),y_final4(dim);
+    vecteur butcher_k(7);
+    for (int i=0;i<7;++i)
+      butcher_k[i]=vecteur(dim);
+    vecteur firsteval=subst(odesolve_f,ytvar,yt,false,contextptr),lasteval;
+    gen direction=t1_e-t0_e;
+    double temps_total=abs(direction,contextptr)._DOUBLE_val,temps=0;
+    direction=direction/temps_total;
+    for (int nstep=0;do_while && nstep<maxstep && temps<temps_total;++nstep) {
+      gen dt=tstep*direction;
+      // compute next step
+      vecteur & bk0=*butcher_k[0]._VECTptr;
+      bk0=firsteval;
+      if (is_undef(bk0))
+	return bk0;
+      multvecteur(dt,bk0,bk0);
+      int butcher_a_shift=0;
+      for (int j=1;j<=6;j++){
+	// compute butcher_k[j]
+	for (int i=0;i<dim;++i){
+	  yt1[i]=yt[i];
+	}
+	for (int k=0;k<j;k++){
+	  gen bak=butcher_a[butcher_a_shift+k];
+	  const vecteur & bkk=(*butcher_k[k]._VECTptr);
+	  for (int i=0;i<dim;++i){
+	    yt1[i] += bak*bkk[i];
+	  }
+	}
+	butcher_a_shift += j;
+	yt1[dim]=yt[dim]+butcher_c[j]*dt;
+	vecteur & bkj = *butcher_k[j]._VECTptr;
+	if (j<6)
+	  bkj=subst(odesolve_f,ytvar,yt1,false,contextptr);
+	else
+	  bkj=lasteval=subst(odesolve_f,ytvar,yt1,false,contextptr);
+	if (is_undef(bkj))
+	  return bkj;
+	multvecteur(dt,bkj,bkj);
+      }
+      for (int i=0;i<dim;++i){
+	y_final5[i]=yt1[i];
+	y_final4[i]=yt[i];
+      }
+      for (int j=0;j<7;++j){
+	vecteur & bkj=*butcher_k[j]._VECTptr;
+	// gen bb5j=butcher_b5[j];
+	gen bb4j=butcher_b4[j];
+	for (int i=0;i<dim;i++){
+	  // y_final5[i] += bb5j*bkj[i];
+	  y_final4[i] += bb4j*bkj[i];
+	}
+      }
+      // accept or reject current step and compute dt
+      double err=rk_error(y_final4,y_final5,yt,contextptr);
+      gen hopt=.9*tstep*pow(tolerance/err,.2,contextptr);
+      if (debug_infolevel>5)
+	cerr << nstep << ":" << t_e << ",y5=" << y_final5 << ",y4=" << y_final4 << " " << tstep << " hopt=" << hopt << " err=" << err << endl;
+      if (is_strictly_greater(err,tolerance,contextptr)){
+	// reject step
+	tstep=hopt._DOUBLE_val;
+      }
+      else { // accept
+	swap(firsteval,lasteval);
+	for (int i=0;i<dim;++i)
+	  yt[i]=y_final5[i];
+	t_e += dt;
+	yt[dim]=t_e;
+	temps += tstep;
+	tstep=abs(t1_e-t_e,contextptr)._DOUBLE_val;
+	if (hopt._DOUBLE_val<tstep)
+	  tstep=hopt._DOUBLE_val;
+	if (return_curve)
+	  resv.push_back(makevecteur(t_e,y_final5));
+	if (!iscomplex){
+	  // check boundaries for y_final5
+	  for (int i=0;i<dim;++i){
+	    // cerr << y[i] << endl;
+	    if ( ymin && ymax && ( y_final5[i]._DOUBLE_val< ymin[i] || y_final5[i]._DOUBLE_val>ymax[i]) )
+	      do_while=false;
+	  }
+	}
+      }
+    } // end integration loop
     if (return_curve)
       return resv;
     else {
-      if (t!=t1)
-	return makevecteur(t,double2vecteur(y,dim));
-      return double2vecteur(y,dim);
-    }
+      if (t_e!=t1_e)
+	return makevecteur(t_e,y_final5);
+      return y_final5;
+    }    
   }
   // note that params is not used
-#else // HAVE_LIBGSL
-  gen odesolve(const gen & t0orig,const gen & torig,const gen & f,const gen & y0orig,double tstep,bool return_curve,double * ymin,double * ymax,int maxstep,GIAC_CONTEXT){
-    return gentypeerr(gettext("GSL not available"));
-  }
-#endif
 
   // standard format is expression,t=t0..t1,vars,init_values
   // also accepted 
@@ -3888,17 +4061,17 @@ namespace giac {
   // expression,t,vars,init_values,t=tmin..tmax
   // expression,[t,vars],[t0,init_values],t1
   static gen odesolve(const vecteur & w,GIAC_CONTEXT){
-#ifndef HAVE_LIBGSL
-    return gentypeerr(gettext("GSL not available"));
-#endif
     vecteur v(w);
     int vs=v.size();
     if (vs<3)
       return gendimerr(contextptr);
     // convert expression,[t,vars],[t0,init_values],t1
+    gen t0t=v[0],t0,t1,f,t,y0;
     if (v[1].type==_VECT && v[2].type==_VECT && v[2]._VECTptr->size()==v[1]._VECTptr->size() && vs>3){
       if (v[1]._VECTptr->size()<2)
 	return gendimerr(contextptr);
+      t0=v[2]._VECTptr->front();
+      t1=v[3];
       gen newv1=symbolic(at_equal,v[1]._VECTptr->front(),symb_interval(v[2]._VECTptr->front(),v[3]));
       gen newv2=vecteur(v[1]._VECTptr->begin()+1,v[1]._VECTptr->end());
       gen newv3=vecteur(v[2]._VECTptr->begin()+1,v[2]._VECTptr->end());
@@ -3906,7 +4079,6 @@ namespace giac {
       v[2]=newv2;
       v[3]=newv3;
     }
-    gen t0t=v[0],t0,t1,f,t,y0;
     int maxstep=1000,vstart=0;
     double tstep=0;
     if ( t0t.is_symb_of_sommet(at_interval)){ // functional form
@@ -3926,12 +4098,18 @@ namespace giac {
       double tmin(-1e300),tmax(1e300);
       vstart=1;
       read_tmintmaxtstep(v,t,vstart,tmin,tmax,tstep,tminmax_defined,tstep_defined,contextptr);
-      if (tmin>0 || tmax<0 || tmin>tmax || tstep<=0)
-	return gensizeerr(gettext("Time"));
-      t0=tmin;
-      t1=tmax;
-      if (tminmax_defined && tstep_defined)
-	maxstep=2*int((tmax-tmin)/tstep)+1;
+      if (t0!=t1){
+	if (tstep==0)
+	  tstep=evalf_double(abs(t1-t0,contextptr),1,contextptr)._DOUBLE_val/30;
+      }
+      else {
+	if (tmin>0 || tmax<0 || tmin>tmax || tstep<=0)
+	  *logptr(contextptr) << "Warning time reversal" << endl;
+	t0=tmin;
+	t1=tmax;
+      }
+      // if (tminmax_defined && tstep_defined) maxstep=2*int((tmax-tmin)/tstep)+1;
+      // commented since the real step is used is smaller than tstep most of the time!
       vstart=3;
     }
     double ym[2]={gnuplot_xmin,gnuplot_ymin},yM[2]={gnuplot_xmin,gnuplot_ymin};

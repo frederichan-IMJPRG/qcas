@@ -299,14 +299,16 @@ namespace giac {
     vecteur::const_iterator it=v.begin(),itend=v.end();
     string s;
     for (;;){
-      if ( it->type==_CPLX || (it->type==_SYMB && ( it->_SYMBptr->sommet==at_plus || it->_SYMBptr->sommet==at_neg) ) )
+      if ( (it->type==_CPLX && !is_zero(*it->_CPLXptr) && !is_zero(*(it->_CPLXptr+1))) || (it->type==_SYMB && ( it->_SYMBptr->sommet==at_plus || (it->_SYMBptr->sommet==at_neg && need_parenthesis(it->_SYMBptr->feuille)) ) ) )
 	s += string("(")+gen2tex(*it,contextptr)+string(")");
       else 
 	s += gen2tex(*it,contextptr);
       ++it;
       if (it==itend)
 	return s;
-      if (it->type<=_IDNT || (it->type==_SYMB && it->_SYMBptr->sommet.ptr()->printsommet && it->_SYMBptr->feuille.type==_VECT && !it->_SYMBptr->feuille._VECTptr->empty() && it->_SYMBptr->feuille._VECTptr->front().type<_IDNT)) // second part of the test added for e.g. latex('2*3*5^2')
+      if (it->type<=_IDNT || (it->type==_SYMB && 
+			      (it->_SYMBptr->sommet==at_neg || (it->_SYMBptr->sommet.ptr()->printsommet && it->_SYMBptr->feuille.type==_VECT && !it->_SYMBptr->feuille._VECTptr->empty() && it->_SYMBptr->feuille._VECTptr->front().type<_IDNT))
+			      )) // second part of the test added for e.g. latex('2*3*5^2')
 	s += "\\cdot ";
       else
 	s += " ";
@@ -964,7 +966,16 @@ namespace giac {
     if (g.is_symb_of_sommet(at_cercle)){
       gen c,r;
       centre_rayon(g,c,r,false,contextptr);
-      vecteur v=makevecteur(c-r,c+r,c-cst_i*r,c+cst_i*r);
+      vecteur v;
+      if (g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()>=3){
+	v=*g._SYMBptr->feuille._VECTptr;
+	gen delta=v[2]-v[1];
+	v=makevecteur(c-r*exp(cst_i*(v[1]-0.1*delta),contextptr),
+		      c-r*exp(cst_i*(v[2]+0.1*delta),contextptr)); 
+	// FIXME? centre_rayon returns (a-b)/2 for rayon instead of (b-a)/2...
+      }
+      else
+	v=makevecteur(c-r,c+r,c-cst_i*r,c+cst_i*r);
       in_autoscale(v,vx,vy,vz,contextptr);
       return true;
     }
@@ -1060,7 +1071,7 @@ namespace giac {
       if ((mys.sommet==at_neg) || (mys.sommet==at_plus)){
 	if (feu.type!=_SYMB) 
 	  return opstring+gen2tex(feu,contextptr) ;
-	if (feu._SYMBptr->sommet==at_inv)
+	if (feu._SYMBptr->sommet==at_inv || !need_parenthesis(feu._SYMBptr->feuille))
 	  return opstring+gen2tex(feu,contextptr) ;
 	return opstring+string("\\left(") + gen2tex(feu,contextptr) +string("\\right)");
       }
@@ -1076,7 +1087,7 @@ namespace giac {
 	gen e((*(feu._VECTptr))[i]);
 	if ((e.type==_SYMB) && (e._SYMBptr->sommet==at_neg)){
 	  s += "-";
-	  if (e._SYMBptr->feuille.type!=_CPLX && (e._SYMBptr->feuille.type!=_SYMB || e._SYMBptr->feuille._SYMBptr->sommet==at_inv ||  e._SYMBptr->feuille._SYMBptr->sommet==at_prod) )
+	  if (e._SYMBptr->feuille.type!=_CPLX && (e._SYMBptr->feuille.type!=_SYMB || e._SYMBptr->feuille._SYMBptr->sommet==at_inv ||  e._SYMBptr->feuille._SYMBptr->sommet==at_prod|| !need_parenthesis(e._SYMBptr->feuille)) )
 	    s += gen2tex(e._SYMBptr->feuille,contextptr) ;
 	  else
 	    s += "\\left(" + gen2tex(e._SYMBptr->feuille,contextptr) + "\\right)";
@@ -1477,7 +1488,7 @@ namespace giac {
       return string2gen(s,false);
     }
     else { // search in history for the last plot command answer == to an int
-      int s=min(history_out(contextptr).size(),history_in(contextptr).size());
+      int s=giacmin(history_out(contextptr).size(),history_in(contextptr).size());
       for (int i=s-1;i>=0;--i){
 	if (history_out(contextptr)[i].is_symb_of_sommet(at_pnt) && history_out(contextptr)[i].subtype>=0)
 	  return history_out(contextptr)[i].subtype;

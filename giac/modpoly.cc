@@ -538,7 +538,7 @@ namespace giac {
     if ( (n<0) || (m<0) )
       return ;
     new_coord.clear();
-    new_coord.reserve(max(n,m));
+    new_coord.reserve(giacmax(n,m));
     bool trimming;
     if (m==n)
       trimming=true;
@@ -2450,7 +2450,7 @@ namespace giac {
     vector< monomial<gen> >::const_iterator it=p.coord.begin(),itend=p.coord.end();
     for (;it!=itend;++it){
       if (it->value.type==_VECT)
-	res=max(res,it->value._VECTptr->size());
+	res=giacmax(res,it->value._VECTptr->size());
     }
     return res-1;
   }
@@ -2772,14 +2772,14 @@ namespace giac {
     // gcddeg*size estimates the time for lifting to gcddeg
     // sumdeg*size estimates the time for full lifting
     // if sumdeg<(gcddeg+%age^dim*(1-%age)^dim*size) do full lifting
-    int Deltadeg = Delta.size()-1,liftdeg=max(pxndeg,qxndeg)+Deltadeg;
+    int Deltadeg = Delta.size()-1,liftdeg=giacmax(pxndeg,qxndeg)+Deltadeg;
     int gcddeg_plus_delta=gcddeg+Deltadeg;
-    int liftdeg0=max(liftdeg-gcddeg,gcddeg_plus_delta);
+    int liftdeg0=giacmax(liftdeg-gcddeg,gcddeg_plus_delta);
     // once liftdeg0 is reached we can replace g/gp/gq computation
     // by a check that d*dp=dxn*lcoeff(d*dp)/Delta at alpha
     // and d*dq=dxn*lcoeff(d*dq)/lcoeff(qxn) at alpha
     int sumdeg = pxndeg+qxndeg;
-    double percentage = double(gcddeg)/min(pxndeg,qxndeg);
+    double percentage = double(gcddeg)/giacmin(pxndeg,qxndeg);
     int sumsize = p_orig.coord.size()+q_orig.coord.size();
     double gcdlift=gcddeg+std::pow(percentage,dim)*std::pow(1-percentage,dim)*sumsize;
     bool compute_cof = sumdeg<gcdlift/(1+dim);
@@ -3081,7 +3081,7 @@ namespace giac {
   modpoly gcd(const modpoly & p,const modpoly &q,environment * env){
     if (!env || !env->moduloon){
       polynome r,s;
-      int dim=max(inner_POLYdim(p),inner_POLYdim(q));
+      int dim=giacmax(inner_POLYdim(p),inner_POLYdim(q));
       poly12polynome(p,1,r,dim);
       poly12polynome(q,1,s,dim);
       return polynome2poly1(gcd(r,s),1);
@@ -3101,7 +3101,7 @@ namespace giac {
   // p1*u+p2*v=d
   void egcd(const modpoly &p1, const modpoly & p2, environment * env,modpoly & u,modpoly & v,modpoly & d){
     if (!env || !env->moduloon){
-      int dim=max(inner_POLYdim(p1),inner_POLYdim(p2));
+      int dim=giacmax(inner_POLYdim(p1),inner_POLYdim(p2));
       polynome pp1(dim),pp2(dim),pu(dim),pv(dim),pd(dim);
       poly12polynome(p1,1,pp1,dim);
       poly12polynome(p2,1,pp2,dim);
@@ -3658,7 +3658,7 @@ namespace giac {
     dense_POLY1::const_iterator b_end = q.end();
     int n=(a_end-a), m=(b_end-b);
     dense_POLY1 res;
-    res.reserve(max(n,m));
+    res.reserve(giacmax(n,m));
     for (;m>n;++b,--m)
       res.push_back(smod(iquo(u*(*b),d),pqmod));
     for (;n>m;++a,--n)
@@ -3920,7 +3920,7 @@ namespace giac {
     unsigned long l=gen(ps+qs-1).bindigits()-1; // m=2^l <= deg(p*q) < 2^{l+1}
     // long m2 = 1u << (l + 1); /* m2 = 2m = 2^{l+1} */
     gen P=norm(p,0), Q=norm(q,0); // coeff assumed to be integers -> no context
-    P=gen(min(ps,qs))*P*Q+1;
+    P=gen(giacmin(ps,qs))*P*Q+1;
     unsigned long bound=P.bindigits()+1; // 2^bound=smod bound on coeff of p*q
     unsigned long r=(bound >> l)+1;
     unsigned long mr=r<<l; // 2^mr is also a smod bound on coeff op p*q
@@ -3946,7 +3946,7 @@ namespace giac {
       return false;
     // cout << "modular gcd 1 " << pp << " " << qq << endl;
     gen gcdfirstcoeff(gcd(pp.front(),qq.front()));
-    int gcddeg= min(pp.size(),qq.size())-1;
+    int gcddeg= giacmin(pp.size(),qq.size())-1;
     gen bound(pow(gen(2),gcddeg+1)* abs(gcdfirstcoeff,context0) * min(norm(pp,context0), norm(qq,context0),context0));
     env->moduloon = true;
     // env->modulo=nextprime(max(gcdfirstcoeff+1,gen(30011),context0)); 

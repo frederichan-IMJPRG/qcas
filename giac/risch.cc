@@ -165,7 +165,9 @@ namespace giac {
     return lcmdeno.lexsorted_degree()==0;
   }
 
-  static bool spde_x(const polynome & S,const polynome & R,const polynome & T,const vecteur & vdiff,polynome & N1,polynome & N2){ // Solve S*N+R*N'=T, R constant poly
+  static bool spde_x(const polynome & S0,const polynome & R0,const polynome & T0,const vecteur & vdiff,polynome & N1,polynome & N2){ // Solve S*N+R*N'=T, R constant poly
+    gen con=gcd(Tcontent(S0),gcd(Tcontent(R0),Tcontent(T0)));
+    polynome S(S0/con),R(R0/con),T(T0/con);
     int s=T.dim;
     if (T.coord.empty()){
       N1=T;
@@ -326,7 +328,7 @@ namespace giac {
 	alpha=gamma;
 	if (beta<=0){
 	  if (beta!=0)
-	    alpha=min(0,gamma-beta);
+	    alpha=giacmin(0,gamma-beta);
 	  else { // possible cancellation case depend of cst coeff of f
 	    vecteur vtmp(polynome2poly1(fnum,1));
 	    gen f0=r2sym(vtmp[0],lv1,contextptr);
@@ -334,7 +336,7 @@ namespace giac {
 	    f0=f0/r2sym(vtmp[0],lv1,contextptr);
 	    gen lnc,prim,remains;
 	    if (in_risch(f0,x,v1,Z._SYMBptr->feuille,prim,lnc,remains,contextptr)&&lnc.type==_INT_)
-	      alpha=min(lnc.val,alpha);
+	      alpha=giacmin(lnc.val,alpha);
 	  }
 	}
       }
@@ -399,23 +401,23 @@ namespace giac {
     int ydeg=td-sd;
     gen expshift=plus_one; // multiplicative change of variable
     if (Z==x){
-      ydeg=td-max(rd-1,sd);
+      ydeg=td-giacmax(rd-1,sd);
       if (rd-1==sd){ // test whether S_s/R_r is an integer
 	gen n=Ss.coord.front().value/Rr.coord.front().value;
 	if (n.type==_INT_ && n.val>ydeg && (Ss-n*Rr).coord.empty())
-	  ydeg=max(ydeg,n.val);
+	  ydeg=giacmax(ydeg,n.val);
       }
     }
     else {
       if (Z.type!=_SYMB)
 	return false;
       gen z=Z._SYMBptr->feuille;
-      ydeg=td-max(rd,sd);
+      ydeg=td-giacmax(rd,sd);
       if (Z.is_symb_of_sommet(at_exp)){
 	if (rd==sd){ // test whether int S_s/R_r is elementary with n*z coeff
 	  gen lnc,prim,remains,tmp=r2sym(Rr,lv,contextptr)/r2sym(Ss,lv,contextptr);
 	  if (in_risch(tmp,x,v1,z,prim,lnc,remains,contextptr)&&lnc.type==_INT_)
-	    ydeg=max(lnc.val,ydeg);
+	    ydeg=giacmax(lnc.val,ydeg);
 	}
       }
       else {
@@ -558,7 +560,7 @@ namespace giac {
       factor(tmp.fact,p_content,vden,false,true,true,1); // complex+sqrt ok
       factorization::const_iterator f_it=vden.begin(),f_itend=vden.end();
       gen add_prim;
-      bool ok=true;
+      // bool ok=true;
       for (;f_it!=f_itend;++f_it){
 	int deg=f_it->fact.lexsorted_degree();
 	if (!deg)

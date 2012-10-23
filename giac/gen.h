@@ -122,8 +122,8 @@ namespace giac {
 
   // short integer arithmetic
   int absint(int a);
-  int min(int a,int b);
-  int max(int a,int b);
+  int giacmin(int a,int b);
+  int giacmax(int a,int b);
   int invmod(int n,int modulo);
   unsigned invmod(unsigned a,int b);
   int invmod(longlong a,int b);
@@ -204,6 +204,7 @@ namespace giac {
     vecteur v;
     ref_vecteur():ref_count(1) {}
     ref_vecteur(unsigned s):ref_count(1),v(s) {}
+    ref_vecteur(unsigned s,const gen & g):ref_count(1),v(s,g) {}
     ref_vecteur(const_iterateur it,const_iterateur itend):ref_count(1),v(it,itend) {}
     ref_vecteur(const vecteur & w):ref_count(1),v(w) {}
   };
@@ -973,6 +974,7 @@ namespace giac {
     virtual gen operator * (const gen &) const { return gensizeerr(gettext("Binary * not redefined")); }
     virtual gen operator * (const gen_user & a) const { return (*this) * gen(a); }
     virtual gen operator / (const gen_user & a) const { return (*this) * a.inv(); }
+    virtual gen operator / (const gen & a) const { return gensizeerr(gettext("Binary / not redefined")); }
     virtual bool is_zero() const { 
 #ifndef NO_STDEXCEPT
       setsizeerr(gettext("==0 not redefined")); 
@@ -991,12 +993,13 @@ namespace giac {
 #endif
       return false;
     }
-    virtual gen inv () const { return gensizeerr(gettext("Inv not redefined")); }
-    virtual gen conj(GIAC_CONTEXT) { return gensizeerr(gettext("Conj not redefined"));}
-    virtual gen re(GIAC_CONTEXT) { return gensizeerr(gettext("Real part not redefined"));}
-    virtual gen im(GIAC_CONTEXT) { return gensizeerr(gettext("Imaginary part not redefined")); }
-    virtual gen abs(GIAC_CONTEXT) { return gensizeerr(gettext("Abs not redefined"));}
-    virtual gen arg() { return gensizeerr(gettext("Arg not redefined")); }
+    virtual gen inv() const { return gensizeerr(gettext("Inv not redefined")); }
+    virtual gen conj(GIAC_CONTEXT) const { return gensizeerr(gettext("Conj not redefined"));}
+    virtual gen re(GIAC_CONTEXT) const { return gensizeerr(gettext("Real part not redefined"));}
+    virtual gen im(GIAC_CONTEXT) const { return gensizeerr(gettext("Imaginary part not redefined")); }
+    virtual gen abs(GIAC_CONTEXT) const { return gensizeerr(gettext("Abs not redefined"));}
+    virtual gen arg(GIAC_CONTEXT) const { return gensizeerr(gettext("Arg not redefined")); }
+    virtual gen sqrt(GIAC_CONTEXT) const { return gensizeerr(gettext("Sqrt not redefined")); }
     virtual gen operator () (const gen &,GIAC_CONTEXT) const { return gensizeerr(gettext("() not redefined")); }
     virtual gen operator [] (const gen &) { return gensizeerr(gettext("[] not redefined")); }
     virtual bool operator == (const gen &) const { 
@@ -1024,6 +1027,7 @@ namespace giac {
     virtual gen eval(int level,const context * contextptr) const {return *this;};
     virtual gen evalf(int level,const context * contextptr) const {return *this;};
     virtual gen makegen(int i) const { return string2gen("makegen not redefined"); } ;
+    virtual gen rand(GIAC_CONTEXT) const { return string2gen("rand not redefined"); };
   };
   struct ref_gen_user {
     volatile int ref_count;
@@ -1063,6 +1067,7 @@ namespace giac {
   std::string binary_print_ZINT(const mpz_t & a);
   std::string print_ZINT(const mpz_t & a);
   std::string printinner_VECT(const vecteur & v, int subtype,GIAC_CONTEXT);
+  std::string & add_printinner_VECT(std::string & s,const vecteur &v,int subtype,GIAC_CONTEXT);
   std::string begin_VECT_string(int subtype,bool tex,GIAC_CONTEXT);
   std::string end_VECT_string(int subtype,bool tex,GIAC_CONTEXT);
   std::string print_VECT(const vecteur & v,int subtype,GIAC_CONTEXT); // subtype was 0 by default
@@ -1384,6 +1389,7 @@ namespace giac {
   extern const unsigned long alias_at_display;
   extern const unsigned long alias_at_of;
   extern const unsigned long alias_at_at;
+  extern const unsigned long alias_at_normalmod;  
 
 #ifdef BCD
   inline bool ck_gentobcd(const gen & g,accurate_bcd_float * bcdptr){

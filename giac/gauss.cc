@@ -326,9 +326,6 @@ namespace giac {
     return gauss(q,x,D,U,P,contextptr);
   }
 
-  static gen symb_gauss(const gen & q,const gen & x){
-    return symbolic(at_gauss,makevecteur(q,x));
-  }
   static gen symb_gauss(const gen & args){
     return symbolic(at_gauss,args);
   }

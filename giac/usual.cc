@@ -1024,6 +1024,9 @@ namespace giac {
 	return cst_i*sqrt(-e,contextptr);
       return e._REALptr->sqrt();
     }
+    if (e.type==_USER){
+      return e._USERptr->sqrt(contextptr);
+    }
     gen a,b;
     if (e.type==_MOD){
       a=*e._MODptr;
@@ -2826,7 +2829,7 @@ namespace giac {
 	// change indice's value
 	if (in_place){
 	  (*vptr)[indice.val]=a;
-	  return string2gen("Done",false);
+	  return valeur; // string2gen("Done",false);
 	}
 	else {
 	  v[indice.val]=a;
@@ -2865,7 +2868,7 @@ namespace giac {
       --itend;
       if (in_place){
 	(*vptr)[itend->val]=a;
-	return string2gen("Done",false);
+	return valeur; // string2gen("Done",false);
       }
       v[itend->val]=a;
       vecteur oldv;
@@ -4592,7 +4595,7 @@ namespace giac {
       return gensizeerr(contextptr);
     vecteur & a =*args._VECTptr;
     if ( (a.front().type==_VECT) && (a[1].type==_VECT))
-      return quorem(a.front(),a.back());
+      return quorem(a.front(),a[1]);
     if ( (a.front().type==_POLY) && (a[1].type==_POLY)){
       int dim=a.front()._POLYptr->dim;
       if (a[1]._POLYptr->dim!=dim)
@@ -4695,12 +4698,17 @@ namespace giac {
   static symbolic symb_floor(const gen & a){
     return symbolic(at_floor,a);
   }
+  gen apply_unit(const gen & args,const gen_op_context & f,GIAC_CONTEXT){
+    return symbolic(at_unit,gen(makevecteur(f(args._SYMBptr->feuille[0],contextptr),args._SYMBptr->feuille[1]),_SEQ__VECT));  
+  }
   gen _floor(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (is_equal(args))
       return apply_to_equal(args,_floor,contextptr);
     if (is_inf(args)||is_undef(args))
       return args;
+    if (args.is_symb_of_sommet(at_unit))
+      return apply_unit(args,_floor,contextptr);
     if (args.type==_VECT)
       return apply(args,contextptr,_floor);
     if (args.type==_CPLX)
@@ -4782,9 +4790,6 @@ namespace giac {
 #endif
   define_unary_function_ptr5( at_floor ,alias_at_floor,&__floor,0,true);
 
-  static symbolic symb_ceil(const gen & a){
-    return symbolic(at_ceil,a);
-  }
   gen _ceil(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (is_inf(args)||is_undef(args))
@@ -4853,6 +4858,8 @@ namespace giac {
     if (args.type==_STRNG && args.subtype==-1) return  args;
     if (is_equal(args))
       return apply_to_equal(args,_round,contextptr);
+    if (args.is_symb_of_sommet(at_unit))
+      return apply_unit(args,_round,contextptr);
     if (is_inf(args)||is_undef(args))
       return args;
     if (args.type==_VECT && args._VECTptr->size()!=2)
@@ -4949,13 +4956,15 @@ namespace giac {
   gen _is_prime(const gen & args0,GIAC_CONTEXT){
     gen args(args0);
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    int certif=0;
+    if (args0.type==_VECT && args0._VECTptr->size()==2 && args0._VECTptr->back().type==_INT_){
+      args=args0._VECTptr->front();
+      certif=args0._VECTptr->back().val;
+    }
     if (!is_integral(args))
       return gentypeerr(contextptr);
 #ifdef HAVE_LIBPARI
-    string s=pari_isprime(args);
-    if (s.size()==1)
-      return gen(s,context0);
-    return string2gen(s,false);
+    return pari_isprime(args,certif);
 #else
     return is_probab_prime_p(args);
 #endif
@@ -5308,6 +5317,10 @@ namespace giac {
     if (a.type==_VECT && a.subtype==_SEQ__VECT && a._VECTptr->size()==2 && a._VECTptr->back().type==_INT_){
       int save_decimal_digits=decimal_digits(contextptr);
       int ndigits=a._VECTptr->back().val;
+#ifndef HAVE_LIBMPFR
+      if (ndigits>14)
+	return gensizeerr("Longfloat library not available");
+#endif
       set_decimal_digits(ndigits,contextptr);
       gen res=a._VECTptr->front().evalf(1,contextptr);
       if (res.type==_REAL || res.type==_CPLX)
@@ -6018,6 +6031,15 @@ namespace giac {
     if (g.type!=_VECT || g._VECTptr->size()!=2)
       return gensizeerr(contextptr);
     gen & f =g._VECTptr->front();
+    if (f.is_symb_of_sommet(at_equal))
+      return symb_equal(_normalmod(makevecteur(f._SYMBptr->feuille[0],g._VECTptr->back()),contextptr),
+			_normalmod(makevecteur(f._SYMBptr->feuille[1],g._VECTptr->back()),contextptr));
+    if (f.type==_VECT){
+      vecteur v=*f._VECTptr;
+      for (unsigned i=0;i<v.size();++i)
+	v[i]=_normalmod(makevecteur(v[i],g._VECTptr->back()),contextptr);
+      return gen(v,f.subtype);
+    }
     gen res=normal(makemodquoted(f,g._VECTptr->back()),contextptr);
     if (f.type==_VECT && res.type==_VECT)
       res.subtype=f.subtype;
@@ -6028,7 +6050,7 @@ namespace giac {
 #else
   static const char _normalmod_s []="%";
 #endif
-  static define_unary_function_eval4 (__normalmod,&_normalmod,_normalmod_s,&printsommetasoperator,&texprintsommetasoperator);
+  static define_unary_function_eval4_index (166,__normalmod,&_normalmod,_normalmod_s,&printsommetasoperator,&texprintsommetasoperator);
   define_unary_function_ptr( at_normalmod ,alias_at_normalmod ,&__normalmod);
 
   // a=expression, x variable, n=number of terms, 

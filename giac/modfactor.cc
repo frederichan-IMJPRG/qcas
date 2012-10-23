@@ -148,7 +148,7 @@ namespace giac {
     vector<modpoly>::const_iterator vitend=v.end(),vit=v.begin();
     for (itvptr=itv;vit!=vitend;++vit,++itvptr){
       * itvptr=vit->end();
-      maxdeg=max(maxdeg,int(vit->size()));
+      maxdeg=giacmax(maxdeg,int(vit->size()));
     }
 #if 1 // def VISUALC
     gen * res = new gen[maxdeg];
@@ -1189,7 +1189,7 @@ namespace giac {
 	    return true;
 	  }
 	  int ilifta=int(giac_ceil(giac_log(logbound_d/giac_log((double) primes[i]))/giac_log(2.0)));
-	  int iliftb=max(1,int(giac_ceil(giac_log(2./3.*logbound_d/giac_log((double) primes[i]))/giac_log(2.))));
+	  int iliftb=giacmax(1,int(giac_ceil(giac_log(2./3.*logbound_d/giac_log((double) primes[i]))/giac_log(2.))));
 	  if (debuglevel)
 	    cout << "Would use min " << ilifta << "," << iliftb << " steps modulo " << currentprime << endl; 
 	  gen qlifta(pow(currentprime,(long unsigned int) pow(gen(2),ilifta).to_int()));
