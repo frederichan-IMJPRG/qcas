@@ -110,7 +110,7 @@ void MainWindow::createAction(){
     connect(saveAction,SIGNAL(triggered()),this,SLOT(save()));
 
     saveAsAction=new QAction(tr("&Enregistrer sous..."),this);
-    saveAsAction->setShortcut(tr("Ctrl+Maj+S"));
+    //saveAsAction->setShortcut(tr("Ctrl+Maj+S"));//Gives a conflict with Ctrl+S
     saveAsAction->setStatusTip(tr("Enregistrer sous un nouveau nom de fichier"));
     saveAsAction->setIcon(QIcon(":/images/document-saveas.png"));
     connect(saveAsAction,SIGNAL(triggered()),this,SLOT(saveAs()));
@@ -271,6 +271,7 @@ void MainWindow::newFile(){
 }
 bool MainWindow::okToContinue(){
     if (isWindowModified()){
+        /* PB: gives OK, NO, YES and never understand save or cancel.
         int r=QMessageBox::warning(this,tr("Espace de travail"),
                                    tr("Le document a été modifié.\n"
                                       "Voulez-vous sauvegarder les modifications?"),
@@ -279,6 +280,17 @@ bool MainWindow::okToContinue(){
                                    QMessageBox::Cancel||QMessageBox::Escape);
         if (r==QMessageBox::Yes){
             return save();
+        */
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Espace de travail");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Le document a été modifié."));
+        msgBox.setInformativeText(tr("Voulez-vous sauvegarder les modifications?"));
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        int r = msgBox.exec();
+        if (r==QMessageBox::Save){
+            return MainWindow::save();
         }
         else if (r==QMessageBox::Cancel){
             return false;
@@ -501,7 +513,7 @@ void MainWindow::setCurrentFile(const QString &fileName){
         setWindowTitle(tr("%1[*] - %2").arg(shownName).arg("QCAS"));
 
     }
-    else setWindowTitle("QCAS");
+    else setWindowTitle("QCAS[*]");
 }
 
 QString MainWindow::strippedName(const QString &fullFileName){
@@ -891,6 +903,7 @@ void MainWindow::evaluate(const QString &formula){
         delete warningFirstEvaluation;
         warningFirstEvaluation=NULL;
     }*/
+    setWindowModified(true);
     displayInStatusBar("","black");
 
     taskProperties.firstPrintMessage=true;
