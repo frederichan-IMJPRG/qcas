@@ -36,6 +36,8 @@ private:
     QLineEdit* editF;
     QWidget* polarPanel;
     QLineEdit* editR;
+    QWidget* implicitPanel;
+    QLineEdit* editE;
     QWidget* parametricPanel;
     QLineEdit* editX;
     QLineEdit* editY;

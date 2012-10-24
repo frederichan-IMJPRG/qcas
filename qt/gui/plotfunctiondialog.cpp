@@ -56,6 +56,23 @@ void PlotFunctionDialog::initGui(){
     boxPolar->addWidget(editR);
     polarPanel->setLayout(boxPolar);
 
+    implicitPanel=new QWidget;
+    QHBoxLayout* boxImplicit=new QHBoxLayout;
+    QLabel* labelE=new QLabel(tr("f(x,y)="));
+    editE=new QLineEdit;
+    boxImplicit->addWidget(labelE);
+    boxImplicit->addWidget(editE);
+    /*   QLabel* labelXmin=new QLabel(tr("x min="));
+    QLabel* labelXmax=new QLabel(tr("x max="));
+    editXmin=new QLineEdit;
+    editXmax=new QLineEdit;
+    boxImplicit->addWidget(labelXmin);
+    boxImplicit->addWidget(editXmin);
+    boxImplicit->addWidget(labelXmax);
+    boxImplicit->addWidget(editXmax);
+    */ 
+   implicitPanel->setLayout(boxImplicit);
+
     parametricPanel=new QWidget;
     QGridLayout* grid=new QGridLayout;
     QLabel* labelX=new QLabel(tr("x(t)="));
@@ -70,6 +87,7 @@ void PlotFunctionDialog::initGui(){
 
     tabWidget->addTab(cartesianPanel,tr("Cartésienne"));
     tabWidget->addTab(polarPanel,tr("Polaire"));
+    tabWidget->addTab(implicitPanel,tr("Implicite"));
     tabWidget->addTab(parametricPanel,tr("Paramétrique"));
 
 
@@ -82,9 +100,10 @@ void PlotFunctionDialog::initGui(){
     editMax=new QLineEdit;
     hbox->addWidget(labMin);
     hbox->addWidget(editMin);
-    hbox->addWidget(labMax)    ;
+    hbox->addWidget(labMax);
     hbox->addWidget(editMax);
     rangePanel->setLayout(hbox);
+
 
     QWidget * buttonPanel=new QWidget;
     QHBoxLayout * hbox2=new QHBoxLayout;
@@ -130,6 +149,22 @@ void PlotFunctionDialog::closeDialog(){
         command.append("polarplot(");
         command.append(editR->text());
         command.append(",t=");
+        command.append(editMin->text());
+        command.append("..");
+        command.append(editMax->text());
+        command.append(");");
+    }
+        break;
+        // implicit
+        case 2:{
+        if (!checkFunction(editE)) reject();
+        command.append("plotimplicit(");
+        command.append(editE->text());
+        command.append(",x=");
+        command.append(editMin->text());
+        command.append("..");
+        command.append(editMax->text());
+        command.append(",y=");
         command.append(editMin->text());
         command.append("..");
         command.append(editMax->text());

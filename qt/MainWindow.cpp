@@ -653,6 +653,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             redoAction->setVisible(true);
             undoAction->setVisible(true);
             evaluateAction->setVisible(false);
+            insertlineAction->setVisible(false);
             deleteLevelAction->setVisible(false);
             leftPanel->hide();
         }
@@ -665,6 +666,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             pasteAction->setVisible(true);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
+            insertlineAction->setVisible(true);
             deleteLevelAction->setVisible(true);
             evaluateAction->setVisible(true);
             leftPanel->show();
