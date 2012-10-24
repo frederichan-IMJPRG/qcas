@@ -135,7 +135,7 @@ CasManager::CasManager(MainWindow* main){
 
     context=new giac::context;
     mainWindow->setDecimalDigits(giac::decimal_digits(context));
-//    giac::language(0,context);
+//  giac::language(0,context);
 
     monitor=new MonitorThread(context);
     stopThread=new StopThread(context);
