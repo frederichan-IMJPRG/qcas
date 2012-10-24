@@ -326,7 +326,24 @@ void FormalWorkSheet::paste(){
 void FormalWorkSheet::redo(){
     lines->at(current)->getTextInput()->redo();
 }
+void FormalWorkSheet::insertline(){
+    lines->insert(current,new Line(current,this));
+    vLayout->insertWidget(current,lines->at(current));
+    for(int i=current;i<lines->size();++i){
+       Line* line=lines->at(i);
+       line->setId(i);
+    }
+    lines->at(current)->show();
+    lines->at(current)->getTextInput()->setFocus(Qt::OtherFocusReason);
+    //MAJ of selectedLevels
+    for (int i=selectedLevels.size()-1;i>=0;--i){
+        if(current<=selectedLevels.at(i)){
+        selectedLevels.replace(i,selectedLevels.at(i)+1);
+        }
+    }
+}
 void FormalWorkSheet::deleteSelectedLevels(){
+    /* Bug: when the check button are not clicked in a increasing way
     for (int i=selectedLevels.size()-1;i>=0;--i){
         Line* line=lines->at(selectedLevels.at(i));
         vLayout->removeWidget(line);
@@ -338,7 +355,22 @@ void FormalWorkSheet::deleteSelectedLevels(){
         lines->at(i)->setId(i);
     }
     current=0;
-
+    */
+    for(int j=lines->size()-1;j>=0;--j){
+       for (int i=selectedLevels.size()-1;i>=0;--i){
+      if(j==selectedLevels.at(i)){
+          Line* line=lines->at(j);
+          vLayout->removeWidget(line);
+          lines->remove(j);
+          delete line;
+      }
+       }
+    }
+    selectedLevels.clear();
+    for (int i=0;i<lines->size();++i){
+        lines->at(i)->setId(i);
+    }
+    current=0;
 
 }
 

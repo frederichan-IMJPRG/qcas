@@ -118,11 +118,12 @@ private:
     QAction *pasteAction;
     QAction *undoAction;
     QAction *redoAction;
+    QAction *insertlineAction;
     QAction *deleteLevelAction;
     QAction *evaluateAction;
     QAction *prefAction;
+    QAction *htmlhelpAction;
     QAction *aboutAction;
-
     QAction *stopAction;
     QToolButton * stopButton;
 
@@ -156,10 +157,12 @@ private slots:
     void about();
     void pref();
     void copy();
+    void htmlhelp();
     void cut();
     void paste();
     void undo();
     void redo();
+    void insertline();
     void deleteSelectedLevels();
     void evaluate();
     void openRecentFile();

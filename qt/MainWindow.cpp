@@ -157,6 +157,12 @@ void MainWindow::createAction(){
     redoAction->setIcon(QIcon(":/images/edit-redo.png"));
     connect(redoAction,SIGNAL(triggered()),this,SLOT(redo()));
 
+    insertlineAction=new QAction(tr("&Nouvelle Entrée"),this);
+    insertlineAction->setShortcut(tr("Ctrl+I"));
+    insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
+    insertlineAction->setIcon(QIcon(":/images/add.png"));
+    connect(insertlineAction,SIGNAL(triggered()),this,SLOT(insertline()));
+
     deleteLevelAction=new QAction(tr("&Effacer les lignes sélectionnées"),this);
     deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
     deleteLevelAction->setIcon(QIcon(":/images/delete.png"));
@@ -168,6 +174,10 @@ void MainWindow::createAction(){
     evaluateAction->setStatusTip(tr("Evaluer"));
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
     connect(evaluateAction,SIGNAL(triggered()),this,SLOT(evaluate()));
+
+    htmlhelpAction=new QAction(tr("&Aide Html"),this);
+    htmlhelpAction->setStatusTip(tr("Aide html de Giac/Qcas"));
+    connect(htmlhelpAction,SIGNAL(triggered()),this,SLOT(htmlhelp()));
 
     aboutAction=new QAction(tr("&A propos"),this);
     aboutAction->setStatusTip(tr("Principales informations concernant QCAS"));
@@ -194,6 +204,7 @@ void MainWindow::createToolBars(){
     toolBar->addAction(pasteAction);
     toolBar->addAction(undoAction);
     toolBar->addAction(redoAction);
+    toolBar->addAction(insertlineAction);
     toolBar->addAction(evaluateAction);
     toolBar->setOrientation(Qt::Vertical);
 
@@ -217,12 +228,14 @@ void MainWindow::createMenus(){
     editMenu->addAction(pasteAction);
     editMenu->addAction(undoAction);
     editMenu->addAction(redoAction);
+    editMenu->addAction(insertlineAction);
     editMenu->addAction(deleteLevelAction);
 
     optionsMenu=menuBar()->addMenu(tr("&Options"));
     optionsMenu->addAction(prefAction);
 
     helpMenu=menuBar()->addMenu(tr("&Aide"));
+    helpMenu->addAction(htmlhelpAction);
     helpMenu->addAction(aboutAction);
 }
 void MainWindow::createContextMenu(){
@@ -730,6 +743,9 @@ void MainWindow::about(){
                                                       ).append(QDate::currentDate().toString()));
 
 }
+void MainWindow::htmlhelp(){
+    giac::system_browser_command("doc/index.html");
+}
 void MainWindow::closeEvent(QCloseEvent *event){
     if (okToContinue()){
         writeSettings();
@@ -841,6 +857,19 @@ void MainWindow::redo(){
         graph->redo();
     }
      break;
+    }
+}
+void MainWindow::insertline(){
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+    {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+            form->insertline();}
+    break;
+    case MainSheet::SPREADSHEET_TYPE:
+    case MainSheet::G2D_TYPE:
+    case MainSheet::PROGRAMMING_TYPE:
+    break;
     }
 }
 void MainWindow::deleteSelectedLevels(){
