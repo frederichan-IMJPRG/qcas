@@ -86,7 +86,9 @@ private:
     void writeSettings();
     bool okToContinue();
     bool loadFile(const QString &fileName);
+    bool loadGiacFile(const QString &fileName);
     bool saveFile(const QString &fileName);
+    bool saveToGiacFile(const QString &fileName);
     void setCurrentFile(const QString &fileName);
     void updateRecentFileActions();
     QString curFile;
@@ -124,6 +126,7 @@ private:
     QAction *prefAction;
     QAction *htmlhelpAction;
     QAction *aboutAction;
+
     QAction *stopAction;
     QToolButton * stopButton;
 
@@ -154,6 +157,7 @@ private slots:
     void open();
     bool save();
     bool saveAs();
+    bool saveAsgiacxcas();
     void about();
     void pref();
     void copy();

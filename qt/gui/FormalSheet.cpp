@@ -406,5 +406,55 @@ void  FormalWorkSheet::toXML(QDomElement & root){
     }
     root.appendChild(formal);
 
-
 }
+//Basic export to a giac text file.
+void  FormalWorkSheet::toGIAC(QString & root){
+    for (int i=0;i<lines->size();++i){
+        Line* line=lines->at(i);
+        QString tmp=line->getTextInput()->toPlainText();
+	root.append(tmp);
+	if (tmp != ""){
+	  if (tmp.right(1) !=";") root.append(";\n");
+	  else root.append("\n");
+	}
+    }
+}
+//export to Xcas
+void  FormalWorkSheet::toXCAS(QString & root){
+    for (int i=0;i<lines->size();++i){
+        Line* line=lines->at(i);
+        QString xcasinput=line->getTextInput()->toPlainText();
+	QString fltk="// fltk 7Fl_Tile 11 50 1189 ";
+	  //"60 12 0\n[\n// fltk N4xcas16Xcas_Text_EditorE 11 50 1189 ";
+	int nbcr=23+xcasinput.count("\n")*15;
+        fltk.append(QString::number(nbcr));
+	fltk.append(" 12 0\n[\n// fltk N4xcas16Xcas_Text_EditorE 11 50 1189 ");
+        fltk.append(QString::number(nbcr));
+	fltk.append(" 12 0\n");
+	fltk.append(QString::number(xcasinput.size()));
+	fltk.append(" ,\n");
+	fltk.append(xcasinput);
+	fltk.append(",\n]\n");
+     
+	/*QString fltk="// fltk N4xcas19Multiline_Input_tabE 20 415 916 ";
+        fltk.append(QString::number((1+xcasinput.count("\n"))*14.5));
+	fltk.append(" 12\n");
+	xcasinput.replace("\n",QChar(0x00A3));
+	fltk.append(xcasinput);
+	fltk.append("\n");
+      */
+	root.append(fltk);
+	//root.toStdString();
+    }
+}
+
+
+/*
+
+ @ 15/10/2012 FH . Bug in deleteSelectedLevels() with non increasing selections.
+                 . Add insertline
+ @ 17/10/2012 FH . Improve insertline to take care of selectedLevels. 
+
+ @ 18/10/2012 FH . Export formal line to fltk/xcas 
+
+*/

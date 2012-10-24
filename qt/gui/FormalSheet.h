@@ -111,6 +111,8 @@ public:
     void addSelectedLevel(int);
     void removeStop(int);
     void toXML(QDomElement & root);
+    void toGIAC(QString &);
+    void toXCAS(QString &);
 protected:
     void keyPressEvent(QKeyEvent *);
     void keyReleaseEvent(QKeyEvent *);
