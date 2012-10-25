@@ -561,6 +561,7 @@ void PrefDialog::apply(){
 
 //    giac::
 //    giac::set_language(2,mainWindow->getContext());
+    giac::set_language(Config::language+1,mainWindow->getContext());//french is 1 in giac.
     close();
 
 }

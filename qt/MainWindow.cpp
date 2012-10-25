@@ -110,7 +110,7 @@ void MainWindow::createAction(){
     connect(saveAction,SIGNAL(triggered()),this,SLOT(save()));
 
     saveAsAction=new QAction(tr("&Enregistrer sous..."),this);
-    saveAsAction->setShortcut(tr("Ctrl+Maj+S"));
+    //saveAsAction->setShortcut(tr("Ctrl+Maj+S"));//Gives a conflict with Ctrl+S
     saveAsAction->setStatusTip(tr("Enregistrer sous un nouveau nom de fichier"));
     saveAsAction->setIcon(QIcon(":/images/document-saveas.png"));
     connect(saveAsAction,SIGNAL(triggered()),this,SLOT(saveAs()));
@@ -157,6 +157,12 @@ void MainWindow::createAction(){
     redoAction->setIcon(QIcon(":/images/edit-redo.png"));
     connect(redoAction,SIGNAL(triggered()),this,SLOT(redo()));
 
+    insertlineAction=new QAction(tr("&Nouvelle Entrée"),this);
+    insertlineAction->setShortcut(tr("Ctrl+I"));
+    insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
+    insertlineAction->setIcon(QIcon(":/images/add.png"));
+    connect(insertlineAction,SIGNAL(triggered()),this,SLOT(insertline()));
+
     deleteLevelAction=new QAction(tr("&Effacer les lignes sélectionnées"),this);
     deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
     deleteLevelAction->setIcon(QIcon(":/images/delete.png"));
@@ -168,6 +174,10 @@ void MainWindow::createAction(){
     evaluateAction->setStatusTip(tr("Evaluer"));
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
     connect(evaluateAction,SIGNAL(triggered()),this,SLOT(evaluate()));
+
+    htmlhelpAction=new QAction(tr("&Aide Html"),this);
+    htmlhelpAction->setStatusTip(tr("Aide html de Giac/Qcas"));
+    connect(htmlhelpAction,SIGNAL(triggered()),this,SLOT(htmlhelp()));
 
     aboutAction=new QAction(tr("&A propos"),this);
     aboutAction->setStatusTip(tr("Principales informations concernant QCAS"));
@@ -194,6 +204,7 @@ void MainWindow::createToolBars(){
     toolBar->addAction(pasteAction);
     toolBar->addAction(undoAction);
     toolBar->addAction(redoAction);
+    toolBar->addAction(insertlineAction);
     toolBar->addAction(evaluateAction);
     toolBar->setOrientation(Qt::Vertical);
 
@@ -217,12 +228,14 @@ void MainWindow::createMenus(){
     editMenu->addAction(pasteAction);
     editMenu->addAction(undoAction);
     editMenu->addAction(redoAction);
+    editMenu->addAction(insertlineAction);
     editMenu->addAction(deleteLevelAction);
 
     optionsMenu=menuBar()->addMenu(tr("&Options"));
     optionsMenu->addAction(prefAction);
 
     helpMenu=menuBar()->addMenu(tr("&Aide"));
+    helpMenu->addAction(htmlhelpAction);
     helpMenu->addAction(aboutAction);
 }
 void MainWindow::createContextMenu(){
@@ -258,6 +271,7 @@ void MainWindow::newFile(){
 }
 bool MainWindow::okToContinue(){
     if (isWindowModified()){
+        /* PB: gives OK, NO, YES and never understand save or cancel.
         int r=QMessageBox::warning(this,tr("Espace de travail"),
                                    tr("Le document a été modifié.\n"
                                       "Voulez-vous sauvegarder les modifications?"),
@@ -266,6 +280,17 @@ bool MainWindow::okToContinue(){
                                    QMessageBox::Cancel||QMessageBox::Escape);
         if (r==QMessageBox::Yes){
             return save();
+        */
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Espace de travail");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Le document a été modifié."));
+        msgBox.setInformativeText(tr("Voulez-vous sauvegarder les modifications?"));
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        int r = msgBox.exec();
+        if (r==QMessageBox::Save){
+            return MainWindow::save();
         }
         else if (r==QMessageBox::Cancel){
             return false;
@@ -276,9 +301,15 @@ bool MainWindow::okToContinue(){
 
 void MainWindow::open(){
     if (okToContinue()){
-        QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS files (*.qcas)"));
-        if (!fileName.isEmpty())
-            loadFile(fileName);
+        clearWorkspace();
+        QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS or Giac/Xcas files (*.qcas *.cas *.xws)"));
+        if (!fileName.isEmpty()){
+	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
+	    loadGiacFile(fileName);
+	  }
+	  else 
+	    loadFile(fileName);
+	}
     }
 }
 
@@ -373,16 +404,123 @@ bool MainWindow::loadFile(const QString &fileName){
     return true;
 }
 
+bool MainWindow::loadGiacFile(const QString &fileName){
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    QTextStream dataIn(&file);
+    if (fileName.endsWith(".xws")){
+        //xcas .xws file
+	QString xcasline = dataIn.readLine();
+	QString fltktag="";
+	QString multilinebuffer="";
+	//QString geoflag="";
+	tabPages->addFormalSheet();
+	FormalWorkSheet *f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+	GraphWidget * g2d;
+	while (!xcasline.isNull()&&!xcasline.startsWith("// context")) {
+	  if(xcasline.startsWith("// fltk")){
+	    if((xcasline.contains("7Fl_Tile"))||(xcasline.contains("History_Pack"))){
+		  //drop those cases.
+		  xcasline=dataIn.readLine();//drop the bracket
+	    }
+	    if((xcasline.contains("Equation"))||(xcasline.contains("Output"))||(xcasline.contains("Mouse"))||(xcasline.contains("Button"))||(xcasline.contains("Menu"))||(xcasline.contains("N4xcas7Graph3dE"))){
+		  //drop those cases.
+		  xcasline=dataIn.readLine();//drop the nextline (results)
+	    }
+	    if(xcasline.contains("Comment")){
+	      xcasline=dataIn.readLine();
+	      xcasline.prepend("/* ");
+	      xcasline.append(" */");
+	      //xcasline.replace('£',"\n");
+	      f->sendText(xcasline);
+	      f->goToNextLine();
+	    }
+	    if(xcasline.contains("N4xcas6FigureE")){
+	      //Open Interactive 2D geometry
+	      fltktag="Geo2D";
+	      //tabPages->addG2dSheet();
+	      //g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+	      //g2d interactive not ready, convert to formal.
+	      tabPages->addFormalSheet();
+	      f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+	    }
+	    if(xcasline.contains("N4xcas5Geo2dE")){
+	      //quit geo 2d later.
+	      xcasline=dataIn.readLine();//drop the next line
+	      fltktag="newformal";
+	    }
+	    //Fixme: add the spreadsheet and other non formal case before new formal.
+	    if(fltktag=="newformal"){
+	      //default case
+	      fltktag="";
+	      tabPages->addFormalSheet();
+	      f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+	    }
+	    //Formal  multilines and xcas editor needs to be after newformal
+	    if((xcasline.contains("N4xcas7EditeurE"))||(xcasline.contains("Xcas_Text_EditorE"))){
+	      fltktag="";
+	      int nbcar=(dataIn.readLine()).remove(",").toInt();
+	      xcasline=dataIn.read(nbcar);
+	      f->sendText(xcasline);
+	      f->goToNextLine();
+	    }
+	  }
+	  else{   
+	    if(fltktag==""){
+	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!="")){
+		f->sendText(xcasline);
+		f->goToNextLine();
+	      }
+	    }
+	    if(fltktag=="Geo2D"){
+	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!=(""))){
+		//FIXME: some errors are not intercepted: Program received signal SIGABRT, Aborted.
+		//f->sendText(xcasline.append("\n"));
+		if (!(xcasline.endsWith(";"))){
+		    xcasline.append(";\n");
+		  }
+	        else{
+		  xcasline.append("\n");
+		} 
+		  
+		f->sendText(xcasline);
+		//f->goToNextLine();
+		//listWidget->addItems(list);
+	      }
+	    }
+	  }
+	  xcasline = dataIn.readLine();
+	}
+
+
+      }
+    else{
+        //giac .cas file
+        QString giacline = dataIn.readLine();
+	tabPages->addFormalSheet();
+	FormalWorkSheet *f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+	while (!giacline.isNull()) {
+	  f->sendText(giacline);
+	  f->goToNextLine();
+	  giacline = dataIn.readLine();
+	}
+      }
+    file.close();
+    //setCurrentFile(fileName.replace(".cas",".qcas"));PB si le fichier existe deja.
+    return true;
+}
 
 
 
 bool MainWindow::save(){
-    if (curFile.isEmpty())
+  if ((curFile.isEmpty())||!(curFile.endsWith(".qcas")))
         return saveAs();
     else
         return saveFile(curFile);
 }
 bool MainWindow::saveFile(const QString &fileName){
+
     QDomDocument doc;
 
     QDomElement root=doc.createElement("qcas");
@@ -423,13 +561,9 @@ bool MainWindow::saveFile(const QString &fileName){
         QDataStream dataOut(&file);
         dataOut.writeBytes(xmlByteArray.data(), xmlByteArray.size());
 
+//   QTextStream out(&file);
+//   doc.save(out, 4);
 
-
-
-
-/*        QTextStream out(&file);
-    doc.save(out, 4);
-    */
     file.close();
 /*    -------------------------------------
 
@@ -467,12 +601,85 @@ bool MainWindow::saveFile(const QString &fileName){
 
     return true;
 }
+bool MainWindow::saveToGiacFile(const QString &fileName){
+
+    QDomElement rootold;
+    QString root;
+    // TODO: write cas configuration
+    for (int i=0;i<tabPages->count()-1;++i){
+        MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->widget(i));
+        switch(sheet->getType()){
+        case MainSheet::FORMAL_TYPE:
+            {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->widget(i));
+            if(fileName.endsWith(".cas"))
+	      form->toGIAC(root);
+	    else
+	      form->toXCAS(root);
+        }
+            break;
+        case MainSheet::SPREADSHEET_TYPE:
+            break;
+        case MainSheet::PROGRAMMING_TYPE:
+            break;
+        case MainSheet::G2D_TYPE:
+        {GraphWidget *graph=qobject_cast<GraphWidget*>(tabPages->widget(i));
+	      if(fileName.endsWith(".xws"))
+	          graph->toInteractiveXCAS2D(root);
+	    
+	}
+         break;
+
+        }
+
+    }
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly))
+    {
+        QTextStream out(&file);
+	out<<root;
+	file.close();
+    }
+    else
+    return(false);
+
+    setCurrentFile(fileName);
+    setWindowModified(true);
+
+    return true;
+}
 bool MainWindow::saveAs(){
-    QString fileName=QFileDialog::getSaveFileName(this,tr("Enregistrer sous..."),".qcas",tr("QCAS files (*.qcas)"));
+
+  QFileDialog rep(this,tr("Enregistrer sous..."),"",tr("QCAS files (*.qcas);;XCAS files (*.xws);;GIAC files (*.cas)"));
+  rep.setAcceptMode(QFileDialog::AcceptSave);
+
+  if(rep.exec()){
+     
+     QString fileName = rep.selectedFiles()[0];
+     if((fileName.endsWith(".xws"))||(fileName.endsWith(".cas")))
+           return saveToGiacFile(fileName);
+     else{
+        if(fileName.endsWith(".qcas"))
+	   return saveFile(fileName);
+        else{
+	  if (rep.selectedNameFilter() == "XCAS files (*.xws)")
+	    return saveToGiacFile(fileName.append(".xws"));
+	  if (rep.selectedNameFilter() == "GIAC files (*.cas)")
+	    return saveToGiacFile(fileName.append(".cas"));
+	  else
+	    return saveFile(fileName.append(".qcas"));
+	}
+     }
+  }
+  else
+    return false;
+}
+
+bool MainWindow::saveAsgiacxcas(){
+    QString fileName=QFileDialog::getSaveFileName(this,tr("Exporter vers..."),".xws",tr("XCAS files (*.xws);;GIAC files (*.cas)"));
     if (fileName.isEmpty()){
         return false;
     }
-    return saveFile(fileName);
+    return saveToGiacFile(fileName);
 }
 
 void MainWindow::setCurrentFile(const QString &fileName){
@@ -488,7 +695,7 @@ void MainWindow::setCurrentFile(const QString &fileName){
         setWindowTitle(tr("%1[*] - %2").arg(shownName).arg("QCAS"));
 
     }
-    else setWindowTitle("QCAS");
+    else setWindowTitle("QCAS[*]");
 }
 
 QString MainWindow::strippedName(const QString &fullFileName){
@@ -640,6 +847,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             redoAction->setVisible(true);
             undoAction->setVisible(true);
             evaluateAction->setVisible(false);
+            insertlineAction->setVisible(false);
             deleteLevelAction->setVisible(false);
             leftPanel->hide();
         }
@@ -652,6 +860,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             pasteAction->setVisible(true);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
+            insertlineAction->setVisible(true);
             deleteLevelAction->setVisible(true);
             evaluateAction->setVisible(true);
             leftPanel->show();
@@ -729,6 +938,9 @@ void MainWindow::about(){
                                                       "</ul><hr>"
                                                       ).append(QDate::currentDate().toString()));
 
+}
+void MainWindow::htmlhelp(){
+    giac::system_browser_command("doc/index.html");
 }
 void MainWindow::closeEvent(QCloseEvent *event){
     if (okToContinue()){
@@ -843,6 +1055,19 @@ void MainWindow::redo(){
      break;
     }
 }
+void MainWindow::insertline(){
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+    {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+            form->insertline();}
+    break;
+    case MainSheet::SPREADSHEET_TYPE:
+    case MainSheet::G2D_TYPE:
+    case MainSheet::PROGRAMMING_TYPE:
+    break;
+    }
+}
 void MainWindow::deleteSelectedLevels(){
     FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
     if (form==0) return;
@@ -860,6 +1085,7 @@ void MainWindow::evaluate(const QString &formula){
         delete warningFirstEvaluation;
         warningFirstEvaluation=NULL;
     }*/
+    setWindowModified(true);
     displayInStatusBar("","black");
 
     taskProperties.firstPrintMessage=true;

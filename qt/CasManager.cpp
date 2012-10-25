@@ -135,7 +135,7 @@ CasManager::CasManager(MainWindow* main){
 
     context=new giac::context;
     mainWindow->setDecimalDigits(giac::decimal_digits(context));
-//    giac::language(0,context);
+//  giac::language(0,context);
 
     monitor=new MonitorThread(context);
     stopThread=new StopThread(context);
@@ -224,7 +224,7 @@ void CasManager::evaluate(){
 
     printCache="";
 
-   if (giac::make_thread(expression,1,CasManager::callback,(void*)context,context))
+   if (giac::make_thread(expression,eval_level(context),CasManager::callback,(void*)context,context))
     {
        disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
 
@@ -391,7 +391,7 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-   info(answer,0);
+//   info(answer,0);//to have debug xml info
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();

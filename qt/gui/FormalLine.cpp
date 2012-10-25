@@ -77,6 +77,7 @@ int Line::getId()const{
 }
 void Line::setId(const int & a){
     id=a;
+    check->setText(QString::number(id+1));
 }
 TextInput* Line::getTextInput() const{
     return input;

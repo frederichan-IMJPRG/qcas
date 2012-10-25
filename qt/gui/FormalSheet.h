@@ -104,12 +104,15 @@ public:
     void paste();
     void undo();
     void redo();
+    void insertline();
     void deleteSelectedLevels();
     void sendText(const QString &);
     void displayResult(int line,OutputWidget* );
     void addSelectedLevel(int);
     void removeStop(int);
     void toXML(QDomElement & root);
+    void toGIAC(QString &);
+    void toXCAS(QString &);
 protected:
     void keyPressEvent(QKeyEvent *);
     void keyReleaseEvent(QKeyEvent *);

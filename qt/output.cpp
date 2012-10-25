@@ -782,6 +782,13 @@ void GraphWidget::toInteractiveXML(QDomElement  &top){
     top.appendChild(output);
 }
 
+
+void GraphWidget::toInteractiveXCAS2D(QString  &top){
+    QString output;
+    canvas->toInteractiveXCAS2D(output);
+    top.append(output);
+}
+
 void GraphWidget::XML2Curve(QDomElement & nodeCurve,const bool & fillable, const int& att){
     QDomNodeList list=nodeCurve.childNodes();
     QPainterPath path;
@@ -4655,6 +4662,7 @@ void Canvas2D::addInter(const QString & type){
 
 
 void Canvas2D::executeMyAction(bool onlyForPreview=false){
+    //setWindowModified(true);//FH: cf okToContinue. PB ca ne fonctionne pas.  
         if (itemPreview!=0) delete itemPreview;
          itemPreview=0;
     switch(currentActionTool){
@@ -6664,6 +6672,22 @@ void SourceDialog::initGui(){
     setLayout(hbox);
     connect(deleteButton,SIGNAL(clicked()),this,SLOT(updateCanvas()));
 }
+void Canvas2D::toInteractiveXCAS2D(QString  &top){
+    
+    QStringList geo2Dcommandlist;
+    getDisplayCommands(geo2Dcommandlist);
+    
+    top.append("// fltk 7Fl_Tile 20 36 982 541 12\n[\n// fltk N4xcas6FigureE 20 36 982 540 12\n// fltk N4xcas12History_PackE 22 79 322 70 12\n[\n");
+    
+    for(int i=0;i<geo2Dcommandlist.size();i++){
+	  top.append("// fltk 7Fl_Tile 31 54 313 23 12\n[\n// fltk N4xcas19Multiline_Input_tabE 31 54 313 22 12\n");
+	  top.append(geo2Dcommandlist.at(i));
+	  top.append("\n]\n");
+    }
+    top.append("]\n// fltk N4xcas5Geo2dE 348 54 524 522 12\n-5.1316,5.1316,-5.1619,5.1619,[],-5,5,1,0,0,0,1,1,1,0,1,1.4167,0,1,1,[],24,18,256,0,100,0,0,1,0.1\n \n");
+
+}
+
 void SourceDialog::updateCanvas(){
     int id=listWidget->currentRow();
     parent->deleteObject(parent->getCommands().at(id).item);
