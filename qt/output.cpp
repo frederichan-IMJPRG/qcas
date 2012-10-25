@@ -6690,12 +6690,13 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 
 void SourceDialog::updateCanvas(){
     int id=listWidget->currentRow();
-    parent->deleteObject(parent->getCommands().at(id).item);
-    listWidget->clear();
-    QStringList list;
-    parent->getDisplayCommands(list);
-    listWidget->addItems(list);
-
+    if(id>=0){
+        Parent->deleteObject(parent->getCommands().at(id).item);
+        listWidget->clear();
+        QStringList list;
+        parent->getDisplayCommands(list);
+        listWidget->addItems(list);
+    }
 
 }
 CoordsDialog::CoordsDialog(Canvas2D* p):QDialog (p){
