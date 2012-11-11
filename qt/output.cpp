@@ -789,6 +789,11 @@ void GraphWidget::toInteractiveXCAS2D(QString  &top){
     top.append(output);
 }
 
+void GraphWidget::sendText(const QString  &s){
+  canvas->sendText(s);
+}
+
+
 void GraphWidget::XML2Curve(QDomElement & nodeCurve,const bool & fillable, const int& att){
     QDomNodeList list=nodeCurve.childNodes();
     QPainterPath path;
@@ -6685,6 +6690,106 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 	  top.append("\n]\n");
     }
     top.append("]\n// fltk N4xcas5Geo2dE 348 54 524 522 12\n-5.1316,5.1316,-5.1619,5.1619,[],-5,5,1,0,0,0,1,1,1,0,1,1.4167,0,1,1,[],24,18,256,0,100,0,0,1,0.1\n \n");
+
+}
+
+void Canvas2D::sendText(const QString &s){
+    //TODO les :;   les element , les vecteurs d'objets geo.
+  QStringList ls=s.split(QRegExp(":*\s*;"),QString::SkipEmptyParts);
+  if(ls.size()>1){
+    for( int i =0; i<ls.size();++i){
+      sendText(ls.at(i));
+    }
+    return;
+  }
+    Command newCommand;
+    newCommand.command=ls.at(0);
+    newCommand.attributes=0;
+    newCommand.isCustom=false;
+    evaluationLevel=commands.size();
+    InterItem * inter=0;
+    gen g(newCommand.command.toStdString(),context);
+    QList<MyItem*> v;
+    gen geva=protecteval(g,1,context);
+    addToVector(geva,v);
+    if (v.isEmpty()) {
+       std::cout<<print(g,context)<<std::endl;//test fred 
+       //std::cout<<print(geva,context)<<std::endl;//test fred 
+       std::cout<<print(gen(varPt.toStdString(),context),context)<<std::endl;//test fred pour element
+       giac::_purge(gen(varPt.toStdString(),context),context);
+       return;
+    }
+    // Case of intersections. the command can answer a group of points..
+    if(newCommand.command.contains("inter(")){
+        inter=new InterItem(false,this);
+	inter->setLevel(evaluationLevel);
+	//inter->setVar(v.at(0)->getLegend());
+	
+	if(v.at(0)->getLegend().isEmpty()){
+	  findFreeVar(varPt); 
+	  inter->setLegend(varPt);
+	}
+	else{ 
+	  inter->setLegend(v.at(0)->getLegend());
+	}
+	newCommand.item=inter;
+	newCommand.command=newCommand.command.remove(QRegExp("^.*:="));
+	commands.append(newCommand);
+	//qDebug()<<newCommand.command;
+	pointItems.append(inter);
+	for (int i=0;i<v.size();++i){
+	  if (v.at(i)->isPoint()){
+  	     //v.at(i)->setLegend("");
+	     v.at(i)->setVar((inter->getLegend()).append("[").append(QString::number(i)).append("]"));
+	     v.at(i)->setFromInter(true);
+	     pointItems.append(v.at(i));
+	     v.at(i)->updateScreenCoords(true);
+	     parent->addToTree(v.at(i));
+	     inter->addChild(v.at(i));
+	  }
+	}
+	findIDNT(g,inter);//find parents
+	parent->addToTree(newCommand.item);
+	focusOwner=newCommand.item;
+	undoStack->push(new AddObjectCommand(this));
+	parent->updateAllCategories();
+	updatePixmap(false);
+	repaint();
+	return;
+    }//end of inter case
+    //
+    v.at(0)->setVar(v.at(0)->getLegend());
+    newCommand.item=v.at(0);
+    if(v.at(0)->isCursorItem()){
+      qDebug()<<"cursor found";
+      cursorItems.append(v.at(0));
+    }
+    //non cursor item
+    else{
+      if(v.at(0)->isPoint()){
+	pointItems.append(newCommand.item);
+	if(newCommand.command.contains("element(")){
+	  qDebug()<<"point element found";
+	}
+	else{
+	  newCommand.item->setMovable(true);
+	}
+      }
+      else{  //non point, non cursor item
+	lineItems.append(v.at(0));
+	newCommand.item->setMovable(true);
+	  }
+    } 
+    findIDNT(g,newCommand.item); 	
+    commands.append(newCommand);
+    parent->addToTree(v.at(0));
+    undoStack->push(new AddObjectCommand(this));
+    focusOwner=v.at(0);
+    parent->updateAllCategories();
+    parent->selectInTree(focusOwner);
+    selectedItems.append(focusOwner);
+    updatePixmap(false);
+    repaint();
 
 }
 

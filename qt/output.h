@@ -274,6 +274,7 @@ class GraphWidget:public OutputWidget,public MainSheet{
     virtual void toXML(QDomElement &);
     void toInteractiveXML(QDomElement  &);
     void toInteractiveXCAS2D(QString  &);
+    void sendText(const QString  &);
     void loadXML(QDomElement &);
     void loadInteractiveXML(QDomElement &);
     void XML2Axis(QDomElement &);
@@ -361,6 +362,7 @@ public:
     void toScreenCoord(const double,const double,double& , double&);
     void toXY(const double,const double,double& , double&);
     void toInteractiveXCAS2D(QString  &);
+    void sendText(const QString  &);
     void toInteractiveXML(QDomElement &);
     void loadInteractiveXML(QDomElement &);
     void itemToXML(Command , QDomElement &, const bool &setLevel=false);
