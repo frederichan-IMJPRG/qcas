@@ -422,7 +422,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		  //drop those cases.
 		  xcasline=dataIn.readLine();//drop the bracket
 	    }
-	    if((xcasline.contains("Equation"))||(xcasline.contains("Output"))||(xcasline.contains("Mouse"))||(xcasline.contains("Button"))||(xcasline.contains("History"))||(xcasline.contains("Menu"))||(xcasline.contains("Scroll"))||(xcasline.contains("N4xcas7Graph3dE"))){
+	    if((xcasline.contains("Equation"))||(xcasline.contains("Output"))||(xcasline.contains("Mouse"))||(xcasline.contains("Button"))||(xcasline.contains("History"))||(xcasline.contains("Menu"))||(xcasline.contains("Scroll"))||(xcasline.contains("N4xcas7Graph3dE"))||(xcasline.contains("N4xcas7Graph2dE"))){
 		  //drop those cases.
 		  xcasline=dataIn.readLine();//drop the nextline (results)
 	    }
