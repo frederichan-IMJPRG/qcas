@@ -6578,12 +6578,12 @@ void AxisPanel::initGui(){
     showAxis=new QCheckBox(tr("Afficher l'axe"),this);
     QLabel * labelMin=new QLabel(tr("Minimum:"),this);
     editMin=new QLineEdit(this);
-    editMin->setValidator(new QDoubleValidator);
+    editMin->setValidator(new QDoubleValidator(this));
     editMin->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Maximum);
 
     QLabel * labelMax=new QLabel(tr("Maximum:"),this);
     editMax=new QLineEdit(this);
-    editMax->setValidator(new QDoubleValidator);
+    editMax->setValidator(new QDoubleValidator(this));
 
     QLabel * labelLegend=new QLabel(tr("Légende:"),this);
     editLabel=new QLineEdit(this);
@@ -6591,7 +6591,7 @@ void AxisPanel::initGui(){
     editUnitLabel=new QLineEdit(this);
     QLabel * labelDistance=new QLabel(tr("Espace-graduations:"),this);
     editDistance=new QLineEdit(this);
-    editDistance->setValidator(new QDoubleValidator);
+    editDistance->setValidator(new QDoubleValidator(this));
     colorPanel=new ColorPanel(this);
     grid->addWidget(showAxis,0,0,1,2);
     grid->addWidget(labelMin,1,0);
