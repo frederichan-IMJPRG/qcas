@@ -324,7 +324,7 @@ bool MainWindow::loadFile(const QString &fileName){
     dataIn >> compByteArray;
     QByteArray xmlByteArray = qUncompress(compByteArray);
     QString xmlString =QString::fromUtf8(xmlByteArray.data(), xmlByteArray.size());
-    qDebug()<<xmlString;
+    //qDebug()<<xmlString;//too slow with big files
     if (!doc.setContent(xmlString)){
         file.close();
         return false;
