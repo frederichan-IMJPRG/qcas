@@ -562,7 +562,7 @@ void CasManager::clearGiacDisplay(){
     fullDisplay.clear();
 }
 
-void CasManager::toXML(QDomElement & root){
+void CasManager::toXML(QDomElement & root, const bool &archivecontext){
     QDomElement settings=root.ownerDocument().createElement("settings");
     QDomElement cas=root.ownerDocument().createElement("cas");
     cas.setAttribute("xcas_mode",giac::xcas_mode(context));
@@ -598,13 +598,20 @@ void CasManager::toXML(QDomElement & root){
     general.setAttribute("autoscale",giac::autoscale);
     general.setAttribute("grid_attraction",Config::gridAttraction);
     settings.appendChild(general);
+    if(archivecontext){
+       QDomElement archct=root.ownerDocument().createElement("context");
+       //save giac session (variables... with history = false)
+       archct.setAttribute("context",QString::fromStdString(giac::archive_session(false,context)));
+       settings.appendChild(archct);
+       //qDebug()<<QString::fromStdString(giac::archive_session(true,context));
+    }
     root.appendChild(settings);
 
 
 
 }
 
-void CasManager::loadXML(const QDomElement& root){
+void CasManager::loadXML(const QDomElement& root,const bool &archivecontext){
     giac::xcas_mode(root.attribute("xcas_mode","0").toInt(),context);
     giac::scientific_format(root.attribute("scientific_format","0").toInt(),context);
     giac::integer_format(root.attribute("integer_format","10").toInt(),context);
@@ -626,6 +633,12 @@ void CasManager::loadXML(const QDomElement& root){
     giac::MAX_RECURSION_LEVEL=root.attribute("recurs_prog","100").toInt();
     giac::debug_infolevel=root.attribute("debug","0").toInt();
     giac::NEWTON_DEFAULT_ITERATION=root.attribute("newton","20").toInt();
+    if((archivecontext)&&(!root.attribute("context").isEmpty())){
+       giac::gen replace;
+       //qDebug()<<root.attribute("context");
+       giac::unarchive_session_string(root.attribute("context").toStdString(),-1,replace,context);
+    }
+
 }
 void CasManager::loadGeneralXML(const QDomElement& general){
     Config::graph_width=general.attribute("graph_width","400").toInt();

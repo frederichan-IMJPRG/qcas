@@ -391,8 +391,12 @@ bool MainWindow::loadFile(const QString &fileName){
                      if (!element.isNull()) {
                          QString tag=element.tagName();
                          if (tag=="cas") cas->loadXML(element);
-                         else if (tag=="general") { cas->loadGeneralXML(element);}
-                        }
+                         else {
+			   if (tag=="general") { cas->loadGeneralXML(element);}
+			   else{ if(tag=="context"){cas->loadXML(element,true);}//load giac context
+			   }
+			 }
+		     }
                      first=first.nextSibling();
                  }
              }
@@ -422,7 +426,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		  //drop those cases.
 		  xcasline=dataIn.readLine();//drop the bracket
 	    }
-	    if((xcasline.contains("Equation"))||(xcasline.contains("Output"))||(xcasline.contains("Mouse"))||(xcasline.contains("Button"))||(xcasline.contains("History"))||(xcasline.contains("Menu"))||(xcasline.contains("Scroll"))||(xcasline.contains("N4xcas7Graph3dE"))){
+	    if((xcasline.contains("Equation"))||(xcasline.contains("Output"))||(xcasline.contains("Mouse"))||(xcasline.contains("Button"))||(xcasline.contains("History"))||(xcasline.contains("Menu"))||(xcasline.contains("Scroll"))||(xcasline.contains("N4xcas7Graph3dE"))||(xcasline.contains("N4xcas7Graph2dE"))){
 		  //drop those cases.
 		  xcasline=dataIn.readLine();//drop the nextline (results)
 	    }
@@ -534,7 +538,7 @@ bool MainWindow::saveFile(const QString &fileName){
 
     QDomElement root=doc.createElement("qcas");
     // write cas configuration
-    cas->toXML(root);
+    cas->toXML(root,true);// the true option save also the  giac context
     for (int i=0;i<tabPages->count()-1;++i){
         MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->widget(i));
         switch(sheet->getType()){
