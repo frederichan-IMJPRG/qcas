@@ -1041,7 +1041,15 @@ namespace giac {
     gen df(derive(v[0],var,contextptr));
     if (is_undef(df))
       return df;
+    gen savevar=var;
+    if (var._IDNTptr->in_eval(1,var,savevar,contextptr))
+      ;
+    giac_assume(symbolic(at_and,makevecteur(symb_superieur_egal(var,range[0]),symb_inferieur_egal(var,range[1]))),contextptr);
     vecteur w=solve(df,var,0,contextptr);
+    if (savevar==var)
+      _purge(var,contextptr);
+    else
+      sto(savevar,var,contextptr);
     if (w.empty() && debug_infolevel)
       *logptr(contextptr) << "Warning: " << df << "=0: no solution found" << endl;
     gen resmin=plus_inf;

@@ -5214,7 +5214,9 @@ namespace giac {
 	gen new_exp=v1*exponent;
 	if (new_exp.type>_IDNT)
 	  new_exp=normal(new_exp,contextptr);
-	if ( v1.type==_INT_ && v1.val%2==0 && new_exp.type==_INT_ && new_exp.val%2 && !complex_mode(contextptr) ) 
+	if ( v1.type==_INT_ && v1.val%2==0 
+	     && (new_exp.type!=_INT_ || new_exp.val%2 )
+	     && !complex_mode(contextptr) ) 
 	  return pow(abs(v[0],contextptr),new_exp,contextptr); 
 	else 
 	  return pow(v[0],new_exp,contextptr);
@@ -6893,7 +6895,7 @@ namespace giac {
     case _FLOAT_:
       return a._FLOAT_val==giac_float(1);
     case _REAL:
-      return evalf_double(a,0,context0)._DOUBLE_val==1;
+      return is_zero(a-1);
     case _VECT:
       return a._VECTptr->size()==1 && is_one(a._VECTptr->front());
     case _POLY:
@@ -6922,7 +6924,7 @@ namespace giac {
     case _FLOAT_:
       return a._FLOAT_val==giac_float(-1);
     case _REAL:
-      return evalf_double(a,0,0)._DOUBLE_val==-1;
+      return is_zero(a+1);
     case _VECT:
       return a._VECTptr->size()==1 && is_minus_one(a._VECTptr->front());
     case _POLY:
@@ -7056,13 +7058,17 @@ namespace giac {
       if (i._SYMBptr->sommet==at_interval) {
 	if ((i._SYMBptr->feuille._VECTptr->front().type==_INT_) && (i._SYMBptr->feuille._VECTptr->back().type==_INT_) ){
 	  int debut=i._SYMBptr->feuille._VECTptr->front().val,fin=i._SYMBptr->feuille._VECTptr->back().val;
+	  debut=giacmax(debut,0);
+	  if (type==_STRNG)
+	    fin=giacmin(fin,_STRNGptr->size()-1);
+	  if (type==_VECT)
+	    fin=giacmin(fin,_VECTptr->size()-1);
 	  if (fin<debut)
 	    return (type==_STRNG)?string2gen("",false):gen(vecteur(0),subtype); // swap(debut,fin);
-	  if (type==_STRNG)
+	  if (type==_STRNG){
 	    return string2gen('"'+_STRNGptr->substr(debut,fin-debut+1)+'"');
+	  }
 	  if (type==_VECT){
-	    debut=giacmax(debut,0);
-	    fin=giacmin(fin,_VECTptr->size()-1);
 	    return gen(vecteur(_VECTptr->begin()+debut,_VECTptr->begin()+fin+1),subtype);
 	  }
 	}
@@ -9031,8 +9037,6 @@ namespace giac {
 
   int giac_yyparse(void * scanner);
 
-  bool try_parse_test_i = true;
-
   static int try_parse(const string & s,GIAC_CONTEXT){
     int res;
 #ifndef NO_STDEXCEPT
@@ -9040,12 +9044,12 @@ namespace giac {
 #endif
       void * scanner;
       YY_BUFFER_STATE state=set_lexer_string(s,scanner,contextptr);
-      if (xcas_mode(contextptr)==0 && try_parse_test_i)
+      if (xcas_mode(contextptr)==0 && try_parse_i(contextptr))
 	i_sqrt_minus1(0,contextptr);
       res=giac_yyparse(scanner);
       delete_lexer_string(state,scanner);
       // if xcas_mode(contextptr)<=0 scan for i:=something, if not present replace i by sqrt(-1)
-      if (xcas_mode(contextptr)==0 && try_parse_test_i){
+      if (xcas_mode(contextptr)==0 && try_parse_i(contextptr)){
 	const gen& p = parsed_gen(contextptr);
 	if (1) { // p.type==_SYMB || p.type==_VECT){
 	  vecteur v(rlvarx(p,i__IDNT_e));

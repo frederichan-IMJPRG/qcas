@@ -3352,10 +3352,20 @@ namespace giac {
     ++it;
     if (it==itend){
       // improve: if a is an idnt/symb and b also do not rebuild the vector
-      if (idnt_symb_int(b) && plus_idnt_symb(a))
+      if (idnt_symb_int(b) && plus_idnt_symb(a)){
+	if (b.is_symb_of_sommet(at_neg) && a==b._SYMBptr->feuille)
+	  return chkmod(zero,a);
+	if (a.is_symb_of_sommet(at_neg) && b==a._SYMBptr->feuille)
+	  return chkmod(zero,b);
 	return new_ref_symbolic(symbolic(at_plus,args));
-      if (idnt_symb_int(a) && plus_idnt_symb(b))
+      }
+      if (idnt_symb_int(a) && plus_idnt_symb(b)){
+	if (b.is_symb_of_sommet(at_neg) && a==b._SYMBptr->feuille)
+	  return chkmod(zero,a);
+	if (a.is_symb_of_sommet(at_neg) && b==a._SYMBptr->feuille)
+	  return chkmod(zero,b);
 	return new_ref_symbolic(symbolic(at_plus,args));
+      }
       return operator_plus(a,b,contextptr);
     }
     gen sum(operator_plus(a,b,contextptr));
@@ -7741,8 +7751,8 @@ namespace giac {
 #endif
 
 #if defined(GIAC_GENERIC_CONSTANTS) // || (defined(VISUALC) && !defined(RTOS_THREADX)) || defined(__x86_64__)
-  gen cst_two_pi(symbolic(at_prod,makevecteur(plus_two,cst_pi)));
-  gen cst_pi_over_2(_FRAC2_SYMB(cst_pi,2));
+  gen cst_two_pi(symbolic(at_prod,makevecteur(plus_two,_IDNT_pi())));
+  gen cst_pi_over_2(_FRAC2_SYMB(_IDNT_pi(),2));
   gen plus_inf(symbolic(at_plus,_IDNT_infinity()));
   gen minus_inf(symbolic(at_neg,_IDNT_infinity()));
   gen plus_one_half(fraction(1,2));
@@ -7775,8 +7785,8 @@ namespace giac {
   gen tan_5pi_12(symbolic(at_plus,makevecteur(2,plus_sqrt3)));
   gen minus_tan_pi_12(symbolic(at_neg,tan_pi_12));
   gen minus_tan_5pi_12(symbolic(at_neg,tan_5pi_12));
-  gen rad2deg_e(_FRAC2_SYMB(180,cst_pi));
-  gen deg2rad_e(_FRAC2_SYMB(cst_pi,180));
+  gen rad2deg_e(_FRAC2_SYMB(180,_IDNT_pi()));
+  gen deg2rad_e(_FRAC2_SYMB(_IDNT_pi(),180));
   // 0 = -pi, 12=0, 24=pi
   const gen * const table_cos[trig_deno+1]={
     &minus_one,&minus_cos_pi_12,&minus_sqrt3_2,&minus_sqrt2_2,&minus_one_half,&minus_sin_pi_12,

@@ -286,12 +286,13 @@ mpz_class smod(const mpz_class & a,int reduce){
 	if ( newu < u ){
 	  break;
 	}
-	if (curu-newu>var2)
+	if (curu>newu+var2)
 	  current.insert(current.end(),(curu-newu)/var2-1,T(0));
 	current.push_back(it->g);
 	curu=newu;
       }
-      current.insert(current.end(),(curu-u)/var2,T(0));
+      if (curu>u)
+	current.insert(current.end(),(curu-u)/var2,T(0));
       if (!gcdsmallmodpoly(pcontxn,current,pminptr,modulo,tmp))
 	return false;
       pcontxn=tmp;
@@ -312,11 +313,13 @@ mpz_class smod(const mpz_class & a,int reduce){
 	if ( newu < u ){
 	  break;
 	}
-	current.insert(current.end(),(curu-newu)/var2-1,T(0));
+	if (curu>newu+var2)
+	  current.insert(current.end(),(curu-newu)/var2-1,T(0));
 	current.push_back(it->g);
 	curu=newu;
       }
-      current.insert(current.end(),(curu-u)/var2,T(0));
+      if (curu>u)
+	current.insert(current.end(),(curu-u)/var2,T(0));
       if (!DivRem(current,pcontxn,pminptr,modulo,tmp,reste))
 	return false;
       typename vector<T>::const_iterator jt=tmp.begin(),jtend=tmp.end();
@@ -911,6 +914,13 @@ mpz_class smod(const mpz_class & a,int reduce){
     for (it=itend-ws;it!=itend;++jt,++it){
       *it = (*it+*jt)%m;
     }
+    // trim resulting polynomial
+    for (it=v.begin();it!=itend;++it){
+      if (*it)
+	break;
+    }
+    if (it!=v.begin())
+      v.erase(v.begin(),it);
   }
 
   // v <- v+w % m
@@ -948,6 +958,13 @@ mpz_class smod(const mpz_class & a,int reduce){
     for (it=itend-ws;it!=itend;++jt,++it){
       *it = smod(*it+*jt,m);
     }
+    // trim resulting polynomial
+    for (it=v.begin();it!=itend;++it){
+      if (!is_zero(*it))
+	break;
+    }
+    if (it!=v.begin())
+      v.erase(v.begin(),it);
   }
 
   // v <- v-w % m
@@ -1749,6 +1766,7 @@ mpz_class smod(const mpz_class & a,int reduce){
       mulmod(vx,x,modulo);
       addmod(vx,*it,modulo);
     }
+    // trim(vx);
   }
 
   static bool is_equal_modulo(const vector<int> & v,const vector<int> & w,int modulo){
@@ -2685,7 +2703,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  if (hornermod(lcoeffp,alpha1,modulo)==0 || hornermod(lcoeffq,alpha1,modulo)==0)
 	    continue;
 	  if (debug_infolevel>20-dim)
-	    cerr << "gcdmod eval alpha1=" << alpha << " dim " << dim << " " << clock() << endl;
+	    cerr << "gcdmod eval alpha1=" << alpha1 << " dim " << dim << " " << clock() << endl;
 	  break;
 	} // end for (;;)
 	// alpha is probably admissible 
@@ -2728,23 +2746,24 @@ mpz_class smod(const mpz_class & a,int reduce){
 	do_recursive_gcd_call((void *)&gcd_call_param_v[thread]);
 #endif
       }
+#ifdef HAVE_PTHREAD_H
+      for (int thread=0;thread<nthreads-1;++thread){
+	int vpos=alphav.size()-(nthreads-thread);
+	// wait for thread to finish
+	void * ptr;
+	pthread_join(tab[thread],&ptr);
+	if (!ptr){
+	  if (dim2) 
+	    dim2gcdv[vpos].clear();
+	  else
+	    gcdv[vpos].clear();
+	}
+      }
+#endif
       for (int thread=0;thread<nthreads;++thread){
 	int vpos=alphav.size()-(nthreads-thread);
 	// Compare gcd degree in x1..xn-1, 0 means trash this value of alpha1
 	int comp=0;
-	// wait for thread to finish
-#ifdef HAVE_PTHREAD_H
-	if (thread!=nthreads-1){
-	  void * ptr;
-	  pthread_join(tab[thread],&ptr);
-	  if (!ptr){
-	    if (dim2) 
-	      dim2gcdv[vpos].clear();
-	    else
-	      gcdv[vpos].clear();
-	  }
-	}
-#endif
 	if ( dim2 ? (!dim2gcdv[vpos].empty()) : (!gcdv[vpos].empty()) ){
 	  if (dim2)
 	    gdeg[0]=dim2gcdv[vpos].size()-1;
@@ -3998,6 +4017,8 @@ mpz_class smod(const mpz_class & a,int reduce){
 	if (it->type==_FRAC){
 	  if (!vlcm(ppcm,it->_FRACptr->den,modulo))
 	    return 0;
+	  if ((int)ppcm.size()>maxdeg+1)
+	    return 0;
 	}
 	else {
 	  if (it->type==_POLY){
@@ -4005,6 +4026,8 @@ mpz_class smod(const mpz_class & a,int reduce){
 	    for (;jt!=jtend;++jt){
 	      if (jt->value.type==_FRAC){
 		if (!vlcm(ppcm,jt->value._FRACptr->den,modulo))
+		  return 0;
+		if ((int)ppcm.size()>maxdeg+1)
 		  return 0;
 	      }
 	    }
@@ -4036,7 +4059,13 @@ mpz_class smod(const mpz_class & a,int reduce){
 	    if (it->type==_POLY){
 	      vector< monomial<gen> >::iterator jt=it->_POLYptr->coord.begin(),jtend=it->_POLYptr->coord.end();
 	      for (;jt!=jtend;++jt){
-		if (jt->value.type==_FRAC)
+		if (jt->value.type==_FRAC){
+		  modpoly quot,rest;
+		  if (!DivRem(ppcm,*jt->value._FRACptr->den._VECTptr,&env,quot,rest,false) || !rest.empty())
+		    return 0; // setsizeerr();
+		  jt->value = smod(adjust*(jt->value._FRACptr->num * gen(quot,_POLY1__VECT)),modulo);
+		}
+		else
 		  jt->value = smod(adjust*(den * jt->value),modulo) ;
 	      }
 	    }
@@ -5126,7 +5155,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	  if (is_zero(hornermod_ext(lcoeffp,alpha1,modulo)) || is_zero(hornermod_ext(lcoeffq,alpha1,modulo)))
 	    continue;
 	  if (debug_infolevel>20-dim)
-	    cerr << "gcdmod eval alpha1=" << alpha << " dim " << dim << " " << clock() << endl;
+	    cerr << "gcdmod eval alpha1=" << alpha1 << " dim " << dim << " " << clock() << endl;
 	  break;
 	} // end for (;;)
 	// alpha is probably admissible 
@@ -5162,10 +5191,9 @@ mpz_class smod(const mpz_class & a,int reduce){
 	do_recursive_gcd_ext_call((void *)&gcd_call_param_v[thread]);
 #endif
       }
-      for (int thread=0;thread<nthreads;++thread){
+      // wait for all threads before doing modifications in gcdv and co
+      for (int thread=0;thread<nthreads-1;++thread){
 	int vpos=alphav.size()-(nthreads-thread);
-	// Compare gcd degree in x1..xn-1, 0 means trash this value of alpha1
-	int comp=0;
 	// wait for thread to finish
 #ifdef HAVE_PTHREAD_H
 	if (thread!=nthreads-1){
@@ -5187,6 +5215,13 @@ mpz_class smod(const mpz_class & a,int reduce){
 #endif
 	if (gcd_ext_ok!=1)
 	  continue; // improve: kill other threads
+      }
+      if (gcd_ext_ok!=1)
+	continue; 
+      for (int thread=0;thread<nthreads;++thread){
+	int vpos=alphav.size()-(nthreads-thread);
+	// Compare gcd degree in x1..xn-1, 0 means trash this value of alpha1
+	int comp=0;
 	if (!gcdv[vpos].empty()){
 	  degree(gcdv[vpos],shift_vars_truncated,gdeg);
 	  comp=compare(gdeg,delta); 

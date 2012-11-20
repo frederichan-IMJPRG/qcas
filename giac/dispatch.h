@@ -213,7 +213,8 @@ namespace giac {
     _POINT__VECT=20,
     _POLYEDRE__VECT=21,
     _RGBA__VECT=22,
-    _LIST__VECT=23
+    _LIST__VECT=23,
+    _LOGO__VECT=24
   } ;
 
   enum symb_subtypes {

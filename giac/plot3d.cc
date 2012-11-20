@@ -191,6 +191,10 @@ namespace giac {
       }
       v[1]=l2norm(*tmp._VECTptr,contextptr);
     }
+    else {
+      if (is_strictly_positive(-v[1],contextptr))
+	return gensizeerr(contextptr);
+    }
     return pnt_attrib(symbolic(at_hypersphere,gen(v,args.subtype)),attributs,contextptr);
   }
   static const char _sphere_s []="sphere";

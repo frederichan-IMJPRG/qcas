@@ -489,6 +489,25 @@ namespace giac {
 	  return;
 	}
       }
+      if (lidnt(e)==vecteur(1,x)){
+	// if the equation does not depend on parameters
+	// and the variable is assumed to live in a finite interval 
+	// try bisection solver
+	vecteur a;
+	gen a0,a1;
+	if (find_range(x,a,contextptr)==1 && a.size()==1){
+	  gen A=a.front();
+	  if (A.type==_VECT && A._VECTptr->size()==2 && (a0=A._VECTptr->front())!=minus_inf && (a1=A._VECTptr->back())!=plus_inf){
+	    int iszero=-1;
+	    a=bisection_solver(e,x,a0,a1,iszero,contextptr);
+	    if (iszero==1 || iszero==0){
+	      *logptr(contextptr) << "Unable to isolate "+string(x.print(contextptr))+" in "+e.print(contextptr) << ", switching to approx. solutions" << endl;
+	      v=mergevecteur(v,a);
+	      return;
+	    }
+	  }
+	}
+      }
 #ifndef NO_STDEXCEPT
       throw(std::runtime_error("Unable to isolate "+string(x.print(contextptr))+" in "+e.print(contextptr)));
 #endif
@@ -813,16 +832,27 @@ namespace giac {
       gen l=range[i],m=range[i+1];
       if (l==m)
 	continue;
-      gen test;
+      gen testval;
       if (l==minus_inf)
-	test=m-1;
+	testval=m-1;
       else {
 	if (m==plus_inf)
-	  test=l+1;
+	  testval=l+1;
 	else
-	  test=(l+m)/2;
+	  testval=(l+m)/2;
       }
-      test=eval(subst(e0,x,test,false,contextptr),eval_level(contextptr),contextptr);
+      gen test=eval(subst(e0,x,testval,false,contextptr),eval_level(contextptr),contextptr);
+      if (is_undef(test)){
+	if (e0.type==_SYMB && e0._SYMBptr->feuille.type==_VECT && e0._SYMBptr->feuille._VECTptr->size()==2){
+	  gen a=e0._SYMBptr->feuille[0];
+	  a=limit(a,x,testval,0,contextptr);
+	  gen b=e0._SYMBptr->feuille[1];
+	  b=limit(b,x,testval,0,contextptr);
+	  test=e0._SYMBptr->sommet(gen(makevecteur(a,b),_SEQ__VECT),contextptr);
+	}
+	if (is_undef(test))
+	  return vecteur(1,gensizeerr(gettext("Unable to check test at x=")+test.print()));
+      }
       if (test!=1){
 	if (!equalposcomp(already_added,l) && equalposcomp(veq_not_singu,l))
 	  add_eq.push_back(l);
@@ -1131,30 +1161,36 @@ namespace giac {
 	return;
       }
     } // end if (e.type==_SYMB)
-    /*
+    vecteur tmp1=listvars;
+    tmp1.push_back(x);
+    tmp1.push_back(cst_pi);
+    vecteur tmp2=tmp1;
+    lvar(e,tmp1);
+    if (tmp1==tmp2){
       // new code with resultant in all var except the first one
       // disadvantage: does not check that listvars[i] are admissible
       // example assume(M<0); solve(sqrt(x)=M);
-    gen expr(e);
-    int s=listvars.size();
-    for (int i=1;i<s;++i){
-      // expr must be rationnal wrt listvars[i]
-      vecteur vtmp(1,listvars[i]);
-      if (listvars[i].type!=_IDNT)
-	setsizeerr();
-      rlvarx(expr,listvars[i],vtmp);
-      // IMPROVE: maybe a function applied to expr is rationnal
-      if (vtmp.size()!=1)
-	setsizeerr(gettext("Solve with fractional power:")+expr.print(contextptr)+" is not rationnal w.r.t. "+listvars[i].print(contextptr));
-      if (!is_zero(derive(expr,listvars[i],contextptr)))
-	expr=_resultant(makevecteur(expr,equations[i-1],listvars[i]),contextptr);
-    }
-    expr=factor(expr,false,contextptr);
-    if (is_zero(derive(expr,x,contextptr)))
+      // hence can be used only if no parameter present
+      gen expr(e);
+      int s=listvars.size();
+      for (int i=1;i<s;++i){
+	// expr must be rationnal wrt listvars[i]
+	vecteur vtmp(1,listvars[i]);
+	if (listvars[i].type!=_IDNT)
+	  setsizeerr();
+	rlvarx(expr,listvars[i],vtmp);
+	// IMPROVE: maybe a function applied to expr is rationnal
+	if (vtmp.size()!=1)
+	  setsizeerr(gettext("Solve with fractional power:")+expr.print(contextptr)+" is not rationnal w.r.t. "+listvars[i].print(contextptr));
+	if (!is_zero(derive(expr,listvars[i],contextptr)))
+	  expr=_resultant(makevecteur(expr,equations[i-1],listvars[i]),contextptr);
+      }
+      expr=factor(expr,false,contextptr);
+      if (is_zero(derive(expr,x,contextptr)))
+	return;
+      solve(expr,x,fullres,isolate_mode,contextptr);
       return;
-    solve(expr,x,fullres,isolate_mode,contextptr);
-    return;
-    */
+    }
     // old code with Groebner basis
     equations.push_back(e);      
     vecteur res=gsolve(equations,listvars,complex_mode(contextptr),contextptr);
@@ -1165,10 +1201,10 @@ namespace giac {
     iterateur it=res.begin(),itend=res.end();
     for (;it!=itend;++it)
       *it=(*it)[0];
-    _purge(vecteur(listvars.begin()+1,listvars.end()),contextptr);
-    if (listvars[0].type==_IDNT){
-      fullres=mergevecteur(res,fullres);
-      return;
+      _purge(vecteur(listvars.begin()+1,listvars.end()),contextptr);
+      if (listvars[0].type==_IDNT){
+	fullres=mergevecteur(res,fullres);
+	return;
     }
     // recursive call to solve composevar=*it with respect to x
     for (it=res.begin();it!=itend;++it){
@@ -1345,16 +1381,28 @@ namespace giac {
       // Only if expr1 does not depend on other variables than x
       vecteur othervar(1,x),res;
       lidnt(expr1,othervar);
+      int pospi;
+      if (pospi=equalposcomp(othervar,cst_pi)) 
+	othervar.erase(othervar.begin()+pospi-1);
       if (othervar.size()==listvars.size()){
 	const_iterateur it=fullres.begin(),itend=fullres.end();
 	for (;it!=itend;++it){
 	  vecteur algv=alg_lvar(*it);
-	  if ( (!algv.empty() && algv.front().type==_VECT && !algv.front()._VECTptr->empty()) || is_zero(limit(expr,x,*it,0,contextptr)))
+	  if (!algv.empty() && algv.front().type==_VECT && !algv.front()._VECTptr->empty())
 	    res.push_back(*it);
+	  else {
+	    gen tmp=evalf(subst(expr,x,*it,false,contextptr),1,contextptr);
+	    if (is_undef(tmp))
+	      tmp=limit(expr,x,*it,0,contextptr);
+	    if (is_zero(tmp))
+	      res.push_back(*it);
+	  }
 	}
       }
-      else
+      else {
+	*logptr(contextptr) << gettext("Warning, solutions were not checked!") << endl;
 	res=fullres;
+      }
       return res;
     }
     lv=lvarx(expr,x);
@@ -1637,6 +1685,8 @@ namespace giac {
       }
       arg1=w;
     }
+    if (arg1.type!=_VECT && !arg1.is_symb_of_sommet(at_equal) && !arg1.is_symb_of_sommet(at_superieur_strict) && !arg1.is_symb_of_sommet(at_superieur_egal) && !arg1.is_symb_of_sommet(at_inferieur_strict) && !arg1.is_symb_of_sommet(at_inferieur_egal))
+      *logptr(contextptr) << gettext("Warning, argument is not an equation, solving ") << arg1 << "=0" << endl;
     vecteur res=solve(apply(arg1,equal2diff),v.back(),isolate_mode,contextptr);
     // if (is_fully_numeric(res))
     if (v.back().type!=_VECT && lidnt(res).empty() && is_zero(im(res,contextptr)))
@@ -1648,6 +1698,22 @@ namespace giac {
   static const char _solve_s []="solve";
   static define_unary_function_eval_quoted (__solve,&_solve,_solve_s);
   define_unary_function_ptr5( at_solve ,alias_at_solve,&__solve,_QUOTE_ARGUMENTS,true);
+
+  gen _realproot(const gen & e,GIAC_CONTEXT) {
+    gen g=_proot(e,contextptr);
+    if (g.type!=_VECT)
+      return g;
+    vecteur w;
+    for (unsigned i=0;i<g._VECTptr->size();++i){
+      gen tmp=(*g._VECTptr)[i];
+      if (is_zero(im(tmp,contextptr)))
+	w.push_back(tmp);
+    }
+    return w;
+  }
+  static const char _realproot_s []="realproot";
+  static define_unary_function_eval (__realproot,&giac::_realproot,_realproot_s);
+  define_unary_function_ptr5( at_realproot ,alias_at_realproot,&__realproot,0,true);
 
   // bisection solver on a0,b0 with a sign reversal inside
   static vecteur bisection_solver_sr(const gen & equation,const gen & var,const gen & a0,const gen &b0,int & iszero,double faorig,double fborig,GIAC_CONTEXT){

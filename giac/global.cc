@@ -456,6 +456,21 @@ extern "C" void Sleep(unsigned int miliSecond);
       _all_trig_sol_=b;
   }
 
+  static bool _try_parse_i_=true; 
+  bool & try_parse_i(GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      return contextptr->globalptr->_try_parse_i_;
+    else
+      return _try_parse_i_;
+  }
+
+  void try_parse_i(bool b,GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      contextptr->globalptr->_try_parse_i_=b;
+    else
+      _try_parse_i_=b;
+  }
+
   static bool _lexer_close_parenthesis_=true; 
   bool & lexer_close_parenthesis(GIAC_CONTEXT){
     if (contextptr && contextptr->globalptr )
@@ -728,7 +743,11 @@ extern "C" void Sleep(unsigned int miliSecond);
       _logptr_=b;
   }
 
-  thread_param::thread_param(): _kill_thread(false), thread_eval_status(-1), v(6) {}
+  thread_param::thread_param(): _kill_thread(false), thread_eval_status(-1), v(6)
+#ifdef HAVE_LIBPTRHEAD
+			      ,eval_thread(0)
+#endif
+ {}
 
   thread_param * & context0_thread_param_ptr(){
     static thread_param * ans=new thread_param();
@@ -1184,17 +1203,32 @@ extern "C" void Sleep(unsigned int miliSecond);
       return _turtle_();
   }
 
+  // protect turtle access by a lock
+  // turtle changes are mutually exclusive even in different contexts
+#ifdef HAVE_LIBPTHREAD
+  pthread_mutex_t turtle_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
   std::vector<logo_turtle> & _turtle_stack_(){
     static std::vector<logo_turtle> * ans = new std::vector<logo_turtle>(1,_turtle_());
+#ifdef HAVE_LIBPTHREAD
+    ans->reserve(20000);
+#endif
     return *ans;
   }
   std::vector<logo_turtle> & turtle_stack(GIAC_CONTEXT){
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_lock(&turtle_mutex);
+#endif
+    std::vector<logo_turtle> * ans=0;
     if (contextptr && contextptr->globalptr )
-      return contextptr->globalptr->_turtle_stack_;
+      ans=&contextptr->globalptr->_turtle_stack_;
     else
-      return _turtle_stack_();
+      ans=&_turtle_stack_();
+#ifdef HAVE_LIBPTHREAD
+    pthread_mutex_unlock(&turtle_mutex);
+#endif
+    return *ans;
   }
-
 
   // Other global variables
   bool secure_run=true;
@@ -2938,6 +2972,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      ptr->globalptr->_do_lnabs_=_do_lnabs_;
      ptr->globalptr->_eval_abs_=_eval_abs_;
      ptr->globalptr->_complex_mode_=_complex_mode_;
+     ptr->globalptr->_try_parse_i_=_try_parse_i_;
      ptr->globalptr->_complex_variables_=_complex_variables_;
      ptr->globalptr->_increasing_power_=_increasing_power_;
      ptr->globalptr->_approx_mode_=_approx_mode_;
@@ -3329,7 +3364,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #ifdef BCD
 		     _bcd_decpoint_('.'|('E'<<16)|(' '<<24)),_bcd_mantissa_(12+(15<<8)), _bcd_flags_(0),
 #endif
-		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
+		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
     _turtle_stack_.push_back(_turtle_);
     _debug_ptr=new debug_struct;
     _thread_param_ptr=new thread_param;

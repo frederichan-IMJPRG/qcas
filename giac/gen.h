@@ -81,8 +81,6 @@ namespace giac {
 #endif
 
 
-  extern bool try_parse_test_i;
-
   class gen ; 
   // errors
   void settypeerr(GIAC_CONTEXT0);
@@ -1160,7 +1158,7 @@ namespace giac {
     ~identificateur();
     identificateur & operator =(const identificateur & s);
     gen eval(int level,const gen & orig,const context * context_ptr) ;
-    bool in_eval(int level,const gen & orig,gen & evaled,const context * context_ptr) ;
+    bool in_eval(int level,const gen & orig,gen & evaled,const context * context_ptr, bool No38Lookup=false); // if No38Lookup, does not check if HP38 knows about this name...
     const char * print(const context * context_ptr) const ;
     std::string name() const { return id_name; }
     void dbgprint() const { std::cout << this->print(context0); }
@@ -1170,6 +1168,7 @@ namespace giac {
     bool operator ==(const gen & i);
     inline bool operator !=(const identificateur & i){ return !(*this==i); }
     inline bool operator !=(const gen & i){ return !(*this==i);}
+    void MakeCopyOfNameIfNotLocal(); ///< if the name is not dynamicaly allocated, create a copy for that id.
   };
   struct ref_identificateur {
     volatile int ref_count;
@@ -1402,6 +1401,10 @@ namespace giac {
     return fExpand(g._FLOAT_val.f,bcdptr);
   }
 #endif
+
+  // should be in input_lexer.h
+  // return true/false to tell if s is recognized. return the appropriate gen if true
+  bool CasIsBuildInFunction(char const *s, gen &g);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -185,7 +185,7 @@ class init_gmp_memory
 extern init_gmp_memory init_gmp_memory_instance;
 
 #ifdef BCD
-#define ASPEN_GEOMETRY // required also here because of name resolution in identificateur.cc
+// #define ASPEN_GEOMETRY // required also here because of name resolution in identificateur.cc
 // #define CAS38_DISABLED
 
 #include <stdlib.h>

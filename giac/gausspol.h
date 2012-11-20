@@ -104,6 +104,7 @@ namespace giac {
   polynome re(const polynome & th);
   polynome im(const polynome & th);
   polynome conj(const polynome & th);
+  polynome poly1_2_polynome(const vecteur & v, int dimension);
   void polynome2poly1(const polynome & p,int var,vecteur & v);
   vecteur polynome12poly1(const polynome & p);
   int inner_POLYdim(const vecteur & v);

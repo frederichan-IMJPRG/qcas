@@ -98,9 +98,9 @@ namespace giac {
   void find_all_index(const std::string & subdir,std::multimap<std::string,std::string> & mtt,std::multimap<std::string,std::string> & mall);
   // Return all HTML nodes refered to s in mtt
   std::vector<std::string> html_help(std::multimap<std::string,std::string> & mtt,const std::string & s);
-  std::string html_help_init(char * arg,int language,bool verbose=true,bool force_rebuild=false);
+  std::string html_help_init(const char * arg,int language,bool verbose=true,bool force_rebuild=false);
 #endif
-  std::string xcasroot_dir(char * arg);
+  std::string xcasroot_dir(const char * arg);
 
   std::string localize(const std::string & s,int language);
   std::string unlocalize(const std::string & s);
