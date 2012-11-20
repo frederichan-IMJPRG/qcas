@@ -97,8 +97,8 @@ public:
     void appendPrintCache(const QChar& );
     QStringList& getGiacDisplay() ;
     void clearGiacDisplay();
-    void toXML(QDomElement &);
-    void loadXML(const QDomElement &);
+    void toXML(QDomElement &, const bool &archivecontext=false);
+    void loadXML(const QDomElement &, const bool &archivecontext=false);
     void loadGeneralXML(const QDomElement &);
 private:
     static giac::gen answer;
