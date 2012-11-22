@@ -27,7 +27,10 @@ int main(int argc, char * argv []){
 
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
     MainWindow win;
-    win.show();
+    if(argc>1){
+      if(win.loadFile(argv[1])){win.show();}
+    }
+    else{win.show();}
 
     return app.exec();
 

@@ -71,6 +71,7 @@ class MainWindow :public QMainWindow {
     void setUndoButton(bool);
     int getDecimalDigit() const;
     void setDecimalDigits(const int & a);
+    bool loadFile(const QString &fileName);
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -85,7 +86,7 @@ private:
     void readSettings();
     void writeSettings();
     bool okToContinue();
-    bool loadFile(const QString &fileName);
+    bool loadQcasFile(const QString &fileName);
     bool loadGiacFile(const QString &fileName);
     bool saveFile(const QString &fileName);
     bool saveToGiacFile(const QString &fileName);

@@ -304,16 +304,21 @@ void MainWindow::open(){
         clearWorkspace();
         QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS or Giac/Xcas files (*.qcas *.cas *.xws)"));
         if (!fileName.isEmpty()){
-	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
-	    loadGiacFile(fileName);
-	  }
-	  else 
 	    loadFile(fileName);
 	}
     }
 }
 
 bool MainWindow::loadFile(const QString &fileName){
+      if (!fileName.isEmpty()){
+ 	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
+	    return loadGiacFile(fileName);
+ 	  }
+ 	  else 
+	    return loadQcasFile(fileName);
+      }
+}
+bool MainWindow::loadQcasFile(const QString &fileName){
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
         return false;
