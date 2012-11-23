@@ -3978,7 +3978,10 @@ namespace giac {
   static string printasdouble_deux_points(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     gen a,b;
     check_binary(feuille,a,b);
-    return a.print(contextptr)+"::"+b.print(contextptr)+ " ";
+    string s=b.print(contextptr);
+    if (s.size()>2 && s[0]=='\'' && s[s.size()-1]=='\'')
+      s=s.substr(1,s.size()-2);
+    return a.print(contextptr)+"::"+s+ " ";
   }
   gen symb_double_deux_points(const gen & args){
     return symbolic(at_double_deux_points,args);
@@ -3988,9 +3991,9 @@ namespace giac {
     gen a,b,c;
     if (!check_binary(args,a,b))
       return a;
-    if (sto_38 && abs_calc_mode(contextptr)==38 && a.type==_IDNT && b.type==_IDNT){
+    if (sto_38 && abs_calc_mode(contextptr)==38 && a.type==_IDNT){
       gen value;
-      if (rcl_38(value,a._IDNTptr->id_name,b._IDNTptr->id_name,undef,false,contextptr)){
+      if (rcl_38(value,a._IDNTptr->id_name,b.type==_IDNT?b._IDNTptr->id_name:b.print().c_str(),undef,false,contextptr)){
 	return value;
       }
     }
@@ -7459,6 +7462,8 @@ namespace giac {
       return plus_one;
     if (is_one(exponent))
       return g;
+    if (evalf_double(exponent,1,context0).type!=_DOUBLE_)
+      return gensizeerr("Invalid unit exponent"+exponent.print());
     return symbolic(at_pow,gen(makevecteur(g,exponent),_SEQ__VECT));
   }
   gen mksa_reduce(const gen & g,GIAC_CONTEXT){

@@ -3390,7 +3390,9 @@ namespace giac {
 	cerr << "End cst " << p_simp.dim << " " << clock() << " " << d.coord.size() << endl;
       return true;
     }
-    if (pt==_EXT){
+    if (pt==_EXT){ 
+      // FIXME then test for
+      // m:=matrix(2,2,[1,1,i*(sqrt(a^2*b^2-4*a*b)+a*b)/(2*a),i*(-sqrt(a^2*b^2-4*a*b)+a*b)/(2*a)]); M:=simplify(trn(m)*m); egvl(M);
       int dim=p_simp.dim;
       vector< T_unsigned<gen,hashgcd_U> > p,q,g,pcof,qcof;
       index_t di(dim);

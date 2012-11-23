@@ -309,7 +309,7 @@ namespace giac {
 	if (s[i]==t[j])
 	  res=max(oldres-1,*(curit+1)-1,*curit+2);
 	else {
-          if (abs(s[i]-t[i])==32)
+          if (abs(s[i]-t[j])==32)
 	    res=max(oldres-1,*(curit+1)-1,*curit+1);
           else
 	    res=max(oldres,*(curit+1),*curit)-1;
@@ -918,7 +918,7 @@ namespace giac {
     return v;
   }
 
-  string xcasroot_dir(char * arg){
+  string xcasroot_dir(const char * arg){
     string xcasroot;
     if (getenv("XCAS_ROOT")){
       xcasroot=string(getenv("XCAS_ROOT"));
@@ -1032,7 +1032,7 @@ namespace giac {
     return true;
   }
 
-  string html_help_init(char * arg,int language,bool verbose,bool force_rebuild){
+  string html_help_init(const char * arg,int language,bool verbose,bool force_rebuild){
     string xcasroot=xcasroot_dir(arg);
     // HTML online help
     string html_help_dir=xcasroot+"doc/";

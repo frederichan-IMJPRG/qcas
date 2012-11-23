@@ -495,6 +495,13 @@ namespace giac {
     }
   }
 
+  void identificateur::MakeCopyOfNameIfNotLocal() {
+    int_string_shortint_bool * ptr = (int_string_shortint_bool *) ref_count;
+    if (ptr->s_dynalloc) return;
+    id_name = ptr->s= strdup(ptr->s);
+    ptr->s_dynalloc= true;
+  }
+
   identificateur & identificateur::operator =(const identificateur & s){
     if (ref_count){
       --(*ref_count);
@@ -793,7 +800,7 @@ namespace giac {
     return globalize?global_eval(res,level):res; 
   }
 
-  bool identificateur::in_eval(int level,const gen & orig,gen & evaled,const context * contextptr) {
+  bool identificateur::in_eval(int level,const gen & orig,gen & evaled,const context * contextptr, bool No38Lookup) {
     // if (!ref_count) return false; // does not work for cst ref identificateur
     if (contextptr){
       const context * cur=contextptr;
@@ -809,10 +816,11 @@ namespace giac {
       // check for quoted
       if (cur->quoted_global_vars && !cur->quoted_global_vars->empty() && equalposcomp(*cur->quoted_global_vars,orig)) 
 	return false;
-      if (sto_38) //  && abs_calc_mode(contextptr)==38)
+      if (!No38Lookup && sto_38) //  && abs_calc_mode(contextptr)==38)
 	return eval_38(level,orig,evaled,id_name,contextptr);
       sym_tab::const_iterator it=cur->tabptr->find(id_name);
       if (it==cur->tabptr->end()){
+        if (No38Lookup) return false;
 	if (!sto_38 && abs_calc_mode(contextptr)==38)
 	  return eval_38(level,orig,evaled,id_name,contextptr);
 	return false;
@@ -853,7 +861,7 @@ namespace giac {
     evaled=evaled.eval(level,contextptr);
     return true;
   }
-
+  
   void identificateur::push(int protection,const gen & e){
     if (!localvalue)
       localvalue=new vecteur;

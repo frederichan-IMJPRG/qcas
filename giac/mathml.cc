@@ -1045,7 +1045,7 @@ namespace giac {
 	return "";
       case _STRNG:
 	return "<mi>"+(*e._STRNGptr)+"</mi>";
-      case _FUNC:
+      case _FUNC: case _MAP:
 	return "<mi>"+e.print(contextptr)+"</mi>";
       case _USER:
 	return "<mi>"+e._USERptr->texprint(contextptr)+"</mi>"; // <--------------------------- A traduire ?

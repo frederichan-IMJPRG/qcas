@@ -386,7 +386,8 @@ namespace giac {
       if (is_one(tmpmult))
 	g=pptr;
       else
-	g=fraction(tmpmult*pptr,polynome(tmpmult,np.dim));
+	g=fraction(tmpmult*pptr,tmpmult); // polynome(tmpmult,np.dim));
+      // changed 4 nov. 2012 failure on f(x):=sqrt(x)/(x+1); F:=normal(f'(x));
       n=np;
       d=dp;
       return g;

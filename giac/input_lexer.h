@@ -79,6 +79,9 @@ namespace giac {
   extern const unsigned long * const builtin_lexer_functions_;
 #endif
 
+  // return true/false to tell if s is recognized. return the appropriate gen if true
+  bool CasIsBuildInFunction(char const *s, gen &g);
+
   sym_tab & syms();
   // The lexer recognize first static declared symbols as declared in
   // input_lexer.ll, then it does 2 steps:

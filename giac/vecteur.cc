@@ -941,8 +941,10 @@ namespace giac {
     if (temp.type==_SYMB && temp.subtype==_SPREAD__SYMB)
       temp.subtype=0;
     // Avoid answers that are too complex
-    if (temp.type==_SYMB && taille(temp,100)>100)
-      temp=undef;
+    if (temp.type==_SYMB && taille(temp,4000)>4000){
+      cerr << "Spreadsheet matrix max size 4000 exceeded" <<endl;
+      temp=undeferr("Spreadsheet matrix max size 4000 exceeded");
+    }
     mr=m_row;
     mc=m_col;
     const gen & res=protecteval(temp,eval_level(contextptr),contextptr);
@@ -3901,6 +3903,9 @@ namespace giac {
       double p0=46340./std::sqrt(double(as))/5.; // so that p0^2*rows(a)<2^31
 #endif
       gen ainf=linfnorm(a,context0);
+      if (is_zero(ainf)){
+	res=a; det=0; return 1;
+      }
       if (ainf.type==_INT_){ // insure that ||a||_inf*p*rows(a)<2^63
 	double p1=((((ulonglong) 1)<<63)/ainf.val)/as;
 	if (p1<p0)
@@ -5348,7 +5353,7 @@ namespace giac {
   bool mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,GIAC_CONTEXT){
     return mrref(a,res,pivots,det,0,a.size(),0,a.front()._VECTptr->size(),
 		 /* fullreduction */ 1,0,true,1,0,
-	  contextptr);
+	  contextptr)!=0;
   }
 
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,const gen& modulo){
@@ -8542,10 +8547,14 @@ namespace giac {
 	if (eigenvalues_only){
 	  vecteur res;
 	  ans = ans && schur_eigenvalues(H1,res,eps,contextptr);
-	  gen tmp=_diag(res,contextptr);
-	  if (tmp.type!=_VECT)
-	    return false;
-	  d=*tmp._VECTptr;
+	  if (!jordan)
+	    d=res;
+	  else {
+	    gen tmp=_diag(res,contextptr);
+	    if (tmp.type!=_VECT)
+	      return false;
+	    d=*tmp._VECTptr;
+	  }
 	  return ans;
 	}
 	else {
@@ -8577,7 +8586,7 @@ namespace giac {
       }
     } // end if (numeric_matrix)
     int taille=m.size();
-    vecteur lv(lvar(m));
+    vecteur lv(alg_lvar(m));
     numeric_matrix=has_num_coeff(m) && is_fully_numeric(evalf(m,1,contextptr));
     matrice mr=*(e2r(numeric_matrix?exact(m,contextptr):m,lv,contextptr)._VECTptr); // convert to internal form
     // vecteur lv;
@@ -8588,8 +8597,9 @@ namespace giac {
     p_car=common_deno(p_car)*p_car; // remove denominators
     // factorizes p_car
     factorization f;
-    polynome p_content(lv.size()+1);
-    if (!factor(poly12polynome(p_car,1),p_content,f,false,rational_jordan_form?false:withsqrt(contextptr),complex_mode(contextptr),1))
+    polynome ppcar(poly1_2_polynome(p_car,1));
+    polynome p_content(ppcar.dim);
+    if (!factor(ppcar,p_content,f,false,rational_jordan_form?false:withsqrt(contextptr),complex_mode(contextptr),1))
       return false;
     factorization::const_iterator f_it=f.begin(),f_itend=f.end();
     int total_char_found=0;
@@ -8598,7 +8608,8 @@ namespace giac {
       // works currently only for 1st order factors
       // vecteur v=solve(f_it->fact);
       vecteur v;
-      vecteur w=polynome2poly1(f_it->fact,1);
+      const polynome & itfact=f_it->fact;
+      vecteur w=polynome2poly1(itfact,1);
       int s=w.size();
       if (s<2)
 	continue;
@@ -8698,7 +8709,10 @@ namespace giac {
       if (s>=3){ // recompute cur_m_adj using new extensions
 	cur_m_adj=*r2sym(m_adj,lv,contextptr)._VECTptr;
 	identificateur tmpx(" x");
-	v=solve(horner(r2sym(w,lv,contextptr),tmpx),tmpx,complex_mode(contextptr),contextptr); 
+	vecteur ww(w.size());
+	for (unsigned i=0;i<w.size();++i)
+	  ww[i]=r2e(w[i],lv,contextptr);
+	v=solve(horner(ww,tmpx),tmpx,complex_mode(contextptr),contextptr); 
 	// compute new lv and update v and m_adj accordingly
 	cur_lv=alg_lvar(v);
 	alg_lvar(cur_m_adj,cur_lv);
@@ -8712,6 +8726,11 @@ namespace giac {
 	char_m.clear();
 	int n=f_it->mult;
 	x=r2sym(*it,cur_lv,contextptr);
+	if (eigenvalues_only && !jordan){
+	  d=mergevecteur(d,vecteur(n,x));
+	  total_char_found +=n;
+	  continue;
+	}
 	// compute Taylor expansion of m_adj at roots of it->fact
 	// at order n-1
 	for (;;){
@@ -8837,7 +8856,8 @@ namespace giac {
 	}
       }
     } // end for factorization
-    p=mtran(p);
+    if (!eigenvalues_only)
+      p=mtran(p);
     if (jordan)
       d=mtran(d);
     return true;
@@ -8877,7 +8897,7 @@ namespace giac {
   gen _egvl(const gen & a,GIAC_CONTEXT){
     if ( a.type==_STRNG && a.subtype==-1) return  a;
     if (!is_squarematrix(a))
-      return symb_pcar(a);
+      return gendimerr(contextptr);
     return megvl(*a._VECTptr,contextptr);
   }
   static const char _egvl_s []="egvl";

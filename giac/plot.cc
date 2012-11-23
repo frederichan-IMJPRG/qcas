@@ -1,4 +1,4 @@
-/* -*- mode:C++ ; compile-command: "g++-3.4 -I. -I.. -I../include -g -c plot.cc -Wall -DIN_GIAC -DHAVE_CONFIG_H" -*- */
+/* -*- mode:C++ ; compile-command: "g++ -I. -I.. -I../include -g -c plot.cc -Wall -DIN_GIAC -DHAVE_CONFIG_H -DGIAC_GENERIC_CONSTANTS " -*- */
 // NB: Using gnuplot optimally requires patching and recompiling gnuplot
 // If you use the -DGNUPLOT_IO compile flag, you
 // MUST compile gnuplot with interactive mode enabled, file src/plot.c
@@ -1891,8 +1891,11 @@ namespace giac {
 	      *it=*it+res[0];
 	  }
 	}
-	else
+	else {
+	  if (!ispnt && it!=res.begin())
+	    *it=*it+res[0];
 	  it->subtype=_POINT__VECT;
+	}
       }
     }
     if (res.size()==2 && res.front()==res.back())
@@ -2053,6 +2056,8 @@ namespace giac {
       A=A[0]+cst_i*A[1];
       d=d[0]+cst_i*d[1];
     }
+    else
+      return _droite_segment(makevecteur(A,d),_LINE__VECT,attributs,contextptr);
     return _droite_segment(makevecteur(A,A+d),_LINE__VECT,attributs,contextptr);
   }
 
@@ -2152,7 +2157,7 @@ namespace giac {
     gen seg=gen(makevecteur(v[0],v[1]),_SEQ__VECT);
     if (s==3){
       v[0]=remove_at_pnt(v[0]);
-      v[1]=remove_at_pnt(v[1]);
+      // v[1]=remove_at_pnt(v[1]);
       vecteur w;
       w.push_back(eval(symb_sto(_point(v[0],contextptr),v[2]),contextptr));
       w.push_back(_droite_segment(seg,_HALFLINE__VECT,attributs,contextptr));
@@ -2176,15 +2181,17 @@ namespace giac {
     if (s==1)
       v=makevecteur(0*v[0],v[0]);
     v[0]=remove_at_pnt(v[0]);
-    v[1]=remove_at_pnt(v[1]);
-    if (v[0].type==_VECT && v[0]._VECTptr->size()==2)
-      v[0]=v[0]._VECTptr->front()+cst_i*v[0]._VECTptr->back();
-    if (v[1].type==_VECT && v[1].subtype==_VECTOR__VECT && v[1]._VECTptr->size()==2){
-      vecteur & w=*v[1]._VECTptr;
-      v[1]=v[0]+w[1]-w[0];
+    if (v[1].type!=_VECT) {
+      v[1]=remove_at_pnt(v[1]);
+      if (v[0].type==_VECT && v[0]._VECTptr->size()==2)
+	v[0]=v[0]._VECTptr->front()+cst_i*v[0]._VECTptr->back();
+      if (v[1].type==_VECT && v[1].subtype==_VECTOR__VECT && v[1]._VECTptr->size()==2){
+	vecteur & w=*v[1]._VECTptr;
+	v[1]=v[0]+w[1]-w[0];
+      }
+      if (v[1].type==_VECT && v[1]._VECTptr->size()==2)
+	v[1]=v[1]._VECTptr->front()+cst_i*v[1]._VECTptr->back();
     }
-    if (v[1].type==_VECT && v[1]._VECTptr->size()==2)
-      v[1]=v[1]._VECTptr->front()+cst_i*v[1]._VECTptr->back();
     gen seg=gen(makevecteur(v[0],v[1]),_SEQ__VECT);
     return _droite_segment(seg,_VECTOR__VECT,attributs,contextptr);
   }
@@ -4475,7 +4482,7 @@ namespace giac {
       return pow(dotvecteur(n1,subvecteur(P2,P1)),2,contextptr)/dotvecteur(n1,n1);
     }
     if (e.type==_VECT){
-      if (e.subtype==_POINT__VECT || (f.type==_VECT && f.subtype==_POINT__VECT)){ // n-d point
+      if (e.subtype==_POINT__VECT || (f.type==_VECT && f.subtype==_POINT__VECT && e.subtype!=_LINE__VECT)){ // n-d point
 	vecteur & ev = *e._VECTptr;
 	if (f.type==_VECT && f.subtype==_POINT__VECT){ // square distance between 2 n-d points
 	  vecteur ef(subvecteur(*f._VECTptr,ev));
@@ -4514,10 +4521,12 @@ namespace giac {
 	    vecteur & vB=*B._VECTptr;
 	    vecteur vAB(subvecteur(vB,vA));
 	    vecteur veA(subvecteur(vA,ev));
-	    gen t=dotvecteur(veA,vAB)/dotvecteur(vAB,vAB);
+	    gen t=-dotvecteur(veA,vAB)/dotvecteur(vAB,vAB);
 	    // distance2 = (M-e).(M-e), M-e=A-e+t*(B-A)
 	    vecteur veM(addvecteur(veA,multvecteur(t,vAB)));
-	    return dotvecteur(veM,veM);
+	    t=dotvecteur(veM,veM);
+	    // cerr << dotvecteur(veM,vAB)  << endl;
+	    return  t;
 	  }
 	}
       } // end e of type n-d point
@@ -8025,7 +8034,7 @@ namespace giac {
 	  arg=(*arg._VECTptr)[1];
       }
     }
-    if (arg.type!=_VECT)
+    if (arg.type!=_VECT || arg._VECTptr->empty())
       return gensizeerr(contextptr);
     vecteur & argv=*arg._VECTptr;
     int s=argv.size()-1;
@@ -8141,7 +8150,7 @@ namespace giac {
 	      if (remove_at_pnt(Mon)==curve){
 		direction=subst(direction,v[1],Mt,false,contextptr);
 		M=t._SYMBptr->feuille[0]; // remove_at_pnt(t);
-		return _droite_segment(gen(makevecteur(M,M+direction),_SEQ__VECT),_LINE__VECT,vecteur(1,default_color(contextptr)),contextptr);
+		return _droite_segment(gen(makevecteur(M,direction),_SEQ__VECT),_LINE__VECT,vecteur(1,default_color(contextptr)),contextptr);
 	      }
 	    }
 	  }
@@ -8338,14 +8347,18 @@ namespace giac {
       gen xF1F2=re(F1F2,contextptr),yF1F2=im(F1F2,contextptr);
       gen eitheta(xy2eitheta(xF1F2,yF1F2,contextptr));
       res=eitheta*(a*symb_cos(theta)+b*cst_i*symb_sin(theta))+O;
+      gen r,i;
+      reim(res,r,i,contextptr);
+      res=makevecteur(r,i);
     }
-    gen r,i;
-    reim(res,r,i,contextptr);
-    res=makevecteur(r,i);
+    gen ustep=_USTEP;
+    ustep.subtype=_INT_PLOT;
+    gen nstep=_NSTEP;
+    nstep.subtype=_INT_PLOT;
 #ifdef GIAC_HAS_STO_38
-    return _paramplot(gen(makevecteur(res,symb_equal(vx_var,symb_interval(0,2*cst_pi)),symb_equal(_NSTEP,60),symb_equal(_USTEP,M_PI/30),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr);
+    return _paramplot(gen(makevecteur(res,symb_equal(vx_var,symb_interval(0,2*cst_pi)),symb_equal(nstep,60),symb_equal(ustep,M_PI/30),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr);
 #else
-    return _paramplot(gen(makevecteur(res,symb_equal(t__IDNT_e,symb_interval(0,2*cst_pi)),symb_equal(_NSTEP,60),symb_equal(_USTEP,M_PI/30),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr);
+    return _paramplot(gen(makevecteur(res,symb_equal(t__IDNT_e,symb_interval(0,2*cst_pi)),symb_equal(nstep,60),symb_equal(ustep,M_PI/30),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr);
 #endif
   }
   static const char _ellipse_s []="ellipse";
@@ -8365,9 +8378,10 @@ namespace giac {
     if (s==1)
       return _plotimplicit(args,contextptr);
     gen F1,F2,a,n;
+    gen aorig=*(args._VECTptr->begin()+s-1);
     if (!foyers_a(vecteur(args._VECTptr->begin(),args._VECTptr->begin()+s),F1,F2,a,contextptr))
       return gensizeerr(contextptr);
-    if ( a.is_symb_of_sommet(at_pnt) || !is_zero(im(a,contextptr)) ){
+    if ( aorig.is_symb_of_sommet(at_pnt) || a.type==_VECT || !is_zero(im(a,contextptr)) ){
       a=get_point(remove_at_pnt(a),0,contextptr);
       if (is_undef(a)) return a;
       if (a.type==_VECT)
@@ -8377,7 +8391,7 @@ namespace giac {
     gen F1F2=F2-F1;
     gen O=rdiv(F1+F2,plus_two);
     gen c2=rdiv(F1F2.squarenorm(contextptr),gen(4));
-    gen b=sqrt(c2-a*a,contextptr),res;
+    gen b=sqrt(c2-a*a,contextptr),res,res1,res2;
 #ifdef GIAC_HAS_STO_38
     gen theta=vx_var;
 #else
@@ -8386,22 +8400,27 @@ namespace giac {
     if (n.type==_VECT){
       n=n-O;
       n=cross(cross(F1F2,n,contextptr),F1F2,contextptr);
-      res=a*cosh(theta,contextptr)*F1F2/abs_norm(F1F2,contextptr)+b*sinh(theta,contextptr)*n/abs_norm(n,contextptr);
+      res1=a*cosh(theta,contextptr)*F1F2/abs_norm(F1F2,contextptr)+b*sinh(theta,contextptr)*n/abs_norm(n,contextptr);
+      res2=-a*cosh(theta,contextptr)*F1F2/abs_norm(F1F2,contextptr)+b*sinh(theta,contextptr)*n/abs_norm(n,contextptr);
     }
     else {
       gen xF1F2=re(F1F2,contextptr),yF1F2=im(F1F2,contextptr);
       gen eitheta(xy2eitheta(xF1F2,yF1F2,contextptr));
       res=eitheta*(a*cosh(theta,contextptr)+b*cst_i*sinh(theta,contextptr));
+      gen r,i;
+      reim(res+O,r,i,contextptr);
+      res1=makevecteur(r,i);
+      reim(-res+O,r,i,contextptr);
+      res2=makevecteur(r,i);
     }
-    gen r,i;
-    reim(res+O,r,i,contextptr);
-    gen res1=makevecteur(r,i);
-    reim(-res+O,r,i,contextptr);
-    gen res2=makevecteur(r,i);
+    gen ustep=_USTEP;
+    ustep.subtype=_INT_PLOT;
+    gen nstep=_NSTEP;
+    nstep.subtype=_INT_PLOT;
 #ifdef GIAC_HAS_STO_38
-    return makevecteur(_paramplot(gen(makevecteur(res1,symb_equal(vx_var,symb_interval(-3,3)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.1),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr),_paramplot(gen(makevecteur(res2,symb_equal(vx_var,symb_interval(-3,3)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.1),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr)); // should be -inf..inf
+    return makevecteur(_paramplot(gen(makevecteur(res1,symb_equal(vx_var,symb_interval(-3,3)),symb_equal(nstep,60),symb_equal(ustep,0.1),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr),_paramplot(gen(makevecteur(res2,symb_equal(vx_var,symb_interval(-3,3)),symb_equal(nstep,60),symb_equal(ustep,0.1),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr)); // should be -inf..inf
 #else
-    return makevecteur(_paramplot(gen(makevecteur(res1,symb_equal(t__IDNT_e,symb_interval(-3,3)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.1),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr),_paramplot(gen(makevecteur(res2,symb_equal(t__IDNT_e,symb_interval(-3,3)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.1),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr)); // should be -inf..inf
+    return makevecteur(_paramplot(gen(makevecteur(res1,symb_equal(t__IDNT_e,symb_interval(-3,3)),symb_equal(nstep,60),symb_equal(ustep,0.1),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr),_paramplot(gen(makevecteur(res2,symb_equal(t__IDNT_e,symb_interval(-3,3)),symb_equal(nstep,60),symb_equal(ustep,0.1),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr)); // should be -inf..inf
 #endif
   }
   static const char _hyperbole_s []="hyperbola";
@@ -8456,15 +8475,20 @@ namespace giac {
     if (eitheta.type==_VECT){
       res=O+(F-O)/(4*c*abs_norm(F-O,contextptr))*pow(theta,2)+eitheta*theta;
     }
-    else 
+    else {
       res=O+eitheta*theta*(1+cst_i*theta/4/c);
-    gen r,i;
-    reim(res,r,i,contextptr);
-    res=makevecteur(r,i);
+      gen r,i;
+      reim(res,r,i,contextptr);
+      res=makevecteur(r,i);
+    }
+    gen ustep=_USTEP;
+    ustep.subtype=_INT_PLOT;
+    gen nstep=_NSTEP;
+    nstep.subtype=_INT_PLOT;
 #ifdef GIAC_HAS_STO_38
-    res= _paramplot(gen(makevecteur(res,symb_equal(vx_var,symb_interval(-4,4)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.15),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr);
+    res= _paramplot(gen(makevecteur(res,symb_equal(vx_var,symb_interval(-4,4)),symb_equal(nstep,60),symb_equal(ustep,0.15),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr);
 #else
-    res= _paramplot(gen(makevecteur(res,symb_equal(t__IDNT_e,symb_interval(-4,4)),symb_equal(_NSTEP,60),symb_equal(_USTEP,0.15),symbolic(at_equal,makevecteur(_COLOR,attributs[0]))),_SEQ__VECT),contextptr);
+    res= _paramplot(gen(makevecteur(res,symb_equal(t__IDNT_e,symb_interval(-4,4)),symb_equal(nstep,60),symb_equal(ustep,0.15),symbolic(at_equal,makevecteur(at_display,attributs[0]))),_SEQ__VECT),contextptr);
 #endif
     return res;
   }
@@ -8660,7 +8684,7 @@ namespace giac {
     ss +=' ';
     ss +='"';
     decimal_digits(contextptr)=save_digits;
-    l=gen(ss,false);
+    l=string2gen(ss,false);
     vecteur w=makevecteur(v[2],l);
     for (int i=3; i<s;++i)
       w.push_back(v[i]);
@@ -8722,7 +8746,7 @@ namespace giac {
     ss +="="+l.print(contextptr)+" \"";
     // string ss="◼"+v[0].print(contextptr)+"="+l.print(contextptr)+" ";
     decimal_digits(contextptr)=save_digits;
-    l=gen(ss,false);
+    l=string2gen(ss,false);
     vecteur w=makevecteur(v[1],l);
     for (int i=2; i<s;++i)
       w.push_back(v[i]);
@@ -8766,7 +8790,7 @@ namespace giac {
     add_name(ss,v[0],contextptr);
     ss += "="+l.print(contextptr)+" \"";
     decimal_digits(contextptr)=save_digits;
-    l=gen(ss,false);
+    l=string2gen(ss,false);
     vecteur w=makevecteur(v[1],l);
     for (int i=2; i<s;++i)
       w.push_back(v[i]);
@@ -8792,7 +8816,7 @@ namespace giac {
     ss += "="+l.print(contextptr)+" \"";
     // string ss="◻"+v[0].print(contextptr)+"="+l.print(contextptr)+" ";
     decimal_digits(contextptr)=save_digits;
-    l=gen(ss,false);
+    l=string2gen(ss,false);
     vecteur w=makevecteur(v[1],l);
     for (int i=2; i<s;++i)
       w.push_back(v[i]);
@@ -8862,7 +8886,7 @@ namespace giac {
     ss += "="+l.print(contextptr)+" \"";
     // string ss="∡"+v[0].print(contextptr)+"="+l.print(contextptr)+" ";
     decimal_digits(contextptr)=save_digits;
-    l=gen(ss,false);
+    l=string2gen(ss,false);
     vecteur w=makevecteur(v[3],l);
     for (int i=4; i<s;++i)
       w.push_back(v[i]);
@@ -11912,7 +11936,7 @@ namespace giac {
   }
 
   gen turtle2gen(const logo_turtle & turtle){
-    return makevecteur(turtle.x,turtle.y,turtle.theta,turtle_status(turtle),turtle.radius,string2gen(turtle.s,false));
+    return gen(makevecteur(turtle.x,turtle.y,turtle.theta,turtle_status(turtle),turtle.radius,string2gen(turtle.s,false)),_LOGO__VECT);
   }
 
   vecteur turtlevect2vecteur(const std::vector<logo_turtle> & v){

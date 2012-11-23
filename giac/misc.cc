@@ -1355,11 +1355,16 @@ namespace giac {
 
   gen _eigenvals(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
+    if (!is_squarematrix(g))
+      return gendimerr(contextptr);
     bool b=complex_mode(contextptr);
     complex_mode(true,contextptr);
-    gen res=gen(*_diag(_egvl(g,contextptr),contextptr)._VECTptr,_SEQ__VECT);
+    matrice m;
+    vecteur d;
+    if (!egv(*g._VECTptr,m,d,contextptr,false,false,true))
+      *logptr(contextptr) << gettext("Low accuracy") << endl;
     complex_mode(b,contextptr);
-    return res;
+    return gen(d,_SEQ__VECT);
   }
   static const char _eigenvals_s []="eigenvals";
   static define_unary_function_eval (__eigenvals,&_eigenvals,_eigenvals_s);

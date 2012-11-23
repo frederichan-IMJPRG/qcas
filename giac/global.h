@@ -372,9 +372,9 @@ namespace giac {
     std::string s;
     void * widget;
 #ifdef IPAQ
-    logo_turtle(): x(70),y(70),theta(0),visible(true),mark(true),color(0),turtle_length(10),radius(0),widget(0) {}
+    logo_turtle(): x(70),y(70),theta(0),visible(true),mark(true),direct(true),color(0),turtle_length(10),radius(0),widget(0) {}
 #else
-    logo_turtle(): x(100),y(100),theta(0),visible(true),mark(true),color(0),turtle_length(10),radius(0),widget(0) {}
+    logo_turtle(): x(100),y(100),theta(0),visible(true),mark(true),direct(true),color(0),turtle_length(10),radius(0),widget(0) {}
 #endif
   };
 
@@ -408,6 +408,7 @@ namespace giac {
     bool _ntl_on_;
     bool _lexer_close_parenthesis_;
     bool _rpn_mode_;
+    bool _try_parse_i_;
     int _angle_mode_;
     int _bounded_function_no_;
     int _series_flags_; // bit1= full simplify, bit2=1 for truncation
@@ -528,6 +529,9 @@ namespace giac {
 
   bool & complex_mode(GIAC_CONTEXT);
   void complex_mode(bool b,GIAC_CONTEXT);
+
+  bool & try_parse_i(GIAC_CONTEXT);
+  void try_parse_i(bool b,GIAC_CONTEXT);
 
   bool & do_lnabs(GIAC_CONTEXT);
   void do_lnabs(bool b,GIAC_CONTEXT);
@@ -765,7 +769,7 @@ namespace giac {
   // Check this in wait_001 function if you don't want the main thread to
   // be blocked by a call to thread_eval inside wait_001
   pthread_mutex_t * mutexptr(GIAC_CONTEXT);
-  extern pthread_mutex_t interactive_mutex;
+  extern pthread_mutex_t interactive_mutex,turtle_mutex;
   
 #endif
   // Check if a thread_eval is active
