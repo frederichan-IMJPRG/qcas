@@ -357,6 +357,7 @@ public:
     virtual void toXML(QDomElement &);
     virtual QString getType() const;
     virtual bool isFillable() const;
+    void updateValueFrom(const QList<MyItem*> &);
 
 private:
     QList<MyItem*> list;

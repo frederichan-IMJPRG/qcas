@@ -3359,7 +3359,7 @@ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
 
 void Canvas2D::updateAllChildrenFrom(MyItem* item){
     QList<MyItem*> v;
-    refreshFromItem(item,v);
+    refreshFromItem(item,v);//get the list of the children
     qSort(v.begin(),v.end(),lessThan);
 
 
@@ -3429,8 +3429,16 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             if (vv.isEmpty())
                 v.at(i)->setUndef(true);
             else {
-                v.at(i)->updateValueFrom(vv.at(0));
-                delete vv.at(0);
+               if((v.at(i))->isList()){
+               //the case of  listItems
+               //qDebug()<<"found list item to update";
+               ListItem * L=dynamic_cast<ListItem*>(v.at(i));
+               L->updateValueFrom(vv);
+	       }
+	       else{
+		 v.at(i)->updateValueFrom(vv.at(0));
+		 delete vv.at(0);
+	       }
             }
         }
         else{
@@ -6728,7 +6736,7 @@ void Canvas2D::sendText(const QString &s){
     newCommand.attributes=0;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
-    InterItem * inter=0;
+    ListItem * list=0;
     gen g(newCommand.command.toStdString(),context);
     QList<MyItem*> v;
     gen geva=protecteval(g,1,context);
@@ -6740,44 +6748,32 @@ void Canvas2D::sendText(const QString &s){
        giac::_purge(gen(varPt.toStdString(),context),context);
        return;
     }
-    // Case of intersections. the command can answer a group of points..
-    if(newCommand.command.contains("inter(")){
-        inter=new InterItem(false,this);
-	inter->setLevel(evaluationLevel);
-	//inter->setVar(v.at(0)->getLegend());
-	
-	if(v.at(0)->getLegend().isEmpty()){
-	  findFreeVar(varPt); 
-	  inter->setLegend(varPt);
-	}
-	else{ 
-	  inter->setLegend(v.at(0)->getLegend());
-	}
-	newCommand.item=inter;
-	newCommand.command=newCommand.command.remove(QRegExp("^.*:="));
-	commands.append(newCommand);
-	//qDebug()<<newCommand.command;
-	pointItems.append(inter);
-	for (int i=0;i<v.size();++i){
-	  if (v.at(i)->isPoint()){
-  	     //v.at(i)->setLegend("");
-	     v.at(i)->setVar((inter->getLegend()).append("[").append(QString::number(i)).append("]"));
-	     v.at(i)->setFromInter(true);
-	     pointItems.append(v.at(i));
-	     v.at(i)->updateScreenCoords(true);
-	     parent->addToTree(v.at(i));
-	     inter->addChild(v.at(i));
-	  }
-	}
-	findIDNT(g,inter);//find parents
-	parent->addToTree(newCommand.item);
-	focusOwner=newCommand.item;
-	undoStack->push(new AddObjectCommand(this));
-	parent->updateAllCategories();
-	updatePixmap(false);
-	repaint();
-	return;
-    }//end of inter case
+    // Case of a list. We want to consider a list as a single geometric object
+    if (v.size()>1) {
+       list =new ListItem(v,this);
+       list->setLevel(evaluationLevel);
+       list->setLegend(v.at(0)->getLegend());
+       list->setAttributes(v.at(0)->getAttributes());
+       list->setValue(v.at(0)->getValue());
+       //list->setMovable(true);
+       list->setFromInter(false);
+       findIDNT(g,list);
+       newCommand.item=list;
+       commands.append(newCommand);
+       list->setVar(v.at(0)->getLegend());
+       list->updateScreenCoords(true);
+       lineItems.append(newCommand.item);
+       undoStack->push(new AddObjectCommand(this));
+       focusOwner=list;
+       list->setVisible(false);
+       parent->addToTree(list);
+       parent->selectInTree(focusOwner);
+       parent->updateAllCategories();
+       list->setVisible(true);
+       updatePixmap(false);
+       repaint();
+       return;
+    }//end of list case
     //
     v.at(0)->setVar(v.at(0)->getLegend());
     newCommand.item=v.at(0);

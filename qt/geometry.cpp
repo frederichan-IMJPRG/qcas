@@ -1625,6 +1625,17 @@ bool ListItem::isList() const{
 QString ListItem::getType() const{
     return QObject::tr("Liste");
 }
+void ListItem::updateValueFrom(const QList<MyItem*> & v){
+  
+    if (v.size()==0){
+        value=giac::undef;
+        undef=true;
+        return;
+    }
+    undef=false;
+    list=v;
+    updateScreenCoords(true);
+}
 UndefItem::UndefItem(Canvas2D* p):MyItem(p){
     value=giac::undef;
 }
