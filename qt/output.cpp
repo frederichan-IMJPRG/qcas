@@ -189,6 +189,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
         qWarning("MathML error: %s, Line: %d, Column: %d",
                  errorMsg.constData(), errorLine, errorColumn);
       }
+mmlWidget->setBaseFontPointSize(Config::mml_fontsize);
       mmlWidget->updateGeometry();
      resize(mmlWidget->size());
 }
@@ -3272,14 +3273,30 @@ void Canvas2D::setXYUnit(){
   *     A,B,...,Z,A1,....,Z1, A2 .....
   *
   * Same model for lines but in lower case
+  * We add a prefix Config::GeoVarPrefix to store in giac to avoid unexpected mistakes in f
+ormal calculus.
   **/
 void Canvas2D::findFreeVar(QString & var){
-    gen g(var.toStdString(),context);
-    while ((eval(g,1,context)!=g)||(findItemFromVar(var,&cursorItems)!=-1)) {
-        incrementVariable(var);
-        g=gen(var.toStdString(),context);
-    }
+
+  if (!var.startsWith(Config::GeoVarPrefix)){
+    var=var.prepend(Config::GeoVarPrefix);
+  }
+  QString vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());
+  gen g(var.toStdString(),context);
+  QString lvar=QString::fromStdString(giac::print(giac::_VARS(1,context),context));
+  lvar=lvar.mid(1,lvar.length()-2);//we remove the brackets [  ]
+  //qDebug()<<lvar;
+  QStringList lvarlist=lvar.split(",");
+  //Warning it could be very long to test if a variable is not empty by evalutating it. 
+  //with the following: ((eval(g,1,context)!=g) 
+  while(lvarlist.contains(var) || lvarlist.contains(vpostfix) || (findItemFromVar(vpostfix,&cursorItems)!=-1))
+  {
+       incrementVariable(var);
+       vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());
+  }
+  g=gen(var.toStdString(),context);  
 }
+
 /**
   * Increments the label for points or lines
   *   eg: D4 becomes D5
@@ -3287,7 +3304,11 @@ void Canvas2D::findFreeVar(QString & var){
   */
 
 void Canvas2D::incrementVariable(QString & var){
-    QChar c=var.at(0);
+    int idec=0;
+    if(var.startsWith(Config::GeoVarPrefix)){
+      idec=(Config::GeoVarPrefix).length();
+    }
+    QChar c=var.at(idec);
     if (c=='Z'){
         QString s="A";
         s.append(QString::number(QString(var.right(var.length()-1)).toInt()+1));
@@ -3302,7 +3323,7 @@ void Canvas2D::incrementVariable(QString & var){
     else if (c=='h'&&var.length()==1) var="j";
     // letter e can't label a variable, it stands for function exp
     else if  (c=='d'&&var.length()==1) {var="f";}
-    else var[0]=QChar(c.toAscii()+1);
+    else var[idec]=QChar(c.toAscii()+1);
 }
 
 bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){

@@ -401,8 +401,23 @@ void GeneralPanel::initGui(){
     hLayout->setSizeConstraint(QLayout::SetFixedSize);
     langPanel->setLayout(hLayout);
 
+    QGroupBox* policeGroup=new QGroupBox(tr("Options polices"),this);
+    QGridLayout* policeGrid=new QGridLayout(policeGroup);
+
+    QLabel* labelMMLSize=new QLabel(tr("Taille des polices MathML:"),this);
+    
+    editMMLSize=new QSpinBox(this);
+    editMMLSize->setRange(8,40);
+    policeGrid->addWidget(editMMLSize,0,1);
+    editMMLSize->adjustSize();
+    editMMLSize->setValue(Config::mml_fontsize);
+    policeGrid->addWidget(labelMMLSize,0,0);
+    policeGrid->setSizeConstraint(QLayout::SetFixedSize);
+
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
     mainLayout->addWidget(langPanel);
+    mainLayout->addWidget(policeGroup);
+    policeGroup->setLayout(policeGrid);
     mainLayout->addWidget(graphicGroup);
     graphicGroup->setLayout(graphicGrid);
     setLayout(mainLayout);
@@ -470,12 +485,39 @@ void GeneralPanel::apply(){
     }
     giac::autoscale=checkAutoScale->isChecked();
     Config::gridAttraction=checkGridAttraction->isChecked();
-
+    Config::mml_fontsize=editMMLSize->text().toInt();
 }
 /**
  *************** PREFERENCES INTERACTIVE 2D
  ****
  ***/
+Interactive2dPanel::Interactive2dPanel():QWidget(){
+    initGui();
+}
+void Interactive2dPanel::initGui(){
+    QVBoxLayout* mainLayout=new QVBoxLayout(this);
+    QGroupBox* autovar2dGroup=new QGroupBox(tr("Options variables automatiques"),this);
+    QGridLayout* autovar2dGrid=new QGridLayout(autovar2dGroup);
+    QLabel* labelGeoVarPrefix=new QLabel(tr("Prefixe ajouté aux variables nommées automatiquement"),this);
+    editGeoVarPrefix=new QLineEdit(this);
+    editGeoVarPrefix->setValidator(new QRegExpValidator(QRegExp("[A-Za-z]+[A-Za-z0-9_\-]*"),editGeoVarPrefix));
+    mainLayout->setSizeConstraint(QLayout::SetFixedSize);
+
+    autovar2dGrid->addWidget(editGeoVarPrefix,0,1);
+    editGeoVarPrefix->adjustSize();
+    autovar2dGrid->addWidget(labelGeoVarPrefix,0,0);
+    //autovar2dGrid->setSizeConstraint(QLayout::SetFixedSize);
+    mainLayout->addWidget(autovar2dGroup);
+
+    setLayout(mainLayout);
+}
+
+void Interactive2dPanel::initValue(){
+  editGeoVarPrefix->setText(Config::GeoVarPrefix);
+}
+void Interactive2dPanel::apply(){
+  Config::GeoVarPrefix=editGeoVarPrefix->text();
+}
 
 
 /**
@@ -496,13 +538,13 @@ void PrefDialog::initGui(){
     generalPanel=new GeneralPanel;
     casPanel=new CasPanel(mainWindow);
     spreadSheetPanel=new QWidget(this);
-    interactive2dPanel=new QWidget(this);
+    interactive2dPanel=new Interactive2dPanel;
 
     stackWidget=new QStackedWidget;
     stackWidget->addWidget(generalPanel);
     stackWidget->addWidget(casPanel);
-    stackWidget->addWidget(spreadSheetPanel);
     stackWidget->addWidget(interactive2dPanel);
+    stackWidget->addWidget(spreadSheetPanel);
 
 
     listWidget=new QListWidget;
@@ -527,8 +569,8 @@ void PrefDialog::initGui(){
 
     listWidget->addItem(generalItem);
     listWidget->addItem(casItem);
-//    listWidget->addItem(spreadItem);
     listWidget->addItem(interactive2dItem);
+//    listWidget->addItem(spreadItem);
     listWidget->adjustSize();
     listWidget->setCurrentRow(0);
     okButton=new QPushButton(tr("Ok"));
@@ -558,6 +600,7 @@ void PrefDialog::initGui(){
 void PrefDialog::apply(){
     generalPanel->apply();
     casPanel->apply();
+    interactive2dPanel->apply();
 
 //    giac::
 //    giac::set_language(2,mainWindow->getContext());
@@ -569,5 +612,6 @@ void PrefDialog::apply(){
 void PrefDialog::initValue(){
     generalPanel->initValue();
     casPanel->initValue();
+    interactive2dPanel->initValue();
 
 }

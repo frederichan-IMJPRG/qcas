@@ -18,18 +18,45 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <QString>
+
 class Config{
 
 public:
     Config();
 //    static bool ortho,autoscale;
     static int graph_width;
+/* Warning: in giac the languages are like this:  
+  int string2lang(const string & s){
+    if (s=="fr")
+      return 1;
+    if (s=="en")
+      return 2;
+    if (s=="sp" || s=="es")
+      return 3;
+    if (s=="el")
+      return 4;
+    if (s=="pt")
+      return 5;
+    if (s=="it")
+      return 6;
+    if (s=="tr")
+      return 7;
+    if (s=="zh")
+      return 8;
+    if (s=="de")
+      return 8;
+    return 0;
+  }
+*/
     enum LANGUAGES{
        FRENCH=0,
        ENGLISH=1
     };
     static LANGUAGES language;
     static bool gridAttraction;
+    static int mml_fontsize;
+    static QString GeoVarPrefix;
 };
 
 #endif // CONFIG_H

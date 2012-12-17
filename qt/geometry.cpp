@@ -17,6 +17,7 @@
 
 
 #include "giac/giac.h"
+#include "config.h"
 #include "output.h"
 #include <QPainter>
 #include <QTreeWidgetItem>
@@ -187,7 +188,12 @@ QString MyItem::getLegend() const{
     return legend;
 }
 void MyItem::setLegend(const QString &s){
+  if(s.startsWith(Config::GeoVarPrefix)){
+    legend=s.right(s.length()-(Config::GeoVarPrefix).length());
+  }
+  else{  
     legend=s;
+  }
 }
 void MyItem::setLevel(const int & i){
     level=i;

@@ -91,6 +91,7 @@ private:
     QLineEdit* editZMax;
     QLineEdit* editTMin;
     QLineEdit* editTMax;
+    QSpinBox* editMMLSize;
     QCheckBox* checkAutoScale;
 
     void initGui();
@@ -98,6 +99,18 @@ private:
 
 };
 //class Interactive
+class Interactive2dPanel:public QWidget{
+public:
+    Interactive2dPanel();
+    void initValue();
+    void apply();
+private:
+    QLineEdit* editGeoVarPrefix;
+    void initGui();
+
+};
+
+//
 
 
 class PrefDialog: public QDialog{
@@ -112,7 +125,7 @@ private:
     CasPanel* casPanel;
     GeneralPanel* generalPanel;
     QWidget* spreadSheetPanel;
-    QWidget* interactive2dPanel;
+    Interactive2dPanel* interactive2dPanel;
     QPushButton* okButton;
     QPushButton* cancelButton;
     void initGui();

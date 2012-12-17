@@ -308,14 +308,17 @@ QString CasManager::displayType(int c) const{
 
 QString CasManager::displaySubType(int c) const{
     switch(c){
+    //the default case is 0 and corresponds in giac/xcas to: [ , , ]
     case 1:
-        return "_SEQ__VECT";
-     break;
+    //in Giac/xcas: ( , , )
+    return "_SEQ__VECT";
+    break;
     case 2:
-     return "_SET__VECT";
-     break;
+    //in giac/xcas: %{ , , %} or set[ , , ]
+    return "_SET__VECT";
+    break;
     case 3:
-       return "_RPN_FUNC__VECT"; // mpz_t * _ZINTptr
+    return "_RPN_FUNC__VECT"; // mpz_t * _ZINTptr
     break;
     case 4:
     return "_STACK_FUNC_VECT";
