@@ -6723,7 +6723,7 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 }
 
 void Canvas2D::sendText(const QString &s){
-    //TODO les :;   les element , les vecteurs d'objets geo.
+    //TODO les :;   les element , garder les variables non affectees?
   QStringList ls=s.split(QRegExp(":*\s*;"),QString::SkipEmptyParts);
   if(ls.size()>1){
     for( int i =0; i<ls.size();++i){
@@ -6744,8 +6744,8 @@ void Canvas2D::sendText(const QString &s){
     if (v.isEmpty()) {
        std::cout<<print(g,context)<<std::endl;//test fred 
        //std::cout<<print(geva,context)<<std::endl;//test fred 
-       std::cout<<print(gen(varPt.toStdString(),context),context)<<std::endl;//test fred pour element
-       giac::_purge(gen(varPt.toStdString(),context),context);
+       //std::cout<<print(gen(varPt.toStdString(),context),context)<<std::endl;//test fred pour element
+       //giac::_purge(gen(varPt.toStdString(),context),context);
        return;
     }
     // Case of a list. We want to consider a list as a single geometric object
@@ -6799,9 +6799,9 @@ void Canvas2D::sendText(const QString &s){
     } 
     findIDNT(g,newCommand.item); 	
     commands.append(newCommand);
-    parent->addToTree(v.at(0));
+    parent->addToTree(newCommand.item);
     undoStack->push(new AddObjectCommand(this));
-    focusOwner=v.at(0);
+    focusOwner=newCommand.item;
     parent->updateAllCategories();
     parent->selectInTree(focusOwner);
     selectedItems.append(focusOwner);

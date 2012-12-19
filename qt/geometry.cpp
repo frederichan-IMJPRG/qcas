@@ -100,7 +100,10 @@ bool MyItem::hasChildren() const{
     return !children.isEmpty();
 }
 void MyItem::addChild(MyItem * item){
+  int id=children.indexOf(item);//check if this item isn't already a child
+  if (id==-1 && item != this){
     children.append(item);
+  }
 }
 QVector<MyItem*> MyItem::getChildren(){
     return children;
@@ -111,13 +114,20 @@ MyItem* MyItem::getChildAt(const int& id){
 }
 void MyItem::deleteChild(MyItem* item){
     int index=children.indexOf(item);
-    if (index!=-1) children.remove(index);
+    while (index!=-1){
+      //in case the same item appears at several indexes. (Cf listItem)
+      children.remove(index);
+      index=children.indexOf(item);
+    }
 }
 bool MyItem::hasParents() const{
     return !parents.isEmpty();
 }
 void MyItem::addParent(MyItem * item){
-    parents.append(item);
+    int index=parents.indexOf(item);
+    if (index==-1) {
+      parents.append(item);
+    }
 }
 QVector<MyItem*> MyItem::getParents(){
     return parents;
