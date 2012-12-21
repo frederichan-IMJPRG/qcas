@@ -1842,22 +1842,27 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
         int id=findItemFromVar(s,&pointItems);
         if (id!=-1){
             pointItems.at(id)->addChild(item);
+	    item->addParent(pointItems.at(id));
         }
         else {
             id=findItemFromVar(s,&lineItems);
             if (id!=-1){
                 lineItems.at(id)->addChild(item);
+		item->addParent(lineItems.at(id));
             }
             else {
                 id=findItemFromVar(s,&filledItems);
                 if (id!=-1){
                     filledItems.at(id)->addChild(item);
+		    item->addParent(filledItems.at(id));
                 }
                 else{
                     // Look into sliders
                     id=findItemFromVar(s,&cursorItems);
                     if (id!=-1){
                         cursorItems.at(id)->addChild(item);
+			item->addParent(cursorItems.at(id));
+
                     }
 
                 }

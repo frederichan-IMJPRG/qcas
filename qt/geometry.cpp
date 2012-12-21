@@ -125,7 +125,7 @@ bool MyItem::hasParents() const{
 }
 void MyItem::addParent(MyItem * item){
     int index=parents.indexOf(item);
-    if (index==-1) {
+    if (index==-1 && item != this) {
       parents.append(item);
     }
 }
