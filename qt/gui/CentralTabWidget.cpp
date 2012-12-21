@@ -21,6 +21,7 @@
 #include <QToolButton>
 #include <QMenu>
 #include <QLabel>
+#include <QMessageBox>
 #include "MainWindow.h"
 #include "FormalSheet.h"
 #include "CentralTabWidget.h"
@@ -71,6 +72,12 @@ void MainTabWidget::changeTab(int id){
     mainWindow->updateInterface(sheet->getType());
 }
 void MainTabWidget::closeTab(int id){
+
+  //
+     int r=QMessageBox::warning(this,tr("Confirmation"),tr("Vous allez supprimer cet objet ainsi \n que toutes ses dépendances. \n Voulez-vous poursuivre?"),QMessageBox::Yes|QMessageBox::Default,QMessageBox::Cancel|QMessageBox::Escape);
+     if (r!=QMessageBox::Yes) return;
+
+
     MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));
     switch(sheet->getType()){
     case MainSheet::FORMAL_TYPE:
