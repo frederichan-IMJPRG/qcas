@@ -1930,13 +1930,33 @@ void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
 
     // TODO Attributs
     vecteur f=*g._SYMBptr->feuille._VECTptr;
-  //  int mxw=Mon_image.w(),myw=Mon_image.h()-(Mon_image.show_axes?(Mon_image.title.empty()?1:2):0)*Mon_image.labelsize();
-  double i0;
-  double j0;
-  double i0save,j0save,i1,j1;
+    //  int mxw=Mon_image.w(),myw=Mon_image.h()-(Mon_image.show_axes?(Mon_image.title.empty()?1:2):0)*Mon_image.labelsize();
+    double i0;
+    double j0;
+    double i0save,j0save,i1,j1;
     int fs=f.size();
-    if ((fs==4) && (s==at_parameter)){
-     return ;
+    
+    if ((fs>=3) && (s==at_parameter) && (parent->isInteractive())){
+       qDebug()<<"found parameter";//f:  var,min,max,(step,orig)
+       CursorItem* cursor;
+       double min,max;
+       double step=0.1;
+       double val=0;
+       QString var=QString::fromStdString(f[0]._IDNTptr->name());
+       min=evalf_double(f[1],1,context)._DOUBLE_val;
+       max=evalf_double(f[2],1,context)._DOUBLE_val;
+       if(fs>3){step=evalf_double(f[3],1,context)._DOUBLE_val;};
+       if(fs>4){val=evalf_double(f[3],1,context)._DOUBLE_val;};
+       cursor=new CursorItem(true,this);
+       cursor->setLegend(var);
+       cursor->setLevel(evaluationLevel);
+       CursorPanel* cp=new CursorPanel(var,min,max,step,val,cursor);
+       cursor->setCursorPanel(cp);
+       parent->addCursorPanel(cp);
+       connect (cp,SIGNAL(valueChanged()),this,SLOT(updateAllChildrenFrom()));
+       connect(cp,SIGNAL(deletePanel()),this,SLOT(deleteCursorPanel()));
+       scene.append(cursor);
+       return ;
     }
     std::string the_legend;
     vecteur style(get_style(f,the_legend));
@@ -6728,8 +6748,8 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 }
 
 void Canvas2D::sendText(const QString &s){
-    //TODO les :;   les element , garder les variables non affectees?
-  QStringList ls=s.split(QRegExp(":*\s*;"),QString::SkipEmptyParts);
+  //TODO les invisibles avec :  securiser les syntaxes d'elements
+  QStringList ls=s.split(QRegExp(":*\\s*;"),QString::SkipEmptyParts);
   if(ls.size()>1){
     for( int i =0; i<ls.size();++i){
       sendText(ls.at(i));
@@ -6763,6 +6783,7 @@ void Canvas2D::sendText(const QString &s){
        //list->setMovable(true);
        list->setFromInter(false);
        findIDNT(g,list);
+       list->deleteChild(list);
        newCommand.item=list;
        commands.append(newCommand);
        list->setVar(v.at(0)->getLegend());
@@ -6783,26 +6804,62 @@ void Canvas2D::sendText(const QString &s){
     v.at(0)->setVar(v.at(0)->getLegend());
     newCommand.item=v.at(0);
     if(v.at(0)->isCursorItem()){
-      qDebug()<<"cursor found";
-      cursorItems.append(v.at(0));
+      //      qDebug()<<"cursor found";
+      commands.append(newCommand);
+      cursorItems.append(newCommand.item);
+      undoStack->push(new AddObjectCommand(this));
+      return;
     }
     //non cursor item
     else{
       if(v.at(0)->isPoint()){
-	pointItems.append(newCommand.item);
+	//pointItems.append(newCommand.item);
 	if(newCommand.command.contains("element(")){
 	  qDebug()<<"point element found";
+	  //std::cout<<print(g,context)<<std::endl;//test fred 
+	  //std::cout<<print(geva,context)<<std::endl;//test fred 
+	  PointElement* p=0;
+	  Point* origin=dynamic_cast<Point*>(v.at(0));
+	  if (origin !=0){
+            p=new PointElement(origin,this);
+	  }
+	  delete origin;
+	  if (p==0){return;}
+
+	  newCommand.item=p;//v.at(0);
+	  newCommand.attributes=0;
+	  newCommand.isCustom=false;
+	  QString ns(newCommand.command);
+	  ns.append("+(0+0*i)");
+	  evaluationLevel=commands.size();
+	  g=giac::gen(ns.toStdString(),context);
+	  v.clear();
+	  addToVector(protecteval(g,1,context),v);
+	  p->setAttributes(0);
+	  p->updateValueFrom(v.at(0));
+	  p->setLevel(evaluationLevel);
+	  p->setLegend(v.at(0)->getLegend());
+	  delete v.at(0);
+	  p->updateScreenCoords(true);
+	  if(!(p->getLegend()).isEmpty()){
+	    p->setVar(p->getLegend());
+	  }
+	  else{
+	    findFreeVar(varPt);
+	    p->setVar(varPt);
+	  }
+	  p->setMovable(true);
+	  newCommand.item=p;//v.at(0);
 	}
-	else{
-	  newCommand.item->setMovable(true);
-	}
+	pointItems.append(newCommand.item);
+	newCommand.item->setVisible(true);
       }
       else{  //non point, non cursor item
 	lineItems.append(v.at(0));
 	newCommand.item->setMovable(true);
-	  }
+      }
     } 
-    findIDNT(g,newCommand.item); 	
+    findIDNT(g,newCommand.item); //find parents	
     commands.append(newCommand);
     parent->addToTree(newCommand.item);
     undoStack->push(new AddObjectCommand(this));
@@ -6811,6 +6868,10 @@ void Canvas2D::sendText(const QString &s){
     parent->selectInTree(focusOwner);
     selectedItems.append(focusOwner);
     updatePixmap(false);
+    //    qDebug()<<"var"<<newCommand.item->getVar()<<" "<<(newCommand.item)->getParents().size();
+    if(!newCommand.item->hasParents()){
+       newCommand.item->setMovable(true);
+    }
     repaint();
 
 }
