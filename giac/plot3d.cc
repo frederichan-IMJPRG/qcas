@@ -1306,12 +1306,12 @@ namespace giac {
 	bool swapped=is_zero(derive(curveeq,t,contextptr));
 	if (swapped)
 	  std::swap(s,t);
-	gen sol=inter_solve(gen(makevecteur(curveeq,t),_SEQ__VECT),contextptr);
+	gen sol=inter_solve(gen(makevecteur(symbolic(at_equal,makevecteur(curveeq,0)),t),_SEQ__VECT),contextptr);
 	if (sol.type!=_VECT)
 	  return vecteur(1,gensizeerr(contextptr));
 	if (!swapped && sol._VECTptr->empty()){
 	  std::swap(s,t);
-	  sol=inter_solve(gen(makevecteur(curveeq,t),_SEQ__VECT),contextptr);
+	  sol=inter_solve(gen(makevecteur(symbolic(at_equal,makevecteur(curveeq,0)),t),_SEQ__VECT),contextptr);
 	  if (sol.type!=_VECT)
 	    return vecteur(1,gensizeerr(contextptr));
 	}

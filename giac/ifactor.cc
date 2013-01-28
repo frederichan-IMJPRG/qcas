@@ -9,7 +9,9 @@
 #endif
 
 // Thanks to Jason Papadopoulos, author of msieve
-#if defined(__GNUC__) && __GNUC__ >= 3
+#ifdef BESTA_OS
+	#define PREFETCH(addr) /* nothing */
+#elif defined(__GNUC__) && __GNUC__ >= 3
 	#define PREFETCH(addr) __builtin_prefetch(addr) 
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 	#define PREFETCH(addr) PreFetchCacheLine(PF_TEMPORAL_LEVEL_1, addr)
@@ -205,7 +207,7 @@ namespace giac {
 #endif
 
   static const int giac_last_prime=giac_primes[sizeof(giac_primes)/sizeof(short)-1];
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
   const unsigned QS_SIZE=65536; // number of slicetype in a sieve slice
   typedef unsigned char slicetype; // define to unsigned char if not enough
 #else
@@ -373,7 +375,7 @@ namespace giac {
   }
 #endif
 
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS 
   typedef unsigned short pui_t ;
   typedef unsigned short ushort_t;
   typedef short short_t;
@@ -393,7 +395,7 @@ namespace giac {
 #if defined(HASH_MAP_NAMESPACE) && defined(PRIMES32)
 #define ADDITIONAL_PRIMES_HASHMAP
 #endif
-#endif // RTOS_THREADX
+#endif // RTOS_THREADX || BESTA_OS
 
   struct axbinv {
 #if 0
@@ -433,7 +435,8 @@ namespace giac {
 #endif
 #endif
 
-#ifndef RTOS_THREADX
+#ifndef RTOS_THREADX 
+#ifndef BESTA_OS
   // #define WITH_INVA
 #if defined(__APPLE__) || defined(__x86_64__)
 #define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
@@ -443,6 +446,7 @@ namespace giac {
 #else
 #define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
 #endif // APPLE or 64 bits
+#endif
 #endif
 
 #ifdef LP_TAB_SIZE
@@ -514,7 +518,7 @@ namespace giac {
     unsigned root1; // first root position in slice
     unsigned root2; // second root position
     ushort_t p; // the prime p
-    ushort_t sqrtmod:24;
+    unsigned sqrtmod:24;
 #ifdef WITH_LOGP
     unsigned char logp:8; // could be unsigned char
 #endif
@@ -583,9 +587,11 @@ namespace giac {
 #else
       if (p>next){
 	++nbits;
+#ifndef BESTA_OS
 #ifndef RTOS_THREADX
 	if (nbits==LP_BIT_LIMIT+1)
 	  break;
+#endif
 #endif
 	next *=2;
       }
@@ -610,6 +616,7 @@ namespace giac {
       }
     }
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
 #ifndef LP_TAB_SIZE
     for (;bit!=bitend;++bit){
       // same as above but we are sieving with primes >2^15, no need to check for nbits increase
@@ -626,6 +633,7 @@ namespace giac {
       }
       bit->root2 = pos-ss;
     }
+#endif
 #endif
 #endif
     return bit;
@@ -669,11 +677,11 @@ namespace giac {
     if (nbits>70)
       up_to += (0.8*(nbits-70))/70;
     if (debug_infolevel>7)
-      *logptr(contextptr) << clock() << "Sieve tolerance factor " << up_to << endl;
+      *logptr(contextptr) << clock() << gettext("Sieve tolerance factor ") << up_to << endl;
     unsigned char logB=(unsigned char) (nbits-int(up_to*sizeinbase2(basis.back().p)+.5));
     // unsigned char logB=(unsigned char) (nbits-int(up_to*std::log(double(basis.back().p))/std::log(2.0)+.5));
     if (debug_infolevel>6)
-      *logptr(contextptr) << clock() << " reset" << endl;
+      *logptr(contextptr) << clock() << gettext(" reset") << endl;
     // assumes slice type is size 1 byte and multiple of 32
 #ifdef __x86_64__
     ulonglong * ptr=(ulonglong *) &slice[0];
@@ -692,7 +700,7 @@ namespace giac {
     }
 #endif
     if (debug_infolevel>8)
-      *logptr(contextptr) << clock() << " end reset, nbits " << nbits << endl;
+      *logptr(contextptr) << clock() << gettext(" end reset, nbits ") << nbits << endl;
     // now for all primes p in basis move in slice from p to p
     // decrease slice[] by number of bits in p
     // determines the first prime used in basis
@@ -721,7 +729,7 @@ namespace giac {
       int p=basis[bstart].p;
       if (p>next){
 	if (debug_infolevel>7)
-	  *logptr(contextptr) << "Sieve first prime " << p << " nbits " << nbits << endl;
+	  *logptr(contextptr) << gettext("Sieve first prime ") << p << " nbits " << nbits << endl;
 	break;
       }
 #ifdef LP_SMALL_PRIMES 
@@ -751,7 +759,7 @@ namespace giac {
     }
     next *= 2;
     if (debug_infolevel>8)
-      *logptr(contextptr) << clock() << " sieve begin " << endl;
+      *logptr(contextptr) << clock() << gettext(" sieve begin ") << endl;
     // bool sameroot; // Should be there to avoid counting twice the same root but it's faster to ignore it..;
 #ifdef LP_SMALL_PRIMES
     small_basis_t * bit=&small_basis[bstart], * bitend=&small_basis[0]+small_basis.size();
@@ -790,7 +798,7 @@ namespace giac {
     if (debug_infolevel>6)
       cl=clock();
     if (debug_infolevel>8)
-      *logptr(contextptr) << cl << "relations " << endl;
+      *logptr(contextptr) << cl << gettext("relations ") << endl;
     // now find relations
     st=slice; stend=slice+ss;
 #ifdef __x86_64__
@@ -984,7 +992,7 @@ namespace giac {
 	if (mpz_cmp_si(z1,1)==0){ // is_one(tmp)){
 	  ++nrelations;
 	  if (debug_infolevel>6)
-	    *logptr(contextptr) << clock() << " true relation " << endl;
+	    *logptr(contextptr) << clock() << gettext(" true relation ") << endl;
 	  axbmodn.push_back(axbinv(sqrtavals.size()-1,shiftpos,bvals.size()-1,puissancesptr-puissancesbegin,(puissancesptr-puissancesbegin)+curpuissances.size()));	
 	  for (unsigned i=0;i<curpuissances.size();++puissancesptr,++i){
 	    if (puissancesptr>=puissancesend)
@@ -1001,7 +1009,7 @@ namespace giac {
 #endif
 			 )==1){
 	    if (debug_infolevel>6)
-	      *logptr(contextptr) << gen(z1) << " Sieve large remainder:" << endl;
+	      *logptr(contextptr) << gen(z1) << gettext(" Sieve large remainder:") << endl;
 	  }
 	  else {
 #ifdef GIAC_ADDITIONAL_PRIMES
@@ -1034,7 +1042,7 @@ namespace giac {
 	    int Ppos=_equalposcomp(additional_primes,P); // this is in O(additional^2)=o(B^3)
 	    if (Ppos){
 	      if (debug_infolevel>6)
-		*logptr(contextptr) << P << " already additional" << endl;
+		*logptr(contextptr) << P << gettext(" already additional") << endl;
 	      --Ppos;
 	      additional_primes_twice[Ppos]=true;
 	    } else {
@@ -1071,7 +1079,7 @@ namespace giac {
     } // end for loop on slice array
     if (debug_infolevel>6){
       unsigned cl2=clock();
-      *logptr(contextptr) << cl2 << " end relations " << cl2-cl << endl;
+      *logptr(contextptr) << cl2 << gettext(" end relations ") << cl2-cl << endl;
     }
     return nrelations;
   }
@@ -1322,13 +1330,13 @@ namespace giac {
     }
     if (debug_infolevel>6){
       for (unsigned i=0;i<nmult;++i){
-	*logptr(contextptr) << "multiplier " << int(mult[i]) << " score " << scores[i] << endl;
+	*logptr(contextptr) << gettext("multiplier ") << int(mult[i]) << " score " << scores[i] << endl;
       }
     }
     if (pos){
       delta=minscore-scores[0];
       if (debug_infolevel)
-	*logptr(contextptr) << "Using multiplier " << int(mult[pos]) << " delta-score " << delta << endl;
+	*logptr(contextptr) << gettext("Using multiplier ") << int(mult[pos]) << " delta-score " << delta << endl;
     }
     return mult[pos];
   }
@@ -1876,7 +1884,7 @@ namespace giac {
 #endif
 #endif
     if (debug_infolevel)
-      *logptr(contextptr) << "" << clock() << " sieve on " << N << endl << "Number of primes " << B << endl;
+      *logptr(contextptr) << "" << clock() << gettext(" sieve on ") << N << endl << gettext("Number of primes ") << B << endl;
     // first compute the prime basis and sqrt(N) mod p, p in basis
     vector<basis_t> basis;
     basis.reserve(unsigned(B));
@@ -1899,7 +1907,7 @@ namespace giac {
 	break;
       ushort_t j=giac_primes[i];
       if (debug_infolevel>6 && (i%500==99))
-	*logptr(contextptr) << clock() << " sieve current basis size " << basis.size() << endl;
+	*logptr(contextptr) << clock() << gettext(" sieve current basis size ") << basis.size() << endl;
 #if 1 // def USE_GMP_REPLACEMENTS
       // int n=fastsmod_compute(N256,j);
       int n=modulo(*N._ZINTptr,j),s;
@@ -1952,7 +1960,7 @@ namespace giac {
       }
 #endif
       if (debug_infolevel>6 && (i%500==99))
-	*logptr(contextptr) << clock() << " sieve current basis size " << basis.size() << endl;
+	*logptr(contextptr) << clock() << gettext(" sieve current basis size ") << basis.size() << endl;
 #if 1 // def USE_GMP_REPLACEMENTS
       // int n=fastsmod_compute(N256,jp);
       int n=modulo(*N._ZINTptr,jp),s;
@@ -2002,7 +2010,7 @@ namespace giac {
     unsigned maxadditional=3*basis.back().p*ps;
 #endif
     if (debug_infolevel)
-      *logptr(contextptr) << clock() << " sieve basis OK, size " << basis.size() << " largest prime in basis " << basis.back().p << " large prime " << maxadditional << " Mtarget " << Mtarget << endl ;
+      *logptr(contextptr) << clock() << gettext(" sieve basis OK, size ") << basis.size() << " largest prime in basis " << basis.back().p << " large prime " << maxadditional << " Mtarget " << Mtarget << endl ;
     int bs=basis.size();
     gen isqrtN=isqrt(N);
     isqrtN.uncoerce(); 
@@ -2103,8 +2111,8 @@ namespace giac {
     }
 #endif // OLD_AFACT
     if (debug_infolevel){
-      *logptr(contextptr) << "Using " << afact << " square factors per a coefficient in polynomials" << endl;
-      *logptr(contextptr) << afixed << " fixed begin at " << basis[pos0].p << " and " << afact-afixed << " variables at " << basis[pos1].p << endl; 
+      *logptr(contextptr) << gettext("Using ") << afact << " square factors per a coefficient in polynomials" << endl;
+      *logptr(contextptr) << afixed << gettext(" fixed begin at ") << basis[pos0].p << " and " << afact-afixed << " variables at " << basis[pos1].p << endl; 
     }
     vector<ushort_t> isqrtN256;
     // fastsmod_prepare(isqrtN,zx,zy,zr,isqrtN256);
@@ -2194,7 +2202,7 @@ namespace giac {
       Mval=Mval*basis[pos[i]].p;
     Mval=std::sqrt(2*Nd)/(Mval*Mval);
     if (debug_infolevel)
-      *logptr(contextptr) << "First M " << Mval << endl;
+      *logptr(contextptr) << gettext("First M ") << Mval << endl;
     Mtarget=Mval;
     int avar=afact-afixed;
     int end_pos1=2*pos1;
@@ -2310,7 +2318,7 @@ namespace giac {
       a.uncoerce();
       int M=int(std::floor(std::sqrt(Nd*2)/evalf_double(a,1,contextptr)._DOUBLE_val));
       if (debug_infolevel>6)
-	*logptr(contextptr) << clock() << " initial value for M= " << M << endl;
+	*logptr(contextptr) << clock() << gettext(" initial value for M= ") << M << endl;
       int nslices=int(std::ceil((2.*M)/slicesize));
       M=(nslices*slicesize)/2;
       bvalues.clear();
@@ -2365,7 +2373,7 @@ namespace giac {
       } // end for
       // compute inverse of a modulo p (will set to 0 if not invertible)
       if (debug_infolevel>6)
-	*logptr(contextptr) << clock() << " Computing inverses mod p of the basis " << endl;
+	*logptr(contextptr) << clock() << gettext(" Computing inverses mod p of the basis ") << endl;
       // fastsmod_prepare(a,zx,zy,zr,a256);
       gen b;
       for (int i=0;i< (1<<(afact-1));++i){
@@ -2379,7 +2387,7 @@ namespace giac {
 	if (axbmodn.size()>=todo_rel)
 	  break;
 	if (debug_infolevel>6)
-	  *logptr(contextptr) << clock() << " Computing c " << endl;
+	  *logptr(contextptr) << clock() << gettext(" Computing c ") << endl;
 #ifdef PRIMES32
 	int bv=1,be=-1;
 	if (afact>afact0){
@@ -2423,7 +2431,7 @@ namespace giac {
 	  }
 	bvals.push_back(b);
 	if (debug_infolevel>6)
-	  *logptr(contextptr) << clock() << " Computing roots mod the basis " << endl;
+	  *logptr(contextptr) << clock() << gettext(" Computing roots mod the basis ") << endl;
 	// fastsmod_prepare(b,zx,zy,zr,b256);
 #ifdef PRIMES32 
 	if (i && afact>afact0)
@@ -2450,7 +2458,7 @@ namespace giac {
 	  unsigned cl;
 	  if (debug_infolevel>3){
 	    cl=clock();
-	    *logptr(contextptr) << cl << " Init large prime hashtables " << endl;
+	    *logptr(contextptr) << cl << gettext(" Init large prime hashtables ") << endl;
 	  }
 	  int total=(nslices << (afact-1));
 	  if (int(lp_map.size()) < total)
@@ -2477,7 +2485,7 @@ namespace giac {
 	      if (k== (1 << (afact-1))){
 		if (debug_infolevel>3){
 		  unsigned cl2=clock();
-		  *logptr(contextptr) << cl2 << " End large prime hashtables " << cl2-cl << endl;
+		  *logptr(contextptr) << cl2 << gettext(" End large prime hashtables ") << cl2-cl << endl;
 		}
 		break;
 	      }
@@ -2550,7 +2558,7 @@ namespace giac {
 	// we can now sieve in [-M,M[ by slice of size slicesize
 	if (debug_infolevel>5){
 	  *logptr(contextptr) << clock();
-	  *logptr(contextptr) << " Polynomial a,b,M=" << a << "," << b << "," << M << " (" << pos << ")" ;
+	  *logptr(contextptr) << gettext(" Polynomial a,b,M=") << a << "," << b << "," << M << " (" << pos << ")" ;
 	  *logptr(contextptr) << clock() << endl;
 	}
 	int nrelationsb=0;
@@ -2591,7 +2599,7 @@ namespace giac {
 #endif
 				    contextptr);
 	  if (slicerelations==-1){
-	    *logptr(contextptr) << "Sieve error: Not enough memory " << endl;
+	    *logptr(contextptr) << gettext("Sieve error: Not enough memory ") << endl;
 	    break;
 	  }
 	  nrelationsb += slicerelations;
@@ -2615,11 +2623,11 @@ namespace giac {
       }
 #ifndef RTOS_THREADX
       if (debug_infolevel>1)
-	*logptr(contextptr) << clock()<< " sieved : " << axbmodn.size() << " of " << todo_rel << " (" << 100-100*(todo_rel-axbmodn.size())/double(bs+marge) << "%), M=" << M << endl;
+	*logptr(contextptr) << clock()<< gettext(" sieved : ") << axbmodn.size() << " of " << todo_rel << " (" << 100-100*(todo_rel-axbmodn.size())/double(bs+marge) << "%), M=" << M << endl;
 #endif
     } // end sieve loop
     if (debug_infolevel)
-      *logptr(contextptr) << "Polynomials a,b in use: #a " << sqrtavals.size() << " and #b " << bvals.size() << endl;
+      *logptr(contextptr) << gettext("Polynomials a,b in use: #a ") << sqrtavals.size() << " and #b " << bvals.size() << endl;
     delete [] slice;
     if (ctrl_c || puissancesptr==puissancesend){
       mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
@@ -2629,7 +2637,7 @@ namespace giac {
     }
     // We have enough relations, make matrix, reduce it then find x^2=y^2 mod n congruences
     if (debug_infolevel)
-      *logptr(contextptr) << clock() << " sieve done: used " << (puissancesptr-puissancestab)*0.002 << " K for storing relations (of " << puissancestablength*0.002 << ")" << endl;
+      *logptr(contextptr) << clock() << gettext(" sieve done: used ") << (puissancesptr-puissancestab)*0.002 << " K for storing relations (of " << puissancestablength*0.002 << ")" << endl;
     release_memory(isqrtNmodp);
 #ifdef GIAC_ADDITIONAL_PRIMES 
 #ifdef ADDITIONAL_PRIMES_HASHMAP
@@ -2643,7 +2651,7 @@ namespace giac {
     sort(additional_primes.begin(),additional_primes.end()); // for binary search later
 #else
     if (debug_infolevel)
-      *logptr(contextptr) << clock() << " removing additional primes" << endl;
+      *logptr(contextptr) << clock() << gettext(" removing additional primes") << endl;
     // remove relations with additional primes which are used only once
     int lastp=axbmodn.size()-1,lasta=additional_primes.size()-1;
     for (int i=0;i<=lastp;++i){
@@ -2682,7 +2690,7 @@ namespace giac {
     axbmodn.resize(lastp+1);
     additional_primes.resize(lasta+1);
     if (debug_infolevel)
-      *logptr(contextptr) << clock() << " end removing additional primes" << endl;
+      *logptr(contextptr) << clock() << gettext(" end removing additional primes") << endl;
 #endif // ADDTIONAL_PRIMES_HASHMAP
 #endif // GIAC_ADDITIONAL_PRIMES
     // Make relations matrix (currently dense, FIXME improve to sparse and Lanczos algorithm)
@@ -2797,7 +2805,7 @@ namespace giac {
       } // end for unsigned j=0; j<l32
       for (int i=0;i<bs;++i){
 	if (p[i] % 2)
-	  *logptr(contextptr) << "error, odd exponent for prime " << basis[i].p << endl;
+	  *logptr(contextptr) << gettext("error, odd exponent for prime ") << basis[i].p << endl;
 	if (p[i]){
 #if 1
 	  mpz_set_ui(alloc1,basis[i].p);
@@ -2824,7 +2832,7 @@ namespace giac {
       }
       for (unsigned i=0;i<additional_primes.size();++i){
 	if (add_p[i] % 2)
-	  *logptr(contextptr) << "error" << i << endl;
+	  *logptr(contextptr) << gettext("error") << i << endl;
 	if (add_p[i]){
 #if 1
 	  mpz_set_ui(alloc1,additional_primes[i]);
@@ -2855,7 +2863,7 @@ namespace giac {
 #endif
       cur=gcd(x-y,n_orig);
       if (debug_infolevel>6)
-	*logptr(contextptr) << clock() << "checking gcd" << cur << " " << N << endl;
+	*logptr(contextptr) << clock() << gettext("checking gcd") << cur << " " << N << endl;
       if ( (cur.type==_INT_ && cur.val>7) || 
 	   (cur.type==_ZINT && is_strictly_greater(n_orig,cur,contextptr))){
 	pn=cur;
@@ -2879,7 +2887,7 @@ namespace giac {
 #ifdef USE_GMP_REPLACEMENTS
   const int POLLARD_MAXITER=3000;
 #else
-  const int POLLARD_MAXITER=3000;
+  const int POLLARD_MAXITER=100000;
 #endif
 #else
   const int POLLARD_MAXITER=100000;
@@ -2949,10 +2957,10 @@ namespace giac {
 				 (1<<18)
 #endif
 				 )==0))
-	  *logptr(contextptr) << clock() << " Pollard-rho try " << m << endl;
+	  *logptr(contextptr) << clock() << gettext(" Pollard-rho try ") << m << endl;
 	if (m > maxiter ){
 	  if (debug_infolevel)	  
-	    *logptr(contextptr) << clock() << " Pollard-rho failure, ntries " << m << endl;
+	    *logptr(contextptr) << clock() << gettext(" Pollard-rho failure, ntries ") << m << endl;
 	  return -1;
 	}
 	// p=irem(p*(x1-x),n,q);
@@ -3275,7 +3283,7 @@ namespace giac {
     int debug_infolevel_=debug_infolevel;
     debug_infolevel=2;
     if (do_pollard)
-      *logptr(contextptr) << "Pollard-rho on " << a << endl; 
+      *logptr(contextptr) << gettext("Pollard-rho on ") << a << endl; 
 #endif
     gen res=inpollardsieve(a,k,do_pollard,contextptr);
 #ifdef GIAC_HAS_STO_38

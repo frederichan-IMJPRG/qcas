@@ -1441,15 +1441,45 @@ namespace giac {
 	g1=it1->g;
 	it2beg=(*v2ptr)[d2];
 	it2end=(*v2ptr)[d2+1];
+#if 1
+	if ((it1+3)<it1end && (it1+3)->u/degdiv == d1){
+	  // 4 monomials have same main degree: make the product simult
+	  T * prod0=prod+u1, * prod1=prod+(it1+1)->u,*prod2=prod+(it1+2)->u,*prod3=prod+(it1+3)->u;
+	  T g1_1=(it1+1)->g,g1_2=(it1+2)->g,g1_3=(it1+3)->g,g2;
+	  if (is_zero(reduce)){
+	    for (it2=it2beg;it2!=it2end;++it2){
+	      u2=it2->u;
+	      g2=it2->g;
+	      type_operator_plus_times(g1,g2,prod0[u2]); 
+	      type_operator_plus_times(g1_1,g2,prod1[u2]); 
+	      type_operator_plus_times(g1_2,g2,prod2[u2]); 
+	      type_operator_plus_times(g1_3,g2,prod3[u2]); 
+	    }
+	  }
+	  else {
+	    for (it2=it2beg;it2!=it2end;++it2){
+	      u2=it2->u;
+	      g2=it2->g;
+	      type_operator_plus_times_reduce(g1,g2,prod0[u2],reduce); 
+	      type_operator_plus_times_reduce(g1_1,g2,prod1[u2],reduce); 
+	      type_operator_plus_times_reduce(g1_2,g2,prod2[u2],reduce); 
+	      type_operator_plus_times_reduce(g1_3,g2,prod3[u2],reduce); 
+	    }
+	  }
+	  it1 += 3;
+	  continue;
+	}
+#endif
+	T * prod0 = prod+u1;
 	if (is_zero(reduce)){
 	  for (it2=it2beg;it2!=it2end;++it2){
-	    type_operator_plus_times(g1,it2->g,prod[u1+it2->u]); 
+	    type_operator_plus_times(g1,it2->g,prod0[it2->u]); 
 	    // prod_it->second += g; 
 	  }
 	}
 	else {
 	  for (it2=it2beg;it2!=it2end;++it2){
-	    type_operator_plus_times_reduce(g1,it2->g,prod[u1+it2->u],reduce); 
+	    type_operator_plus_times_reduce(g1,it2->g,prod0[it2->u],reduce); 
 	  }
 	}
       }

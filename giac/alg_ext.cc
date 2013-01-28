@@ -555,7 +555,7 @@ namespace giac {
       if (innerdim){
 	polynome pb(1),px(unsplitmultivarpoly(p,innerdim));
 	find_good_eval(px,pb,vb);
-	*logptr(contextptr) << "Warning, choice of an algebraic branch for root of a polynomial with parameters might be wrong. The choice is done for parameters value=0 if 0 is regular, otherwise randomly. Actual choice is " << vb << endl;
+	*logptr(contextptr) << gettext("Warning, choice of an algebraic branch for root of a polynomial with parameters might be wrong. The choice is done for parameters value=0 if 0 is regular, otherwise randomly. Actual choice is ") << vb << endl;
 	racines=proot(polynome2poly1(pb));
       }
       else
@@ -1038,20 +1038,64 @@ namespace giac {
     }
     if (range.size()!=2)
       return gensizeerr(gettext("fminmax, range ")+gen(range).print(contextptr));
-    gen df(derive(v[0],var,contextptr));
+    if (range[0]==minus_inf || range[1]==plus_inf){
+      // periodic function?
+      vecteur w=lvarx(trig2exp(expr,contextptr),var);
+      gen period=0;
+      for (unsigned i=0;i<w.size();++i){
+	if (!w[i].is_symb_of_sommet(at_exp)){
+	  period=0;
+	  break;
+	}
+	gen tmp=w[i]._SYMBptr->feuille,a,b;
+	if (!is_linear_wrt(tmp,var,a,b,contextptr) || !is_zero(re(a,contextptr))){
+	  period=0;
+	  break;
+	}
+	if (is_zero(a))
+	  continue;
+	a=ratnormal(cst_two_pi/im(a,contextptr)); // current period
+	if (is_zero(period))
+	  period=a;
+	else { // find common period (if it exists)
+	  b=ratnormal(period/a);
+	  if (b.type!=_INT_ && b.type!=_FRAC){
+	    period=0;
+	    break;
+	  }
+	  if (b.type==_FRAC) 
+	    period=period*b._FRACptr->den;
+	}
+      }
+      if (!is_zero(period)){
+	if (w.size()>1) 
+	  expr=simplify(expr,contextptr);
+	if (range[0]==minus_inf){
+	  if (range[1]==plus_inf){
+	    range[1]=period/2;
+	    range[0]=-range[1];
+	  }
+	  else
+	    range[0]=range[1]-period;
+	}
+	else 
+	  range[1]=range[0]+period;
+      }
+    }
+    gen df(derive(expr,var,contextptr));
     if (is_undef(df))
       return df;
     gen savevar=var;
     if (var._IDNTptr->in_eval(1,var,savevar,contextptr))
       ;
     giac_assume(symbolic(at_and,makevecteur(symb_superieur_egal(var,range[0]),symb_inferieur_egal(var,range[1]))),contextptr);
-    vecteur w=solve(df,var,0,contextptr);
+    vecteur w=solve(df,var,2,contextptr);
     if (savevar==var)
       _purge(var,contextptr);
     else
       sto(savevar,var,contextptr);
     if (w.empty() && debug_infolevel)
-      *logptr(contextptr) << "Warning: " << df << "=0: no solution found" << endl;
+      *logptr(contextptr) << gettext("Warning: ") << df << gettext("=0: no solution found") << endl;
     gen resmin=plus_inf;
     gen resmax=minus_inf;
     vecteur xmin,xmax;
@@ -1061,7 +1105,7 @@ namespace giac {
     recompute_minmax(vecteur(1,range[0]),range,expr,var,resmin,resmax,xmin,xmax,1,contextptr);
     recompute_minmax(vecteur(1,range[1]),range,expr,var,resmin,resmax,xmin,xmax,-1,contextptr);
     // Singularities
-    vecteur ws=find_singularities(v[0],*var._IDNTptr,0,contextptr);
+    vecteur ws=find_singularities(expr,*var._IDNTptr,0,contextptr);
     int wss=ws.size();
     w.clear();
     for (int i=0;i<wss;++i){

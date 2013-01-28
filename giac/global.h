@@ -26,19 +26,19 @@
 #define GIAC_CONTEXT const context * contextptr
 #define GIAC_CONTEXT0 const context * contextptr=0
 
-#ifndef HAVE_NO_SYS_TIMES_H
+#if !defined(HAVE_NO_SYS_TIMES_H) && !defined(BESTA_OS)
 #include <sys/times.h>
 #else
-#ifdef VISUALC 
+#if defined VISUALC || defined BESTA_OS 
 typedef long pid_t;
 #else // VISUALC
-#ifndef __MINGW_H
+#if !defined(__MINGW_H) && !defined(BESTA_OS)
 #include "wince_replacements.h"
 #endif
 #endif // VISUALC
 #endif // HAVE_NO_SYS_TIMES_H
 // #ifndef __APPLE__
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
 #include <math.h>
 #include <float.h>
 #ifndef RTOS_THREADX
@@ -93,7 +93,7 @@ inline double giac_log(double d){
 
 #include <stdexcept>
 #include "help.h"
-#if !defined(GIAC_HAS_STO_38) && !defined(ConnectivityKit)
+#if !defined(GIAC_HAS_STO_38) && !defined(ConnectivityKit) && !defined(BESTA_OS)
 #include "tinymt32.h"
 #endif
 
@@ -113,7 +113,7 @@ namespace giac {
   unsigned int utf8length(const wchar_t * wline);
 
 
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
   extern int R_OK;
   int access(const char * ch,int mode);
   void usleep(int );
@@ -158,8 +158,10 @@ namespace giac {
 
   extern bool CAN_USE_LAPACK;
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
   extern int CALL_LAPACK; // lapack is used if dim of matrix is >= CALL_LAPACK
   // can be changed using shell variable GIAC_LAPACK in icas
+#endif
 #endif
   extern int FACTORIAL_SIZE_LIMIT;
   extern int LIST_SIZE_LIMIT;
@@ -190,6 +192,8 @@ namespace giac {
   // void control_c();
   // note that ctrl_c=false was removed, should be done before calling eval
 #ifdef RTOS_THREADX
+#define control_c() 
+#elif BESTA_OS
 #define control_c()
 #else
   #define control_c() if (ctrl_c) { interrupted = true; std::cerr << "Throwing exception for user interruption." << std::endl; throw(std::runtime_error("Stopped by user interruption.")); }
@@ -395,6 +399,7 @@ namespace giac {
     bool _expand_re_im_;
     bool _do_lnabs_;
     bool _eval_abs_;
+    bool _integer_mode_;
     bool _complex_mode_;
     bool _complex_variables_;
     bool _increasing_power_;
@@ -409,6 +414,7 @@ namespace giac {
     bool _lexer_close_parenthesis_;
     bool _rpn_mode_;
     bool _try_parse_i_;
+    bool _specialtexprint_double_;
     int _angle_mode_;
     int _bounded_function_no_;
     int _series_flags_; // bit1= full simplify, bit2=1 for truncation
@@ -469,7 +475,9 @@ namespace giac {
     context();
     context(const context & c);
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
     context(const std::string & name);
+#endif
 #endif
     ~context();
     context * clone() const;
@@ -485,7 +493,9 @@ namespace giac {
 #endif
   
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
   extern std::map<std::string,context *> * context_names ;
+#endif
 #endif
 
   std::vector<const char *> & last_evaled_function_name(GIAC_CONTEXT);
@@ -527,11 +537,17 @@ namespace giac {
   bool & expand_re_im(GIAC_CONTEXT);
   void expand_re_im(bool b,GIAC_CONTEXT);
 
+  bool & integer_mode(GIAC_CONTEXT);
+  void integer_mode(bool b,GIAC_CONTEXT);
+
   bool & complex_mode(GIAC_CONTEXT);
   void complex_mode(bool b,GIAC_CONTEXT);
 
   bool & try_parse_i(GIAC_CONTEXT);
   void try_parse_i(bool b,GIAC_CONTEXT);
+
+  bool & specialtexprint_double(GIAC_CONTEXT);
+  void specialtexprint_double(bool b,GIAC_CONTEXT);
 
   bool & do_lnabs(GIAC_CONTEXT);
   void do_lnabs(bool b,GIAC_CONTEXT);

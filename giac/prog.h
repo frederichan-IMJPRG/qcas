@@ -78,6 +78,7 @@ namespace giac {
   gen _bloc(const gen & prog,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_bloc ;
 
+  std::string printasfor(const gen & feuille,const char * sommetstr,GIAC_CONTEXT);
   std::string printasifte(const gen & feuille,const char * sommetstr,GIAC_CONTEXT);
   symbolic symb_ifte(const gen & test,const gen & oui, const gen & non);
   gen ifte(const gen & args,bool isifte,const context * contextptr);
@@ -154,6 +155,7 @@ namespace giac {
 
   gen _rand(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_rand;  
+  gen rand_interval(const vecteur & v,bool entier,GIAC_CONTEXT);
 
   gen _srand(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_srand;  

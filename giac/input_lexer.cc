@@ -3191,17 +3191,17 @@ YY_RULE_SETUP
 case 267:
 YY_RULE_SETUP
 #line 604 "input_lexer.ll"
-index_status(yyextra)=0; (*yylval)=gen(at_ifte,3); return T_BLOC_END;
+index_status(yyextra)=0; (*yylval)=4; return T_BLOC_END;
 	YY_BREAK
 case 268:
 YY_RULE_SETUP
 #line 605 "input_lexer.ll"
-index_status(yyextra)=0; (*yylval)=gen(at_ifte,3); return T_BLOC_END;
+index_status(yyextra)=0; (*yylval)=9; return T_BLOC_END;
 	YY_BREAK
 case 269:
 YY_RULE_SETUP
 #line 606 "input_lexer.ll"
-index_status(yyextra)=0; (*yylval)=gen(at_ifte,3); return T_BLOC_END;
+index_status(yyextra)=0; (*yylval)=3; return T_BLOC_END;
 	YY_BREAK
 case 270:
 YY_RULE_SETUP

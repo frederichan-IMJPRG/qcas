@@ -844,9 +844,10 @@ namespace giac {
       remsum += rem;
     }
     res += risch_lin(remsum,x,remains_to_integrate,contextptr);
-    vector<const unary_function_ptr *> SiCi(1,at_Si);
-    SiCi.push_back(at_Ci);
-    if (!lop(res,at_Si).empty()){
+    vector<const unary_function_ptr *> SiCiexp(1,at_Si);
+    SiCiexp.push_back(at_Ci);
+    SiCiexp.push_back(at_exp);
+    if (!lop(res,SiCiexp).empty()){
       res=recursive_normal(res,contextptr);
       if (has_i(res)){
 	res=_exp2trig(res,contextptr);

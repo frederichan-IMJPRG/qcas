@@ -203,12 +203,14 @@ namespace giac {
   gen _rm_a_z(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
     if (variables_are_files(contextptr)){
       char a_effacer[]="a.cas";
       for (;a_effacer[0]<='z';++a_effacer[0]){
 	unlink(a_effacer);
       }
     }
+#endif
 #endif
     for (char c='a';c<='z';c++){
       _purge(gen(string(1,c),contextptr),contextptr);
@@ -1164,7 +1166,7 @@ namespace giac {
     }
     if (e.type==_CPLX){ 
       if (e.subtype){
-	complex<double> d;
+	complex_double d;
 	if (angle_radian(contextptr)) 
 	  d=gen2complex_d(e);
 	else
@@ -1323,7 +1325,7 @@ namespace giac {
     }
     if (e.type==_CPLX){ 
       if (e.subtype){
-	complex<double> d;
+	complex_double d;
 	if (angle_radian(contextptr)) 
 	  d=gen2complex_d(e);
 	else
@@ -1482,7 +1484,7 @@ namespace giac {
     }
     if (e.type==_CPLX){ 
       if (e.subtype){
-	complex<double> c(gen2complex_d(e));
+	complex_double c(gen2complex_d(e));
 	if (!angle_radian(contextptr)) 
 	  c *= deg2rad_d;
 #ifdef _SOFTMATH_H
@@ -1981,7 +1983,7 @@ namespace giac {
       return e._REALptr->tanh();
     if (e.type==_CPLX){
       if (e.subtype){
-	complex<double> c(gen2complex_d(e));
+	complex_double c(gen2complex_d(e));
 #ifdef _SOFTMATH_H
 	return std::giac_gnuwince_tanh(c);
 #else
@@ -2179,6 +2181,12 @@ namespace giac {
 #endif
   define_unary_function_ptr5( at_atanh ,alias_at_atanh,&__atanh,0,true);
 
+  static string printasquote(const gen & g,const char * s,GIAC_CONTEXT){
+    if (calc_mode(contextptr)==38)
+      return "QUOTE("+g.print(contextptr)+")";
+    else
+      return "'"+g.print(contextptr)+"'"; 
+  }
   symbolic symb_quote(const gen & arg){
     return symbolic(at_quote,arg);
   }
@@ -2194,9 +2202,9 @@ namespace giac {
   define_partial_derivative_onearg_genop( D_at_quote," D_at_quote",&quote);
   static const char _quote_s []="quote";
 #ifdef GIAC_HAS_STO_38
-  static define_unary_function_eval3_quoted (__quote,&giac::quote,(unsigned long)&D_at_quoteunary_function_ptr,_quote_s);
+  static define_unary_function_eval5_quoted (__quote,&giac::quote,(unsigned long)&D_at_quoteunary_function_ptr,_quote_s,&printasquote,0);
 #else
-  static define_unary_function_eval3_quoted (__quote,&giac::quote,D_at_quote,_quote_s);
+  static define_unary_function_eval5_quoted (__quote,&giac::quote,D_at_quote,_quote_s,&printasquote,0);
 #endif
   define_unary_function_ptr5( at_quote ,alias_at_quote,&__quote,0,true);
 
@@ -2413,18 +2421,18 @@ namespace giac {
   static define_unary_function_eval (__calc_mode,&giac::_calc_mode,_calc_mode_s);
   define_unary_function_ptr5( at_calc_mode ,alias_at_calc_mode,&__calc_mode,0,true); 
   
-  bool is_numericv(const vecteur & v){
+  bool is_numericv(const vecteur & v, int withfracint){
     const_iterateur it=v.begin(),itend=v.end();
     for (;it!=itend;++it){
-      if (it->type==_VECT || !is_fully_numeric(*it))
+      if (it->type==_VECT || !is_fully_numeric(*it, withfracint))
 	return false;
     }
     return true;
   }
-  bool is_numericm(const vecteur & v){
+  bool is_numericm(const vecteur & v, int withfracint){
     const_iterateur it=v.begin(),itend=v.end();
     for (;it!=itend;++it){
-      if (it->type!=_VECT || !is_numericv(*it->_VECTptr))
+      if (it->type!=_VECT || !is_numericv(*it->_VECTptr, withfracint))
 	return false;
     }
     return true;
@@ -2545,6 +2553,7 @@ namespace giac {
 	  return is_undef(error)?error:a;
 	}
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
 #ifdef HAVE_LIBPTHREAD
 	pthread_mutex_lock(&context_list_mutex);
 #endif
@@ -2567,6 +2576,7 @@ namespace giac {
 	}
 #ifdef HAVE_LIBPTHREAD
 	pthread_mutex_unlock(&context_list_mutex);
+#endif
 #endif
 #endif
 	// TI path
@@ -2655,7 +2665,7 @@ namespace giac {
 	    // check that the current value is a thread pointer
 	    if (it->second.type==_POINTER_ && it->second.subtype==_THREAD_POINTER){
 	      if (it->second._POINTER_val!=(void *)contextptr_)
-		return gentypeerr(b.print(contextptr)+" is locked by thread "+it->second.print(contextptr));
+		return gentypeerr(b.print(contextptr)+gettext(" is locked by thread ")+it->second.print(contextptr));
 	    }
 	    it->second=aa;
 	    done=true;
@@ -2664,14 +2674,14 @@ namespace giac {
 	}
 	if (!done) {// store b globally
 	  if (contains(lidnt(a),b))
-	    *logptr(contextptr) << b.print(contextptr)+": recursive definition" << endl;
+	    *logptr(contextptr) << b.print(contextptr)+gettext(": recursive definition") << endl;
 	  sym_tab * symtabptr=contextptr->globalcontextptr?contextptr->globalcontextptr->tabptr:contextptr->tabptr;
 	  sym_tab::iterator it=symtabptr->find(b._IDNTptr->id_name),itend=symtabptr->end();
 	  if (it!=itend){ 
 	    // check that the current value is a thread pointer
 	    if (it->second.type==_POINTER_ && it->second.subtype==_THREAD_POINTER){
 	      if (it->second._POINTER_val!=(void *)contextptr_)
-		return gentypeerr(b.print(contextptr)+" is locked by thread "+it->second.print(contextptr));
+		return gentypeerr(b.print(contextptr)+gettext(" is locked by thread ")+it->second.print(contextptr));
 	    }
 	    it->second=aa;
 	  }
@@ -2685,7 +2695,7 @@ namespace giac {
 	return ans;
       } // end if (contextptr)
       if (contains(lidnt(a),b))
-	*logptr(contextptr) << b.print(contextptr)+": recursive definition" << endl;
+	*logptr(contextptr) << b.print(contextptr)+gettext(": recursive definition") << endl;
       if (b._IDNTptr->localvalue && !b._IDNTptr->localvalue->empty() && (b.subtype!=_GLOBAL__EVAL))
 	b._IDNTptr->localvalue->back()=aa;
       else {
@@ -2885,11 +2895,11 @@ namespace giac {
       return sto(v,destination,in_place,contextptr);
     }
     if (b.type==_FUNC){
-      string errmsg=b.print(contextptr)+ " is a reserved word, sto not allowed:";
+      string errmsg=b.print(contextptr)+ gettext(" is a reserved word, sto not allowed:");
       *logptr(contextptr) << errmsg << endl;
       return makevecteur(string2gen(errmsg,false),a);
     }
-    return gentypeerr(gettext("sto ")+b.print(contextptr)+ " not allowed!");
+    return gentypeerr(gettext("sto ")+b.print(contextptr)+ gettext(" not allowed!"));
   }
   symbolic symb_sto(const gen & a,gen & b,bool in_place){
     if (in_place)
@@ -2919,7 +2929,7 @@ namespace giac {
     return sto(a._VECTptr->front(),a._VECTptr->back(),contextptr);
   }
   static const char _sto_s []="sto";
-  static define_unary_function_eval4_index (30,__sto,&giac::_sto,_sto_s,&printassto,&texprintassto);
+  define_unary_function_eval4_index (30,__sto,&giac::_sto,_sto_s,&printassto,&texprintassto);
   define_unary_function_ptr5( at_sto ,alias_at_sto,&__sto,0,true); 
   // NB argument quoting for sto is done in eval in symbolic.cc
 
@@ -3905,7 +3915,7 @@ namespace giac {
     if (rcl_38){
       if (qf.type==_IDNT){
 	if (strlen(qf._IDNTptr->id_name)==2 && qf._IDNTptr->id_name[0]=='U' && qf._IDNTptr->id_name[1]>='0' && qf._IDNTptr->id_name[1]<='9'){
-	  gensizeerr("Not implemented",value);
+	  gensizeerr(gettext("Not implemented"),value);
 	  return value;
 	}
 	if (rcl_38(value,0,qf._IDNTptr->id_name,b,true,contextptr)){
@@ -4927,7 +4937,7 @@ namespace giac {
   gen _print(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if ( debug_infolevel && (args.type==_IDNT) && args._IDNTptr->localvalue && (!args._IDNTptr->localvalue->empty()))
-      *logptr(contextptr) << "Local var protected " << (*args._IDNTptr->localvalue)[args._IDNTptr->localvalue->size()-2].val << endl;
+      *logptr(contextptr) << gettext("Local var protected ") << (*args._IDNTptr->localvalue)[args._IDNTptr->localvalue->size()-2].val << endl;
     gen tmp=args.eval(eval_level(contextptr),contextptr);
     // If giac used inside a console don't add to messages, since we print
 #ifdef HAVE_SIGNAL_H_OLD
@@ -5329,7 +5339,7 @@ namespace giac {
       int ndigits=a._VECTptr->back().val;
 #ifndef HAVE_LIBMPFR
       if (ndigits>14)
-	return gensizeerr("Longfloat library not available");
+	return gensizeerr(gettext("Longfloat library not available"));
 #endif
       set_decimal_digits(ndigits,contextptr);
       gen res=a._VECTptr->front().evalf(1,contextptr);
@@ -5546,7 +5556,7 @@ namespace giac {
     if (g.type!=_FUNC)
       return false;
     unary_function_ptr & u=*g._FUNCptr;
-    if (u==at_pow)
+    if (u==at_pow || u==at_division || u==at_prod)
       return false;
     if (u==at_neg || u==at_minus || u==at_and || u==at_et || u==at_ou || u==at_oufr || u==at_xor || u==at_same || u==at_equal || u==at_superieur_egal || u==at_superieur_strict || u==at_inferieur_egal || u==at_inferieur_strict)
       return true;
@@ -5628,13 +5638,19 @@ namespace giac {
     return res;
   }
   
-  static complex<long double> lngamma(complex<long double> x){
-    complex<long double> res;
+  static complex_long_double lngamma(complex_long_double x){
+    complex_long_double res;
     if (x.real()<0.5)
+#ifdef BESTA_OS
+		assert(0);
+		// besta compiler does not like this next line, it is unable to resolve the "-" operator
+	    // code looks okay to me, but putting this here to move forward, needs to be fixed sometime....
+#else
       res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.L-x);
-    else {
+#endif
+	else {
       x=x-1.L;
-      complex<long double> a = L9[0];
+      complex_long_double a = L9[0];
       for (int i = 1; i < 9; ++i) {
 	a+= L9[i]/(x+(long double)(i));
       }
@@ -5652,7 +5668,7 @@ namespace giac {
     if (g.type==_CPLX && (g._CPLXptr->type==_DOUBLE_ || (g._CPLXptr+1)->type==_DOUBLE_ ||
 			  g._CPLXptr->type==_FLOAT_ || (g._CPLXptr+1)->type==_FLOAT_)){
       g=evalf_double(g,1,contextptr);
-      complex<long double> z(re(g,contextptr)._DOUBLE_val,im(g,contextptr)._DOUBLE_val);
+      complex_long_double z(re(g,contextptr)._DOUBLE_val,im(g,contextptr)._DOUBLE_val);
       z=lngamma(z);
       return gen(double(z.real()),double(z.imag()));
     }
@@ -5757,7 +5773,7 @@ namespace giac {
       }
       return factnum/factden*sqrt(cst_pi,contextptr);
     }
-#ifdef HAVE_LIBGSL
+#if 0 // def HAVE_LIBGSL
     if (x.type==_DOUBLE_)
       return gsl_sf_gamma(x._DOUBLE_val);
 #endif
@@ -5776,7 +5792,14 @@ namespace giac {
     if (x.type==_CPLX)
       return pari_gamma(x);
 #endif
-    if (x.type==_DOUBLE_ || x.type==_CPLX){
+    if (x.type==_DOUBLE_ || ( x.type==_CPLX &&  
+			      (x._CPLXptr->type==_DOUBLE_ || (x._CPLXptr+1)->type==_DOUBLE_ ||
+			       x._CPLXptr->type==_FLOAT_ || (x._CPLXptr+1)->type==_FLOAT_)
+			      )
+	) {
+#if 1
+      return exp(lngamma(x,contextptr),contextptr);
+#else
       if (is_strictly_positive(.5-re(x,contextptr),contextptr))
 	return cst_pi / (sin(M_PI*x,contextptr)*Gamma(1-x,contextptr));
       static const double p[] = {
@@ -5789,7 +5812,8 @@ namespace giac {
       for (int i=1;i<g+2;++i)
 	X += gen(p[i])/(z+i);
       gen t = z + g + 0.5;
-      return sqrt(2*cst_pi,contextptr) * pow(t,z+0.5,contextptr) * exp(-t,contextptr) * X;      
+      return sqrt(2*cst_pi,contextptr) * pow(t,z+0.5,contextptr) * exp(-t,contextptr) * X;   
+#endif   
     }
 #ifdef GIAC_HAS_STO_38
     return gammatofactorial(x,contextptr);
@@ -6417,13 +6441,13 @@ namespace giac {
     gen z=evalf_double(abs(x,contextptr),1,contextptr);
     if (x.type==_CPLX && x._CPLXptr->type!=_REAL){
       double absx=z._DOUBLE_val;
-      complex<long double> z(evalf_double(re(x,contextptr),1,contextptr)._DOUBLE_val,
+      complex_long_double z(evalf_double(re(x,contextptr),1,contextptr)._DOUBLE_val,
 			     evalf_double(im(x,contextptr),1,contextptr)._DOUBLE_val);
       if (absx<=3){
 	// numerical computation of int(exp(-t^2),t=0..x) 
 	// by series expansion at x=0
 	// x*sum( (-1)^n*(x^2)^n/n!/(2*n+1),n=0..inf)
-	complex<long double> z2=z*z,res=0,pi=1;
+	complex_long_double z2=z*z,res=0,pi=1;
 	for (long double n=0;;){
 	  res += pi/(2*n+1);
 	  ++n;
@@ -6444,14 +6468,14 @@ namespace giac {
 	// z=1/x
 	// z*exp(-x^2)*(1/2 - 1/4 z^2 +3/8 z^4-15/16 z^6 + ...)
 	z=1.0L/z;
-	complex<long double> z2=z*z/2.0L,res=0,pi=0.5;
+	complex_long_double z2=z*z/2.0L,res=0,pi=0.5;
 	for (long double n=0;;++n){
 	  res += pi;
 	  pi = -pi*(2*n+1)*z2;
 	  if (std::abs(pi)<1e-16)
 	    break;
 	}
-	res=complex<long double>(2.0/std::sqrt(M_PI))*std::exp(-1.0L/z/z)*z*res;
+	res=complex_long_double(2.0/std::sqrt(M_PI))*std::exp(-1.0L/z/z)*z*res;
 	erfc=gen(double(res.real()),double(res.imag()));
 	gen e=1-erfc;
 	if (!neg)
@@ -6462,12 +6486,12 @@ namespace giac {
       else { 
 	// continued fraction
 	// 2*exp(z^2)*int(exp(-t^2),t=z..inf)=1/(z+1/2/(z+1/(z+3/2/(z+...))))
-	complex<long double> res=0;
+	complex_long_double res=0;
 	for (long double n=40;n>=1;n--){
 	  res=(n/2)/(z+res);
 	}
 	res=1.0L/(z+res);
-	res=std::exp(-z*z)*res/complex<long double>(std::sqrt(M_PI));
+	res=std::exp(-z*z)*res/complex_long_double(std::sqrt(M_PI));
 	erfc=gen(double(res.real()),double(res.imag()));
 	gen e=1-erfc;
 	if (!neg)
@@ -7454,11 +7478,11 @@ namespace giac {
     } // end real cas
     if (prec<=13 && z._DOUBLE_val>=2.5 && z._DOUBLE_val<=40){
       // continued fraction: http://people.math.sfu.ca/~cbm/aands/page_229.htm
-      complex<long double> x(evalf_double(re(args,contextptr),1,contextptr)._DOUBLE_val,
+      complex_long_double x(evalf_double(re(args,contextptr),1,contextptr)._DOUBLE_val,
 			evalf_double(im(args,contextptr),1,contextptr)._DOUBLE_val);
       x=-x;
       if (x.real()>0 || std::abs(x.imag()/x.real())>=1){
-	complex<long double> result(1);
+	complex_long_double result(1);
 	long double un(1);
 	for (long double n=40;n>=1;--n){
 	  result = un+n/result;
@@ -7471,10 +7495,10 @@ namespace giac {
 #if 1 // defined(__x86_64__) || defined(__i386__) // if long double available use this
     gen tmp=evalf_double(args,1,contextptr);
     if (tmp.type==_CPLX && prec<=13){
-      complex<long double> Z(tmp._CPLXptr->_DOUBLE_val,(tmp._CPLXptr+1)->_DOUBLE_val);
+      complex_long_double Z(tmp._CPLXptr->_DOUBLE_val,(tmp._CPLXptr+1)->_DOUBLE_val);
       if (z._DOUBLE_val>30){ 
 	// expansion at infinity, order 30, error 1e-13
-	complex<long double> ei=1.0,pi=1.0;
+	complex_long_double ei=1.0,pi=1.0;
 	for (long double n=1;n<=30;n++){
 	  pi = (n*pi)/Z;
 	  ei += pi;
@@ -7494,7 +7518,7 @@ namespace giac {
       else { 
 	// use expansion at 0, 
 	// cancellation for negative re(Z) but already computed with cont frac
-	complex<long double> ei=0,pi=1;
+	complex_long_double ei=0,pi=1;
 	for (long double n=1;n<=70;++n){
 	  pi = pi*Z/n;
 	  ei += pi/n;
@@ -7596,7 +7620,7 @@ namespace giac {
     if (n.type!=_INT_)
       return gensizeerr(contextptr);
     if (n==1)
-      *logptr(contextptr) << "Warning, Ei(x,1) is defined as -Ei(-x), not as Ei(x)" << endl;
+      *logptr(contextptr) << gettext("Warning, Ei(x,1) is defined as -Ei(-x), not as Ei(x)") << endl;
     return Ei(x,n.val,contextptr);
   }
   static const char _Ei_s []="Ei";

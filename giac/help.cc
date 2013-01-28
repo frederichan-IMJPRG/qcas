@@ -25,21 +25,31 @@ using namespace std;
 #include "help.h"
 #include <iostream>
 #include "global.h"
-#ifdef VISUALC
+
+#if defined VISUALC || defined BESTA_OS
+
 #ifndef RTOS_THREADX
 #include <io.h>
 #endif
+
 #define opendir FindFirstFile
 #define readdir FindNextFile
 #define closedir FindClose
 #define DIR WIN32_FIND_DATA
 #define GNUWINCE 1
-#else
+
+#else // VISUALC or BESTA_OS
+
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+
+#ifndef BESTA_OS // test should always return true
 #include <dirent.h>
 #endif
+
+#endif // VISUALC or BESTA_OS
+
 #include "input_lexer.h"
 
 #ifndef NO_NAMESPACE_GIAC
@@ -255,7 +265,7 @@ namespace giac {
     if (i<0)
       return string("-")+printint(-i);      
     int length = (int) std::floor(std::log10((double) i));
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     char * s =new char[length+2];
 #else
     char s[length+2];
@@ -263,7 +273,7 @@ namespace giac {
     s[length+1]=0;
     for (;length>-1;--length,i/=10)
       s[length]=i%10+'0';
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
      string res=s;
      delete s;
      return res;
@@ -307,18 +317,26 @@ namespace giac {
       for (int j=0;j<lt;++curit,++j){
 	*newit=oldres;
 	if (s[i]==t[j])
-	  res=max(oldres-1,*(curit+1)-1,*curit+2);
+	  res=max(oldres-1,*(curit+1)-1,*curit+3);
 	else {
           if (abs(s[i]-t[j])==32)
-	    res=max(oldres-1,*(curit+1)-1,*curit+1);
+	    res=max(oldres-1,*(curit+1)-1,*curit+2);
           else
-	    res=max(oldres,*(curit+1),*curit)-1;
+	    res=max(oldres-1,*(curit+1)-1,*curit-2);
 	}
 	++newit;
 	oldres=res;
       }
       *newit=oldres;
       copy(newbeg,newend,curbeg);
+    }
+    // alignement would be return *newit;
+    // we modify the returned value to increase the weight of the first char
+    if (!s.empty() && !t.empty()){
+      if (s[0]==t[0])
+	return * newit+2;
+      else
+	return *newit-2;
     }
     return *newit;
   }
@@ -517,7 +535,7 @@ namespace giac {
     aide result;
     string current(demande);
     if (with_op)
-      result.syntax = "No help available for " +current +"\n";
+      result.syntax = gettext("No help available for ") +current +"\n";
     else
       result.syntax="NULL";
     if (!count){
@@ -538,7 +556,7 @@ namespace giac {
 	    best_score=cur_score;
 	    continue;
 	  }
-	  if (cur_score>=mon_max(best_score-4,0))
+	  if (cur_score>=mon_max(best_score-6,0))
 	    best_j.push_back(j);
 	}
 	if (best_score>0){
@@ -546,7 +564,7 @@ namespace giac {
 	  for (int k=1;(k<10) && (it!=itend);++k,++it)
 	    result.related.push_back(indexed_string(k, v[*it].cmd_name));
 	}
-	result.syntax += "Best match has score " + printint(best_score) + "\n";
+	result.syntax += gettext("Best match has score ") + printint(best_score) + "\n";
 	result.cmd_name = current;
 	return result;
       }
@@ -571,7 +589,7 @@ namespace giac {
     }
     vector<indexed_string>::const_iterator iti=cur_aide.related.begin(),itiend=cur_aide.related.end();
     if (itiend!=iti){
-      result +=  "See also: ";
+      result +=  gettext("See also: ");
       for (;iti!=itiend;++iti){
 	result += printint(iti->index) + "/ " + iti->chaine + " ";
       }
@@ -596,7 +614,7 @@ namespace giac {
       return false;
     ifstream i(file.c_str());
     // Skip navigation panel
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     char * buf=new char[BUFFER_SIZE+1];
 #else
     char buf[BUFFER_SIZE+1];
@@ -604,7 +622,7 @@ namespace giac {
     for (;i && !i.eof();){
       i.getline(buf,BUFFER_SIZE,'\n');
       string s(buf);
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
       delete [] buf;
 #endif
       if (s=="<!--End of Navigation Panel-->")
@@ -809,7 +827,7 @@ namespace giac {
     return 0;
   }
 
-#ifndef VISUALC
+#if ! (defined VISUALC || defined BESTA_OS)
 #ifdef WIN32
   static int dir_select (const struct dirent *d){
     string s(d->d_name);
@@ -957,7 +975,7 @@ namespace giac {
 
   // extern int debug_infolevel;
   static bool get_index_from_cache(const char * filename, multimap<string,string> & multi,bool verbose){
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     char * buf = new char[BUFFER_SIZE];
 #else
     char buf[BUFFER_SIZE];
@@ -991,12 +1009,14 @@ namespace giac {
 	  multi.clear();
 	  cerr << "Wrong cache! " << filename << endl;
 	  if_mtt.close();
-	  //#ifndef RTOS_THREADX
+	  #ifndef RTOS_THREADX
+	  #ifndef BESTA_OS
 	  if (unlink(filename)==-1)
 	    cerr <<  "You don't have write permissions on " << filename <<".\nYou must ask someone who has write permissions to remove " << filename << endl;
 	  else
 	    cerr << "Cache file "<< filename << " has been deleted" << endl;
-	  //#endif
+	  #endif
+	  #endif
 	  return false;
 	}
       }
@@ -1009,7 +1029,7 @@ namespace giac {
   }
 
   static bool get_index_from_cache(const char * filename, vector<string> & multi,bool verbose){
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     char * buf = new char[BUFFER_SIZE];
 #else
     char buf[BUFFER_SIZE];

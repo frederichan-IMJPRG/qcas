@@ -27,6 +27,7 @@
 #include <map>
 #include <string>
 #include "index.h"
+#include "poly.h"
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -739,7 +740,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Mul(a,a_end,b,b_end,res,i_lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,res,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_greater<T>)));
     return res ;
   }
 
@@ -747,7 +748,7 @@ namespace giac {
   std::vector< monomial<T> > & operator *= (std::vector< monomial<T> > & v,const std::vector< monomial<T> > & w){
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
-    Mul(a,a_end,b,b_end,v,i_lex_is_strictly_greater,std::ptr_fun((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,v,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_greater<T>)));
     return v;
   }
 
@@ -925,7 +926,7 @@ namespace giac {
     T bareisscoeff=1;
     permut.clear();
     permut.push_back(0); // 0 -> 0 convention for permutations
-    T pivotcol[rows+1];
+    T* pivotcol = new T[rows+1];
     int pivotr;
     for (int pivotc=1;pivotc<=cols;pivotc++){
       std::vector< monomial<T> > pivotline;
@@ -953,6 +954,7 @@ namespace giac {
       v=newcoord;
       // std::cout << v << std::endl;
     }
+    delete [] pivotcol;
   }
 
   template <class T>
@@ -987,7 +989,7 @@ namespace giac {
     Rref(v,rows,cols,permut,dobareiss);
     // divide each non-zero row by leading coeff and order
     typename std::vector< monomial<T> >::const_iterator it=v.begin(),itend=v.end();
-    typename std::vector< monomial<T> >::const_iterator beg[cols+1];
+    typename std::vector< monomial<T> >::const_iterator *beg = new typename std::vector< monomial<T> >::const_iterator[cols+1];
     std::vector< monomial<T> > temp,newcoord;
     Findbeginofrows(it,itend,cols,beg);
     int r=1;
@@ -1004,6 +1006,7 @@ namespace giac {
 	break;
     }
     v=newcoord;
+    delete [] beg;
   }
 
 #ifndef NO_NAMESPACE_GIAC

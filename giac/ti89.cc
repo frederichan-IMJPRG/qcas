@@ -98,7 +98,18 @@ namespace giac {
   gen _logb(const gen & g,GIAC_CONTEXT){
     if (g.type!=_VECT || g._VECTptr->size()!=2)
       return gensizeerr(contextptr);
-    return ln(g._VECTptr->front(),contextptr)/ln(g._VECTptr->back(),contextptr);
+    int n=0; gen e1(g._VECTptr->front()),b(g._VECTptr->back()),q;
+    if (is_integer(e1) && is_integer(b) && !is_zero(e1)){
+      while (is_zero(irem(e1,b,q))){
+	if (q.type==_ZINT)
+	  e1=*q._ZINTptr;
+	else
+	  e1=q;
+	++n;
+      }
+    }
+    return rdiv(ln(e1,contextptr),ln(b,contextptr))+n;
+    // return ln(g._VECTptr->front(),contextptr)/ln(g._VECTptr->back(),contextptr);
   }
   static const char _logb_s[]="logb";
   static define_unary_function_eval (__logb,&_logb,_logb_s);
@@ -1020,7 +1031,7 @@ namespace giac {
       if (v.size()==4 && v[2].type==_INT_ && v[3].type==_INT_ && v[2].val>v[3].val){
 	if (v[3].val==v[2].val-1)
 	  return 1;
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
 	{ gen a=v[2]; v[2]=v[3]; v[3]=a; }
 #else
 	swap(v[2],v[3]);
@@ -1502,7 +1513,7 @@ namespace giac {
     return int(ch);
   }
   static const char _getKey_s[]="getKey";
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
   static define_unary_function_eval(__getKey,&_getKey,_getKey_s);
 #else
   unary_function_eval __getKey(0,&_getKey,_getKey_s);
@@ -1935,7 +1946,7 @@ namespace giac {
 
   gen _RandSeed(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#if defined(VISUALC) || defined(__MINGW_H)
+#if defined(VISUALC) || defined(__MINGW_H) || defined BESTA_OS
     srand(g.val);
 #else
 #ifndef GNUWINCE
@@ -2185,6 +2196,8 @@ namespace giac {
 
   // French structure keywords
   static string printassialorssinon(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
+    if (xcas_mode(contextptr)==3)
+      return printasifte(feuille,sommetstr,contextptr);
     int l=language(contextptr);
     if ( (feuille.type!=_VECT) || (feuille._VECTptr->size()!=3) )
       return localize("sialorssinon",l)+"("+feuille.print(contextptr)+')';
@@ -2235,11 +2248,9 @@ namespace giac {
   static define_unary_function_eval_quoted (__sinon,&_ifte,_sinon_s);
   define_unary_function_ptr5( at_sinon ,alias_at_sinon,&__sinon,_QUOTE_ARGUMENTS,T_ELSE);
   
-  static const char _fsi_s[]="fsi";
-  static define_unary_function_eval_quoted (__fsi,&_ifte,_fsi_s);
-  define_unary_function_ptr5( at_fsi ,alias_at_fsi,&__fsi,_QUOTE_ARGUMENTS,T_BLOC_END);
-
   static string printaspour(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
+    if (xcas_mode(contextptr)==3)
+      return printasfor(feuille,sommetstr,contextptr);
     if ( (feuille.type!=_VECT) || (feuille._VECTptr->size()!=4) )
       return sommetstr+('('+feuille.print(contextptr)+')');
     int l=language(contextptr);
@@ -2249,7 +2260,7 @@ namespace giac {
       ++it;
       res += localize("tantque",l);
       res += ' ';
-      res = sametoequal(*it).print(contextptr) + ' ';
+      res += sametoequal(*it).print(contextptr) + ' ';
       res += localize("faire",l);
       res += ' ';
       ++it;
@@ -2353,14 +2364,6 @@ namespace giac {
   static define_unary_function_eval2_quoted (__pour,&_for,_pour_s,&printaspour);
   define_unary_function_ptr5( at_pour ,alias_at_pour,&__pour,_QUOTE_ARGUMENTS,T_FOR);
 
-  static const char _fpour_s[]="fpour";
-  static define_unary_function_eval_quoted (__fpour,&_for,_fpour_s);
-  define_unary_function_ptr5( at_fpour ,alias_at_fpour,&__fpour,_QUOTE_ARGUMENTS,T_BLOC_END);
-  
-  static const char _ftantque_s[]="ftantque";
-  static define_unary_function_eval_quoted (__ftantque,&_for,_ftantque_s);
-  define_unary_function_ptr5( at_ftantque ,alias_at_ftantque,&__ftantque,_QUOTE_ARGUMENTS,T_BLOC_END);
-  
   static const char _de_s[]="de";
   static define_unary_function_eval_quoted (__de,&_for,_de_s);
   define_unary_function_ptr5( at_de ,alias_at_de,&__de,_QUOTE_ARGUMENTS,T_FROM);
@@ -2368,10 +2371,6 @@ namespace giac {
   static const char _faire_s[]="faire";
   static define_unary_function_eval_quoted (__faire,&_for,_faire_s);
   define_unary_function_ptr5( at_faire ,alias_at_faire,&__faire,_QUOTE_ARGUMENTS,T_DO);
-
-  static const char _ffaire_s[]="ffaire";
-  static define_unary_function_eval_quoted (__ffaire,&_for,_ffaire_s);
-  define_unary_function_ptr5( at_ffaire ,alias_at_ffaire,&__ffaire,_QUOTE_ARGUMENTS,T_BLOC_END);
 
   static const char _pas_s[]="pas";
   static define_unary_function_eval_quoted (__pas,&_for,_pas_s);
@@ -2382,7 +2381,7 @@ namespace giac {
   define_unary_function_ptr5( at_jusque ,alias_at_jusque,&__jusque,_QUOTE_ARGUMENTS,T_TO);
 
   static const char _tantque_s[]="tantque";
-  static define_unary_function_eval_quoted (__tantque,&_for,_tantque_s);
+  static define_unary_function_eval2_quoted (__tantque,&_for,_tantque_s,&printaspour);
   define_unary_function_ptr5( at_tantque ,alias_at_tantque,&__tantque,_QUOTE_ARGUMENTS,T_MUPMAP_WHILE);
 
   static const char _et_s[]="et";
@@ -2405,11 +2404,13 @@ namespace giac {
   static define_unary_function_eval_quoted (__fonction,&_for,_fonction_s);
   define_unary_function_ptr5( at_fonction ,alias_at_fonction,&__fonction,_QUOTE_ARGUMENTS,T_PROC);
 
-  static const char _ffonction_s[]="ffonction";
-  static define_unary_function_eval_quoted (__ffonction,&_for,_ffonction_s);
-  define_unary_function_ptr5( at_ffonction ,alias_at_ffonction,&__ffonction,_QUOTE_ARGUMENTS,T_BLOC_END);
+#if defined RTOS_THREADX || defined BESTA_OS
 
-#ifndef RTOS_THREADX
+  gen _unarchive_ti(const gen & g,GIAC_CONTEXT){
+    return undef;
+  }
+
+#else
 
   static gen ti_decode_unsigned(octet * & ptr,GIAC_CONTEXT){
     short l=(*ptr);
@@ -4192,15 +4193,32 @@ namespace giac {
       return symb_sto(gval._SYMBptr->feuille[0],gname);
     return symb_sto(gval,gname);
   }
-#else
-  gen _unarchive_ti(const gen & g,GIAC_CONTEXT){
-    return undef;
-  }
 #endif //RTOS_THREADX
   static const char _unarchive_ti_s[]="unarchive_ti";
   static define_unary_function_eval (__unarchive_ti,&_unarchive_ti,_unarchive_ti_s);
   define_unary_function_ptr5( at_unarchive_ti ,alias_at_unarchive_ti,&__unarchive_ti,0,true);
 
+#ifdef GIAC_HAS_STO_38
+  static const char _fsi_s[]="fsi";
+  static define_unary_function_eval_quoted (__fsi,&_ifte,_fsi_s);
+  define_unary_function_ptr5( at_fsi ,alias_at_fsi,&__fsi,_QUOTE_ARGUMENTS,T_BLOC_END);
+
+  static const char _ffaire_s[]="ffaire";
+  static define_unary_function_eval_quoted (__ffaire,&_for,_ffaire_s);
+  define_unary_function_ptr5( at_ffaire ,alias_at_ffaire,&__ffaire,_QUOTE_ARGUMENTS,T_BLOC_END);
+
+  static const char _fpour_s[]="fpour";
+  static define_unary_function_eval_quoted (__fpour,&_for,_fpour_s);
+  define_unary_function_ptr5( at_fpour ,alias_at_fpour,&__fpour,_QUOTE_ARGUMENTS,T_BLOC_END);
+  
+  static const char _ftantque_s[]="ftantque";
+  static define_unary_function_eval_quoted (__ftantque,&_for,_ftantque_s);
+  define_unary_function_ptr5( at_ftantque ,alias_at_ftantque,&__ftantque,_QUOTE_ARGUMENTS,T_BLOC_END);
+  
+  static const char _ffonction_s[]="ffonction";
+  static define_unary_function_eval_quoted (__ffonction,&_for,_ffonction_s);
+  define_unary_function_ptr5( at_ffonction ,alias_at_ffonction,&__ffonction,_QUOTE_ARGUMENTS,T_BLOC_END);
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

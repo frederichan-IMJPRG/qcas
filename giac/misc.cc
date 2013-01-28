@@ -2787,7 +2787,7 @@ static define_unary_function_eval (__polynomial_regression_plot,&_polynomial_reg
       gen tmp=_correlation(evalf_double(args,1,contextptr),contextptr);
       if (tmp.type==_STRNG && tmp.subtype==-1) return  tmp;
       Pinit=w[0]/(exp(res._VECTptr->front(),contextptr)-1);
-      *logptr(contextptr) << "Initial cumulative estimated to " << Pinit << endl <<"Correlation for 5 first years to estimate initial cumulative : " << tmp << endl;
+      *logptr(contextptr) << gettext("Initial cumulative estimated to ") << Pinit << endl << gettext("Correlation for 5 first years to estimate initial cumulative : ") << tmp << endl;
     }
     else
       Pinit=v[2];
@@ -2826,7 +2826,7 @@ static define_unary_function_eval (__polynomial_regression_plot,&_polynomial_reg
     if (res.type!=_VECT || res._VECTptr->size()!=2)
       return gendimerr(contextptr);
     gen a=res._VECTptr->front(),b=res._VECTptr->back(),urr=-b/a;
-    *logptr(contextptr) << "Pinstant=" << a << "*Pcumul+" << b << endl << "Correlation " << r << ", Estimated total P=" << urr << endl << "Returning estimated Pcumul, Pinstant, Ptotal, Pinstantmax, tmax, R"<< endl;
+    *logptr(contextptr) << gettext("Pinstant=") << a << gettext("*Pcumul+") << b << endl << gettext("Correlation ") << r << gettext(", Estimated total P=") << urr << endl << gettext("Returning estimated Pcumul, Pinstant, Ptotal, Pinstantmax, tmax, R")<< endl;
     // y'/y=a*y+b -> y=urr/[1+exp(-b*(t-t0))]
     // urr/y-1=exp(-b*(t-t0))
     // -> -b*(t-t0) = ln(urr/y-1)
@@ -3006,7 +3006,7 @@ static define_unary_function_eval (__parabolic_interpolate,&_parabolic_interpola
     if (data.empty())
       return data;
     if (class_size<=0){
-      *logptr(contextptr) << "Invalid class size (replaced by 1) " << class_size << endl;
+      *logptr(contextptr) << gettext("Invalid class size (replaced by 1) ") << class_size << endl;
       class_size=1;
     }
     vector<double>  w1;
@@ -3302,6 +3302,35 @@ static define_unary_function_eval (__histogram,&_histogram,_histogram_s);
     return a.x<b.x;
   }
 
+  vecteur frequencies(const gen & v,GIAC_CONTEXT){
+    gen g(_sort(v,contextptr));
+    if (g.type!=_VECT)
+      return vecteur(1,g);
+    vecteur & w = *g._VECTptr;
+    double total=w.size();
+    vecteur res;
+    gen current=w[0]; unsigned count=1;
+    for (unsigned i=1;i<w.size();++i){
+      if (w[i]!=current){
+	res.push_back(makevecteur(current,count/total));
+	current=w[i];
+	count=0;
+      }
+      ++count;
+    }
+    res.push_back(makevecteur(current,count/total));
+    return res;
+  }
+  gen _frequencies(const gen & g,GIAC_CONTEXT){
+    gen h=evalf_double(g,1,contextptr);
+    if (h.type!=_VECT || !is_numericv(*h._VECTptr) || h._VECTptr->empty())
+      return gensizeerr(contextptr);
+    return frequencies(g,contextptr);
+  }
+  static const char _frequencies_s []="frequencies";
+  static define_unary_function_eval (__frequencies,&_frequencies,_frequencies_s);
+  define_unary_function_ptr5( at_frequencies ,alias_at_frequencies,&__frequencies,0,true);
+
   gen _cumulated_frequencies(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     gen g0(g);
@@ -3323,8 +3352,12 @@ static define_unary_function_eval (__histogram,&_histogram,_histogram_s);
 	class_min=tmp._DOUBLE_val;
       }
     }
-    if (!ckmatrix(g0))
-      return gensizeerr(contextptr);
+    if (!ckmatrix(g0)){
+      gen h=evalf_double(g0,1,contextptr);
+      if (h.type!=_VECT || !is_numericv(*h._VECTptr) || h._VECTptr->empty())
+	return gensizeerr(contextptr);
+      g0=frequencies(g0,contextptr);
+    }
     // 1st column = values (or classes), 2nd column = effectif
     matrice m= *g0._VECTptr ;
     if (m.empty() || m[0]._VECTptr->size()<2)
@@ -3364,7 +3397,7 @@ static define_unary_function_eval (__histogram,&_histogram,_histogram_s);
 	    tmp=tmp._VECTptr->back();
 	}
 	else
-	  tmp=v.front()+class_s/2;
+	  tmp=v.front(); // +class_s/2; // FIX 30/11/2012 for e.g. cumulated_frequencies([[1,0.3],[2,0.5],[3,0.2]])
 	tmp=evalf_double(tmp,1,contextptr);
 	if (tmp.type!=_DOUBLE_)
 	  return gensizeerr(contextptr);
@@ -3383,7 +3416,7 @@ static define_unary_function_eval (__histogram,&_histogram,_histogram_s);
     return gen(ans,_SEQ__VECT);
   }
   static const char _cumulated_frequencies_s []="cumulated_frequencies";
-static define_unary_function_eval (__cumulated_frequencies,&_cumulated_frequencies,_cumulated_frequencies_s);
+  static define_unary_function_eval (__cumulated_frequencies,&_cumulated_frequencies,_cumulated_frequencies_s);
   define_unary_function_ptr5( at_cumulated_frequencies ,alias_at_cumulated_frequencies,&__cumulated_frequencies,0,true);
 
   // classes(vector or column matrix,begin of class, class size)
@@ -3712,7 +3745,10 @@ static define_unary_function_eval (__diagramme_batons,&_diagramme_batons,_diagra
 	da=2*cst_pi*Vals[i]/somme;
 	da100=evalf_double(100*Vals[i]/somme,1,contextptr)._DOUBLE_val;
 	if (da100>0){
+        
+#ifndef BESTA_OS // BP please comment, no sprintf avail?
 	  sprintf(ss,"%.4g",da100);
+#endif
 	  if (is_positive(a-cst_pi/2,contextptr))
 	    pos=_QUADRANT2;
 	  if (is_positive(a-cst_pi,contextptr))
@@ -4468,7 +4504,7 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
       ms=m.size();
       g=_sum(m,contextptr);
       if (g!=vecteur(ms,1))
-	*logptr(contextptr) << "Warning: not a graph matrix!" << endl;
+	*logptr(contextptr) << gettext("Warning: not a graph matrix!") << endl;
     }
     // first make points, 
     vecteur l(ms),pos(ms),col(ms,_BLACK);

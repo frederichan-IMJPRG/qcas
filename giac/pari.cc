@@ -225,7 +225,7 @@ namespace giac {
     gen O;
     find_or_make_symbol("O",O,0,false,context0);
     gen p(GEN2gen((GEN) G[2],vars)),val(longlong(valp(G)));
-    return pow(p,val,context0)*(GEN2gen((GEN) G[4],vars)+symbolic(at_of,makevecteur(O,symb_quote(symb_pow(p,longlong(precp(G)))))));
+    return pow(p,val,context0)*(GEN2gen((GEN) G[4],vars)+symbolic(at_of,makevecteur(O,symb_pow(p,longlong(precp(G)))))); // removed symb_quote for p-adic
   }
 
   // WARNING: If g is a matrix this print the transpose of the matrix
@@ -643,7 +643,7 @@ namespace giac {
       { 
 	if (pari_mutex_ptr) pthread_mutex_unlock(pari_mutex_ptr);    
 	avma = av;
-	*logptr(contextptr) << "Error in PARI subsystem" << endl;
+	*logptr(contextptr) << gettext("Error in PARI subsystem") << endl;
 	PARI_stack_limit = save_pari_stack_limit ;
 	// setsizeerr();
 	return undef;
@@ -689,7 +689,7 @@ namespace giac {
 	find_or_make_symbol(string("pari_")+ptr->name,tmp,0,false,contextptr);
 	sto(symbolic(at_pari,string2gen(ptr->name,false)),tmp,contextptr);
       }
-      return string2gen("All PARI functions are now defined with the pari_ prefix.\nPARI functions are also defined without prefix except:\n"+redef+"\nNote that p-adic numbers must have O argument quoted e.g. 905/7+O('7^3')\nType ?pari for short help\nInside xcas, try Help->Manuals->PARI for HTML help",false);
+      return string2gen("All PARI functions are now defined with the pari_ prefix.\nPARI functions are also defined without prefix except:\n"+redef+"\nWhen working with p-adic numbers use them in a pari() call\nType ?pari for short help\nInside xcas, try Help->Manuals->PARI for HTML help",false);
     }
     if (v[0].is_symb_of_sommet(at_quote)){
       if (vs==1)
@@ -698,7 +698,9 @@ namespace giac {
     }
     for (int i=1;i<vs;i++)
       v[i]=v[i].eval(eval_level(contextptr),contextptr);
-    vecteur vars(lidnt(v));
+    vecteur vars(1,identificateur("O"));
+    lidnt(v,vars);
+    vars.erase(vars.begin());
     bool parse_all=false;
     long av=avma;
 #ifdef PARI23
@@ -708,7 +710,7 @@ namespace giac {
       if (setjmp(GP_DATA->env)){ // if (setjmp(GP_DATA->env)){
 	if (pari_mutex_ptr) pthread_mutex_unlock(pari_mutex_ptr);    
 	avma = av;
-	*logptr(contextptr) << "Error in PARI subsystem" << endl;
+	*logptr(contextptr) << gettext("Error in PARI subsystem") << endl;
 	// setsizeerr();
 	return undef;
       } 
@@ -721,7 +723,7 @@ namespace giac {
       if (setjmp(env)){ // if (setjmp(GP_DATA->env)){
 	if (pari_mutex_ptr) pthread_mutex_unlock(pari_mutex_ptr);    
 	avma = av;
-	*logptr(contextptr) << "Error in PARI subsystem" << endl;
+	*logptr(contextptr) << gettext("Error in PARI subsystem") << endl;
 	// setsizeerr();
 	return undef;
       } 

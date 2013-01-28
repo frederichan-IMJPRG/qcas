@@ -45,7 +45,9 @@ using namespace std;
 #include <stdio.h>
 #ifndef __VISUALC__
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
 #include <fcntl.h>
+#endif
 #endif
 #endif // __VISUALC__
 
@@ -79,6 +81,8 @@ using namespace std;
 #undef HAVE_GMPXX_H
 #undef HAVE_LIBMPFR
 #endif
+
+extern const int BUFFER_SIZE;
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -455,7 +459,7 @@ namespace giac {
     fclose(source);
   }
 
-#if !defined VISUALC && ! defined __MINGW_H
+#if !defined VISUALC && ! defined __MINGW_H && !defined BESTA_OS
   int set_nonblock_flag (int desc, int value){
     int oldflags = fcntl (desc, F_GETFL, 0);
     /* If reading the flags failed, return error indication now. */
@@ -1898,7 +1902,7 @@ namespace giac {
 	}
       }
     }
-    if (res.size()==2 && res.front()==res.back())
+    if (res.size()==2 && is_zero(res.front()-res.back()) && subtype!=_GROUP__VECT && subtype!=_VECTOR__VECT)
       return undef;
     e=pnt_attrib(gen(res,subtype),attributs,contextptr);
     // ofstream pict("PICT",ios::app);
@@ -2916,6 +2920,13 @@ namespace giac {
 	return tmp;
     }
     gen e=eval(v.front(),contextptr),diametre;
+    bool diam=true;
+    if (e.is_symb_of_sommet(at_equal) && e._SYMBptr->feuille.type==_VECT && e._SYMBptr->feuille._VECTptr->size()==2){
+      if (e._SYMBptr->feuille._VECTptr->front()==at_centre){
+	diam=false;
+	e=e._SYMBptr->feuille._VECTptr->back();
+      }
+    }
     int narg=0;
     if ( (e.type==_SYMB) && (e._SYMBptr->sommet==at_pnt)){
       gen f=e._SYMBptr->feuille._VECTptr->front();
@@ -2949,7 +2960,10 @@ namespace giac {
 	else {
 	  g=get_point(g,0,contextptr);
 	  if (is_undef(g)) return g;
-	  diametre=gen(makevecteur(e,g),_GROUP__VECT);
+	  if (diam)
+	    diametre=gen(makevecteur(e,g),_GROUP__VECT);
+	  else
+	    diametre=gen(makevecteur(e+(e-g),g),_GROUP__VECT);
 	}
       }
       else {
@@ -3308,8 +3322,8 @@ namespace giac {
   static void get_rectangle_args(const vecteur & v,gen & e,gen & f,gen & g,gen & tmp,GIAC_CONTEXT){
     e=remove_at_pnt(eval(v[0],contextptr));
     f=remove_at_pnt(eval(v[1],contextptr));
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     gen v2=eval(v[2],contextptr);
     gen d=remove_at_pnt(v2);
     if (d.type==_VECT){
@@ -3401,9 +3415,9 @@ namespace giac {
     if (s<3)
       return gendimerr(contextptr);
     gen e=remove_at_pnt(eval(v[0],contextptr)),f=remove_at_pnt(eval(v[1],contextptr)),d=remove_at_pnt(eval(v[2],contextptr));
-    e=get_point(e,0,contextptr);
-    f=get_point(f,0,contextptr);
-    d=get_point(d,0,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,0,contextptr));
+    d=remove_at_pnt(get_point(d,0,contextptr));
     gen g=(e-f)+d;
     if (is_undef(g)) return g;
     gen res=pnt_attrib(gen(makevecteur(e,f,d,g,e),_GROUP__VECT),attributs,contextptr);
@@ -3420,8 +3434,8 @@ namespace giac {
   static void get_losange_args(const vecteur &v,gen &e,gen &f,gen & g,GIAC_CONTEXT){
     e=remove_at_pnt(eval(v[0],contextptr));
     f=remove_at_pnt(eval(v[1],contextptr));
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     gen angle=remove_at_pnt(eval(v[2],contextptr));
     if (angle.type==_VECT){ // In 3-d angle is not the angle!
       gen ef=f-e;
@@ -3504,8 +3518,8 @@ namespace giac {
       return gendimerr(contextptr);
     int dim=2;
     gen e=remove_at_pnt(eval(v[0],contextptr)),f=remove_at_pnt(eval(v[1],contextptr)),g;
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     if (e.type==_VECT){
       dim=3;
       if (s==2)
@@ -3543,8 +3557,8 @@ namespace giac {
       return gendimerr(contextptr);
     gen e=remove_at_pnt(v[0]);
     gen f=remove_at_pnt(v[1]),g;
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     gen ef=f-e,nd;
     if (is_undef(ef)) return ef;
     if (s>3){
@@ -3600,8 +3614,8 @@ namespace giac {
       return gendimerr(contextptr);
     gen e=remove_at_pnt(eval(v[0],contextptr));
     gen f=remove_at_pnt(eval(v[1],contextptr));
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     gen ef=f-e,g;
     if (is_undef(ef)) return ef;
     int dim=2;
@@ -3641,8 +3655,8 @@ namespace giac {
       return gendimerr(contextptr);
     gen e=remove_at_pnt(eval(v[0],contextptr));
     gen f=remove_at_pnt(eval(v[1],contextptr));
-    e=get_point(e,0,contextptr);
-    f=get_point(f,1,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,1,contextptr));
     gen ef=f-e,ecenter,g,h,i,j;
     if (is_undef(ef)) return ef;
     int dim=2;
@@ -3731,7 +3745,7 @@ namespace giac {
     e=v.front();f=v[1];
     e=remove_at_pnt(e);
     f=remove_at_pnt(f);
-    e=get_point(e,0,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
     if (f.type==_VECT && f.subtype!=_POINT__VECT){
       if (f._VECTptr->size()!=2)
 	return false; // setsizeerr(gettext("gen23points"));
@@ -3743,8 +3757,8 @@ namespace giac {
 	return false; // setsizeerr(gettext("gen23points"));
       g=remove_at_pnt(v[2]);
     }
-    f=get_point(f,0,contextptr);
-    g=get_point(g,0,contextptr);
+    f=remove_at_pnt(get_point(f,0,contextptr));
+    g=remove_at_pnt(get_point(g,0,contextptr));
     return true;
   }
 
@@ -3922,9 +3936,9 @@ namespace giac {
     e=remove_at_pnt(v[0]);
     f=remove_at_pnt(v[1]);
     g=remove_at_pnt(v[2]);
-    e=get_point(e,0,contextptr);
-    f=get_point(f,0,contextptr);
-    g=get_point(g,0,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,0,contextptr));
+    g=remove_at_pnt(get_point(g,0,contextptr));
     if (est_aligne(e,f,g,contextptr) || is_undef(e) || is_undef(f) || is_undef(g))
       return undef;
     if (e.type==_VECT || f.type==_VECT || g.type==_VECT)
@@ -3952,9 +3966,9 @@ namespace giac {
     e=remove_at_pnt(v[0]);
     f=remove_at_pnt(v[1]);
     g=remove_at_pnt(v[2]);
-    e=get_point(e,0,contextptr);
-    f=get_point(f,0,contextptr);
-    g=get_point(g,0,contextptr);
+    e=remove_at_pnt(get_point(e,0,contextptr));
+    f=remove_at_pnt(get_point(f,0,contextptr));
+    g=remove_at_pnt(get_point(g,0,contextptr));
     if (est_aligne(e,f,g,contextptr) || is_undef(e) || is_undef(f) || is_undef(g))
       return undef;
     if (e.type==_VECT || f.type==_VECT || g.type==_VECT)
@@ -3995,9 +4009,9 @@ namespace giac {
     A=remove_at_pnt(v[0]);
     B=remove_at_pnt(v[1]);
     C=remove_at_pnt(v[2]);
-    A=get_point(A,0,contextptr);
-    B=get_point(B,0,contextptr);
-    C=get_point(C,0,contextptr);
+    A=remove_at_pnt(get_point(A,0,contextptr));
+    B=remove_at_pnt(get_point(B,0,contextptr));
+    C=remove_at_pnt(get_point(C,0,contextptr));
     if (est_aligne(A,B,C,contextptr) || is_undef(A) || is_undef(B) || is_undef(B))
       return undef;
     gen a2=distance2pp(B,C,contextptr),b2=distance2pp(C,A,contextptr),c2=distance2pp(A,B,contextptr);
@@ -4723,12 +4737,12 @@ namespace giac {
       gen centre,rayon;
       if (!centre_rayon(g,centre,rayon,false,contextptr))
 	return gensizeerr(contextptr);
-      if (g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==4)
-	return ratnormal(((*g._SYMBptr->feuille._VECTptr)[3]-(*g._SYMBptr->feuille._VECTptr)[2])*(rayon*conj(rayon,contextptr))/2);
+      if (g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()>=3)
+	return ratnormal(((*g._SYMBptr->feuille._VECTptr)[2]-(*g._SYMBptr->feuille._VECTptr)[1])*(rayon*conj(rayon,contextptr))/2);
       return cst_pi*ratnormal(rayon*conj(rayon,contextptr));
     }
-    if (g.type!=_VECT)
-      return undef;
+    if (g.type!=_VECT || g.subtype==_POINT__VECT)
+      return 0; // so that a single point has area 0
     vecteur v=*g._VECTptr;
     int s=v.size();
     // search for a numeric integration method
@@ -5760,7 +5774,7 @@ namespace giac {
 	    lieu_eq=_factor(lieu_eq,contextptr);
 #endif
 #ifndef GIAC_HAS_STO_38
-	    *logptr(contextptr) << "Equation 0 = " << lieu_eq << endl;
+	    *logptr(contextptr) << gettext("Equation 0 = ") << lieu_eq << endl;
 #endif
 	  }
 	  // FIXME: recognize 3-d locus
@@ -6863,7 +6877,7 @@ namespace giac {
 	  return translation(makevecteur(a._VECTptr->back()-a._VECTptr->front(),v[1]),s,contextptr);
 	}
 	if (a.type!=_VECT || a.subtype!=_LINE__VECT)
-	  return gensizeerr("First arg of translation should not be a point");
+	  return gensizeerr(gettext("First arg of translation should not be a point"));
       }
       if ( (a.type==_SYMB) && (a._SYMBptr->sommet==at_cercle) )
 	return gensizeerr(contextptr);
@@ -7314,49 +7328,49 @@ namespace giac {
   void ck_parameter_x(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (x__IDNT_e.evalf(1,contextptr)!=x__IDNT_e)
-      *logptr(contextptr) << "Variable x should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable x should be purged") << endl;
 #endif
   }
 
   void ck_parameter_y(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (y__IDNT_e.evalf(1,contextptr)!=y__IDNT_e)
-      *logptr(contextptr) << "Variable y should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable y should be purged") << endl;
 #endif
   }
 
   void ck_parameter_z(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (z__IDNT_e.evalf(1,contextptr)!=z__IDNT_e)
-      *logptr(contextptr) << "Variable z should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable z should be purged") << endl;
 #endif
   }
 
   void ck_parameter(const gen & g,GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if ( (g.type==_IDNT) && (g.evalf(1,contextptr)!=g) )
-      *logptr(contextptr) << "Variable "+g.print(contextptr)+" should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable ")+g.print(contextptr)+gettext(" should be purged") << endl;
 #endif
   }
 
   void ck_parameter_t(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (t__IDNT_e.evalf(1,contextptr)!=t__IDNT_e)
-      *logptr(contextptr) << "Variable t should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable t should be purged") << endl;
 #endif
   }
 
   void ck_parameter_u(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (u__IDNT_e.evalf(1,contextptr)!=u__IDNT_e)
-      *logptr(contextptr) << "Variable u should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable u should be purged") << endl;
 #endif
   }
 
   void ck_parameter_v(GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
     if (v__IDNT_e.evalf(1,contextptr)!=v__IDNT_e)
-      *logptr(contextptr) << "Variable v should be purged" << endl;
+      *logptr(contextptr) << gettext("Variable v should be purged") << endl;
 #endif
   }
 
@@ -7795,7 +7809,7 @@ namespace giac {
       return remove_not_in_arc(res,circle,contextptr);
 #ifndef NO_STDEXCEPT
     } catch (std::runtime_error & ){
-      *logptr(contextptr) << "Unable to solve intersection equation " << eq << endl;
+      *logptr(contextptr) << gettext("Unable to solve intersection equation ") << eq << endl;
       return makevecteur(symbolic(at_inter,makevecteur(curve,circle)));
     }
 #endif
@@ -8285,9 +8299,9 @@ namespace giac {
       F2=remove_at_pnt((*args._VECTptr)[1]);
     }
     a=args._VECTptr->back();
-    a=get_point(a,0,contextptr);
-    F1=get_point(F1,0,contextptr);
-    F2=get_point(F2,0,contextptr);
+    a=remove_at_pnt(get_point(a,0,contextptr));
+    F1=remove_at_pnt(get_point(F1,0,contextptr));
+    F2=remove_at_pnt(get_point(F2,0,contextptr));
     if (is_undef(a) || is_undef(F1) || is_undef(F2))
       return false;
     return true;
@@ -8321,7 +8335,7 @@ namespace giac {
     if (!foyers_a(vecteur(args._VECTptr->begin(),args._VECTptr->begin()+s),F1,F2,a,contextptr))
       return gensizeerr(contextptr);
     if ( aorig.is_symb_of_sommet(at_pnt) || a.type==_VECT || !is_zero(im(a,contextptr)) ){
-      a=get_point(remove_at_pnt(a),0,contextptr);
+      a=remove_at_pnt(get_point(remove_at_pnt(a),0,contextptr));
       if (is_undef(a)) return a;
       if (a.type==_VECT)
 	n=a;
@@ -8382,7 +8396,7 @@ namespace giac {
     if (!foyers_a(vecteur(args._VECTptr->begin(),args._VECTptr->begin()+s),F1,F2,a,contextptr))
       return gensizeerr(contextptr);
     if ( aorig.is_symb_of_sommet(at_pnt) || a.type==_VECT || !is_zero(im(a,contextptr)) ){
-      a=get_point(remove_at_pnt(a),0,contextptr);
+      a=remove_at_pnt(get_point(remove_at_pnt(a),0,contextptr));
       if (is_undef(a)) return a;
       if (a.type==_VECT)
 	n=a;
@@ -9259,7 +9273,7 @@ namespace giac {
 	  y0=(localisation._CPLXptr+1)->_DOUBLE_val;
 	}
 	else {
-	  *logptr(contextptr) << "End interactive_plotode" << endl;
+	  *logptr(contextptr) << gettext("End interactive_plotode") << endl;
 	  break;
 	}
       }
@@ -9743,16 +9757,13 @@ namespace giac {
   // Replace one level of history by replace
   // Return 0 if not successfull, or a vector of remaining gen in the archive
   gen unarchive_session(istream & is,int level, const gen & replace,GIAC_CONTEXT){
-#ifdef VISUALC
-    char * buf = new char[BUFFER_SIZE];
+#if defined BESTA_OS || defined VISUALC
+    char * buf = ( char * )alloca( BUFFER_SIZE );
 #else
     char buf[BUFFER_SIZE];
 #endif
     is.getline(buf,BUFFER_SIZE,'\n');
     string bufs(buf);
-#ifdef VISUALC
-    delete [] buf;
-#endif
     if (bufs!="giac archive")
       return 0;
     gen g=unarchive(is,contextptr);
@@ -10236,7 +10247,7 @@ namespace giac {
 	    // of even multiplicity change last_direction sign
 	    gen sqfftays=_quo(gen(makevecteur(tays,_gcd(gen(makevecteur(tays,derive(tays,t,contextptr)),_SEQ__VECT),contextptr),t),_SEQ__VECT),contextptr);
 	    gen r=_proot(gen(makevecteur(sqfftays,t),_SEQ__VECT),contextptr);
-	    *logptr(contextptr) << "Near " << sp << " " << tays << " roots " << r << endl;
+	    *logptr(contextptr) << gettext("Near ") << sp << " " << tays << " roots " << r << endl;
 	    if (r.type==_VECT){
 	      int total=0;
 	      for (unsigned kr=0;kr<r._VECTptr->size();++kr){
@@ -10314,7 +10325,7 @@ namespace giac {
 	} // end loop on order
       } // end if k<singular_points.size()
       if (!singular_points.empty())
-	*logptr(contextptr) << "Singular points directions " << singular_points_directions << endl;
+	*logptr(contextptr) << gettext("Singular points directions ") << singular_points_directions << endl;
     }
     bool pathfound;
     vecteur res;
@@ -10487,7 +10498,7 @@ namespace giac {
 	    if (pos>=sing)
 	      singular_points_directions.erase(singular_points_directions.begin()+pos);
 	    else
-	      *logptr(contextptr) << "Bad branch, questionnable accuracy" << endl;
+	      *logptr(contextptr) << gettext("Bad branch, questionnable accuracy") << endl;
 	    break; // singular points were already done
 	  }
 	  else { 
@@ -10535,7 +10546,7 @@ namespace giac {
 	      ycurrent=sol._DOUBLE_val;
 	  }
 	  else {
-	    *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fy << endl;
+	    *logptr(contextptr) << gettext("Warning! Could not loop or reach boundaries ") << fy << endl;
 	    break;
 	  }
 	}
@@ -10558,7 +10569,7 @@ namespace giac {
 	      xcurrent=sol._DOUBLE_val;
 	  }
 	  else {
-	    *logptr(contextptr) << "Warning! Could not loop or reach boundaries " << fx << endl;
+	    *logptr(contextptr) << gettext("Warning! Could not loop or reach boundaries ") << fx << endl;
 	    break;
 	  }	    
 	}
@@ -10613,7 +10624,7 @@ namespace giac {
 	  dfxyorig_abs[icur][jcur]=dfxycurrent_abs;
 	}
 	if (debug_infolevel)
-	  *logptr(contextptr) << "Implicitplot " << icur << " " << jcur << endl;	  
+	  *logptr(contextptr) << gettext("Implicitplot ") << icur << " " << jcur << endl;	  
 	oldi=icur;
 	oldj=jcur;
       }
@@ -10637,7 +10648,7 @@ namespace giac {
     bool cplx=complex_mode(contextptr);
     if (cplx){
       complex_mode(false,contextptr);
-      *logptr(contextptr) << "Impliciplot: temporarily swtiching to real mode" << endl;
+      *logptr(contextptr) << gettext("Impliciplot: temporarily swtiching to real mode") << endl;
     }
     // factorization without sqrt
     gen ff(unfactored?f_orig:factor(f_orig,false,contextptr));
@@ -12199,12 +12210,12 @@ namespace giac {
     // logo instruction
     int nmax=10,n=0;
     for (;n<nmax && g.type!=_SYMB && g.type!=_IDNT;n++){
-      g=__input.op(gen(makevecteur(string2gen("Donner le nom de la procedure, ex. essai",false),identificateur(" logo_record_name")),_SEQ__VECT),contextptr);
+      g=__input.op(gen(makevecteur(string2gen(gettext("Give a name to the procedure, e.g. test"),false),identificateur(" logo_record_name")),_SEQ__VECT),contextptr);
       if (g.type==_VECT && g._VECTptr->size()==2)
 	g=g._VECTptr->back();
     }
     if (g.type!=_SYMB && g.type!=_IDNT)
-      return gensizeerr(gettext("Donner le nom de la procedure, ex. \"essai\""));
+      return gensizeerr(gettext("Give a name to thr procedure, e.g. \"test\""));
     return g;
   }
   static const char _debut_enregistrement_s []="debut_enregistrement";
@@ -12217,12 +12228,12 @@ namespace giac {
     // logo instruction
     int nmax=10,n=0;
     for (;n<nmax && g.type!=_STRNG;n++){
-      g=__input.op(gen(makevecteur(string2gen("Donner le nom du fichier, ex. \"essai\"",false),identificateur(" logo_file_name")),_SEQ__VECT),contextptr);
+      g=__input.op(gen(makevecteur(string2gen("Give a filename, e.g. \"test\"",false),identificateur(" logo_file_name")),_SEQ__VECT),contextptr);
       if (g.type==_VECT && g._VECTptr->size()==2)
 	g=g._VECTptr->back();
     }
     if (g.type!=_STRNG)
-      return gensizeerr(gettext("Donner le nom de fichier, ex. \"essai\""));
+      return gensizeerr(gettext("Give a filename, e.g. \"test\""));
     // Search for debut_enregistrement in history_out(contextptr)
     int s=history_in(contextptr).size(),i;
     for (i=s-1;i>=0;--i){
@@ -12230,7 +12241,7 @@ namespace giac {
 	break;
     }
     if (i<0)
-      return gensizeerr(gettext("Instruction debut_enregistrement non trouvee"));
+      return gensizeerr(gettext("Instruction debut_enregistrement not found"));
     ofstream of(g._STRNGptr->c_str());
     if (i<int(history_out(contextptr).size()))
       of << history_out(contextptr)[i] << "():={" << endl;
@@ -12454,7 +12465,7 @@ namespace giac {
       if (turtle(contextptr).radius<-1)
 	return update_turtle_state(true,contextptr);
     }
-    return gensizeerr(gettext("Argument entier >= 2"));
+    return gensizeerr(gettext("Integer argument >= 2"));
   }
   static const char _polygone_rempli_s []="polygone_rempli";
   static define_unary_function_eval2 (__polygone_rempli,&_polygone_rempli,_polygone_rempli_s,&printastifunction);
@@ -12570,7 +12581,7 @@ namespace giac {
     if (g.is_symb_of_sommet(at_pnt)){
       g=remove_at_pnt(g);
       if (est_aligne(e,f,g,contextptr))
-	return gensizeerr("Collinear points");
+	return gensizeerr(gettext("Collinear points"));
       gen tmp=_circonscrit(gen(makevecteur(e,f,g),_SEQ__VECT),contextptr),tmp2,r;
       centre_rayon(tmp,c,r,false,contextptr);
       tmp=arg((f-c)/(e-c),contextptr);
@@ -13495,7 +13506,7 @@ namespace giac {
     vecteur w=makevecteur(v0,v1,v2);
     w.push_back(eval(symb_sto(d,v[3]),contextptr));
     return gen(w,_GROUP__VECT);
-    return gensizeerr(gettext("div-harmonique)"));
+    return gensizeerr(gettext("div_harmonique)"));
   }
   static const char _div_harmonique_s []="harmonic_division";
   static define_unary_function_eval_quoted (__div_harmonique,&giac::_div_harmonique,_div_harmonique_s);

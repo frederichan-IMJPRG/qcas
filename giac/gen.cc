@@ -1060,7 +1060,7 @@ namespace giac {
     return _DOUBLE_val;
 #else
     longlong r = * (longlong *)(this) ;
-    * (unsigned char *) (&r) = 0;
+    (* (gen *) (&r)).type = 0;
     return * (double *)(&r); 
 #endif
   }
@@ -1684,7 +1684,7 @@ namespace giac {
     gen res;
     if (ctrl_c) { 
       interrupted = true; 
-      gensizeerr("Stopped by user interruption.",res);
+      gensizeerr(gettext("Stopped by user interruption."),res);
       return res;
     }
     if (level==0)
@@ -1771,7 +1771,7 @@ namespace giac {
 #ifdef RTOS_THREADX
 	if ((void *)&slevel<= (void *)&mainThreadStack[2048]){
 	  if ((void *)&slevel<= (void *)&mainThreadStack[1024]){
-	    gensizeerr("Too many recursion levels",evaled); // two many recursion levels
+	    gensizeerr(gettext("Too many recursion levels"),evaled); // two many recursion levels
 	    return true;
 	  }
 	  evaled=nr_eval(*this,level,contextptr);
@@ -1783,10 +1783,10 @@ namespace giac {
 	  // cerr << &slevel << " " << thread_param_ptr(contextptr)->stackaddr << endl;
 	  if ( ((unsigned long) &slevel) < ((unsigned long) thread_param_ptr(contextptr)->stackaddr)+65536){
 	    if ( ((unsigned long) &slevel) < ((unsigned long) thread_param_ptr(contextptr)->stackaddr)+8192){
-	      gensizeerr("Too many recursion levels",evaled); // two many recursion levels
+	      gensizeerr(gettext("Too many recursion levels"),evaled); // two many recursion levels
 	      return true;
 	    }
-	    *logptr(contextptr) << "Running non recursive evaluator" << endl;
+	    *logptr(contextptr) << gettext("Running non recursive evaluator") << endl;
 	    evaled=nr_eval(*this,level,contextptr);
 	    return true;
 	  }
@@ -1795,10 +1795,10 @@ namespace giac {
 	debug_struct * dbgptr=debug_ptr(contextptr);
 	if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL){
 	  if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL+10){
-	    gensizeerr("Too many recursions",evaled);
+	    gensizeerr(gettext("Too many recursions)"),evaled);
 	    return true;
 	  }
-	  *logptr(contextptr) << "Running non recursive evaluator" << endl;
+	  *logptr(contextptr) << gettext("Running non recursive evaluator") << endl;
 	  evaled=nr_eval(*this,level,contextptr);
 	  return true;
 	}
@@ -1957,7 +1957,7 @@ namespace giac {
       return res;
     }
 #endif
-#ifdef BCD
+#if 0 // def BCD
     return fpi();
 #else
     return M_PI;
@@ -2087,14 +2087,14 @@ namespace giac {
 	evaled=real_object(*this,digits2bits(decimal_digits(contextptr)));
 	return true;
       }
-#ifdef BCD
+#if 0 // def BCD
       evaled=giac_float(val);
 #else
       evaled=int2double(val);
 #endif
       return true;
     case _ZINT:
-#ifdef BCD
+#if 0 // def BCD
       evaled=giac_float(_ZINTptr);
 #else
       if (decimal_digits(contextptr)>13)
@@ -3640,7 +3640,7 @@ namespace giac {
       egcd(polya,*modu._VECTptr,0,u,v,d);
       if (d.size()!=1){
 #ifndef NO_STDEXCEPT
-	setsizeerr(gettext("Non invertible"));
+	setsizeerr(gettext("Not invertible"));
 #endif
 	return 0;
       }
@@ -3977,7 +3977,7 @@ namespace giac {
     }
     if (a.is_approx()){
       gen b1;
-      if (has_evalf(b,b1,1,contextptr) && b!=b1){
+      if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
 #ifdef HAVE_LIBMPFR
 	if (a.type==_REAL){
 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
@@ -3990,7 +3990,7 @@ namespace giac {
     }
     if (b.is_approx()){
       gen a1;
-      if (has_evalf(a,a1,1,contextptr) && a!=a1){
+      if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
 #ifdef HAVE_LIBMPFR
 	if (b.type==_REAL){
 	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
@@ -4498,7 +4498,7 @@ namespace giac {
       return a+(-b);
     if ( a.is_approx()){
       gen b1;
-      if (has_evalf(b,b1,1,contextptr) && b!=b1){
+      if (has_evalf(b,b1,1,contextptr) && (b.type!=b1.type || b!=b1)){
 #ifdef HAVE_LIBMPFR
 	if (a.type==_REAL){
 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
@@ -4511,7 +4511,7 @@ namespace giac {
     }
     if ( b.is_approx()){
       gen a1;
-      if (has_evalf(a,a1,1,contextptr) && a!=a1){
+      if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
 #ifdef HAVE_LIBMPFR
 	if (a.type==_REAL){
 	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
@@ -5003,13 +5003,13 @@ namespace giac {
 	return b;
       if (a.type==_FLOAT_){
 	gen b1;
-	if (has_evalf(b,b1,1,contextptr)&& b!=b1)
+	if (has_evalf(b,b1,1,contextptr)&& (b.type!=b1.type || b!=b1))
 	  return a*b1;
 	return operator_times(evalf_double(a,1,contextptr),b,contextptr);
       }
       if (b.type==_FLOAT_){
 	gen a1;
-	if (has_evalf(a,a1,1,contextptr)&& a!=a1)
+	if (has_evalf(a,a1,1,contextptr)&& (a.type!=a1.type || a!=a1))
 	  return a1*b;
 	return operator_times(a,evalf_double(b,1,contextptr),contextptr);
       }
@@ -5371,8 +5371,11 @@ namespace giac {
 	}
 	if (superexponent.type!=_INT_)
 	  return new_ref_symbolic(symbolic(at_pow,gen(makenewvecteur(base,exponent),_SEQ__VECT)));
-	if (subexponent_deno.type!=_INT_)
+	if (subexponent_deno.type!=_INT_){
+	  if (is_one(superexponent))
+	    return new_ref_symbolic(symbolic(at_pow,gen(makenewvecteur(base,_FRAC2_SYMB(subexponent_num,subexponent_deno)),_SEQ__VECT)));
 	  return new_ref_symbolic(symbolic(at_pow,gen(makenewvecteur(new_ref_symbolic(symbolic(at_pow,gen(makenewvecteur(base,_FRAC2_SYMB(subexponent_num,subexponent_deno)),_SEQ__VECT))),superexponent),_SEQ__VECT)));
+	}
 	int q=superexponent.val / subexponent_deno.val;
 	int r=superexponent.val % subexponent_deno.val;
 	gen res(1);
@@ -5425,7 +5428,11 @@ namespace giac {
       vecteur & va=*a._SYMBptr->feuille._VECTptr;
       if (b.is_symb_of_sommet(at_unit)){
 	vecteur & v=*b._SYMBptr->feuille._VECTptr;
-	return new_ref_symbolic(symbolic(at_unit,makenewvecteur(va[0]*v[0],_simplifier(va[1]*v[1],contextptr))));
+	gen res=va[1]*v[1];
+	res=ratnormal(res);
+	if (is_one(res))
+	  return va[0]*v[0];
+	return new_ref_symbolic(symbolic(at_unit,makenewvecteur(va[0]*v[0],res)));
       }
       else
 	return new_ref_symbolic(symbolic(at_unit,makenewvecteur(va[0]*b,va[1])));
@@ -5481,7 +5488,7 @@ namespace giac {
       return a;
     if ( a.is_approx()){
       gen b1;
-      if (has_evalf(b,b1,1,contextptr)&& b!=b1){
+      if (has_evalf(b,b1,1,contextptr)&& (b.type!=b1.type || b!=b1)){
 #ifdef HAVE_LIBMPFR
 	if (a.type==_REAL){
 	  gen b2=accurate_evalf(b,mpfr_get_prec(a._REALptr->inf));
@@ -5494,7 +5501,7 @@ namespace giac {
     }
     if ( b.is_approx()){
       gen a1;
-      if (has_evalf(a,a1,1,contextptr) && a!=a1){
+      if (has_evalf(a,a1,1,contextptr) && (a.type!=a1.type || a!=a1)){
 #ifdef HAVE_LIBMPFR
 	if (b.type==_REAL){
 	  gen a2=accurate_evalf(a,mpfr_get_prec(b._REALptr->inf));
@@ -5644,6 +5651,25 @@ namespace giac {
     return inv(g,contextptr);
   }
 
+  gen inv_distrib(const gen & b,GIAC_CONTEXT){
+    if (b.is_symb_of_sommet(at_prod)){
+      gen f=b._SYMBptr->feuille;
+      return symbolic(at_prod,inv_distrib(f,contextptr));
+    }
+    if (b.is_symb_of_sommet(at_pow))
+      return pow(b._SYMBptr->feuille[0],-b._SYMBptr->feuille[1],contextptr);
+    if (b.is_symb_of_sommet(at_inv))
+      return b._SYMBptr->feuille;
+    if (b.type==_VECT){
+      vecteur v(*b._VECTptr);
+      for (unsigned i=0;i<v.size();++i){
+	v[i]=inv_distrib(v[i],contextptr);
+      }
+      return gen(v,b.subtype);
+    }
+    return unitpow(b,-1);
+  }
+
   gen inv(const gen & a,GIAC_CONTEXT){
     if (ctrl_c) { 
       interrupted = true; return gensizeerr(gettext("Stopped by user interruption.")); 
@@ -5680,7 +5706,7 @@ namespace giac {
       if ((a==plus_inf) || (a==minus_inf))
 	return 0;
       if (a.is_symb_of_sommet(at_unit))
-	return new_ref_symbolic(symbolic(at_unit,makenewvecteur(inv(a._SYMBptr->feuille._VECTptr->front(),contextptr),_simplifier(inv(a._SYMBptr->feuille._VECTptr->back(),contextptr),contextptr))));
+	return new_ref_symbolic(symbolic(at_unit,makenewvecteur(inv(a._SYMBptr->feuille._VECTptr->front(),contextptr),inv_distrib(a._SYMBptr->feuille._VECTptr->back(),contextptr))));
       if (equalposcomp(plot_sommets,a._SYMBptr->sommet))
 	return symbolic_plot_makevecteur( a._SYMBptr->sommet,inv(a._SYMBptr->feuille,contextptr),false,contextptr);
       if (a._SYMBptr->sommet==at_inv)
@@ -6125,12 +6151,12 @@ namespace giac {
 	return chkmod(plus_one,a);
       if (a.is_approx()){
 	gen b1;
-	if (has_evalf(b,b1,1,context0) && b!=b1)
+	if (has_evalf(b,b1,1,context0) && (b.type!=b1.type || b!=b1))
 	  return rdiv(a,b1);
       }
       if (b.is_approx()){
 	gen a1;
-	if (has_evalf(a,a1,1,context0) && a!=a1)
+	if (has_evalf(a,a1,1,context0) && (a.type!=a1.type || a!=a1))
 	  return rdiv(a1,b);
       }
       if (a.type==_REAL)
@@ -6252,7 +6278,7 @@ namespace giac {
       return 0;
     }
     gen approx;
-    if (has_evalf(a,approx,1,contextptr) && a!=approx)
+    if (has_evalf(a,approx,1,contextptr) && (a.type!=approx.type ||a!=approx))
       return fastsign(approx,contextptr);
     // FIXME GIAC_CONTEXT??
     /*
@@ -6537,8 +6563,13 @@ namespace giac {
     case _VECT__VECT:
       if (a._VECTptr==b._VECTptr)
 	return true;
-      if (a.subtype!=b.subtype)
-	return false;
+      if (a.subtype!=b.subtype){
+	if ( (a.subtype==_MATRIX__VECT && b.subtype==0) ||
+	     (b.subtype==_MATRIX__VECT && a.subtype==0) )
+	  ; // don't consider them different
+	else
+	  return false;
+      }
       if (a.subtype)
 	return geo_equal(*a._VECTptr,*b._VECTptr,a.subtype,contextptr);
       return *a._VECTptr==*b._VECTptr;
@@ -6559,7 +6590,7 @@ namespace giac {
     case _SPOL1__SPOL1:
       return *a._SPOL1ptr==*b._SPOL1ptr;
     default: // Check pointers, type subtype
-      if ((a.type==b.type) && (a.subtype==b.subtype) && (a.val==b.val))
+      if ((a.type==b.type) && (a.subtype==b.subtype) && (a.val==b.val) && a._ZINTptr==b._ZINTptr)
 	return true;
       if (a.type<=_REAL && b.type<=_REAL)
 	return is_zero(a-b,contextptr);
@@ -6623,7 +6654,7 @@ namespace giac {
       return undef;
     double eps=epsilon(contextptr);
     if (eps>1e-6)
-      *logptr(contextptr) << "Warning, sign might return 0 incorrectly because the value of eps is too large " << eps << endl;
+      *logptr(contextptr) << gettext("Warning, sign might return 0 incorrectly because the value of eps is too large ") << eps << endl;
     switch (a.type){
     case _INT_: case _ZINT: 
       if (is_positive(a,contextptr))
@@ -7220,7 +7251,7 @@ namespace giac {
 	*it=(*it)(i,contextptr);
       }
       if (warn)
-	*logptr(contextptr) << "Warning, evaluating (" << *this << ")(" << i << ") as a function not as a product" << endl;
+	*logptr(contextptr) << gettext("Warning, evaluating (") << *this << ")(" << i << ") as a function not as a product" << endl;
       return _SYMBptr->sommet(res,contextptr);
     }
     if (type==_FUNC){
@@ -7465,6 +7496,12 @@ namespace giac {
   static bool power_basis_exp(const gen& a,gen & basis,gen & expa){
     if (a.is_symb_of_sommet(at_neg))
       return !power_basis_exp(a._SYMBptr->feuille,basis,expa);
+    /* if (a.is_symb_of_sommet(at_inv)){
+      gen & tmp=a._SYMBptr->feuille;
+      bool b=power_basis_exp(tmp,basis,expa);
+      expa=-expa;
+      return b;
+      } */
     if (a.is_symb_of_sommet(at_pow)){
       gen & tmp=a._SYMBptr->feuille;
       if (tmp.type!=_VECT || tmp._VECTptr->size()!=2){
@@ -7952,7 +7989,7 @@ namespace giac {
     if ((n.type==_POLY) && (d.type==_POLY)){
       polynome np(*n._POLYptr),dp(*d._POLYptr);
       if (np.dim && dp.dim && np.dim!=dp.dim)
-	return gensizeerr("simplify: Polynomials do not have the same dimension");
+	return gensizeerr(gettext("simplify: Polynomials do not have the same dimension"));
       polynome g(np.dim);
       g=simplify(np,dp);
       n=np;
@@ -8922,7 +8959,9 @@ namespace giac {
       base=2;
     }
 #ifdef _LIB_CE_ERRNO_H
-	__set_errno(0);
+#ifndef BESTA_OS
+    __set_errno(0);
+#endif
 #else
      errno = 0;
 #endif
@@ -8960,7 +8999,7 @@ namespace giac {
 	if (!res)
 	  return rg;
       }
-#ifdef BCD
+#if 0 // def BCD
       giac_float gf;
       gf=strtobcd(s,(const char **)&endchar,'.',0,10);
       if (!*endchar)
@@ -9039,6 +9078,7 @@ namespace giac {
 
   static int try_parse(const string & s,GIAC_CONTEXT){
     int res;
+    int isqrt=i_sqrt_minus1(contextptr);
 #ifndef NO_STDEXCEPT
     try {
 #endif
@@ -9076,7 +9116,7 @@ namespace giac {
 	    vs=v.size();
 	    for (i=0;i<vs;i++){
 	      if (v[i]._SYMBptr->feuille[1]==i__IDNT_e){
-		*logptr(contextptr) << "Warning, i is usually sqrt(-1), I'm using a symbolic variable instead but you should check your input" << endl;
+		*logptr(contextptr) << gettext("Warning, i is usually sqrt(-1), I'm using a symbolic variable instead but you should check your input") << endl;
 		break;
 	      }
 	    }
@@ -9096,7 +9136,8 @@ namespace giac {
 #ifndef NO_STDEXCEPT
     }
     catch (std::runtime_error & error){
-      if (!giac::first_error_line(contextptr))
+      i_sqrt_minus1(isqrt,contextptr);
+     if (!giac::first_error_line(contextptr))
 	giac::first_error_line(giac::lexer_line_number(contextptr),contextptr);
       parser_error(error.what(),contextptr);
 #ifdef HAVE_SIGNAL_H_OLD
@@ -9105,6 +9146,7 @@ namespace giac {
       return 1;
     }
 #endif
+    i_sqrt_minus1(isqrt,contextptr);
     return res;
   }
   
@@ -9306,7 +9348,7 @@ namespace giac {
 #ifndef DOUBLEVAL
     // roundoff
     unsigned char * u = (unsigned char *)(&d);
-    *u=0;
+    *u &= 0xe0;
 #endif
     if (my_isnan(d))
       return "undef";
@@ -9485,16 +9527,14 @@ namespace giac {
     size_t l=mpz_sizeinbase (a, 10) + 2;
     if (l>unsigned(MAX_PRINTABLE_ZINT))
       return "Integer_too_large_for_display";
-#ifdef VISUALC
-    char * s = new char[l];
+#if defined( VISUALC ) || defined( BESTA_OS )
+    char * s = ( char * )alloca( l );
 #else
     char s[l];
 #endif
     mpz_get_str (s, 10,a) ;
     string tmp(s);
-#ifdef VISUALC
-    delete [] s;
-#endif
+
     return tmp;
   }
 
@@ -9502,8 +9542,8 @@ namespace giac {
     size_t l=mpz_sizeinbase (a, 16) + 2;
     if (l>unsigned(MAX_PRINTABLE_ZINT))
       return "Integer_too_large";
-#ifdef VISUALC
-    char * s = new char[l];
+#if defined( VISUALC ) || defined( BESTA_OS )
+    char * s = ( char * )alloca( l );
 #else
     char s[l];
 #endif
@@ -9526,9 +9566,7 @@ namespace giac {
     mpz_get_str (s,16,a) ;
     res += s;
 #endif // USE_GMP_REPLACEMENTS
-#ifdef VISUALC
-    delete [] s;
-#endif
+
     return res;
   }
 
@@ -9536,8 +9574,8 @@ namespace giac {
     size_t l=mpz_sizeinbase (a, 8) + 2;
     if (l>unsigned(MAX_PRINTABLE_ZINT))
       return "Integer_too_large";
-#ifdef VISUALC
-    char * s = new char[l];
+#if defined( VISUALC ) || defined( BESTA_OS )
+    char * s = ( char * )alloca( l );
 #else
     char s[l];
 #endif
@@ -9559,9 +9597,7 @@ namespace giac {
     mpz_get_str (s,8,a) ;
     res += s;
 #endif // USE_GMP_REPLACEMENTS
-#ifdef VISUALC
-    delete [] s;
-#endif
+
     return res;
   }
 
@@ -9569,8 +9605,8 @@ namespace giac {
     size_t l=mpz_sizeinbase (a, 2) + 2;
     if (l>unsigned(MAX_PRINTABLE_ZINT))
       return "Integer_too_large";
-#ifdef VISUALC
-    char * s = new char[l];
+#if defined( VISUALC ) || defined( BESTA_OS )
+    char * s = ( char * )alloca( l );
 #else
     char s[l];
 #endif
@@ -9592,9 +9628,7 @@ namespace giac {
     mpz_get_str (s,2,a) ;
     res += s;
 #endif // USE_GMP_REPLACEMENTS
-#ifdef VISUALC
-    delete [] s;
-#endif
+
     return res;
   }
 

@@ -484,6 +484,12 @@ namespace giac {
     _NARY_OPERATOR=4
   };
 
+  enum is_num_mask {
+    num_mask_withint=1,
+    num_mask_withfrac=2,
+  };
+
+
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac
 #endif // ndef NO_NAMESPACE_GIAC

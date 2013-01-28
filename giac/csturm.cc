@@ -81,7 +81,7 @@ namespace giac {
       if (b.front().type==_VECT) {
 	// ddeg should be even if b0 is a _POLY1
 	if (ddeg%2==0)
-	  *logptr(contextptr) << "Singular parametric Sturm sequence " << a << "/" << b << endl;
+	  *logptr(contextptr) << gettext("Singular parametric Sturm sequence ") << a << "/" << b << endl;
       }
       else
 	b0=abs(b.front(),contextptr); 
@@ -788,7 +788,7 @@ namespace giac {
     if (n<=0)
       return 2*n;
     if (eps<=0){
-      *logptr(context0) << "Bad precision, using 1e-12 instead of "+print_DOUBLE_(eps,14) << endl;
+      *logptr(context0) << gettext("Bad precision, using 1e-12 instead of ")+print_DOUBLE_(eps,14) << endl;
       eps=1e-12;
     }
     if (is_strictly_greater(eps,a1-a0,context0) && is_strictly_greater(eps,b1-b0,context0)){

@@ -187,7 +187,7 @@ namespace giac {
       if (is_irreducible_primitive(test,p,test2))
 	return test2;
     }
-    *logptr(contextptr) << "Warning, random search for irreducible polynomial did not work, starting exhaustive search" << endl;
+    *logptr(contextptr) << gettext("Warning, random search for irreducible polynomial did not work, starting exhaustive search") << endl;
     // Now test all possible coeffs for test[k] until it's irreducible
     double pm=std::pow(double(p),double(m));
     for (int k=0;k<pm;k++){
@@ -209,7 +209,7 @@ namespace giac {
     string s(g.print(contextptr));
     while (g==k || g==K || eval(g,1,contextptr)!=g){
       if (warn)
-	*logptr(contextptr) << g << " already assigned. Trying ";
+	*logptr(contextptr) << g << gettext(" already assigned. Trying ");
       autoname_plus_plus(s);
       if (warn)
 	*logptr(contextptr) << s << endl;
@@ -222,7 +222,7 @@ namespace giac {
     vecteur v;
     if (is_integer(args)){ // must be a power of a prime
       if (_isprime(args,contextptr)!=0){
-	return gensizeerr("GF is used for non-prime finite field. Use % or mod for prime fields, e.g. 1 % "+args.print(contextptr)+'.');
+	return gensizeerr(gettext("GF is used for non-prime finite field. Use % or mod for prime fields, e.g. 1 % ")+args.print(contextptr)+'.');
       }
       v.push_back(args);
     }
@@ -257,7 +257,7 @@ namespace giac {
       make_free_variable(K,contextptr,false,k,0);
       make_free_variable(g,contextptr,true,k,K);
       v.push_back(makevecteur(k,K,g));
-      *logptr(contextptr) << "Setting " << g << " as generator for Galois field " << K << endl << "(auxiliary polynomial variable for addition representation " << k << ")" << endl;
+      *logptr(contextptr) << gettext("Setting ") << g << gettext(" as generator for Galois field ") << K << endl << gettext("(auxiliary polynomial variable for addition representation ") << k << ")" << endl;
       ++s;
     }
     if (s==3){
@@ -277,8 +277,8 @@ namespace giac {
 	gen g=(*v.back()._VECTptr)[2];
 	gen k=(*v.back()._VECTptr)[0];
 	galois_field *gf=dynamic_cast<galois_field *>( fieldvalue._USERptr);
-	*logptr(contextptr) << "Assigning variables " << g << " and " << K << endl;
-	*logptr(contextptr) << "Now e.g. " << g <<"^200+1 will build an element of " << K << endl;
+	*logptr(contextptr) << gettext("Assigning variables ") << g << gettext(" and ") << K << endl;
+	*logptr(contextptr) << gettext("Now e.g. ") << g << gettext("^200+1 will build an element of ") << K << endl;
 	sto(fieldvalue,K,contextptr);
 	sto(galois_field(gf->p,gf->P,gf->x,makevecteur(1,0)),g,contextptr);
 	return fieldvalue;
@@ -302,7 +302,7 @@ namespace giac {
     if (!res)
       return gensizeerr(gettext("Not irreducible or not primitive polynomial")+args.print());
     if (res==2)
-      *logptr(contextptr) << "Warning " << symb_horner(*v[1]._VECTptr,xid) << " is irreducible but not primitive. You could use " << symb_horner(vmin,xid) << " instead " << endl;
+      *logptr(contextptr) << gettext("Warning ") << symb_horner(*v[1]._VECTptr,xid) << gettext(" is irreducible but not primitive. You could use ") << symb_horner(vmin,xid) << gettext(" instead ") << endl;
     return galois_field(v[0],v[1],v[2],v[3]);
   }
   static define_unary_function_eval (__galois_field,&giac::_galois_field,_galois_field_s);
@@ -386,7 +386,7 @@ namespace giac {
       return galois_field(p,P,x,a+g);
     if (g.type==_MOD){
       if (*(g._MODptr+1)!=p)
-	return gensizeerr("Incompatible characteristics");
+	return gensizeerr(gettext("Incompatible characteristics"));
       return galois_field(p,P,x,a+*g._MODptr);
     }
     if (g.type!=_USER)
@@ -415,7 +415,7 @@ namespace giac {
       return galois_field(p,P,x,a-g);
     if (g.type==_MOD){
       if (*(g._MODptr+1)!=p)
-	return gensizeerr("Incompatible characteristics");
+	return gensizeerr(gettext("Incompatible characteristics"));
       return galois_field(p,P,x,a-*g._MODptr);
     }
     if (g.type!=_USER)
@@ -461,7 +461,7 @@ namespace giac {
     }
     if (g.type==_MOD){
       if (*(g._MODptr+1)!=p)
-	return gensizeerr("Incompatible characteristics");
+	return gensizeerr(gettext("Incompatible characteristics"));
       return *this*(*g._MODptr);
     }
     if (g.type!=_USER)
@@ -563,7 +563,7 @@ namespace giac {
 	      }
 	      if (g._SYMBptr->sommet==at_pow && g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==2)
 		return pow((*this)(g._SYMBptr->feuille[0],contextptr),g._SYMBptr->feuille[1],contextptr);
-	      return gensizeerr(x[1].print()+"("+g.print()+") invalid, works only for integers or polynomials depending on "+xid.print());
+	      return gensizeerr(x[1].print()+"("+g.print()+gettext(") invalid, works only for integers or polynomials depending on ")+xid.print());
 	    }
 	  }
 	}
@@ -644,7 +644,7 @@ namespace giac {
     env.modulo=p;
     gen gpm=pow(p.val,m);
     if (gpm.type!=_INT_)
-      return gensizeerr("Field too large");
+      return gensizeerr(gettext("Field too large"));
     // int pn=gpm.val;
     env.moduloon=true;
     modpoly & A=*a._VECTptr;
@@ -724,12 +724,21 @@ namespace giac {
 
   gen galois_field::polyfactor (const polynome & p0,factorization & f) const {
     f.clear();
-    if (p0.coord.empty())
+    polynome p(p0.dim);
+    // p0 may contain null coefficients if we multiply a polynomial over Z with a galois_field
+    // because of the non-0 characteristic
+    vector<monomial<gen> >::const_iterator it=p0.coord.begin(),itend=p0.coord.end();
+    for (;it!=itend;++it){
+      if (it->value!=0)
+	p.coord.push_back(*it);
+    }
+    if (p.coord.empty())
       return 0;
-    polynome p=p0.coord.front().value.inverse(context0)*p0;
+    gen lcoeff=p.coord.front().value;
+    p=lcoeff.inverse(context0)*p;
     if (p.dim!=1){
 #if 1
-      cerr << "Warning: multivariate GF factorization is experimental and may fail" << endl;
+      cerr << gettext("Warning: multivariate GF factorization is experimental and may fail") << endl;
 #else
       return gendimerr(gettext("Multivariate GF factorization not yet implemented"));
 #endif
@@ -747,7 +756,7 @@ namespace giac {
       return gensizeerr(gettext("GF polyfactor"));
     f.push_back(facteur<polynome>(
 				  polynome(
-					   monomial<gen>(p0.coord.front().value,0,p.dim)
+					   monomial<gen>(lcoeff,0,p.dim)
 					   ),
 				  1));
     return 0;

@@ -322,8 +322,8 @@ namespace giac {
   gen _array_sto(const gen & a,const context * contextptr);
 
   bool is_assumed_integer(const gen & g,GIAC_CONTEXT);
-  bool is_numericv(const vecteur & v);
-  bool is_numericm(const vecteur & v);
+  bool is_numericv(const vecteur & v, int withfracint = 0);
+  bool is_numericm(const vecteur & v, int withfracint = 0);
   bool check_vect_38(const std::string & s);
   // check value type for storing value in s using 38 compatibility mode
   bool check_sto_38(gen & value,const char * s);
@@ -868,6 +868,12 @@ namespace giac {
   void fonction_bidon();
   std::string printassto(const gen & feuille,const char * sommetstr,GIAC_CONTEXT);
   
+#ifdef STATIC_BUILTIN_LEXER_FUNCTIONS
+  extern const alias_unary_function_eval __sto;
+#else
+  extern const unary_function_eval __sto;
+#endif
+
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac
 #endif // ndef NO_NAMESPACE_GIAC

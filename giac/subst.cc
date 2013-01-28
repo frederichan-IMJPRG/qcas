@@ -1413,7 +1413,7 @@ namespace giac {
 	  }
 	}
       }
-      *logptr(contextptr) << "Simplification assuming " << v[i] << " near " << point << (direction==1?"+":"-") << endl;
+      *logptr(contextptr) << gettext("Simplification assuming ") << v[i] << " near " << point << (direction==1?"+":"-") << endl;
 #ifdef NO_STDEXCEPT
       gg=limit(gg,*v[i]._IDNTptr,point,direction,contextptr);
       if (is_undef(gg))
@@ -1990,7 +1990,7 @@ namespace giac {
 	vabs.push_back(vabs2[i]);
     }
     if (!vabs.empty() && debug_infolevel)
-      *logptr(contextptr) << "simplify preserving " << vabs << endl;
+      *logptr(contextptr) << gettext("simplify preserving ") << vabs << endl;
     int s=vabs.size();
     vabs2=vecteur(s);
     for (int i=0;i<s;++i){

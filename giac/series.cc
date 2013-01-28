@@ -888,7 +888,7 @@ namespace giac {
     // If first.exponent!=0 and direction==0 we can not find 
     // first.exponent^e consistently around 0
     if (!direction && !is_integer(e) && !is_zero(first.exponent) ){
-      *logptr(contextptr) << "Warning: vanishing non integral power expansion" << endl;
+      *logptr(contextptr) << gettext("Warning: vanishing non integral power expansion") << endl;
       /*
       res.clear();
       first.coeff=pow(first.coeff,e,contextptr);
@@ -1228,7 +1228,7 @@ namespace giac {
       if ((temp__SYMB.feuille.type==_IDNT) && (temp__SYMB.sommet!=at_abs)){ 
 	// Since e contains x feuille of e must be x
 	if (!temp__SYMB.sommet.ptr()->series_expansion){
-	  *logptr(contextptr) << "no taylor method for " << temp__SYMB.sommet.ptr()->print(contextptr) << endl;
+	  *logptr(contextptr) << gettext("no taylor method for ") << temp__SYMB.sommet.ptr()->print(contextptr) << endl;
 	  return false; 
 	}
 	gen shift_coeff;
@@ -1275,7 +1275,7 @@ namespace giac {
 	  gen Flim=limit(F,x,0,1,contextptr);
 	  gen eff=sum(flim,x,limlo,limup,contextptr);
 	  if (is_inf(eff)){
-	    *logptr(contextptr) << "Limit of divergent sum not implemented yet" << endl;
+	    *logptr(contextptr) << gettext("Limit of divergent sum not implemented yet") << endl;
 	    return false;
 	  }
 	  // euler 1st part sum(f(n,k),k,lim(lower),lower-1)
@@ -1502,7 +1502,7 @@ namespace giac {
       }
       if (temp__SYMB.sommet==at_abs){
 	if (!image_of_direction){
-	  *logptr(contextptr) << "Sign error " << s << endl;
+	  *logptr(contextptr) << gettext("Sign error ") << s << endl;
 	  return false; // cksignerr(s);
 	}
 	if (image_of_direction==-1)
@@ -1535,7 +1535,7 @@ namespace giac {
       }
       gen shift_coeff;
       if (!temp__SYMB.sommet.ptr()->series_expansion){
-	*logptr(contextptr) << string("Not expandable ")+temp__SYMB.sommet.ptr()->s << endl;
+	*logptr(contextptr) << string(gettext("Not expandable "))+temp__SYMB.sommet.ptr()->s << endl;
 	return false;
       }
       int addorder=0;
@@ -1544,7 +1544,7 @@ namespace giac {
 	  return false; // setsizeerr();
 	addorder=temp__SYMB.feuille._VECTptr->back().val;
 	if (addorder<0){
-	  *logptr(contextptr) << "Psi: bad second argument" << endl;
+	  *logptr(contextptr) << gettext("Psi: bad second argument") << endl;
 	  return false;
 	}
       }
@@ -1802,7 +1802,7 @@ namespace giac {
 	if (v[i].is_symb_of_sommet(at_ln)){
 	  gen g=limit(v[i]._SYMBptr->feuille,x,lim_point,direction,contextptr);
 	  if (is_inf(g) && g!=plus_inf)
-	    return gensizeerr("ln of unsigned or minus infinity");
+	    return gensizeerr(gettext("ln of unsigned or minus infinity"));
 	}
 	if (v[i].is_symb_of_sommet(at_sum)){
 	  gen tmp;
@@ -1882,7 +1882,7 @@ namespace giac {
     if (loptab(e,sign_floor_ceil_round_tab).empty()){
       gen first_try;
       if (lim_point==unsigned_inf){
-	*logptr(contextptr) << "Warning, infinity is unsigned, perhaps you meant +infinity"<< endl;
+	*logptr(contextptr) << gettext("Warning, infinity is unsigned, perhaps you meant +infinity")<< endl;
 	first_try = subst(ratnormal(e),x,lim_point,false,contextptr);
       }
       else
@@ -2091,12 +2091,12 @@ namespace giac {
 	}
       }
       if (temp._SYMBptr->feuille.type==_VECT){
-	*logptr(contextptr) << "Unable to handle "+temp.print(contextptr) << endl;
+	*logptr(contextptr) << gettext("Unable to handle ")+temp.print(contextptr) << endl;
 	return false;
       }
       gen l=in_limit(temp._SYMBptr->feuille,x,plus_inf,0,contextptr);
       if (is_undef(l) || (l==unsigned_inf && temp._SYMBptr->sommet!=at_cos && temp._SYMBptr->sommet!=at_sin)){
-	*logptr(contextptr) << "Undef/Unsigned Inf encountered in limit" << endl;
+	*logptr(contextptr) << gettext("Undef/Unsigned Inf encountered in limit") << endl;
 	return false;
       }
       if (!is_inf(l)){
@@ -2115,7 +2115,7 @@ namespace giac {
       // (semi-)tractable functions?
       gen shift_coeff;
       if (!temp._SYMBptr->sommet.ptr()->series_expansion){
-	invalidserieserr(string("no taylor method for ")+temp._SYMBptr->sommet.ptr()->print(contextptr));
+	invalidserieserr(string(gettext("no taylor method for "))+temp._SYMBptr->sommet.ptr()->print(contextptr));
 	return false;
       }
       gen test=temp._SYMBptr->sommet.ptr()->series_expansion(l,0,temp._SYMBptr->sommet,0,shift_coeff,contextptr); // fixme: 0 should be image_of_direction 
@@ -2675,7 +2675,7 @@ namespace giac {
       gen & f0=f._VECTptr->front();
       gen x =f[1];
       if (x.type!=_IDNT){
-	*logptr(contextptr) << "Unable to convert to euler mac laurin";
+	*logptr(contextptr) << gettext("Unable to convert to euler mac laurin");
 	return false;
       }
       gen f0prime=derive(f0,x,contextptr);

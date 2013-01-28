@@ -181,32 +181,17 @@ namespace giac {
     ref_string(const std::string & S):ref_count(1),s(S) {}
   };
   template <class T> class tensor;
+
   typedef tensor<gen> polynome;
   typedef std::vector< facteur< polynome > > factorization;
-  class vectpoly:public std::vector<polynome> {
-  public:
-    vectpoly():std::vector<polynome>::vector() {};
-    vectpoly(int i,const polynome & p):std::vector<polynome>::vector(i,p) {};
-    void dbgprint(){ 
-      std::cerr << *this << std::endl;
-    }
-  };
+
   template<class T> class Tref_tensor; // in poly.h
   typedef Tref_tensor<gen> ref_polynome;
   typedef Tfraction<gen> fraction;
   template<class T> class Tref_fraction; 
   typedef Tref_fraction<gen> ref_fraction;
 
-  struct ref_vecteur {
-    volatile int ref_count;
-    vecteur v;
-    ref_vecteur():ref_count(1) {}
-    ref_vecteur(unsigned s):ref_count(1),v(s) {}
-    ref_vecteur(unsigned s,const gen & g):ref_count(1),v(s,g) {}
-    ref_vecteur(const_iterateur it,const_iterateur itend):ref_count(1),v(it,itend) {}
-    ref_vecteur(const vecteur & w):ref_count(1),v(w) {}
-  };
-
+  struct ref_vecteur;
   void delete_ref_vecteur(ref_vecteur * ptr);
   ref_vecteur * new_ref_vecteur(const vecteur & v);
   ref_symbolic * new_ref_symbolic(const symbolic & s);
@@ -226,12 +211,8 @@ namespace giac {
 #else
   typedef std::vector<monome> sparse_poly1; // no debug. support
 #endif
-  struct ref_sparse_poly1 {
-    volatile int ref_count;
-    sparse_poly1 s;
-    ref_sparse_poly1(const sparse_poly1 & S):ref_count(1),s(S) {}
-  };
-  
+  struct ref_sparse_poly1;
+
   // arbitrary precision floats hierarchy (value or interval)
   std::string printmpf_t(const mpf_t & inf);
   class real_object {
@@ -369,12 +350,8 @@ namespace giac {
   std::string print_DOUBLE_(double d,GIAC_CONTEXT);
 
   typedef std::map<gen,gen,const std::pointer_to_binary_function < const gen &, const gen &, bool> > gen_map;
-  struct ref_gen_map {
-    volatile int ref_count;
-    gen_map m;
-    ref_gen_map(const std::pointer_to_binary_function < const gen &, const gen &, bool> & p): ref_count(1),m(p) {}
-    ref_gen_map(const gen_map & M):ref_count(1),m(M) {}
-  };
+  struct ref_gen_map;
+
   class my_mpz;
 
 #ifdef NO_UNARY_FUNCTION_COMPOSE
@@ -460,7 +437,12 @@ namespace giac {
   // FIXME: for little-endian check if type/unused/subtype order is correct!
   class gen {
   public:
+#ifdef GIAC_TYPE_ON_8BITS
     unsigned char type;  // see dispatch.h
+#else
+    unsigned char type:5;  // 32 types is enough, keep 3 bits more for double
+    unsigned char type_unused:3; 
+#endif
     signed char subtype;
     unsigned short reserved; // used if SMARTPTR is defined on 64 bit CPU (16 bits for pointer val)
     union {
@@ -587,6 +569,7 @@ namespace giac {
     gen (const fraction & p);
     gen (const std::string & s,GIAC_CONTEXT);
     gen (const wchar_t * s,GIAC_CONTEXT);
+    gen (const char * s,GIAC_CONTEXT){ type=0; *this=gen(std::string(s),contextptr); };
     gen (const sparse_poly1 & p);
     gen (const unary_function_ptr & f,int nargs=1);
     gen (const unary_function_ptr * f,int nargs=1);
@@ -598,6 +581,7 @@ namespace giac {
 #endif
     gen (const my_mpz &);
     ~gen();
+
     bool in_eval(int level,gen & evaled,const context * contextptr) const;
     gen eval(int level,const context * contextptr) const;
     // inline gen eval() const { return eval(DEFAULT_EVAL_LEVEL,context0); }
@@ -613,10 +597,12 @@ namespace giac {
     bool is_integer() const ;
     bool is_constant() const;
     std::string print(GIAC_CONTEXT) const;
+    inline const char * printcharptr(GIAC_CONTEXT) const { return print(contextptr).c_str(); };
     // if sptr==0, return length required, otherwise print at end of *sptr
     int sprint(std::string * sptr,GIAC_CONTEXT) const; 
     std::string print_universal(GIAC_CONTEXT) const;
     std::string print() const;
+    inline const char * printcharptr() const { return print().c_str(); };
     wchar_t * wprint(GIAC_CONTEXT) const ; 
     // print then convert to a malloc-ated wchar_t *
     void modify(int i) { *this =gen(i); };
@@ -685,12 +671,39 @@ namespace giac {
   };
 #endif
 
+  class vectpoly:public std::vector<polynome> {
+  public:
+    vectpoly():std::vector<polynome>::vector() {};
+    vectpoly(int i,const polynome & p):std::vector<polynome>::vector(i,p) {};
+    void dbgprint(){ 
+      std::cerr << *this << std::endl;
+    }
+  };
+
+  struct ref_gen_map {
+    volatile int ref_count;
+    gen_map m;
+    ref_gen_map(const std::pointer_to_binary_function < const gen &, const gen &, bool> & p): ref_count(1),m(p) {}
+    ref_gen_map(const gen_map & M):ref_count(1),m(M) {}
+  };
+
   struct alias_ref_fraction { int ref_count; alias_gen num; alias_gen den; };
   struct alias_ref_complex {
     int ref_count;
     int display;
     alias_gen re,im;
   };
+
+  struct ref_vecteur {
+    volatile int ref_count;
+    vecteur v;
+    ref_vecteur():ref_count(1) {}
+    ref_vecteur(unsigned s):ref_count(1),v(s) {}
+    ref_vecteur(unsigned s,const gen & g):ref_count(1),v(s,g) {}
+    ref_vecteur(const_iterateur it,const_iterateur itend):ref_count(1),v(it,itend) {}
+    ref_vecteur(const vecteur & w):ref_count(1),v(w) {}
+  };
+
 
 #ifdef SMARTPTR64
 #define define_alias_gen(name,type,subtype,ptr) alias_gen name={(longlong(ptr) << 16) | (subtype << 8) | type };
@@ -1099,6 +1112,13 @@ namespace giac {
       coeff=pn=0;
     }
   };
+
+    struct ref_sparse_poly1 {
+    volatile int ref_count;
+    sparse_poly1 s;
+    ref_sparse_poly1(const sparse_poly1 & S):ref_count(1),s(S) {}
+  };
+  
 
   // extern environment * env; 
 

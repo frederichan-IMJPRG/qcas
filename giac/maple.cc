@@ -318,7 +318,7 @@ namespace giac {
     return double(u1)/CLOCKS_PER_SEC;
 #endif
 #ifdef GIAC_HAS_STO_38
-    int t1=AspenGetNow(),t2;
+   int t1=AspenGetNow(),t2;
 #endif
 #ifdef _RUSAGE
     struct rusage tmp1,tmp2,tmpc1,tmpc2;
@@ -755,9 +755,11 @@ namespace giac {
   // open a file, returns a FD
   gen _open(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#if defined(VISUALC) || defined(__MINGW_H)
+#if defined(VISUALC) || defined(__MINGW_H) 
     return gensizeerr(gettext("not implemented"));
-    return undef;
+#elif defined BESTA_OS
+    // BP: why not return the error above?
+    assert(0);
 #else
     gen tmp=check_secure();
     if (is_undef(tmp)) return tmp;
@@ -802,8 +804,10 @@ namespace giac {
     vecteur & v=*g._VECTptr;
     int s=v.size();
     FILE * f=0;
+#ifndef BESTA_OS
     if (v[0].type==_INT_ && v[0].subtype==_INT_FD)
       f= fdopen(v[0].val,"a");
+#endif    
     if (v[0].type==_POINTER_ && v[0].subtype==_FILE_POINTER)
       f=(FILE *) v[0]._POINTER_val;
     if (f){
@@ -827,10 +831,12 @@ namespace giac {
   gen _close(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
 #ifndef VISUALC
+#ifndef BESTA_OS
     if (g.type==_INT_ && g.subtype==_INT_FD){
       close(g.val);
       return plus_one;
     }
+#endif
 #endif
     if (g.type==_POINTER_){
       fclose((FILE *)g._POINTER_val);
@@ -1062,7 +1068,7 @@ namespace giac {
       return gendimerr();
     vecteur a,b;
     if (!egcd_pade(Np,fp,p,a,b,0))
-      *logptr(contextptr) << "Solution may be wrong since a and b are not prime together: "+gen(a).print(contextptr)+","+gen(b).print(contextptr) << endl;
+      *logptr(contextptr) << gettext("Solution may be wrong since a and b are not prime together: ")+gen(a).print(contextptr)+","+gen(b).print(contextptr) << endl;
     gen res=poly12polynome(a,1,ls);
     res=res/(fd*gen(poly12polynome(b,1,ls)));
     res=r2sym(res,l,contextptr);
@@ -1754,12 +1760,12 @@ namespace giac {
     vecteur v;
     polynome P,Q,R;
     if (!is_hypergeometric(e,*n._IDNTptr,v,P,Q,R,contextptr)){
-      *logptr(contextptr) << "Cst part must be hypergeometric" << endl;
+      *logptr(contextptr) << gettext("Cst part must be hypergeometric") << endl;
       remains=e;
       return 0;
     }
     if (Q.lexsorted_degree() || R.lexsorted_degree()){
-      *logptr(contextptr) << "Cst part must be of type a^n*P(n)" << endl;
+      *logptr(contextptr) << gettext("Cst part must be of type a^n*P(n)") << endl;
       remains=e;
       return 0;
     }
@@ -1908,7 +1914,7 @@ namespace giac {
 	vecteur v;
 	polynome P,Q,R;
 	if (!is_hypergeometric(l,*n._IDNTptr,v,P,Q,R,contextptr)){
-	  *logptr(contextptr) << "Cst part must be hypergeometric" << endl;
+	  *logptr(contextptr) << gettext("Cst part must be hypergeometric") << endl;
 	  return symbolic(at_seqsolve,args);
 	}
 	// l(n+1)/l(n) = P(n+1)/P(n)*Q(n)/R(n+1)
@@ -1917,7 +1923,7 @@ namespace giac {
 	it=R.coord.begin();
 	polynome r0=Tnextcoeff<gen>(it,R.coord.end()).untrunc1();
 	if (!is_zero(r0*Q-q0*R)){
-	  *logptr(contextptr) << "Unable to handle coeff of homogeneous part" << endl;
+	  *logptr(contextptr) << gettext("Unable to handle coeff of homogeneous part") << endl;
 	  return symbolic(at_seqsolve,args);
 	}
 	// -> l(n)=l(0)*P(n)/P(0) -> product(l(n))
@@ -1954,12 +1960,12 @@ namespace giac {
 	    return sol+C*res;
 	  }
 	}
-	*logptr(contextptr) << "Unable to find a particular solution for inhomogeneous part" << endl;
+	*logptr(contextptr) << gettext("Unable to find a particular solution for inhomogeneous part") << endl;
 	return symbolic(at_seqsolve,args);
       }
       gen d=linear_apply(c,n,l,remains,contextptr,rsolve);
       if (!is_zero(remains))
-	*logptr(contextptr) << "Unable to solve recurrence" << endl;
+	*logptr(contextptr) << gettext("Unable to solve recurrence") << endl;
       // d is a particular solution of u(n+1)=l*u(n)+c(n)
       // add a general solution d(n)+C*l^n
       // such that at n=0 we get u0 -> C+d(0)=u0
@@ -1992,7 +1998,7 @@ namespace giac {
       c=normal(c,contextptr);
       gen remains,d=linear_apply(c,n,l,remains,contextptr,rsolve);
       if (!is_zero(remains))
-	*logptr(contextptr) << "Unable to solve recurrence" << endl;
+	*logptr(contextptr) << gettext("Unable to solve recurrence") << endl;
       gen C=normal(vzero[i]-quotesubst(d,n,0,contextptr),contextptr);
       if (is_zero(l))
 	res[i]=d+C*symbolic(at_same,gen(makevecteur(n,0),_SEQ__VECT));

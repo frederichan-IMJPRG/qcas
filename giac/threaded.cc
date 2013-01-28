@@ -498,7 +498,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   // extract modular content of p wrt to all but the last variable
   template<class T>
   static bool pp_mod(vector< T_unsigned<T,hashgcd_U> > & p,const vector<int> * pminptr,int modulo,const std::vector<hashgcd_U> & vars,vector< T_unsigned<T,hashgcd_U> > & pcont,int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return false;
 #else
     typename vector< T_unsigned<T,hashgcd_U> >::const_iterator it=p.begin(),itend=p.end();
@@ -2102,7 +2102,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 
   static bool mod_gcd(const vector< T_unsigned<int,hashgcd_U> > & p_orig,const vector< T_unsigned<int,hashgcd_U> > & q_orig,int modulo,vector< T_unsigned<int,hashgcd_U> > & d, vector< T_unsigned<int,hashgcd_U> > & pcofactor, vector< T_unsigned<int,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_pcofactor,bool compute_qcofactor,bool & divtest,vector< vector<int> > & pv,vector< vector<int> > & qv,int nthreads);
 
-#ifndef RTOS_THREADX
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
   static void * do_recursive_gcd_call(void * ptr_){
     gcd_call_param<int> * ptr = (gcd_call_param<int> *) ptr_;
     vector<int> & Delta = *ptr->Delta;
@@ -2205,7 +2205,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 
   // Modular gcd in "internal form"
   static bool mod_gcd(const vector< T_unsigned<int,hashgcd_U> > & p_orig,const vector< T_unsigned<int,hashgcd_U> > & q_orig,int modulo,vector< T_unsigned<int,hashgcd_U> > & d, vector< T_unsigned<int,hashgcd_U> > & pcofactor, vector< T_unsigned<int,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_pcofactor,bool compute_qcofactor,bool & divtest,vector< vector<int> > & pv,vector< vector<int> > & qv,int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return false;
 #else
     divtest=true;
@@ -2392,7 +2392,15 @@ mpz_class smod(const mpz_class & a,int reduce){
       swap(pcofactor,qcofactor);
       swap(pxndeg,qxndeg);
       swap(pv,qv);
+#ifdef BESTA_OS
+      bool tmpbool=compute_pcofactor;
+      compute_pcofactor=compute_qcofactor;
+      compute_qcofactor=tmpbool;
+      // BESTA DOES NOT LIKE THE FOLLOWING LINE OF CODE
+#else
       swap(compute_pcofactor,compute_qcofactor);
+#endif
+
     }
     vector<int> lcoeffp,lcoeffq,lcoeffg,Delta;
     hashgcd_U lcoeffpu,lcoeffqu;
@@ -3247,7 +3255,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   }
 
   bool gcd(const vector< T_unsigned<gen,hashgcd_U> > & p_orig,const vector< T_unsigned<gen,hashgcd_U> > & q_orig,vector< T_unsigned<gen,hashgcd_U> > & d, vector< T_unsigned<gen,hashgcd_U> > & pcofactor, vector< T_unsigned<gen,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_cofactors,int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return false;
 #else
     index_t shift_vars;
@@ -4324,7 +4332,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	       vector< T_unsigned<vecteur,hashgcd_U> > & D,
 	       vector< T_unsigned<vecteur,hashgcd_U> > & Pcof,vector< T_unsigned<vecteur,hashgcd_U> > & Qcof,bool compute_pcof,bool compute_qcof,
 	       int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return 0;
 #else
     // FIXME cofactors are not yet implemented
@@ -4678,7 +4686,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     return true;
   }
 
-#ifndef RTOS_THREADX
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
   static void * do_recursive_gcd_ext_call(void * ptr_){
     gcd_call_param< vector<int> > * ptr = (gcd_call_param< vector<int> > *) ptr_;
     vector< vector<int> > & Delta = *ptr->Delta;
@@ -4770,7 +4778,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	      vector< T_unsigned<vector<int>,hashgcd_U> > & d,
 	      vector< T_unsigned<vector<int>,hashgcd_U> > & pcof,vector< T_unsigned<vector<int>,hashgcd_U> > & qcof,bool compute_pcofactor,bool compute_qcofactor,
 	      int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return 0;
 #else
     //nthreads=1; // FIXME, !=1 segfaults on compaq mini
@@ -4896,7 +4904,14 @@ mpz_class smod(const mpz_class & a,int reduce){
       swap(pcofactor,qcofactor);
       swap(pxndeg,qxndeg);
       // swap(pv,qv);
+#ifdef BESTA_OS
+      bool tmpbool=compute_pcofactor;
+      compute_pcofactor=compute_qcofactor;
+      compute_qcofactor=tmpbool;
+      // BESTA DOES NOT LIKE THE FOLLOWING LINE OF CODE
+#else
       swap(compute_pcofactor,compute_qcofactor);
+#endif
     }
     vector< vector<int> > lcoeffp,lcoeffq,lcoeffg,Delta,tmpcont;
     hashgcd_U lcoeffpu,lcoeffqu;
@@ -5414,7 +5429,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   
   // should be called from gausspol.cc in gcdheu after monomial packing like in modpoly.cc gcd_modular
   bool gcd_ext(const vector< T_unsigned<gen,hashgcd_U> > & p_orig,const vector< T_unsigned<gen,hashgcd_U> > & q_orig,vector< T_unsigned<gen,hashgcd_U> > & d, vector< T_unsigned<gen,hashgcd_U> > & pcofactor, vector< T_unsigned<gen,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_cofactors,int nthreads){
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
     return false;
 #else
     // find extension

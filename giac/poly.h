@@ -47,17 +47,17 @@ namespace giac {
     tensor(const tensor<T> & t, const std::vector< monomial<T> > & v) : dim(t.dim), coord(v), is_strictly_greater(t.is_strictly_greater), m_is_greater(t.m_is_greater) { }
     // warning: this constructor prohibits construction of tensor from a value
     // of type T if this value is an int, except by using tensor<T>(T(int))
-    tensor() : dim(0), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun(m_lex_is_greater<T>)) { }
-    explicit tensor(int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun(m_lex_is_greater<T>)) { }
+    tensor() : dim(0), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
+    explicit tensor(int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
     explicit tensor(int d,const tensor<T> & t) : dim(d),is_strictly_greater(t.is_strictly_greater), m_is_greater(t.m_is_greater)  { }
-    tensor(const monomial<T> & v) : dim(v.index.size()), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun(m_lex_is_greater<T>)) { 
+    tensor(const monomial<T> & v) : dim(v.index.size()), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { 
       coord.push_back(v);
     }
-    tensor(const T & v, int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun(m_lex_is_greater<T>)) {
+    tensor(const T & v, int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) {
       if (!is_zero(v))
 	coord.push_back(monomial<T>(v,0,d));
     }
-    tensor(int d,const std::vector< monomial<T> > & c) : dim(d), coord(c), is_strictly_greater(i_lex_is_strictly_greater),m_is_greater(std::ptr_fun(m_lex_is_greater<T>)) { }
+    tensor(int d,const std::vector< monomial<T> > & c) : dim(d), coord(c), is_strictly_greater(i_lex_is_strictly_greater),m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
     ~tensor() { coord.clear(); }
     // member functions
     // ordering monomials in the tensor
@@ -474,7 +474,7 @@ namespace giac {
 
   template <class T>
   void lexsort(std::vector < monomial<T> > & v){
-    sort(v.begin(),v.end(),std::ptr_fun(m_lex_is_greater<T>));
+    sort(v.begin(),v.end(),std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>));
   }
 
 
@@ -1489,8 +1489,8 @@ namespace giac {
       }
       int ddeg=m-n;
       if (ddeg<0){
-#ifdef RTOS_THREADX
-	tensor<T> t(a); a=b; b=t;
+#if defined RTOS_THREADX || defined BESTA_OS
+    tensor<T> t(a); a=b; b=t;
 #else
 	swap(a,b); // exchange a<->b may occur only at the beginning
 #endif
@@ -1605,7 +1605,7 @@ namespace giac {
       if ( (n*m) % 2)
 	sign=-1;
       int tmpint=n; n=m; m=tmpint;
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
       ptmp=q; qtmp=p; // swap(ptmp,qtmp);
 #else
       swap(ptmp,qtmp);
@@ -1694,7 +1694,7 @@ namespace giac {
       // std::cout << ua*b0pow << std::endl << q*ub << std::endl ;
       (ua*b0pow).TSub(q*ub,ur); // ur=ua*b0pow-q*ub;
       // std::cout << ur << std::endl;
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
       a=b; 
 #else
       swap(a,b); // a=b
@@ -1702,7 +1702,7 @@ namespace giac {
       const tensor<T> & temp=Tpow(h,ddeg);
       // now divides r by g*h^(m-n), result is the new b
       r.TDivRem1(g*temp,b,q); // q is not used anymore
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
       ua=ub;
 #else
       swap(ua,ub); // ua=ub

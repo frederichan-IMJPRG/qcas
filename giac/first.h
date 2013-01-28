@@ -166,6 +166,7 @@ typedef unsigned long long ulonglong;
 #endif // __x86_64__
 
 #ifdef USE_GMP_REPLACEMENTS
+#define GIAC_TYPE_ON_8BITS
 #undef HAVE_GMPXX_H
 #undef HAVE_LIBMPFR
 #include "gmp_replacements.h"

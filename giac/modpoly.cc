@@ -1599,7 +1599,7 @@ namespace giac {
     mulmod(B,invcoeff,m); // B=other*invcoeff;
     // copy rem to an array
     vector<int>::const_iterator remit=rem.begin();//,remend=rem.end();
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int * tmp=new int[a+1];
 #else
     int tmp[a+1];
@@ -1634,7 +1634,7 @@ namespace giac {
     for (;tmpend!=tmp-1;--tmpend){
       rem.push_back( (*tmpend*longlong(coeff)) % m);
     } 
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     delete [] tmp;
 #endif
   }
@@ -1879,7 +1879,7 @@ namespace giac {
   void gcdsmallmodpoly(const modpoly &p,const modpoly & q,int m,modpoly & d){
 
     int as=p.size(),bs=q.size();
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int *asave=new int[as], *a=asave,*aend=a+as;
     int *bsave=new int[bs], *b=bsave,*bend=b+bs,*qcur=0;
 #else
@@ -1906,7 +1906,7 @@ namespace giac {
     for (;a!=aend;++a){
       d.push_back(smod((*a)*longlong(ainv),m));
     }
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     delete [] asave;
     delete [] bsave;
 #endif
@@ -1919,7 +1919,7 @@ namespace giac {
     int as=p.lexsorted_degree()+1,bs=q.lexsorted_degree()+1;
     if (as>1000000 || bs>1000000)
       return false;
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int *asave = new int[as], *a=asave,*aend=a+as,*qcur=0;
     int *Asave = new int[as], *A=Asave,*Aend=A+as;
     int *bsave = new int[bs], *b=bsave,*bend=b+bs;
@@ -1963,7 +1963,7 @@ namespace giac {
       if (aa!=aend && compute_cof){
 	if (debug_infolevel>20)
 	  cerr << "gcdsmallmodpoly, compute cofactors " << clock() << endl;
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
 	int * qsave=new int[std::max(as,bs)], *qcur=qsave,*qend=qsave+std::max(as,bs);
 #else
 	int qsave[std::max(as,bs)], *qcur=qsave,*qend=qsave+std::max(as,bs);
@@ -1984,17 +1984,17 @@ namespace giac {
 	}
 	if (debug_infolevel>20)
 	  cerr << "gcdsmallmodpoly, end compute cofactors " << clock() << endl;
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
 	delete [] qsave; 
 #endif
       }
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
       delete [] asave; delete [] Asave; delete [] bsave; delete [] Bsave;
 #endif
       return true;
     }
     else {
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
       delete [] asave; delete [] Asave; delete [] bsave; delete [] Bsave;
 #endif
       return false;
@@ -2035,7 +2035,7 @@ namespace giac {
     int as=p.size(),bs=q.size();
     if (!as){ d=q; return ; }
     if (!bs){ d=p; return ; }
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int *asave=new int[as], *a=asave,*aend=a+as,*qcur=0;
     int *bsave=new int[bs], *b=bsave,*bend=b+bs;
 #else
@@ -2065,7 +2065,7 @@ namespace giac {
 	d.push_back(smod((*a)*ainv,m));
       }
     }
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     delete [] asave;
     delete [] bsave;
 #endif
@@ -2096,7 +2096,7 @@ namespace giac {
       return ; 
     }
     int ms=std::max(as,bs);
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int *asave=new int[ms], *a=asave,*aend=a+as,*qcur=0,*qend;
     int *bsave=new int[ms], *b=bsave,*bend=b+bs;
 #else
@@ -2113,7 +2113,7 @@ namespace giac {
       t=aend; aend=bend; bend=t;      
     }
     if (a==aend){ // should not happen!
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
       delete [] asave;
       delete [] bsave;
 #endif
@@ -2126,7 +2126,7 @@ namespace giac {
       for (int * acur=a;acur!=aend;++acur)
 	*acur = smod((*acur)*longlong(ainv),m);
     }
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     int * cof=new int[ms];
 #else
     int cof[ms];
@@ -2162,7 +2162,7 @@ namespace giac {
       d.push_back(*a);
     // cerr << d << " " << pcof << " " << p << endl;
     // cerr << d << " " << qcof << " " << q << endl;
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     delete [] asave;
     delete [] bsave;
     delete [] cof;
@@ -3674,12 +3674,14 @@ namespace giac {
   // r = p mod pmod  and r = q mod qmod
   // hence r = p + A*pmod = q + B*qmod
   // or A*pmod -B*qmod = q - p
-  // assuming u*pmod+v*pmod=d we get
+  // assuming u*pmod+v*qmod=d we get
   // A=u*(q-p)/d
   modpoly chinrem(const modpoly & p,const modpoly & q, const modpoly & pmod, const modpoly & qmod,environment * env){
     modpoly u,v,d,r;
     egcd(pmod,qmod,env,u,v,d);
     r=operator_plus(p,operator_times(operator_times(u,operator_div(operator_minus(q,p,env),d,env),env),pmod,env),env);
+    if (r.size()>=pmod.size()+qmod.size()-1)
+      r=operator_mod(r,operator_times(pmod,qmod,env),env);
     return r;
   }
 

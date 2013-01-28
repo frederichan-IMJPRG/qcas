@@ -101,8 +101,12 @@ namespace giac {
   */
   const char * unary_function_eval::print(GIAC_CONTEXT) const { 
     if (abs_calc_mode(contextptr)==38){ 
-      const char * maj = hp38_display_in_maj(s);
-      return maj?maj:s;
+      if (calc_mode(contextptr)==38){
+	const char * maj = hp38_display_in_maj(s);
+	return maj?maj:s;
+      }
+      else
+	return s;
     }
     int lang=language(contextptr);
     multimap<string,localized_string>::iterator it=back_lexer_localization_map().find(s),backend=back_lexer_localization_map().end(),itend=back_lexer_localization_map().upper_bound(s);
@@ -148,8 +152,11 @@ namespace giac {
 
   const char * unary_function_abstract::print(GIAC_CONTEXT) const { 
     if (abs_calc_mode(contextptr)==38){ 
-      const char * maj = hp38_display_in_maj(s);
-      return maj?maj:s;
+      if (calc_mode(contextptr)==38){
+	const char * maj = hp38_display_in_maj(s);
+	return maj?maj:s;
+      }
+      return s;
     }
     int lang=language(contextptr);
     multimap<string,localized_string>::iterator it=back_lexer_localization_map().find(s),backend=back_lexer_localization_map().end(),itend=back_lexer_localization_map().upper_bound(s);
@@ -515,7 +522,7 @@ namespace giac {
 
   gen unary_function_innerprod::operator () (const gen & arg,const context * contextptr) const{
     if (arg.type!=_VECT)
-      setsizeerr(arg.print(contextptr)+ " should be of type _VECT (unary.cc)");
+      setsizeerr(arg.print(contextptr)+ gettext(" should be of type _VECT (unary.cc)"));
     vecteur res;
     // remove i indices from arg
     vecteur::const_iterator jt=arg._VECTptr->begin(),jtend=arg._VECTptr->end();

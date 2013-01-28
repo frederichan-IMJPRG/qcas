@@ -21,6 +21,7 @@
 using namespace std;
 #include <cmath>
 #include <fstream>
+#include <string>
 //#include <unistd.h> // For reading arguments from file
 #include "identificateur.h"
 #include "gen.h"
@@ -29,6 +30,22 @@ using namespace std;
 #include "prog.h"
 #include "usual.h"
 #include "giacintl.h"
+
+#ifdef BESTA_OS
+// Local replacement for strdup on BESTA OS.
+static char* strdup(char* str)
+{
+    if ( ! str )
+    {
+        return str;
+    }
+    
+    int len = strlen(str) + 2;
+    char* p = new char[len];
+    strcpy(p, str);
+    return p;
+}
+#endif
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -816,8 +833,10 @@ namespace giac {
       // check for quoted
       if (cur->quoted_global_vars && !cur->quoted_global_vars->empty() && equalposcomp(*cur->quoted_global_vars,orig)) 
 	return false;
-      if (!No38Lookup && sto_38) //  && abs_calc_mode(contextptr)==38)
-	return eval_38(level,orig,evaled,id_name,contextptr);
+      if (!No38Lookup && sto_38){ //  && abs_calc_mode(contextptr)==38)
+	if (eval_38(level,orig,evaled,id_name,contextptr))
+	  return true;
+      }
       sym_tab::const_iterator it=cur->tabptr->find(id_name);
       if (it==cur->tabptr->end()){
         if (No38Lookup) return false;

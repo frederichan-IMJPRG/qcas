@@ -458,11 +458,20 @@ namespace giac {
 
   static string double2tex(double d){
     char s[32];
+	
+#if 0 // def BESTA_OS
+    assert(0);
+    // returning an auto-var, when the string is constructed before the copy?
+    // not the niceest of things to do....
+    // BP: I don't understand where you see a problem, a string is constructed from s
+    // then the std::string is returned
+#else
     if (d<=-1e30 || d>=1e30)
       sprintf(s,"%13g",d);
     else
       sprintf(s,"%13.6f",d);
-    return s;
+#endif
+	return s;
   }
 
   // convert UTF-8 string to wchar_t *, return adjusted length
@@ -1160,7 +1169,10 @@ namespace giac {
     case _INT_: case _ZINT: case _REAL:
       return e.print(contextptr);
     case _DOUBLE_:
-      return double2tex(e._DOUBLE_val);
+      if (specialtexprint_double(contextptr))
+	return double2tex(e._DOUBLE_val);
+      else
+	return e.print(contextptr);
     case _CPLX:
       return e.print(contextptr);
     case _IDNT:

@@ -23,7 +23,9 @@
 using namespace std;
 #include "global.h"
 // #include <time.h>
+#ifndef BESTA_OS
 #include <signal.h>
+#endif
 #include <math.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -36,7 +38,9 @@ using namespace std;
 #endif
 #include <string.h>
 #include <stdexcept>
+#ifndef BESTA_OS
 #include <cerrno>
+#endif
 #include "gen.h"
 #include "identificateur.h"
 #include "symbolic.h"
@@ -55,6 +59,7 @@ using namespace std;
 #ifdef _HAS_LIMITS
 #include <limits>
 #endif
+#ifndef BESTA_OS
 #ifdef WIN32
 #ifndef VISUALC
 #if !defined(GNUWINCE) && !defined(__MINGW_H)
@@ -63,18 +68,31 @@ using namespace std;
 #endif // ndef gnuwince
 #endif // ndef visualc
 #endif // win32
+#endif // ndef bestaos
 
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
 #include <Windows.h>
-#endif
-#endif
+#endif // besta_os
+#endif // rtos_threadx
+#endif // visualc || besta_os
+
+#ifdef BESTA_OS
+#ifdef BESTA_WIN32_TARGET
+#include <Windows.h>
+#else
+#include <bestafir.h>
+#include <stdio.h>
+#include <stdlib.h>
+#endif // besta_win32_target
+#endif // besta_os
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
   int R_OK=4;
   int access(const char *path, int mode ){
     // return _access(path, mode );
@@ -396,6 +414,21 @@ extern "C" void Sleep(unsigned int miliSecond);
 
 #endif
 
+  static bool _integer_mode_=true;
+  bool & integer_mode(GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      return contextptr->globalptr->_integer_mode_;
+    else
+      return _integer_mode_;
+  }
+
+  void integer_mode(bool b,GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      contextptr->globalptr->_integer_mode_=b;
+    else
+      _integer_mode_=b;
+  }
+
   static bool _complex_mode_=false; 
   bool & complex_mode(GIAC_CONTEXT){
     if (contextptr && contextptr->globalptr )
@@ -469,6 +502,21 @@ extern "C" void Sleep(unsigned int miliSecond);
       contextptr->globalptr->_try_parse_i_=b;
     else
       _try_parse_i_=b;
+  }
+
+  static bool _specialtexprint_double_=true; 
+  bool & specialtexprint_double(GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      return contextptr->globalptr->_specialtexprint_double_;
+    else
+      return _specialtexprint_double_;
+  }
+
+  void specialtexprint_double(bool b,GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      contextptr->globalptr->_specialtexprint_double_=b;
+    else
+      _specialtexprint_double_=b;
   }
 
   static bool _lexer_close_parenthesis_=true; 
@@ -922,6 +970,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 
   static parser_lexer & _pl(){
     static parser_lexer * ans = new parser_lexer();
+    ans->_i_sqrt_minus1_=1;
     return * ans;
   }
   int & lexer_column_number(GIAC_CONTEXT){
@@ -1140,6 +1189,9 @@ extern "C" void Sleep(unsigned int miliSecond);
       return _pl()._parser_error_;
   }
   void parser_error(const std::string & b,GIAC_CONTEXT){
+#ifndef GIAC_HAS_STO_38
+    *logptr(contextptr) << b << endl;
+#endif
     if (contextptr && contextptr->globalptr )
       contextptr->globalptr->_pl._parser_error_=b;
     else
@@ -1243,14 +1295,14 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
   int debug_infolevel=0;
 #endif
-#if defined __APPLE__ || defined VISUALC || defined __MINGW_H
+#if defined __APPLE__ || defined VISUALC || defined __MINGW_H || defined BESTA_OS
   int threads=1;
 #else
   int threads=sysconf (_SC_NPROCESSORS_ONLN);
 #endif
   unsigned short int GIAC_PADIC=50;
   const char cas_suffixe[]=".cas";
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
   int LIST_SIZE_LIMIT = 1000 ;
   int FACTORIAL_SIZE_LIMIT = 254 ;
   int NEWTON_DEFAULT_ITERATION=20;
@@ -1330,8 +1382,10 @@ extern "C" void Sleep(unsigned int miliSecond);
   void ctrl_c_signal_handler(int signum){
     ctrl_c=true;
 #ifndef WIN32
+#ifndef BESTA_OS
     if (child_id)
       kill(child_id,SIGINT);
+#endif
 #endif
 #ifndef HAVE_NO_SIGNAL_H
     cerr << "Ctrl-C pressed (pid " << getpid() << ")" << endl;
@@ -2172,6 +2226,10 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   std::string absolute_path(const std::string & orig_file){
+#ifdef BESTA_OS 
+    // BP: FIXME
+    return orig_file;
+#else
 #if (!defined WIN32) || (defined VISUALC)
     if (orig_file[0]=='/')
       return orig_file;
@@ -2232,6 +2290,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #endif // GNUWINCE
 #endif // WIN32
     return orig_file;
+#endif // BESTA_OS
   }
 
   bool is_file_available(const char * ch){
@@ -2410,6 +2469,9 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   bool system_browser_command(const string & file){
+#ifdef BESTA_OS
+    return false;
+#else
 #ifdef WIN32
     string res=file;
     if (file.size()>4 && file.substr(0,4)!="http"){
@@ -2446,7 +2508,12 @@ extern "C" void Sleep(unsigned int miliSecond);
 #endif
     return true;
 #else
+#ifdef BESTA_OS
+    return false; // return 1;
+#else
     return !system(browser_command(file).c_str());
+#endif
+#endif
 #endif
   }
 
@@ -2678,6 +2745,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 
   std::string read_env(GIAC_CONTEXT,bool verbose){
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
     if (getenv("GIAC_LAPACK")){
       giac::CALL_LAPACK=atoi(getenv("GIAC_LAPACK"));
       if (verbose)
@@ -2688,6 +2756,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       if (verbose)
 	cerr << "// Will use p-adic algorithm if dimension is >=" << giac::GIAC_PADIC << endl;
     }
+#endif
 #endif
     if (getenv("XCAS_RPN")){
       if (verbose)
@@ -2924,6 +2993,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
   std::map<std::string,context *> * context_names = new std::map<std::string,context *> ;
 
   context::context(const string & name) { 
@@ -2945,6 +3015,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #endif
   }
 #endif
+#endif
 
   context::context(const context & c) { 
     *this = c;
@@ -2962,6 +3033,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      ptr->globalptr->_decimal_digits_=_decimal_digits_;
      ptr->globalptr->_scientific_format_=_scientific_format_;
      ptr->globalptr->_integer_format_=_integer_format_;
+     ptr->globalptr->_integer_mode_=_integer_mode_;
      ptr->globalptr->_latex_format_=_latex_format_;
 #ifdef BCD
      ptr->globalptr->_bcd_decpoint_=_bcd_decpoint_;
@@ -2973,6 +3045,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      ptr->globalptr->_eval_abs_=_eval_abs_;
      ptr->globalptr->_complex_mode_=_complex_mode_;
      ptr->globalptr->_try_parse_i_=_try_parse_i_;
+     ptr->globalptr->_specialtexprint_double_=_specialtexprint_double_;
      ptr->globalptr->_complex_variables_=_complex_variables_;
      ptr->globalptr->_increasing_power_=_increasing_power_;
      ptr->globalptr->_approx_mode_=_approx_mode_;
@@ -3040,6 +3113,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 	}
       }
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
       if (context_names){
 	map<string,context *>::iterator it=context_names->begin(),itend=context_names->end();
 	for (;it!=itend;++it){
@@ -3049,6 +3123,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 	  }
 	}
       }
+#endif
 #endif
 #ifdef HAVE_LIBPTHREAD
       pthread_mutex_unlock(&context_list_mutex);
@@ -3165,7 +3240,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 	pthread_mutex_unlock(mutexptr(contextptr));
 	// double tt=double(tp.v[4].val)/CLOCKS_PER_SEC;
 	if (tt>0.4)
-	  (*logptr(contextptr)) << "Evaluation time: " << tt << endl;
+	  (*logptr(contextptr)) << gettext("Evaluation time: ") << tt << endl;
 	if (f)
 	  f(arg_callback,param_callback);
 	else
@@ -3181,7 +3256,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       if (tp.f)
 	tp.f(string2gen("Aborted",false),tp.f_param);
 #ifndef __MINGW_H
-      *logptr(contextptr) << "Thread " << tp.eval_thread << " has been cancelled" << endl;
+      *logptr(contextptr) << gettext("Thread ") << tp.eval_thread << " has been cancelled" << endl;
 #endif
       try {
 	pthread_cancel(tp.eval_thread) ;
@@ -3245,7 +3320,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 	  clear_prog_status(contextptr);
 	  cleanup_context(contextptr);
 #ifndef __MINGW_H
-	  *logptr(contextptr) << "Cancel thread " << eval_thread << endl;
+	  *logptr(contextptr) << gettext("Cancel thread ") << eval_thread << endl;
 #endif
 #ifdef NO_STDEXCEPT
 	  pthread_cancel(eval_thread) ;
@@ -3267,7 +3342,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       // double tt=double(v[4].val)/CLOCKS_PER_SEC;
       double tt=v[4]._DOUBLE_val;
       if (tt>0.1)
-	(*logptr(contextptr)) << "Evaluation time: " << tt << endl;
+	(*logptr(contextptr)) << gettext("Evaluation time: ") << tt << endl;
       return v[5];
     }
     pthread_mutex_unlock(mutexptr(contextptr));
@@ -3364,7 +3439,8 @@ extern "C" void Sleep(unsigned int miliSecond);
 #ifdef BCD
 		     _bcd_decpoint_('.'|('E'<<16)|(' '<<24)),_bcd_mantissa_(12+(15<<8)), _bcd_flags_(0),
 #endif
-		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
+		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_integer_mode_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_specialtexprint_double_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
+    _pl._i_sqrt_minus1_=1;
     _turtle_stack_.push_back(_turtle_);
     _debug_ptr=new debug_struct;
     _thread_param_ptr=new thread_param;
@@ -3389,6 +3465,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      _decimal_digits_=g._decimal_digits_;
      _scientific_format_=g._scientific_format_;
      _integer_format_=g._integer_format_;
+     _integer_mode_=g._integer_mode_;
      _latex_format_=g._latex_format_;
 #ifdef BCD
      _bcd_decpoint_=g._bcd_decpoint_;
@@ -3464,7 +3541,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 
 #else // __APPLE__
   bool my_isnan(double d){
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
 #ifndef RTOS_THREADX
     return _isnan(d)!=0;
 #else
@@ -3476,7 +3553,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   bool my_isinf(double d){
-#ifdef VISUALC
+#if defined VISUALC || defined BESTA_OS
     double x=0.0;
     return d==1.0/x || d==-1.0/x;
 #else

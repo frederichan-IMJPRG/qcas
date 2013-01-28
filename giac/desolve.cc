@@ -177,7 +177,7 @@ namespace giac {
 	continue;
       }
       if (is_strictly_positive(expa,contextptr))
-	*logptr(contextptr) << "Warning, exponential x coeff is positive " << expa << endl;
+	*logptr(contextptr) << gettext("Warning, exponential x coeff is positive ") << expa << endl;
       vecteur varx(lvarx(coeff,x));
       int varxs=varx.size();
       if (!varxs){ // Dirac function
@@ -501,7 +501,7 @@ namespace giac {
     res.reserve(itend-it);
     for (;it!=itend;++it){
       if (it->type==_VECT)
-	*logptr(contextptr) << "Boundary conditions for parametric curve not implemented" << endl;
+	*logptr(contextptr) << gettext("Boundary conditions for parametric curve not implemented") << endl;
       gen tmp=in_desolve_with_conditions(v,x,y,*it,parameters,contextptr);
       if (is_undef(tmp))
 	return tmp;
@@ -653,7 +653,7 @@ namespace giac {
 	}
 	if (is_zero(derive(*it,x,contextptr))){ // x incomplete
 	  if (debug_infolevel)
-	    *logptr(contextptr) << "Incomplete" << endl;
+	    *logptr(contextptr) << gettext("Incomplete") << endl;
 	  gen pr=integrate_without_lnabs(inv(*it,contextptr),y,contextptr)+parameters.back();
 	  sol=mergevecteur(sol,solve(pr-x,*y._IDNTptr,3,contextptr));
 	  continue;
@@ -666,7 +666,7 @@ namespace giac {
 	f=quotesubst(*it,makevecteur(x,y),makevecteur(tplus*x,tplus*y),contextptr);
 	f=normal(f-*it,contextptr);
 	if (is_zero(f)){
-	  *logptr(contextptr) << "Homogeneous" << endl;
+	  *logptr(contextptr) << gettext("Homogeneous") << endl;
 	  tmpsto=sto(doubleassume_and(vecteur(2,0),0,1,false,contextptr),x,contextptr);
 	  if (is_undef(tmpsto))
 	    return tmpsto;
@@ -884,7 +884,7 @@ namespace giac {
       polynome ipnum(dim),ipden(dim);
       partfrac(num,den,vden,pfde_VECT,ipnum,ipden);
       if (!is_zero(ipnum))
-	*logptr(contextptr) << "Warning, z*argument has a non-zero integral part" << endl;
+	*logptr(contextptr) << gettext("Warning, z*argument has a non-zero integral part") << endl;
       vector< pf<gen> >::iterator it=pfde_VECT.begin();
       vector< pf<gen> >::const_iterator itend=pfde_VECT.end();
       gen a,A,B;

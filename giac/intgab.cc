@@ -441,7 +441,7 @@ namespace giac {
       factorization fd;
       polynome Dp_content;
       if (!factor(Dp,Dp_content,fd,false,true,true,1)){
-	*logptr(contextptr) << "Unable to factor " << r2sym(Dp,vX,contextptr) << endl;
+	*logptr(contextptr) << gettext("Unable to factor ") << r2sym(Dp,vX,contextptr) << endl;
 	res=undef;
 	return true;
       }
@@ -450,7 +450,7 @@ namespace giac {
       factorization::const_iterator f_it=fd.begin(),f_itend=fd.end();
       for (;f_it!=f_itend;++f_it){
 	if (f_it->fact.degree(0)>1){
-	  *logptr(contextptr) << "Unable to factor " << r2sym(f_it->fact,vX,contextptr) << endl;
+	  *logptr(contextptr) << gettext("Unable to factor ") << r2sym(f_it->fact,vX,contextptr) << endl;
 	  res=undef;
 	  return true;
 	}
@@ -726,7 +726,7 @@ namespace giac {
 	  for (int i=0;i<s;++i){
 	    if (is_real(v[i],contextptr)){
 	      res=undef; // singularity on the real axis
-	      *logptr(contextptr) << "Warning: pole at " << v[i] << endl;
+	      *logptr(contextptr) << gettext("Warning: pole at ") << v[i] << endl;
 	      _purge(gt,contextptr);
 	      return false;
 	    }
@@ -795,7 +795,7 @@ namespace giac {
       return true;
     }
     if (a==unsigned_inf || b==unsigned_inf){
-      *logptr(contextptr) << "Please use +infinity or -infinity since infinity is unsigned" << endl;
+      *logptr(contextptr) << gettext("Please use +infinity or -infinity since infinity is unsigned") << endl;
       return false;
     }
     if (is_strictly_greater(a,b,contextptr)){
@@ -817,7 +817,7 @@ namespace giac {
       if (heav.type==_VECT && heav._VECTptr->size()==2 && heav._VECTptr->back().type==_INT_ ){
 	int diracorder=heav._VECTptr->back().val;
 	if (diracorder<0){
-	  *logptr(contextptr) << "Negative second Dirac argument" << endl;
+	  *logptr(contextptr) << gettext("Negative second Dirac argument") << endl;
 	  return false;
 	}
 	A=derive(A,x,diracorder,contextptr);
@@ -835,7 +835,7 @@ namespace giac {
       if (ck_is_greater(c,a,contextptr) && ck_is_greater(b,c,contextptr))
 	res += quotesubst(A,x,c,contextptr);
       else
-	*logptr(contextptr) << "Warning, Dirac function outside summation interval" << endl;
+	*logptr(contextptr) << gettext("Warning, Dirac function outside summation interval") << endl;
       return true;
     }
     if (a==b){
@@ -990,7 +990,7 @@ namespace giac {
 	      gof=_exp2pow(gof/x,contextptr);
 	      gof=recursive_normal(gof,contextptr);
 	      // Sucess! Now integration of gof on the unit circle using residues
-	      *logptr(contextptr) << "Searching int of " << gof << " where " << x << " is on the unit circle, using residues" << endl;
+	      *logptr(contextptr) << gettext("Searching int of ") << gof << gettext(" where ") << x << gettext(" is on the unit circle, using residues") << endl;
 	      vecteur w=singular(gof,x,contextptr);
 	      if (is_undef(w))
 		return false;
@@ -1373,7 +1373,7 @@ namespace giac {
 	    gen tmp=r2e(p,v,contextptr)*pow(gx,x,contextptr);
 	    gen remains,tmp1=sum(tmp,x,remains,contextptr);
 	    if (!is_zero(remains) || is_undef(tmp1)){
-	      *logptr(contextptr) << "Unable to sum "+remains.print(contextptr) << endl;
+	      *logptr(contextptr) << gettext("Unable to sum ")+remains.print(contextptr) << endl;
 	      return false;
 	    }
 	    tmp1=-subst(tmp1,x,a,false,contextptr);
@@ -1496,7 +1496,7 @@ namespace giac {
       if (ck_is_greater(c,a_orig,contextptr) && ck_is_greater(b_orig,c,contextptr))
 	res += quotesubst(A,x,c,contextptr);
       else
-	*logptr(contextptr) << "Warning, Dirac function outside summation interval" << endl;
+	*logptr(contextptr) << gettext("Warning, Dirac function outside summation interval") << endl;
       return true;
     }
     // detect Heaviside 

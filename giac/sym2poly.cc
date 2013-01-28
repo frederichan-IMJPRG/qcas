@@ -697,7 +697,10 @@ namespace giac {
 	lowest_degree=1;
 	num=rdiv(-v.back(),v.front());
 	// cerr << "xroot" << num << endl;
-	if (is_positive(r2sym(num,lv,contextptr),contextptr)) 
+	gen numlv=r2sym(num,lv,contextptr);
+	if (!lvar(numlv).empty())
+	  *logptr(contextptr) << gettext("Warning, checking for positivity of a root depending of parameters might return wrong sign: ")<< numlv << endl;
+	if (is_positive(numlv,contextptr))
 	  break;
       }
       if (deg>=lowest_degree)
@@ -777,7 +780,7 @@ namespace giac {
 	fxnd(temp,num,den);
       }
       else {
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
 	gen g=num; num=den; den=g;
 #else
 	swap(num,den);
@@ -917,7 +920,7 @@ namespace giac {
 	    den=tempden;
 	}
 	else {
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
 	  gen g=num; num=den; den=g;
 #else
 	  swap(num,den);
@@ -936,7 +939,7 @@ namespace giac {
 	    fxnd(temp,num,den);
 	  }
 	  else {
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
 	    gen g=num; num=den; den=g;
 #else
 	    swap(num,den);
@@ -1738,7 +1741,7 @@ namespace giac {
 	      tmp2=tmp2.evalf_double(1,contextptr);
 	      if (tmp3.type<=_CPLX && tmp2.type<=_CPLX && tmp2!=tmp3){
 		if (!vzero.empty() && !tst)
-		  *logptr(contextptr) << "Warning, choosing root of " << f << " at parameters values " << vzero << endl;
+		  *logptr(contextptr) << gettext("Warning, choosing root of ") << f << " at parameters values " << vzero << endl;
 		if (abs(tmp2-tmp00,contextptr)._DOUBLE_val<abs(tmp3-tmp00,contextptr)._DOUBLE_val)
 		  return w.back();
 		else

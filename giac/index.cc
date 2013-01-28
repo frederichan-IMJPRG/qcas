@@ -339,7 +339,7 @@ namespace giac {
     return true;
   }
 
-#if !defined(GIAC_NO_OPTIMIZATIONS) && (defined(GIAC_VECTOR) || (!defined(VISUALC) && !defined(__APPLE__)))
+#if !defined(GIAC_NO_OPTIMIZATIONS) && (defined(GIAC_VECTOR) || (!defined(VISUALC) && !defined(__APPLE__) && !defined(BESTA_WIN32_TARGET)))
   index_t index_m::iref() const { 
     if ( (taille % 2)==0)
       return riptr->i;

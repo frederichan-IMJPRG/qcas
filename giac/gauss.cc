@@ -507,12 +507,12 @@ namespace giac {
 	gen coeffs=sign(coeff,contextptr);
 	if (is_minus_one(coeffs)){
 #ifndef GIAC_HAS_STO_38
-	  *logptr(contextptr) << "Empty parabola" << endl;
+	  *logptr(contextptr) << gettext("Empty parabola") << endl;
 #endif
 	  return true;
 	}
 #ifndef GIAC_HAS_STO_38
-	*logptr(contextptr) << "2 parallel lines" << endl;
+	*logptr(contextptr) << gettext("2 parallel lines") << endl;
 #endif
 	gen Y0=normalize_sqrt(sqrt(coeff,contextptr),contextptr);
 	// Y=Y0 : points (0,Y0), (1,Y0)
@@ -570,19 +570,19 @@ namespace giac {
 	if (sprodvp>0){ // ellipse
 	  if (is_zero(coeffcst)){
 #ifndef GIAC_HAS_STO_38
-	    *logptr(contextptr) << "Ellipsis reduced to (" << x0 << "," << y0 << ")" << endl;
+	    *logptr(contextptr) << gettext("Ellipsis reduced to (") << x0 << "," << y0 << ")" << endl;
 #endif
 	    param_curves.push_back(z0);
 	    return true;
 	  }
 	  if (sprodcoeff>0){
 #ifndef GIAC_HAS_STO_38
-	    *logptr(contextptr) << "Empty ellipsis" << endl;
+	    *logptr(contextptr) << gettext("Empty ellipsis") << endl;
 #endif
 	    return true;
 	  }
 #ifndef GIAC_HAS_STO_38
-	  *logptr(contextptr) << "Ellipsis of center (" << x0 << "," << y0 << ")" << endl;
+	  *logptr(contextptr) << gettext("Ellipsis of center (") << x0 << "," << y0 << ")" << endl;
 #endif
 	  vp0=normalize_sqrt(sqrt(-coeffcst/vp0,contextptr),contextptr);
 	  vp1=normalize_sqrt(sqrt(-coeffcst/vp1,contextptr),contextptr);
@@ -597,7 +597,7 @@ namespace giac {
 	  if (is_zero(coeffcst)){
 	    // 2 secant lines at (x0,y0)
 #ifndef GIAC_HAS_STO_38
-	    *logptr(contextptr) << "2 secant lines at (" << x0 << "," << y0 << ")" << endl;
+	    *logptr(contextptr) << gettext("2 secant lines at (") << x0 << "," << y0 << ")" << endl;
 #endif
 	    // vp0*X^2+vp1*Y^2=0 => Y=+/-sqrt(-vp0/vp1)*X
 	    gen directeur=normalize_sqrt(sqrt(-vp0/vp1,contextptr),contextptr);
@@ -607,7 +607,7 @@ namespace giac {
 	  }
 	  // hyperbole
 #ifndef GIAC_HAS_STO_38
-	  *logptr(contextptr) << "Hyperbola of center (" << x0 << "," << y0 << ")" << endl;
+	  *logptr(contextptr) << gettext("Hyperbola of center (") << x0 << "," << y0 << ")" << endl;
 #endif
 	  if (sprodcoeff<0)
 	    vp0=-vp0;
@@ -679,7 +679,7 @@ namespace giac {
     gen s2g=evalf_double(sign(s2,contextptr),1,contextptr);
     gen s3g=evalf_double(sign(s3,contextptr),1,contextptr);
     if (s1g.type!=_DOUBLE_ || s2g.type!=_DOUBLE_ || s3g.type!=_DOUBLE_){
-      *logptr(contextptr) << ("Can't check sign "+s1g.print(contextptr)+" or "+s2g.print(contextptr)+" or "+s3g.print(contextptr)) << endl;
+      *logptr(contextptr) << (gettext("Can't check sign ")+s1g.print(contextptr)+gettext(" or ")+s2g.print(contextptr)+gettext(" or ")+s3g.print(contextptr)) << endl;
       return false; 
     }
     int s1s=int(s1g._DOUBLE_val), s2s=int(s2g._DOUBLE_val), s3s=int(s3g._DOUBLE_val);
@@ -735,7 +735,7 @@ namespace giac {
 	    else { // s1*x^2+s2*y^2=-s3*z^2 ->  x^2/a^2+y^2/b^2=z^2
 	      gen a(sqrt(-s3/s1,contextptr)),b(sqrt(-s3/s2,contextptr));
 	      gen eq=makevecteur(a*upar*symb_cos(vpar),b*upar*symb_sin(vpar),upar);
-	      *logptr(contextptr) << "Cone of center " << centre << endl;
+	      *logptr(contextptr) << gettext("Cone of center ") << centre << endl;
 	      eq=centre+multmatvecteur(P,*eq._VECTptr);
 	      gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
 	      gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
@@ -747,12 +747,12 @@ namespace giac {
 	  else { 
 	    if (s1s*s3s>0){
 	      if (s1s*ds>0)
-		*logptr(contextptr) << "Empty ellipsoid" << endl;
+		*logptr(contextptr) << gettext("Empty ellipsoid") << endl;
 	      else {
 		gen a=sqrt(-d/s1,contextptr),b=sqrt(-d/s2,contextptr),c=sqrt(-d/s3,contextptr);
 		// x^2/a^2+y^2/b^2+z^2/c^2=1
 		gen eq=makevecteur(a*symb_sin(upar)*symb_cos(vpar),b*symb_sin(upar)*symb_sin(vpar),c*symb_cos(upar));
-		*logptr(contextptr) << "Ellipsoid of center " << centre << endl;
+		*logptr(contextptr) << gettext("Ellipsoid of center ") << centre << endl;
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
 		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,cst_pi)));
 		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
@@ -767,7 +767,7 @@ namespace giac {
 		// x^2/a^2+y^2/b^2+1=z^2/c^2, hyperboloide, 2 nappes
 		gen eq=makevecteur(a*symb_sinh(upar)*symb_cos(vpar),b*symb_sinh(upar)*symb_sin(vpar),c*symb_cosh(upar));
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
-		*logptr(contextptr) << "2-fold hyperboloid of center " << centre << endl;
+		*logptr(contextptr) << gettext("2-fold hyperboloid of center ") << centre << endl;
 		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,3)));
 		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
 		ustep=symb_equal(ustep,3./20);
@@ -781,7 +781,7 @@ namespace giac {
 		gen a=sqrt(-d/s1,contextptr),b=sqrt(-d/s2,contextptr),c=sqrt(d/s3,contextptr);
 		// x^2/a^2+y^2/b^2=z^2/c^2+1, hyperboloide, 2 nappes
 		gen eq=makevecteur(a*symb_cosh(upar)*symb_cos(vpar),b*symb_cosh(upar)*symb_sin(vpar),c*symb_sinh(upar));
-		*logptr(contextptr) << "2-fold hyperboloid of center " << centre << endl;
+		*logptr(contextptr) << gettext("2-fold hyperboloid of center ") << centre << endl;
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
 		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-3,3)));
 		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
@@ -805,7 +805,7 @@ namespace giac {
 	  int ds=int(dg._DOUBLE_val);
 	  equation_reduite=s1*pow(x,2)+s2*pow(y,2)+d;
 	  if (s1s*s2s>0){ 
-	    *logptr(contextptr) << "Elliptic cylinder around " << centre << endl;
+	    *logptr(contextptr) << gettext("Elliptic cylinder around ") << centre << endl;
 
 	    if (is_zero(d)) // line (cylinder of radius 0)
 	      param_surface.push_back(makevecteur(centre,centre+w));
@@ -826,7 +826,7 @@ namespace giac {
 	  } // end s1 and s2 of same sign
 	  else { // s1 and s2 have opposite signs, s1*x^2+s2*y^2+d=0
 	    if (is_zero(d)){ // 2 plans
-	      *logptr(contextptr) << "2 plans intersecting at " << centre << endl;
+	      *logptr(contextptr) << gettext("2 plans intersecting at ") << centre << endl;
 	      gen n=u+sqrt(-s2/s1,contextptr)*v;
 	      param_surface.push_back(symbolic(at_hyperplan,gen(makevecteur(n,centre),_SEQ__VECT)));
 	      n=u-sqrt(-s2/s1,contextptr)*v;
@@ -834,7 +834,7 @@ namespace giac {
 	      return true;
 	    }
 	    else { // hyperbolic cylinder
-	      *logptr(contextptr) << "Hyperbolic cylinder around " << centre << endl;
+	      *logptr(contextptr) << gettext("Hyperbolic cylinder around ") << centre << endl;
 	      gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
 	      gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-3,3)));
 	      ustep=symb_equal(ustep,1./2);
@@ -873,7 +873,7 @@ namespace giac {
 	  equation_reduite=s1*pow(x,2)+s2*pow(y,2)+2*c3*z;
 	  // parametrization of s1*x^2+s2*y^2+2*c3*z=0
 	  if (s1s*s2s>0){
-	    *logptr(contextptr) << "Elliptic paraboloid of center " << centre << endl;
+	    *logptr(contextptr) << gettext("Elliptic paraboloid of center ") << centre << endl;
 	    // if (s1s*s2s>0) x^2+y^2/(s1/s2)=-2*c3*z/s1
 	    // x=u*cos(t), y=u*sqrt(s1/s2)*sin(t), z=-u^2*s1/2/c3
 	    gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,5)));
@@ -888,7 +888,7 @@ namespace giac {
 	  }
 	  else {
 	    // if (s1s*s2s<0) x^2-y^2/(-s1/s2)=-2*c3*z/s1
-	    *logptr(contextptr) << "Hyperbolic paraboloid of center " << centre << endl;
+	    *logptr(contextptr) << gettext("Hyperbolic paraboloid of center ") << centre << endl;
 	    gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-3,3)));
 	    ustep=symb_equal(ustep,0.3);
 	    gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-3,3)));
@@ -923,14 +923,14 @@ namespace giac {
 	gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-5,5)));
 	ustep=symb_equal(ustep,1./2);
 	vstep=symb_equal(vstep,1./2);
-	*logptr(contextptr) << "Paraboloid cylinder" << endl;
+	*logptr(contextptr) << gettext("Paraboloid cylinder") << endl;
 	gen eq=makevecteur(upar,vpar,-s1*pow(upar,2)/2/c4);
 	eq=centre+multmatvecteur(P,*eq._VECTptr);
 	param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
 	return true;
       }
       else { // c2==0 and c3==0
-	*logptr(contextptr) << "2 parallel plans" << endl;
+	*logptr(contextptr) << gettext("2 parallel plans") << endl;
 	centre=*tmp._VECTptr;
 	gen dred=normal(subst(q,vxyz,centre,false,contextptr),contextptr);
 	equation_reduite=s1*pow(x,2)+dred;

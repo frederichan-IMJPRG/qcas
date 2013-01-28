@@ -40,6 +40,7 @@ namespace giac {
   typedef vecteur::const_iterator const_iterateur;
   typedef vecteur::iterator iterateur;
   typedef std::complex<double> complex_double;
+  typedef std::complex<long double> complex_long_double;
 
   // make a matrix with free rows 
   // (i.e. it is possible to modify the answer in place)
@@ -185,8 +186,10 @@ namespace giac {
   bool ckmatrix(const gen & a,bool);
   bool is_squarematrix(const matrice & a);
   bool is_squarematrix(const gen & a);
-  bool is_fully_numeric(const vecteur & v);
-  bool is_fully_numeric(const gen & a);
+  bool is_fully_numeric(const vecteur & v, int withfracint = 0);
+  bool is_fully_numeric(const gen & a, int withfracint = 0);
+  bool is_exact(const vecteur & v);
+  bool is_exact(const gen & g);
   // the following functions do not check that a is indeed a matrix
   int mrows(const matrice & a);
   int mcols(const matrice & a);
@@ -247,13 +250,22 @@ namespace giac {
   // Returns 0 on failure, 1 on success, 2 if success inverting and no need to remove identity
   int mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
 	     int fullreduction,int dont_swap_below,bool convert_internal,int algorithm,int rref_or_det_or_lu,GIAC_CONTEXT);
-  bool in_modrref(const matrice & a, std::vector< std::vector<int> > & N,matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,const gen & mult_by_det_mod_p,bool inverting,bool no_initial_mod);
+  // holds temporary work storage for block operation
+  struct smallmodrref_temp_t {
+    std::vector< std::vector<int> > Ainvtran,Ainv,CAinv;
+    std::vector<int> permblock,maxrankblock; 
+    vecteur pivblock; 
+    std::vector<int> y,y1,y2,y3;
+    std::vector<longlong> z,z1,z2,z3;
+  };
+  bool in_modrref(const matrice & a, std::vector< std::vector<int> > & N,matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,const gen & mult_by_det_mod_p,bool inverting,bool no_initial_mod,smallmodrref_temp_t * workptr=0);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,
 	       int fullreduction,int dont_swap_below,const gen & modulo,int rref_or_det_or_lu);
   bool mrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,GIAC_CONTEXT);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,const gen& modulo);
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,const gen & modulo,int rref_or_det_or_lu);
-  void smallmodrref(std::vector< std::vector<int> > & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,longlong & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,bool reset=true);
+
+  void smallmodrref(std::vector< std::vector<int> > & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,longlong & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,bool reset=true,smallmodrref_temp_t * workptr=0);
   void doublerref(matrix_double & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,double & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int rref_or_det_or_lu);
   void modlinear_combination(vecteur & v1,const gen & c2,const vecteur & v2,const gen & modulo,int cstart,int cend=0);
   void modlinear_combination(std::vector<int> & v1,int c2,const std::vector<int> & v2,int modulo,int cstart,int cend,bool pseudo);

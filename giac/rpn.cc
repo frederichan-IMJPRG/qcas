@@ -895,8 +895,10 @@ namespace giac {
     }
     if (args._IDNTptr->value){
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
       if (variables_are_files(contextptr))
 	unlink((args._IDNTptr->name()+string(cas_suffixe)).c_str());
+#endif
 #endif
       gen res=*args._IDNTptr->value;
       if (res.type==_VECT && res.subtype==_FOLDER__VECT){
@@ -1127,7 +1129,7 @@ namespace giac {
 
   gen _MAXREAL(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#ifdef BCD
+#if 0 // def BCD
     return_bcd_maxreal;
 #else
     return 1.79769313486e+308;
@@ -1139,7 +1141,7 @@ namespace giac {
 
   gen _MINREAL(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#ifdef BCD
+#if 0 // def BCD
     return_bcd_minreal;
     // return_bcd_minreal;
 #else
@@ -2096,7 +2098,7 @@ namespace giac {
       return apply_to_equal(g0,_XPON,contextptr);
     if (g0.type==_VECT)
       return apply(g0,_XPON,contextptr);
-#ifdef BCD
+#if 0 // def BCD
     gen g=evalf2bcd(g0,1,contextptr);
 #else
     gen g=evalf_double(g0,1,contextptr);
@@ -2118,7 +2120,7 @@ namespace giac {
       return apply_to_equal(g0,_MANT,contextptr);
     if (g0.type==_VECT)
       return apply(g0,_MANT,contextptr);
-#ifdef BCD
+#if 0 // def BCD
     gen g=evalf2bcd(g0,1,contextptr);
 #else
     gen g=evalf_double(g0,1,contextptr);

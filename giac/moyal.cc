@@ -20,6 +20,7 @@
 using namespace std;
 #include <stdexcept>
 #include <cmath>
+#include <math.h>
 #include <cstdlib>
 #include "sym2poly.h"
 #include "usual.h"
@@ -1112,6 +1113,9 @@ namespace giac {
 
   // kind=0: BesselI, =1 BesselJ, =2 BesselK, =3 BesselY
   gen Bessel(const gen & g,int kind,GIAC_CONTEXT){
+#ifdef BESTA_OS
+    return gensizeerr(gettext("Bessel not implemented"));
+#endif
     int n;
     gen a,x;
     if (!find_n_x(g,n,x,a))

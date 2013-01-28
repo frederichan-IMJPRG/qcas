@@ -20,7 +20,9 @@
  */
 using namespace std;
 #ifndef HAVE_NO_PWD_H
+#ifndef BESTA_OS
 #include <pwd.h>
+#endif
 #endif
 #include <stdexcept>
 #include <cmath>
@@ -62,8 +64,11 @@ using namespace std;
 #undef HAVE_LIBPARI
 #endif
 
+#ifdef BESTA_OS
+unsigned int AspenGetNow(); 
+#endif
 
-#ifdef RTOS_THREADX
+#ifdef RTOS_THREADX 
 u32 AspenGetNow();
 extern "C" uint32_t mainThreadStack[];
 #else
@@ -333,7 +338,7 @@ namespace giac {
     if (g.is_symb_of_sommet(at_ifte)){
       vecteur v=lop(g,at_array_sto);
       if (!v.empty() && logptr(contextptr))
-	*logptr(contextptr) << "Warning, =< is in-place assign, check " << v << endl;
+	*logptr(contextptr) << gettext("Warning, =< is in-place assign, check ") << v << endl;
     }
     if (g.is_symb_of_sommet(at_bloc) || 
 	g.is_symb_of_sommet(at_for) ||
@@ -786,7 +791,7 @@ namespace giac {
 	gen inters=_intersect(gen(makevecteur(vars,newa),_SEQ__VECT),contextptr);
 	if (inters.type==_VECT && !inters._VECTptr->empty()){
 	  inters.subtype=_SEQ__VECT;
-	  *logptr(contextptr) << "Warning: Local variables shadow function arguments " << inters << endl;
+	  *logptr(contextptr) << gettext("Warning: Local variables shadow function arguments ") << inters << endl;
 	}
       }
     }
@@ -931,7 +936,7 @@ namespace giac {
     // *logptr(contextptr) << & res << endl;
 #ifdef RTOS_THREADX
     if ((void *)&res<= (void *)&mainThreadStack[1024]) { 
-      gensizeerr("Too many recursions",res);
+      gensizeerr(gettext("Too many recursions"),res);
       return res;
     }
 #else
@@ -939,19 +944,19 @@ namespace giac {
     if (contextptr){
       // cerr << &slevel << " " << thread_param_ptr(contextptr)->stackaddr << endl;
       if ( ((unsigned long) &res) < ((unsigned long) thread_param_ptr(contextptr)->stackaddr)+8192){
-	gensizeerr("Too many recursion levels",res); // two many recursion levels
+	gensizeerr(gettext("Too many recursion levels"),res); 
 	return res;
       }
     }
     else {
       if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL+1){
-	gensizeerr("Too many recursions",res);
+	gensizeerr(gettext("Too many recursions"),res);
 	return res;
       }
     }
 #else
     if ( int(dbgptr->sst_at_stack.size()) >= MAX_RECURSION_LEVEL+1){
-      gensizeerr("Too many recursions",res);
+      gensizeerr(gettext("Too many recursions"),res);
       return res;
     }
 #endif
@@ -1206,7 +1211,7 @@ namespace giac {
       if (xcas_mode(contextptr)==3){
 	if (is_undef(*(it+1)) && (it->type!=_SYMB || it->_SYMBptr->sommet!=at_bloc) )
 	  return res + indent(contextptr)+"  "+it->print(contextptr);
-	res += " Then ";
+	res += " Then "; // +indent(contextptr);
       }
       else
 	res += calc38?" THEN ":" then ";
@@ -1228,7 +1233,7 @@ namespace giac {
       it=it->_SYMBptr->feuille._VECTptr->begin();
       res += it->print(contextptr);
       if (xcas_mode(contextptr)==3)
-	res += " Then ";
+	res += " Then "; // +indent(contextptr);
       else
 	res += calc38? " THEN ":" then ";
       ++it;
@@ -1303,7 +1308,7 @@ namespace giac {
       test=test.evalf_double(eval_level(contextptr),contextptr);
       if ( (test.type!=_DOUBLE_) && (test.type!=_CPLX) ){
 	if (isifte){
-	  gensizeerr("Ifte: Unable to check test",res); 
+	  gensizeerr(gettext("Ifte: Unable to check test"),res); 
 	  return res;
 	}
 	else
@@ -1435,7 +1440,7 @@ namespace giac {
   }
 
   // loop
-  static string printasfor(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
+  string printasfor(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     if (feuille.type!=_VECT) 
       return sommetstr+('('+feuille.print(contextptr)+')');
     if (feuille._VECTptr->size()==2)
@@ -1481,7 +1486,7 @@ namespace giac {
 	    return res+indent(contextptr)+"EndLoop";
 	  }
 	  if (maplemode==3)
-	    res = "While "+ sametoequal(*it).print(contextptr);
+	    res = "While "+ sametoequal(*it).print(contextptr) +indent(contextptr);
 	  else
 	    res = (maplemode==4?"WHILE ":"while ") + sametoequal(*it).print(contextptr) + (maplemode==4?" DO":" do ");
 	}
@@ -1556,6 +1561,7 @@ namespace giac {
 	    res += ","+step.print(contextptr);
 	  if (!simple_loop)
 	    res += indent(contextptr)+"If not("+(it+1)->print(contextptr)+")"+indent(contextptr)+"Exit";
+	  res += indent(contextptr);
 	}
 	else {
 	  gen absstep=step;
@@ -1699,7 +1705,7 @@ namespace giac {
       }
       else {
 #ifndef NO_STDEXCEPT
-	throw(std::runtime_error("Invalid loop index (hint: i=sqrt(-1)!)"));
+	throw(std::runtime_error(gettext("Invalid loop index (hint: i=sqrt(-1)!)")));
 #endif
 	return undeferr(gettext("Invalid loop index (hint: i=sqrt(-1)!)"));
       }
@@ -1869,7 +1875,7 @@ namespace giac {
 	  else { 
 	    if (jt->_SYMBptr->sommet==at_of){
 	      tmp=jt->_SYMBptr->feuille._VECTptr->front();
-	      *logptr(contextptr) << "Invalid variable "+jt->print(contextptr)+" using "+tmp.print(contextptr)+" instead.";
+	      *logptr(contextptr) << gettext("Invalid variable ")+jt->print(contextptr)+gettext(" using ")+tmp.print(contextptr)+gettext(" instead.");
 	    }
 	    else
 	      tmp=*jt;
@@ -1889,7 +1895,7 @@ namespace giac {
 #ifndef NO_STDEXCEPT
 	  setsizeerr(gettext("Reserved word:")+tmp.print(contextptr));
 #else
-	  *logptr(contextptr) << "Reserved word:"+tmp.print(contextptr) << endl;
+	  *logptr(contextptr) << gettext("Reserved word:")+tmp.print(contextptr) << endl;
 #endif
 	  return -RAND_MAX;
 	}
@@ -1897,7 +1903,7 @@ namespace giac {
 #ifndef NO_STDEXCEPT
 	  setsizeerr(gettext("Not bindable")+tmp.print(contextptr));
 #else
-	  *logptr(contextptr) << "Not bindable"+tmp.print(contextptr) << endl;
+	  *logptr(contextptr) << gettext("Not bindable")+tmp.print(contextptr) << endl;
 #endif
 	  return -RAND_MAX;
 	}
@@ -2420,7 +2426,7 @@ namespace giac {
     const_iterateur it=v.begin(),itend=v.end();
     for (;it!=itend;++it){
       if ( (!it->is_symb_of_sommet(at_equal) && !it->is_symb_of_sommet(at_same)) || it->_SYMBptr->feuille.type!=_VECT || it->_SYMBptr->feuille._VECTptr->size()!=2){
-	*logptr(contextptr) << "Unknown subsop rule " << *it << endl;
+	*logptr(contextptr) << gettext("Unknown subsop rule ") << *it << endl;
 	continue;
       }
       vecteur w=*it->_SYMBptr->feuille._VECTptr;
@@ -2782,7 +2788,7 @@ namespace giac {
     // Rescale in x1..x2
     return x1+_iquo(makevecteur(res*(x2-x1),pow(rand_max_plus_one,n)),contextptr);
   }
-  static gen rand_interval(const vecteur & v,bool entier,GIAC_CONTEXT){
+  gen rand_interval(const vecteur & v,bool entier,GIAC_CONTEXT){
     static gen rand_max_plus_one=gen(rand_max2)+1;
     gen x1=v.front(),x2=v.back();
     if (x1==x2)
@@ -2882,7 +2888,7 @@ namespace giac {
       return args;
     }
     else {
-#ifdef RTOS_THREADX
+#if defined RTOS_THREADX || defined BESTA_OS
       int t=AspenGetNow();
 #else
       int t=int(time(NULL));
@@ -3875,8 +3881,8 @@ namespace giac {
       } // end endless for loop
     } // end thread debugging
 #if (defined WIN32) || (!defined HAVE_SIGNAL_H_OLD)
-    *logptr(contextptr) << "Sorry! Debugging requires a true operating system" << endl;
-    *logptr(contextptr) << "Please try xcas on Linux or an Unix" << endl;
+    *logptr(contextptr) << gettext("Sorry! Debugging requires a true operating system") << endl;
+    *logptr(contextptr) << gettext("Please try xcas on Linux or an Unix") << endl;
     return;
 #else // WIN32
     if (child_id)
@@ -3919,7 +3925,7 @@ namespace giac {
 #endif
       ofstream child_out(cas_sortie_name().c_str());
       gen e(symbolic(at_debug,w));
-      *logptr(contextptr) << "Archiving " << e << endl;
+      *logptr(contextptr) << gettext("Archiving ") << e << endl;
       archive(child_out,e,contextptr);
       archive(child_out,zero,contextptr);
       child_out << "Debugging\n" << '¤' ;
@@ -3928,7 +3934,7 @@ namespace giac {
       ifstream child_in(cas_entree_name().c_str());
       w[1]= unarchive(child_in,contextptr);
       child_in.close();
-      *logptr(contextptr) << "Click reads " << w[1] << endl;
+      *logptr(contextptr) << gettext("Click reads ") << w[1] << endl;
       if (w[1].type==_SYMB){
 	if (w[1]._SYMBptr->sommet==at_sst){
 	  debug_ptr(contextptr)->sst_in_mode=false;
@@ -3979,7 +3985,9 @@ namespace giac {
     gen a,b;
     check_binary(feuille,a,b);
     string s=b.print(contextptr);
-    if (s.size()>2 && s[0]=='\'' && s[s.size()-1]=='\'')
+    if (b.type==_SYMB && b._SYMBptr->sommet!=at_of && b._SYMBptr->sommet.ptr()->printsommet)
+      s = '('+s+')';
+    if (b.type==_FUNC && s.size()>2 && s[0]=='\'' && s[s.size()-1]=='\'')
       s=s.substr(1,s.size()-2);
     return a.print(contextptr)+"::"+s+ " ";
   }
@@ -3998,6 +4006,7 @@ namespace giac {
       }
     }
 #ifndef RTOS_THREADX
+#ifndef BESTA_OS
 #ifdef HAVE_LIBPTHREAD
     pthread_mutex_lock(&context_list_mutex);
 #endif
@@ -4022,6 +4031,7 @@ namespace giac {
       pthread_mutex_unlock(&context_list_mutex);
 #endif
 #endif // RTOS
+#endif
     c=b;
     if (b.is_symb_of_sommet(at_of))
       c=b._SYMBptr->feuille[0];
@@ -4525,7 +4535,7 @@ namespace giac {
     if (v.size()<7)
       return false;
     if (*logptr(contextptr) && debug_infolevel) 
-      *logptr(contextptr) << "Cas_setup " << v << char(10) << char(13) ;
+      *logptr(contextptr) << gettext("Cas_setup ") << v << char(10) << char(13) ;
     if (v[0].type==_INT_)
       approx_mode((v[0].val)!=0,contextptr);
     else {
@@ -4746,7 +4756,7 @@ namespace giac {
       _signal(symb_quote(symbolic(at_insmod,args)),contextptr);
     else
 #endif
-      *logptr(contextptr) << "Parent insmod" <<endl;
+      *logptr(contextptr) << gettext("Parent insmod") <<endl;
     return _xport(args,contextptr);
 #else // HAVE_LIBDL
     return zero;
@@ -4820,7 +4830,7 @@ namespace giac {
 #ifndef NO_STDEXCEPT
 	setsizeerr(gettext("Unable to sort ")+c.print(contextptr));
 #else
-	*logptr(contextptr) << "Unable to sort " << c << endl;
+	*logptr(contextptr) << gettext("Unable to sort ") << c << endl;
 #endif
 	return true;
       }
@@ -5155,22 +5165,19 @@ namespace giac {
     ifstream inf(fichier.c_str());
     if (!inf)
       return undef;
-#ifdef VISUALC
-    char * thebuf = new char[BUFFER_SIZE];
+#if defined( VISUALC ) || defined( BESTA_OS )
+    char * thebuf = ( char * )alloca( BUFFER_SIZE );
 #else
     char thebuf[BUFFER_SIZE];
 #endif
     inf.getline(thebuf,BUFFER_SIZE,'\n');
     string lu(thebuf),thet;
-#ifdef VISUALC
-    delete [] thebuf;
-#endif
     if (lu.size()>9 && lu.substr(0,9)=="{VERSION "){ // Maple Worksheet
       ofstream of("__.map");
       mws_translate(inf,of);
       of.close();
       xcas_mode(contextptr)=1;
-      *logptr(contextptr) << "Running maple text translation __.map" << endl;
+      *logptr(contextptr) << gettext("Running maple text translation __.map") << endl;
       fichier="__.map";
     }
     if (lu.size()>6 && lu.substr(0,6)=="**TI92"){ // TI archive
@@ -5184,7 +5191,7 @@ namespace giac {
       ti_translate(inf,of);
       of.close();
       xcas_mode(contextptr)=3;
-      *logptr(contextptr) << "Running TI89 text translation __.ti" << endl;
+      *logptr(contextptr) << gettext("Running TI89 text translation __.ti") << endl;
       fichier="__.ti";
     } // end file of type TI
     inf.close();
@@ -5516,11 +5523,11 @@ namespace giac {
     if (cas_setup_save.size()>5 && cas_setup_save[5].type==_VECT && cas_setup_save[5]._VECTptr->size()==2){
       vecteur & v = *cas_setup_save[5]._VECTptr;
       if (is_strictly_greater(v[0],1e-6,contextptr)){
-	*logptr(contextptr) << "Restoring epsilon to 1e-6 from " << v[0] << endl;
+	*logptr(contextptr) << gettext("Restoring epsilon to 1e-6 from ") << v[0] << endl;
 	epsilon(1e-6,contextptr);
       }
       if (is_strictly_greater(v[1],1e-6,contextptr)){
-	*logptr(contextptr) << "Restoring proba epsilon to 1e-6 from " << v[0] << endl;
+	*logptr(contextptr) << gettext("Restoring proba epsilon to 1e-6 from ") << v[0] << endl;
 	proba_epsilon(contextptr)=1e-6;
       }
       cas_setup_save=cas_setup(contextptr);
@@ -5913,7 +5920,7 @@ namespace giac {
     if (interactive_op_tab && interactive_op_tab[1])
       return interactive_op_tab[1](args,contextptr);
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
-    string cs("inputform may be used in a window environment only");
+    string cs(gettext("inputform may be used in a window environment only"));
 #if defined WIN32 || (!defined HAVE_SIGNAL_H_OLD)
     *logptr(contextptr) << cs << endl;
     return string2gen(cs,false);
@@ -5929,7 +5936,7 @@ namespace giac {
     // form
     ofstream child_out(cas_sortie_name().c_str());
     gen e(symbolic(at_inputform,args));
-    *logptr(contextptr) << "Archiving " << e << endl;
+    *logptr(contextptr) << gettext("Archiving ") << e << endl;
     archive(child_out,e,contextptr);
     archive(child_out,e,contextptr);
     if ( (args.type==_VECT) && (args._VECTptr->empty()) )
@@ -5941,7 +5948,7 @@ namespace giac {
     ifstream child_in(cas_entree_name().c_str());
     res= unarchive(child_in,contextptr);
     child_in.close();
-    *logptr(contextptr) << "Inputform reads " << res << endl;
+    *logptr(contextptr) << gettext("Inputform reads ") << res << endl;
     // post analysis
     return inputform_post_analysis(v,res,contextptr);
 #endif
@@ -7463,7 +7470,7 @@ namespace giac {
     if (is_one(exponent))
       return g;
     if (evalf_double(exponent,1,context0).type!=_DOUBLE_)
-      return gensizeerr("Invalid unit exponent"+exponent.print());
+      return gensizeerr(gettext("Invalid unit exponent")+exponent.print());
     return symbolic(at_pow,gen(makevecteur(g,exponent),_SEQ__VECT));
   }
   gen mksa_reduce(const gen & g,GIAC_CONTEXT){
@@ -8017,11 +8024,11 @@ namespace giac {
       return gensizeerr(contextptr);
     vecteur v = *g._VECTptr;
     if (v[0].is_symb_of_sommet(at_equal) || v[0].is_symb_of_sommet(at_same)){
-      *logptr(contextptr) << "Assuming false condition " << v[0].print(contextptr) << endl;
+      *logptr(contextptr) << gettext("Assuming false condition ") << v[0].print(contextptr) << endl;
       return v[2];
     }
     if (v[0].is_symb_of_sommet(at_different)){
-      *logptr(contextptr) << "Assuming true condition " << v[0].print(contextptr) << endl;
+      *logptr(contextptr) << gettext("Assuming true condition ") << v[0].print(contextptr) << endl;
       return v[1];
     }
     bool ok=false;

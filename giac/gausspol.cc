@@ -23,6 +23,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 using namespace std;
 #include "gausspol.h"
 #include "modpoly.h"
@@ -336,7 +337,7 @@ namespace giac {
     if (&th!=&res)
       res.coord.clear();
     gen fact=fact0;
-    if (fact.type!=_MOD && !th.coord.empty() && th.coord.front().value.type==_MOD){
+    if (fact.type!=_MOD && fact.type!=_USER && !th.coord.empty() && th.coord.front().value.type==_MOD){
       fact = makemod(fact,*(th.coord.front().value._MODptr+1));
     }
     if (!is_zero(fact)){
@@ -718,12 +719,32 @@ namespace giac {
     if (&target==&source){
       typename vector< T_unsigned<longlong,U> >::iterator it=target.begin(),itend=target.end();
       for (;it!=itend;++it){
-	it->g %= prime;
-	if (!it->g){
-	  vector< T_unsigned<longlong,U> > copie(target);
-	  smod(copie,target,prime);
-	  break;
-	}
+        it->g %= prime;
+        if (!it->g){
+          vector< T_unsigned<longlong,U> > copie(target);
+
+#ifndef BESTA_OS
+          smod(copie,target,prime);
+#else
+
+          // &copie != &target (by definition) so the following is
+          // substituted from below as the Kiel ARM compiler does
+          // not support this sort of recursive template expansion.
+
+	  copie.clear();
+	  typename vector< T_unsigned<longlong,U> >::const_iterator it=source.begin(),itend=source.end();
+          copie.reserve(itend-it);
+          longlong res;
+          for (;it!=itend;++it){
+            res=it->g % prime;
+            if (res)
+               copie.push_back(T_unsigned<longlong,U>(res,it->u));
+          }
+	  target=copie;
+#endif
+
+          break;
+        }
       }
       return;
     }
@@ -895,7 +916,7 @@ namespace giac {
       res=th.shift(other.coord.front().index,other.coord.front().value);
       return;
     }
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined (BESTA_OS)
     Mul<gen>(ita,ita_end,itb,itb_end,res.coord,th.is_strictly_greater,th.m_is_greater);
     // Mul_gen(ita,ita_end,itb,itb_end,res.coord,th.is_strictly_greater,th.m_is_greater);
     return;
@@ -1300,7 +1321,7 @@ namespace giac {
     // if (th.dim==12)
     //  cerr << "* end " << clock() << " " << res.coord.size() << endl;
     return ;
-#endif // RTOS_THREADX
+#endif // RTOS_THREADX besta_os
   }
 
   polynome operator * (const polynome & th, const polynome & other) {
@@ -1396,7 +1417,7 @@ namespace giac {
 	return true;
       }
     }
-#ifndef RTOS_THREADX
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS)
     for (int i=0;i<th.dim;++i){
       pid1 = pid1*unsigned(d1[i]+1);
     }
@@ -1475,7 +1496,7 @@ namespace giac {
       return a.TDivRem(b,quo,r,false) && (exactquo>0?r.coord.empty():true) ;
     }
     int bdeg=b.coord.front().index.front(),rdeg=a.lexsorted_degree(),ddeg=rdeg-bdeg;
-#ifndef RTOS_THREADX
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS)
     if (ddeg>3){
       index_t d1=a.degree(),d2=b.degree(),d3=b.coord.front().index.iref(),d(a.dim);
       // i-th degrees of th / other in quotient and remainder
@@ -2010,7 +2031,7 @@ namespace giac {
     }
     std::vector< monomial<gen> >::const_iterator it=other.coord.begin();
     int bdeg=it->index.front(),rdeg=th.lexsorted_degree(),ddeg=rdeg-bdeg;
-#ifndef RTOS_THREADX
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
     if (//false && 
 	ddeg>2 && os>10 
 	){
@@ -3172,7 +3193,7 @@ namespace giac {
     vector< monomial<gen> >::const_iterator it=p.coord.begin(),itend=p.coord.end();
     int t=0;
     for (;it!=itend;++it){
-      const unsigned char & tmp=it->value.type;
+      const unsigned char tmp=it->value.type;
       if (tmp==_INT_ || tmp==_ZINT)
 	continue;
       t=tmp;
@@ -5226,6 +5247,7 @@ namespace giac {
 	      it->index=idx;
 	    }
 	    P.tsort();
+	    P.dim=pcur.dim;
 	    // adjust sign
 	    if (is_strictly_positive(-P.coord.front().value,context0))
 	      P=-P;
@@ -5370,7 +5392,7 @@ namespace giac {
     return false;
   }
 
-  static bool operator < (const facteur<polynome> & f,const facteur<polynome> & g){
+  bool operator < (const facteur<polynome> & f,const facteur<polynome> & g){
     const polynome & fp=f.fact;
     const polynome & gp=g.fact;
     return fp<gp;
@@ -5749,7 +5771,7 @@ namespace giac {
   gen foisplus(const polynome & a,const polynome & b,const polynome & c,const polynome & d){
     if (debug_infolevel >= 20-a.dim)
       cerr << "foisplus begin " << clock() << endl;
-#ifndef RTOS_THREADX
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
     index_t da=a.degree(),db=b.degree(),dc=c.degree(),dd=d.degree(),de(a.dim);
     double ans=1;
     for (int i=0;i<a.dim;++i){

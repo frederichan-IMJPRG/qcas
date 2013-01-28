@@ -23,14 +23,17 @@
 #include <iostream>
 #include <string>
 
+#pragma anon_unions
+
 #if defined UNORDERED_MAP && !defined(__APPLE__) && !defined(VISUALC)
 #include <tr1/unordered_map>
 #define HASH_MAP_NAMESPACE std::tr1
 #define hash_map unordered_map
 #else // UNORDERED_MAP
 
-#if defined(GIAC_VECTOR) && defined(VISUALC)
+#if (defined(VISUALC) || defined(BESTA_OS))
 #undef HASH_MAP
+#undef EXT_HASH_MAP
 #endif
 
 #ifdef HASH_MAP

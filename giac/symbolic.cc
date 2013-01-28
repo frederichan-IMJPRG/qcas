@@ -333,7 +333,7 @@ namespace giac {
       return s+=')';
     }
 #endif
-    if (calc_mode(contextptr)==38){
+    if (abs_calc_mode(contextptr)==38){
       bool need=need_parenthesis(arg);
       if (pui==plus_one_half){
 	s += (need?"√(":"√");
@@ -369,13 +369,22 @@ namespace giac {
     if (arg.type==_IDNT || (arg.type==_SYMB && arg._SYMBptr->sommet!=at_neg && !arg._SYMBptr->sommet.ptr()->printsommet)){
       if (pui.type==_SYMB || pui.type==_FRAC){
 	add_print(s,arg,contextptr);
-	s += "^(";
+#ifdef GIAC_HAS_STO_38
+	s += '^';
+#else
+	s += __pow.s;
+#endif
+	s += '(';
 	add_print(s,pui,contextptr);
 	return s += ')';
       }
       else {
 	add_print(s,arg,contextptr);
+#ifdef GIAC_HAS_STO_38
 	s += '^';
+#else
+	s += __pow.s;
+#endif
 	return add_print(s,pui,contextptr);
       }
     }
@@ -385,7 +394,11 @@ namespace giac {
     add_print(s,arg,contextptr);
     if (argpar)
       s += ')';
+#ifdef GIAC_HAS_STO_38
     s += '^';
+#else
+    s += __pow.s;
+#endif
     bool puipar = pui.type==_SYMB || pui.type==_FRAC || pui.type==_CPLX || (pui.type==_VECT && pui.subtype==_SEQ__VECT);
     if (puipar)
       s += '(';
@@ -413,6 +426,10 @@ namespace giac {
       }
       i=-i;
     }
+#ifdef BESTA_OS
+    // BP: please comment why the code below does not work for besta
+    assert(0);
+#else
     switch (integer_format(contextptr)){
     case 16:
       sprintf(ch,"0x%X",i);
@@ -420,7 +437,8 @@ namespace giac {
       sprintf(ch,"0o%o",i);
     default:
       sprintf(ch,"%d",i);
-    }      
+    }
+#endif
     s += ch;
     return s;
   }
@@ -656,7 +674,9 @@ namespace giac {
     nr_prog() : contextptr(0),save_debug_info(0),vars(0),save_sst_mode(false),protect(0) {}
   };
 
-  static void increment_instruction(const gen * it0,const gen * itend,GIAC_CONTEXT){
+  // name changed: BESTA compiler see this as repeated code with same sig as passing the itor itself 
+  // - compiler whinges like a wounded pig --
+  static void increment_instruction_ptr(const gen * it0,const gen * itend,GIAC_CONTEXT){
     const gen * it=it0;
     for (;it!=itend;++it)
       increment_instruction(*it,contextptr);
@@ -1041,7 +1061,7 @@ namespace giac {
 		  nr_eval_for_stack.pop_back();
 		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
 		destination=(gen *)&argl.front()+arglpos;
-		gensizeerr("For: Unable to check test",*destination); 
+		gensizeerr(gettext("For: Unable to check test"),*destination); 
 		res=*destination;
 		it=itend;
 		continue;
@@ -1055,7 +1075,7 @@ namespace giac {
 	    state=nr_eval_for_loop;
 	  }
 	  else {
-	    increment_instruction(it+1,it+3,contextptr);
+	    increment_instruction_ptr(it+1,it+3,contextptr);
 	    if (!nr_eval_for_stack.empty()) // pop back instruction and for in index
 	      nr_eval_for_stack.pop_back();
 	    if (!nr_eval_for_stack.empty())
@@ -1122,7 +1142,7 @@ namespace giac {
 	      if (old._SYMBptr->sommet==at_ifte){
 		fromto_restore(arglpos,itbeg,it,itend,old,argl,state,fromto_stack);
 		destination=(gen *)&argl.front()+arglpos;
-		gensizeerr("Ifte: Unable to check test",*destination); 
+		gensizeerr(gettext("Ifte: Unable to check test"),*destination); 
 		res=*destination;
 		it=itend;
 		continue;
@@ -1252,7 +1272,7 @@ namespace giac {
 	    ++destination;
 	  continue;
 	default:
-	  gensizeerr("Bad state",res);
+	  gensizeerr(gettext("Bad state"),res);
 	  return res;
 	} // end switch
 #ifndef NO_STDEXCEPT
