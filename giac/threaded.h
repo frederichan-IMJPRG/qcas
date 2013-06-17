@@ -588,7 +588,7 @@ namespace giac {
     typename std::vector< T_unsigned<T,U> >::const_iterator it1=v1.begin(),it1end=v1.end(),it2=v2.begin(),it2end=v2.end();
     T g;
     v.clear();
-    v.reserve(it1end-it1+it2end-it2); // worst case
+    v.reserve((it1end-it1)+(it2end-it2)); // worst case
     for (;it1!=it1end && it2!=it2end;){
       if (it1->u==it2->u){
 	g=it1->g+it2->g;
@@ -625,7 +625,7 @@ namespace giac {
     typename std::vector< T_unsigned<T,U> >::const_iterator it1=v1.begin(),it1end=v1.end(),it2=v2.begin(),it2end=v2.end();
     T g;
     v.clear();
-    v.reserve(it1end-it1+it2end-it2); // worst case
+    v.reserve((it1end-it1)+(it2end-it2)); // worst case
     for (;it1!=it1end && it2!=it2end;){
       if (it1->u==it2->u){
 	g=it1->g+it2->g;
@@ -663,7 +663,7 @@ namespace giac {
     typename std::vector< T_unsigned<T,U> >::const_iterator it1=v1.begin(),it1end=v1.end(),it2=v2.begin(),it2end=v2.end();
     T g;
     v.clear();
-    v.reserve(it1end-it1+it2end-it2); // worst case
+    v.reserve((it1end-it1)+(it2end-it2)); // worst case
     for (;it1!=it1end && it2!=it2end;){
       if (it1->u==it2->u){
 	g=it1->g-it2->g;
@@ -700,7 +700,7 @@ namespace giac {
     typename std::vector< T_unsigned<T,U> >::const_iterator it1=v1.begin(),it1end=v1.end(),it2=v2.begin(),it2end=v2.end();
     T g;
     v.clear();
-    v.reserve(it1end-it1+it2end-it2); // worst case
+    v.reserve((it1end-it1)+(it2end-it2)); // worst case
     for (;it1!=it1end && it2!=it2end;){
       if (it1->u==it2->u){
 	g=it1->g-it2->g;

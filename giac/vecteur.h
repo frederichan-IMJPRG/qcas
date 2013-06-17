@@ -40,7 +40,12 @@ namespace giac {
   typedef vecteur::const_iterator const_iterateur;
   typedef vecteur::iterator iterateur;
   typedef std::complex<double> complex_double;
-  typedef std::complex<long double> complex_long_double;
+#ifdef HAVE_LONG_DOUBLE
+  typedef long double long_double;
+#else
+  typedef double long_double;
+#endif
+  typedef std::complex<long_double> complex_long_double;
 
   // make a matrix with free rows 
   // (i.e. it is possible to modify the answer in place)
@@ -56,6 +61,21 @@ namespace giac {
   vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g);
   vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h);
   vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i);
+  vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i,const gen &j);
+  vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i,const gen &j,const gen & k);
+  vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i,const gen &j,const gen & k,const gen & l);
+  vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i,const gen &j,const gen & k,const gen & l,const gen & m);
+  vecteur makevecteur(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i,const gen &j,const gen & k,const gen & l,const gen & m,const gen &n);
+
+  gen makesequence(const gen & a);
+  gen makesequence(const gen & a,const gen & b);
+  gen makesequence(const gen & a,const gen & b,const gen & c);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h);
+  gen makesequence(const gen & a,const gen & b,const gen & c,const gen & d,const gen & e,const gen & f,const gen & g,const gen & h,const gen & i);
 
   ref_vecteur * makenewvecteur(const gen & a);
   ref_vecteur * makenewvecteur(const gen & a,const gen & b);
@@ -109,6 +129,7 @@ namespace giac {
   extern const unary_function_ptr * const  at_proot ;
   gen symb_pcoeff(const gen & e) ;
   gen _pcoeff(const gen & e,GIAC_CONTEXT);
+  vecteur pcoeff(const vecteur & v);
   extern const unary_function_ptr * const  at_pcoeff ;
   gen symb_peval(const gen & arg1,const gen & arg2) ;
   extern const unary_function_ptr * const  at_peval;
@@ -159,7 +180,7 @@ namespace giac {
   vecteur multmatvecteur(const matrice & a,const vecteur & b);
   void multvecteurmat(const vecteur & a,const matrice & b,vecteur & res);
   vecteur multvecteurmat(const vecteur & a,const matrice & b);
-  // Scalar product
+  // Scalar product (does not conjugate, see scalarproduct in misc.h)
   gen dotvecteur(const vecteur & a,const vecteur & b);
   gen dotvecteur(const gen & a,const gen & b);
   gen generalized_dotvecteur(const vecteur & a,const vecteur & b,int pos);
@@ -211,6 +232,7 @@ namespace giac {
 
   gen common_deno(const vecteur & v);
 
+  bool convert(const vecteur & v,std::vector<giac_double> & v1);
   void matrice2std_matrix_gen(const matrice & m,std_matrix<gen> & M);
   void std_matrix_gen2matrice(const std_matrix<gen> & M,matrice & m);
   bool vecteur2index(const vecteur & v,index_t & i);
@@ -266,7 +288,7 @@ namespace giac {
   bool modrref(const matrice & a, matrice & res, vecteur & pivots, gen & det,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,const gen & modulo,int rref_or_det_or_lu);
 
   void smallmodrref(std::vector< std::vector<int> > & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,longlong & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int modulo,int rref_or_det_or_lu,bool reset=true,smallmodrref_temp_t * workptr=0);
-  void doublerref(matrix_double & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,double & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int rref_or_det_or_lu);
+  void doublerref(matrix_double & N,vecteur & pivots,std::vector<int> & permutation,std::vector<int> & maxrankcols,double & idet,int l, int lmax, int c,int cmax,int fullreduction,int dont_swap_below,int rref_or_det_or_lu,double eps);
   void modlinear_combination(vecteur & v1,const gen & c2,const vecteur & v2,const gen & modulo,int cstart,int cend=0);
   void modlinear_combination(std::vector<int> & v1,int c2,const std::vector<int> & v2,int modulo,int cstart,int cend,bool pseudo);
   vecteur fracmod(const vecteur & v,const gen & modulo);
@@ -457,6 +479,9 @@ namespace giac {
 
   matrice csv2gen(std::istream & i,char sep,char nl,char decsep,char eof,GIAC_CONTEXT);
 
+  // find index i of x in v that is i such that v[i] <= x < v[i+1]
+  // where v[-1]=-inf, and v[v.size()]=+inf
+  int dichotomy(const std::vector<double> & v,double x);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -208,19 +208,19 @@ namespace giac {
 
   string print_INT_(int i){
     char c[256];
-    sprintf(c,"%d",i);
+    my_sprintf(c,"%d",i);
     return c;
   }
 
   string hexa_print_INT_(int i){
     char c[256];
-    sprintf(c,"%X",i);
+    my_sprintf(c,"%X",i);
     return string("0x")+c;
   }
 
   string octal_print_INT_(int i){
     char c[256];
-    sprintf(c,"%o",i);
+    my_sprintf(c,"%o",i);
     return string("0o")+c;
   }
 
@@ -289,7 +289,7 @@ namespace giac {
   index_t mergeindex(const index_t & i,const index_t & j){
     index_t res(i);
     index_t::const_iterator it=j.begin(),itend=j.end();
-    res.reserve(i.size()+itend-it);
+    res.reserve(i.size()+(itend-it));
     for (;it!=itend;++it)
       res.push_back(*it);
     return res;

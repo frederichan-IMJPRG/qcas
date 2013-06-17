@@ -37,6 +37,23 @@
 #define GIAC_MPZ_INIT_SIZE 128 // initial number of bits for mpz
 
 typedef double giac_double;
+// sprintf replacement
+int my_sprintf(char * s, const char * format, ...);
+#ifdef GIAC_HAS_STO_38
+#define WITH_MYOSTREAM
+#endif
+
+#ifdef WITH_MYOSTREAM
+#include "myostream.h"
+#else
+#define my_ostream std::ostream
+#endif
+
+#ifdef __x86_64__
+#define alias_type ulonglong
+#else
+typedef unsigned long alias_type;
+#endif
 
 #ifdef NO_UNARY_FUNCTION_COMPOSE
 
@@ -94,7 +111,11 @@ typedef double giac_double;
 
 #endif //  NO_UNARY_FUNCTION_COMPOSE
 
+#ifdef __x86_64__
+#define define_unary_function_ptr(name,alias_name,ptr) const ulonglong alias_name = (ulonglong)(ptr); const unary_function_ptr * const name = (const unary_function_ptr *) &alias_name
+#else
 #define define_unary_function_ptr(name,alias_name,ptr) const unsigned long alias_name = (unsigned long)(ptr); const unary_function_ptr * const name = (const unary_function_ptr *) &alias_name
+#endif
 
 #ifdef DOUBLEVAL 
 #undef STATIC_BUILTIN_LEXER_FUNCTIONS
@@ -108,7 +129,11 @@ typedef double giac_double;
 #define define_unary_function_ptr5(name,alias_name,ptr,quoted,token) const unsigned long alias_name = (unsigned long)(ptr); const unary_function_ptr * const name = (const unary_function_ptr *) &alias_name;
 #endif
 #else
+#ifdef __x86_64__
+#define define_unary_function_ptr5(name,alias_name,ptr,quoted,token) static const unary_function_ptr alias_name##_(ptr,quoted,token); const ulonglong alias_name=(ulonglong)ptr; const unary_function_ptr * const name = &alias_name##_;
+#else
 #define define_unary_function_ptr5(name,alias_name,ptr,quoted,token) static const unary_function_ptr alias_name##_(ptr,quoted,token); const unsigned long alias_name=(unsigned long)ptr; const unary_function_ptr * const name = &alias_name##_;
+#endif
 #endif
 
 
@@ -166,12 +191,12 @@ typedef unsigned long long ulonglong;
 #endif // __x86_64__
 
 #ifdef USE_GMP_REPLACEMENTS
-#define GIAC_TYPE_ON_8BITS
+//#define GIAC_TYPE_ON_8BITS
 #undef HAVE_GMPXX_H
 #undef HAVE_LIBMPFR
 #include "gmp_replacements.h"
 #else
-#include <gmp.h>
+#include "gmp.h"
 #endif
 
 #include <cassert>

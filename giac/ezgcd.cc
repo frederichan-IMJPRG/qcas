@@ -161,7 +161,7 @@ namespace giac {
       else {
 	std::vector< monomial<gen> >::const_iterator itend=a.coord.end();
 	for (std::vector< monomial<gen> >::const_iterator it=a.coord.begin();it!=itend;++it)
-	  quo.coord.push_back(monomial<gen>(rdiv(it->value,b),it->index)); 
+	  quo.coord.push_back(monomial<gen>(rdiv(it->value,b,context0),it->index)); 
       }
       return true;
     }
@@ -173,7 +173,7 @@ namespace giac {
     gen b(other.coord.front().value);
     while (a_max >= b_max){
       // errors should be trapped here and false returned if error occured
-      gen q(rdiv(rem.coord.front().value,b));
+      gen q(rdiv(rem.coord.front().value,b,context0));
       if (!allowrational){
 	if ( has_denominator(q) || 
 	     (!is_zero(q*b - rem.coord.front().value)) )
@@ -408,13 +408,14 @@ namespace giac {
       factorization fx1x2,flcoeff;
       vector<polynome> flcoeff0;
       polynome pcurx1x2cont=lgcd(pcurx1x2);
+      gen extra_div=1;
       if (1 || is_one(pcurx1x2cont)){
 	truncate_xk_xn(pcurx1x2,2);
-	if (!factor(pcurx1x2,pcurx1x2cont,fx1x2,true,false,false,1))
+	if (!factor(pcurx1x2,pcurx1x2cont,fx1x2,true,false,false,1,extra_div) || extra_div!=1)
 	  return false;
 	// now find factorization of lcoeff(pcur)
 	polynome pcur_lcoeff(Tfirstcoeff(pcur)),pcur_lcoeffcont;
-	if (!factor(pcur_lcoeff.trunc1(),pcur_lcoeffcont,flcoeff,false,false,false,1))
+	if (!factor(pcur_lcoeff.trunc1(),pcur_lcoeffcont,flcoeff,false,false,false,1,extra_div) || extra_div!=1)
 	  return false;
 	factorization::iterator jt=flcoeff.begin(),jtend=flcoeff.end();
 	polynome constante(pcur_lcoeffcont.untrunc1()*pcurx1x2cont),tmp;
@@ -468,7 +469,9 @@ namespace giac {
     // ok each factor of F0=pcur|0 is square free, they are prime together
     // if lcp has too much terms it will take too long, because
     // we must multiply by product(lcoeffs)/lcp
-    if (!lcoeff_known && std::pow(double(lcp.coord.size()),s-1)>100)
+    // next check was >100 but then heuristic factorization fails
+    // (depends on the size of the coeffs)
+    if (!lcoeff_known && pow(lcp,s-1).coord.size()>300)
       return false;
     // we will lift pcur*product(lcoeffs)/lcp = product_i F0fact[i]*lcoeffs[i](b)/lcoeff(F0fact[i])
     for (int i=0;i<s;++i){
@@ -491,6 +494,7 @@ namespace giac {
 	}
       }
     }
+    // Perhaps the check on lcp should be made here with pcur_adjusted
     vector<modpoly> u;
     if (!egcd(F0fact,0,u))
       return false;// sum_j U_j * product_{i \neq j} F0fact_i = 1

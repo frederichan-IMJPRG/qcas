@@ -1,4 +1,4 @@
-// -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c ti89.cc  -DIN_GIAC -DHAVE_CONFIG_H" -*-
+// -*- mode:C++ ; compile-command: "g++ -I.. -g -c ti89.cc -fno-strict-aliasing -DGIAC_GENERIC_CONSTANTS -DIN_GIAC -DHAVE_CONFIG_H" -*-
 #include "giacPCH.h"
 /*
  *  Copyright (C) 2000,2007 B. Parisse, Institut Fourier, 38402 St Martin d'Heres
@@ -99,7 +99,7 @@ namespace giac {
     if (g.type!=_VECT || g._VECTptr->size()!=2)
       return gensizeerr(contextptr);
     int n=0; gen e1(g._VECTptr->front()),b(g._VECTptr->back()),q;
-    if (is_integer(e1) && is_integer(b) && !is_zero(e1)){
+    if (is_integer(e1) && is_integer(b) && is_strictly_greater(b,1,contextptr) && !is_zero(e1)){
       while (is_zero(irem(e1,b,q))){
 	if (q.type==_ZINT)
 	  e1=*q._ZINTptr;
@@ -108,7 +108,7 @@ namespace giac {
 	++n;
       }
     }
-    return rdiv(ln(e1,contextptr),ln(b,contextptr))+n;
+    return rdiv(ln(e1,contextptr),ln(b,contextptr),contextptr)+n;
     // return ln(g._VECTptr->front(),contextptr)/ln(g._VECTptr->back(),contextptr);
   }
   static const char _logb_s[]="logb";
@@ -190,6 +190,8 @@ namespace giac {
   gen _isprime(const gen & args,GIAC_CONTEXT){
     gen g=_is_prime(args,contextptr);
     if (is_undef(g)) return g;
+    if (g.type==_VECT)
+      return g;
     if (g==0){
       g.subtype=_INT_BOOLEAN;
       return g;
@@ -208,14 +210,14 @@ namespace giac {
     int s=v.size();
     gen res;
     if (s==1)
-    res=_inputform(symbolic(at_click,makevecteur(v[0],0,v[0])));
+    res=_inputform(symbolic(at_click,makesequence(v[0],0,v[0])));
     else {
     if (s==2)
-    res= _inputform(symbolic(at_click,makevecteur(v[0],0,v[1])));
+    res= _inputform(symbolic(at_click,makesequence(v[0],0,v[1])));
     else
     res= __click.op(g);
     }
-    __interactive.op(symbolic(at_print,makevecteur(g,res)));
+    __interactive.op(symbolic(at_print,makesequence(g,res)));
     return res;
     }
   */
@@ -261,8 +263,8 @@ namespace giac {
   define_unary_function_ptr5( at_lis_phrase ,alias_at_lis_phrase,&__lis_phrase,_QUOTE_ARGUMENTS,T_RETURN);
 
   gen _Prompt(const gen & g,GIAC_CONTEXT){
-    gen res= _inputform(symbolic(at_click,makevecteur(g,g,g)),contextptr);
-    __interactive.op(symbolic(at_print,makevecteur(g,res)),contextptr);
+    gen res= _inputform(symbolic(at_click,makesequence(g,g,g)),contextptr);
+    __interactive.op(symbolic(at_print,makesequence(g,res)),contextptr);
     return res;
   }
   static const char _Prompt_s[]="Prompt";
@@ -329,11 +331,13 @@ namespace giac {
     gen var=v[1],guess;
     if (var.type==_SYMB && (var._SYMBptr->sommet==at_equal || var._SYMBptr->sommet==at_same)){
       guess=var._SYMBptr->feuille._VECTptr->back();
+      if (guess.is_symb_of_sommet(at_interval))
+	return _fsolve(g,contextptr);
       var=var._SYMBptr->feuille._VECTptr->front();
-      return newton(remove_equal(v[0]),var,guess,20,1e-5,1e-12,contextptr);
+      return newton(remove_equal(v[0]),var,guess,NEWTON_DEFAULT_ITERATION,1e-5,1e-12,!complex_mode(contextptr),1,0,1,0,1,contextptr);
     }
     else
-      return newton(remove_equal(v[0]),var,undef,20,1e-5,1e-12,contextptr);
+      return newton(remove_equal(v[0]),var,0,NEWTON_DEFAULT_ITERATION,1e-5,1e-12,!complex_mode(contextptr),1,0,1,0,1,contextptr);
   }
   static const char _nSolve_s[]="nSolve";
   static define_unary_function_eval (__nSolve,&_nSolve,_nSolve_s);
@@ -359,6 +363,9 @@ namespace giac {
   static const char _cZeros_s[]="cZeros";
   static define_unary_function_eval_quoted (__cZeros,&_cZeros,_cZeros_s);
   define_unary_function_ptr5( at_cZeros ,alias_at_cZeros,&__cZeros,_QUOTE_ARGUMENTS,true);
+  static const char _czeros_s[]="czeros";
+  static define_unary_function_eval_quoted (__czeros,&_cZeros,_czeros_s);
+  define_unary_function_ptr5( at_czeros ,alias_at_czeros,&__czeros,_QUOTE_ARGUMENTS,true);
 
   static gen getDenom(const gen & g,GIAC_CONTEXT){
     vecteur num,den;
@@ -426,7 +433,7 @@ namespace giac {
     if (g.type!=_VECT || g._VECTptr->size()<2 )
       return ratnormal(g);
     vecteur & v(*g._VECTptr);
-    return _reorder(makevecteur(v.front(),vecteur(v.begin()+1,v.end())),contextptr);
+    return _reorder(makesequence(v.front(),vecteur(v.begin()+1,v.end())),contextptr);
   }
   static const char _comDenom_s[]="comDenom";
   static define_unary_function_eval (__comDenom,&_comDenom,_comDenom_s);
@@ -466,12 +473,50 @@ namespace giac {
       if (vs>=3){
 	f=v[2];
       }
+      if (vs>=4 && v[2].type==_INT_ && v[3].type==_INT_){
+	vecteur w(absint(deg)+1,1);
+	if (calc_mode(contextptr)==1 || abs_calc_mode(contextptr)==38){
+	  if (v[2]==v[3])
+	    return gensizeerr(contextptr);
+	  for (;;){
+	    w[0]=int(giac_rand(contextptr)/(rand_max2+1.0)*(v[3].val-v[2].val+1)+v[2].val);
+	    if (w[0].val)
+	      break;
+	  }
+	}
+	for (unsigned i=1;i<=(unsigned)absint(deg);++i){
+	  w[i]=int(giac_rand(contextptr)/(rand_max2+1.0)*(v[3].val-v[2].val+1)+v[2].val);
+	}
+#ifdef GIAC_HAS_STO_38
+	return w;
+#else
+	return symb_horner(w,x);
+#endif
+      }
+      if (vs==4){
+	if (f.type==_FUNC)
+	  f=symbolic(*f._FUNCptr,v.back());
+	else
+	  f=symb_of(f,v.back());
+      }
+      if (vs>4){
+	if (f.type==_FUNC)
+	  f=symbolic(*f._FUNCptr,gen(vecteur(v.begin()+3,v.end()),_SEQ__VECT));
+	else
+	  f=symb_of(f,gen(vecteur(v.begin()+3,v.end()),_SEQ__VECT));
+      }
     }
     vecteur w;
-    for (;;){
-      w=vranm(absint(deg)+1,f,contextptr);
-      if (!is_exactly_zero(w.front()))
-	break;
+    if (calc_mode(contextptr)==1 || abs_calc_mode(contextptr)==38){
+      for (int essai=0;essai<1000;++essai){
+	w=vranm(absint(deg)+1,f,contextptr);
+	if (!is_zero(w.front()))
+	  break;
+      }
+    }
+    else {
+      w=vranm(absint(deg),f,contextptr);
+      w.insert(w.begin(),1);
     }
 #ifdef GIAC_HAS_STO_38
     return w;
@@ -505,7 +550,7 @@ namespace giac {
     gen step(0.001);
     if (v.size()>2)
       step=v[2];
-    return evalf(rdiv(subst(v[0],v[1],v[1]+step,false,contextptr)-subst(v[0],v[1],v[1]-step,false,contextptr),2*step),1,contextptr);
+    return evalf(rdiv(subst(v[0],v[1],v[1]+step,false,contextptr)-subst(v[0],v[1],v[1]-step,false,contextptr),2*step,contextptr),1,contextptr);
   }
   static const char _nDeriv_s[]="nDeriv";
   static define_unary_function_eval (__nDeriv,&_nDeriv,_nDeriv_s);
@@ -519,7 +564,7 @@ namespace giac {
     gen step(0.001);
     if (v.size()>2)
       step=v[2];
-    return evalf(rdiv(subst(v[0],v[1],v[1]+step,false,contextptr)-subst(v[0],v[1],v[1],false,contextptr),step),1,contextptr);
+    return evalf(rdiv(subst(v[0],v[1],v[1]+step,false,contextptr)-subst(v[0],v[1],v[1],false,contextptr),step,contextptr),1,contextptr);
   }
   static const char _avgRC_s[]="avgRC";
   static define_unary_function_eval (__avgRC,&_avgRC,_avgRC_s);
@@ -579,8 +624,8 @@ namespace giac {
     if (v.size()==4)
       x0=v[3];
     if (v[1].is_symb_of_sommet(at_equal))
-      return _series(makevecteur(v[0],v[1],v[2]),contextptr);
-    return _series(makevecteur(v[0],symbolic(at_equal,makevecteur(v[1],x0)),v[2]),contextptr);
+      return _series(makesequence(v[0],v[1],v[2]),contextptr);
+    return _series(makesequence(v[0],symbolic(at_equal,makesequence(v[1],x0)),v[2]),contextptr);
   }
   static const char _taylor_s[]="taylor";
   static define_unary_function_eval (__taylor,&_taylor,_taylor_s);
@@ -589,6 +634,8 @@ namespace giac {
   gen _arcLen(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     vecteur v(gen2vecteur(g));
+    if (v.size()==3)
+      v.insert(v.begin()+1,ggb_var(v.front()));
     if (v.size()!=4 || v[1].type!=_IDNT)
       return gentoofewargs("arcLen");
     gen fprime=derive(v[0],v[1],contextptr);
@@ -1252,7 +1299,7 @@ namespace giac {
     if (l1<0 || l1>=s || l2<0 || l2>=s)
       return gendimerr(contextptr);
     vecteur w=*v[0]._VECTptr;
-    w[l2]=w[l1-shift]+w[l2];
+    w[l2]=w[l1]+w[l2];
     return w;
   }
   static const char _rowAdd_s[]="rowAdd";
@@ -1337,11 +1384,11 @@ namespace giac {
     if (v.size()!=3 || !is_squarematrix(res=eval(v[0],eval_level(contextptr),contextptr)) || v[1].type!=_IDNT || v[2].type!=_IDNT )
       return gentypeerr(contextptr);
     gen res1=qr(res,contextptr);
-    if (is_undef(res1) || !ckmatrix(res1))
+    if (is_undef(res1) || !ckmatrix(res1[0]) || !ckmatrix(res1[1]))
       return res;
-    gen tmpsto=sto(res*inv(res1,contextptr),v[1],contextptr);
+    gen tmpsto=sto(res1[0],v[1],contextptr);
     if (is_undef(tmpsto)) return tmpsto;
-    return sto(res1,v[2],contextptr);
+    return sto(res1[1],v[2],contextptr);
   }
   static const char _QR_s[]="QR";
   static define_unary_function_eval_quoted (__QR,&_QR,_QR_s);
@@ -1434,7 +1481,7 @@ namespace giac {
 
   gen _unitV(const gen & g,GIAC_CONTEXT) {
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-    return rdiv(g,_l2norm(g,contextptr));
+    return rdiv(g,_l2norm(g,contextptr),contextptr);
   }
   static const char _unitV_s[]="unitV";
   static define_unary_function_eval (__unitV,&giac::_unitV,_unitV_s);
@@ -1690,7 +1737,7 @@ namespace giac {
     int couleur=FL_BLACK;
     if (v.size()==5 && v[4].val==0)
       couleur=FL_WHITE;
-    return _couleur(makevecteur(_segment(makevecteur(v[0]+cst_i*v[1],v[2]+cst_i*v[3]),contextptr),couleur),contextptr);
+    return _couleur(makesequence(_segment(makesequence(v[0]+cst_i*v[1],v[2]+cst_i*v[3]),contextptr),couleur),contextptr);
   }
   static const char _Line_s[]="Line";
   static define_unary_function_eval2 (__Line,&_Line,_Line_s,&printastifunction);
@@ -1704,7 +1751,7 @@ namespace giac {
     int couleur=FL_BLACK;
     if (v.size()==2 && v[1].val==0)
       couleur=FL_WHITE;
-    return _couleur(makevecteur(_droite(makevecteur(cst_i*v[0],1+cst_i*v[0]),contextptr),couleur),contextptr);
+    return _couleur(makesequence(_droite(makesequence(cst_i*v[0],1+cst_i*v[0]),contextptr),couleur),contextptr);
   }
   static const char _LineHorz_s[]="LineHorz";
   static define_unary_function_eval2 (__LineHorz,&_LineHorz,_LineHorz_s,&printastifunction);
@@ -1718,7 +1765,7 @@ namespace giac {
     int couleur=FL_BLACK;
     if (v.size()==2 && v[1].val==0)
       couleur=FL_WHITE;
-    return _couleur(makevecteur(_droite(makevecteur(v[0],cst_i+v[0]),contextptr),couleur),contextptr);
+    return _couleur(makesequence(_droite(makesequence(v[0],cst_i+v[0]),contextptr),couleur),contextptr);
   }
   static const char _LineVert_s[]="LineVert";
   static define_unary_function_eval2 (__LineVert,&_LineVert,_LineVert_s,&printastifunction);
@@ -1730,7 +1777,7 @@ namespace giac {
     if (v.size()<3)
       return gensizeerr(contextptr);
     gen pt(v[0]+cst_i*v[1]);
-    return _droite(makevecteur(pt,pt+1+cst_i*v[2]),contextptr);
+    return _droite(makesequence(pt,pt+1+cst_i*v[2]),contextptr);
   }
   static const char _DrawSlp_s[]="DrawSlp";
   static define_unary_function_eval2 (__DrawSlp,&_DrawSlp,_DrawSlp_s,&printastifunction);
@@ -1745,7 +1792,7 @@ namespace giac {
     if (v.size()==4 && v[3].val==0)
       couleur=FL_WHITE;
     gen centre(v[0]+cst_i*v[1]);
-    return _couleur(makevecteur(_cercle(makevecteur(centre,v[2]),contextptr),couleur),contextptr);
+    return _couleur(makesequence(_cercle(makesequence(centre,v[2]),contextptr),couleur),contextptr);
   }
   static const char _Circle_s[]="Circle";
   static define_unary_function_eval2 (__Circle,&_Circle,_Circle_s,&printastifunction);
@@ -1757,7 +1804,7 @@ namespace giac {
     if (v.size()<3)
       return gensizeerr(contextptr);
     gen tmp(v[1]+cst_i*v[2]);
-    return _legende(makevecteur(tmp,v[0]),contextptr);
+    return _legende(makesequence(tmp,v[0]),contextptr);
   }
   static const char _PtText_s[]="PtText";
   static define_unary_function_eval2 (__PtText,&_PtText,_PtText_s,&printastifunction);
@@ -1857,7 +1904,7 @@ namespace giac {
     if (is_undef(fprime)) return fprime;
     gen M0(x0+cst_i*subst(f,x,x0,false,contextptr));
     gen direction(1+cst_i*subst(fprime,x,x0,false,contextptr));
-    return put_attributs(_droite(makevecteur(M0,M0+direction),contextptr),attributs,contextptr);
+    return put_attributs(_droite(makesequence(M0,M0+direction),contextptr),attributs,contextptr);
   }
   static const char _LineTan_s[]="LineTan";
   static define_unary_function_eval2 (__LineTan,&_LineTan,_LineTan_s,&printastifunction);
@@ -1946,7 +1993,7 @@ namespace giac {
 
   gen _RandSeed(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#if defined(VISUALC) || defined(__MINGW_H) || defined BESTA_OS
+#if defined(VISUALC) || defined(__MINGW_H) || defined BESTA_OS || defined EMCC
     srand(g.val);
 #else
 #ifndef GNUWINCE
@@ -1968,15 +2015,17 @@ namespace giac {
   define_unary_function_ptr5( at_Store ,alias_at_Store,&__Store,_QUOTE_ARGUMENTS,true);
 
   gen exact_double(double d,double eps){
+    if (eps<1e-14)
+      eps=1e-14;
     if (d<0)
       return -exact_double(-d,eps);
     if (d > (1<<30) )
       return _floor(d,context0);
     vector<int> res;
     double eps1(1+eps);
-    for (;;){
-      if (ctrl_c) { 
-	interrupted = true; 
+    for (;!interrupted;){
+      if (ctrl_c || interrupted) { 
+	interrupted = true; ctrl_c=false;
 	return gensizeerr(gettext("Stopped by user interruption.")); 
       }
       res.push_back(int(d*eps1));
@@ -1984,6 +2033,8 @@ namespace giac {
       if (d<=eps)
 	break;
       d=1/d;
+      if (d > (1<<30))
+	break;
       eps=eps*d*d;
     }
     reverse(res.begin(),res.end());
@@ -2013,7 +2064,7 @@ namespace giac {
     }
   }
   gen _exact(const gen & g,GIAC_CONTEXT){
-#ifdef BCD
+#if 0 // def BCD
     return symb_quote(exact(g,contextptr));
 #else
     return exact(g,contextptr);
@@ -2396,15 +2447,17 @@ namespace giac {
   static define_unary_function_eval (__non,&_not,_non_s);
   define_unary_function_ptr5( at_non ,alias_at_non,&__non,0,T_NOT);
 
+  /*
   static const char _resultat_s[]="resultat";
   static define_unary_function_eval_quoted (__resultat,&_nop,_resultat_s);
   define_unary_function_ptr5( at_resultat ,alias_at_resultat,&__resultat,_QUOTE_ARGUMENTS,T_RETURN);
+  */
 
   static const char _fonction_s[]="fonction";
   static define_unary_function_eval_quoted (__fonction,&_for,_fonction_s);
   define_unary_function_ptr5( at_fonction ,alias_at_fonction,&__fonction,_QUOTE_ARGUMENTS,T_PROC);
 
-#if defined RTOS_THREADX || defined BESTA_OS
+#if defined RTOS_THREADX || defined BESTA_OS || defined EMCC || defined __MINGW_H
 
   gen _unarchive_ti(const gen & g,GIAC_CONTEXT){
     return undef;
@@ -2801,9 +2854,9 @@ namespace giac {
     gen g1=ti_decode_tag(ptr,contextptr);
     gen g2=ti_decode_tag(ptr,contextptr);
     if (normal_order)
-      return symbolic(u,makevecteur(g1,g2));
+      return symbolic(u,makesequence(g1,g2));
     else
-      return symbolic(u,makevecteur(g2,g1));
+      return symbolic(u,makesequence(g2,g1));
   }
 
   static gen ti_decode_nary(octet * & ptr,const unary_function_ptr * u,int n,GIAC_CONTEXT){
@@ -2843,7 +2896,7 @@ namespace giac {
     gen gf=g._SYMBptr->feuille;
     if (gf.type==_VECT)
       gf.subtype=_SEQ__VECT;
-    return symbolic(at_ti_not_implemented,makevecteur(gs,gf));
+    return symbolic(at_ti_not_implemented,makesequence(gs,gf));
   }
 
   // secondary or extension tag
@@ -3957,9 +4010,9 @@ namespace giac {
 	return gensizeerr(contextptr);
       res=res._SYMBptr->feuille;
       if (res._VECTptr->size()==2)
-	return symbolic(at_at,makevecteur(res._VECTptr->front(),(res._VECTptr->back()-plus_one)));
+	return symbolic(at_at,makesequence(res._VECTptr->front(),(res._VECTptr->back()-plus_one)));
       else
-	return symbolic(at_at,makevecteur(res._VECTptr->front(),gen(vecteur(res._VECTptr->begin()+1,res._VECTptr->end()),_SEQ__VECT)-gen(vecteur(res._VECTptr->size()-1,plus_one),_SEQ__VECT)));
+	return symbolic(at_at,makesequence(res._VECTptr->front(),gen(vecteur(res._VECTptr->begin()+1,res._VECTptr->end()),_SEQ__VECT)-gen(vecteur(res._VECTptr->size()-1,plus_one),_SEQ__VECT)));
     case RAND_TAG:
       return ti_decode_nary(ptr,at_rand,0,contextptr);
     case MIN_TAG:
@@ -3971,7 +4024,7 @@ namespace giac {
       if (res.type!=_SYMB || res._SYMBptr->feuille.type!=_VECT)
 	return gensizeerr(contextptr);
       res=res._SYMBptr->feuille;
-      return symbolic(at_of,makevecteur(res._VECTptr->front(),gen(vecteur(res._VECTptr->begin()+1,res._VECTptr->end()),_SEQ__VECT)));
+      return symbolic(at_of,makesequence(res._VECTptr->front(),gen(vecteur(res._VECTptr->begin()+1,res._VECTptr->end()),_SEQ__VECT)));
     case FIG_TAG:
       return gensizeerr(gettext("fig_tag"));
     case MAC_TAG:

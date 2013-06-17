@@ -104,7 +104,7 @@ namespace giac {
 	gen t;
 	vecteur u(3);
 	//2*cos(theta)+b=trace(M)
-	t=rdiv(M[0][0]+M[1][1]+M[2][2]-b,2);
+	t=rdiv(M[0][0]+M[1][1]+M[2][2]-b,2,contextptr);
 	//on cherche le signe de theta (t=cos(theta)), u est orth a nn 
 	if ((nn[0] !=0)||(nn[1] !=0)) {
 	  u[0]=-nn[1];
@@ -208,11 +208,11 @@ namespace giac {
 	gen b=n[1];
 	vecteur M2;
 	vecteur li(2); 
-	li[0]=rdiv(b*b-a*a,a*a+b*b);
-	li[1]=-rdiv(gen(2)*a*b,a*a+b*b);
+	li[0]=rdiv(b*b-a*a,a*a+b*b,contextptr);
+	li[1]=-rdiv(gen(2)*a*b,a*a+b*b,contextptr);
 	M2.push_back(li);
-	li[0]=-rdiv(gen(2)*a*b,a*a+b*b);
-	li[1]=-rdiv(b*b-a*a,a*a+b*b);
+	li[0]=-rdiv(gen(2)*a*b,a*a+b*b,contextptr);
+	li[1]=-rdiv(b*b-a*a,a*a+b*b,contextptr);
 	M2.push_back(li);
 	return(M2);
 	//}

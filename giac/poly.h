@@ -41,27 +41,27 @@ namespace giac {
     // T zero;
     // functional object sorting function for monomial ordering
     bool (* is_strictly_greater)( const index_m &, const index_m &);
-    std::pointer_to_binary_function < const monomial<T> &, const monomial<T> &, bool> m_is_greater ;
+    std::pointer_to_binary_function < const monomial<T> &, const monomial<T> &, bool> m_is_strictly_greater ;
     // constructors
-    tensor(const tensor<T> & t) : dim(t.dim), coord(t.coord), is_strictly_greater(t.is_strictly_greater), m_is_greater(t.m_is_greater) { }
-    tensor(const tensor<T> & t, const std::vector< monomial<T> > & v) : dim(t.dim), coord(v), is_strictly_greater(t.is_strictly_greater), m_is_greater(t.m_is_greater) { }
+    tensor(const tensor<T> & t) : dim(t.dim), coord(t.coord), is_strictly_greater(t.is_strictly_greater), m_is_strictly_greater(t.m_is_strictly_greater) { }
+    tensor(const tensor<T> & t, const std::vector< monomial<T> > & v) : dim(t.dim), coord(v), is_strictly_greater(t.is_strictly_greater), m_is_strictly_greater(t.m_is_strictly_greater) { }
     // warning: this constructor prohibits construction of tensor from a value
     // of type T if this value is an int, except by using tensor<T>(T(int))
-    tensor() : dim(0), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
-    explicit tensor(int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
-    explicit tensor(int d,const tensor<T> & t) : dim(d),is_strictly_greater(t.is_strictly_greater), m_is_greater(t.m_is_greater)  { }
-    tensor(const monomial<T> & v) : dim(v.index.size()), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { 
+    tensor() : dim(0), is_strictly_greater(i_lex_is_strictly_greater), m_is_strictly_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>)) { }
+    explicit tensor(int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_strictly_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>)) { }
+    explicit tensor(int d,const tensor<T> & t) : dim(d),is_strictly_greater(t.is_strictly_greater), m_is_strictly_greater(t.m_is_strictly_greater)  { }
+    tensor(const monomial<T> & v) : dim(v.index.size()), is_strictly_greater(i_lex_is_strictly_greater), m_is_strictly_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>)) { 
       coord.push_back(v);
     }
-    tensor(const T & v, int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) {
+    tensor(const T & v, int d) : dim(d), is_strictly_greater(i_lex_is_strictly_greater), m_is_strictly_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>)) {
       if (!is_zero(v))
 	coord.push_back(monomial<T>(v,0,d));
     }
-    tensor(int d,const std::vector< monomial<T> > & c) : dim(d), coord(c), is_strictly_greater(i_lex_is_strictly_greater),m_is_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>)) { }
+    tensor(int d,const std::vector< monomial<T> > & c) : dim(d), coord(c), is_strictly_greater(i_lex_is_strictly_greater),m_is_strictly_greater(std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>)) { }
     ~tensor() { coord.clear(); }
     // member functions
     // ordering monomials in the tensor
-    void tsort(){ sort(coord.begin(),coord.end(),m_is_greater); }
+    void tsort(){ sort(coord.begin(),coord.end(),m_is_strictly_greater); }
     int lexsorted_degree() const{ 
       if (!dim)
 	return 0;
@@ -251,26 +251,26 @@ namespace giac {
     return p.dim==q.dim && p.coord.size()==q.coord.size() && p.coord==q.coord;
   }
 
-  template <class T> bool tensor_is_greater(const tensor<T> & p,const tensor<T> & q){
+  template <class T> bool tensor_is_strictly_greater(const tensor<T> & p,const tensor<T> & q){
     if (q.coord.empty())
       return true;
     if (p.coord.empty())
       return false;
-    return p.m_is_greater(p.coord.front(),q.coord.front());
+    return p.m_is_strictly_greater(p.coord.front(),q.coord.front());
   }
 
   template <class T> bool operator >= (const tensor<T> & p,const tensor<T> & q){
-    return tensor_is_greater(p,q);
+    return tensor_is_strictly_greater(p,q);
   }
 
   template <class T> bool operator <= (const tensor<T> & p,const tensor<T> & q){
-    return tensor_is_greater(q,p);
+    return tensor_is_strictly_greater(q,p);
   }
 
   template <class T>
   void tensor<T>::insert_monomial(const monomial<T> & c){
     coord.push_back(c);
-    sort(coord.begin(),coord.end(),m_is_greater);
+    sort(coord.begin(),coord.end(),m_is_strictly_greater);
   }
 
   template <class T>
@@ -474,7 +474,7 @@ namespace giac {
 
   template <class T>
   void lexsort(std::vector < monomial<T> > & v){
-    sort(v.begin(),v.end(),std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_greater<T>));
+    sort(v.begin(),v.end(),std::ptr_fun<const monomial<T> &, const monomial<T> &, bool>(m_lex_is_strictly_greater<T>));
   }
 
 
@@ -710,7 +710,7 @@ namespace giac {
     return(this->shift(other.coord.front().index,other.coord.front().value));
     std::vector< monomial<T> > new_coord;
     new_coord.reserve(c1+c2); // assumes dense poly (would be c1+c2-1)
-    Mul(ita,ita_end,itb,itb_end,new_coord,m_is_greater);
+    Mul(ita,ita_end,itb,itb_end,new_coord,m_is_strictly_greater);
     return tensor<T>(*this,new_coord);
     }
 
@@ -1475,7 +1475,10 @@ namespace giac {
     // a and b are the primitive part of p and q
     p.TDivRem1(dp,a,r,true);
     q.TDivRem1(dq,b,r,true);
-    while (!a.coord.empty()){
+    while (
+	   !a.coord.empty()
+	   && !ctrl_c && !interrupted
+	   ){
       int n=b.lexsorted_degree();
       int m=a.lexsorted_degree();
       if (!n) {// if b is constant (then b!=0), gcd=original Tlgcd
@@ -1888,6 +1891,8 @@ namespace giac {
     if (coord.empty())
       return *this;
     tensor<T> res(dim);
+    if (dim==0)
+      return res;
     res.coord.reserve(coord.size());
     typename std::vector< monomial<T> >::const_iterator itend=coord.end();
     T tmp;

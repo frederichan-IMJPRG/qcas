@@ -63,11 +63,11 @@ namespace giac {
 	qdd=recursive_normal(qdd,contextptr); 
 	//cout<<i<<","<<j<<qdd<<endl;
 	if (i==j){
-	  (*A[i]._VECTptr)[i]=rdiv(qdd,2);
+	  (*A[i]._VECTptr)[i]=rdiv(qdd,2,contextptr);
 	} 
 	else {
-	  (*A[i]._VECTptr)[j]=rdiv(qdd,2);
-	  (*A[j]._VECTptr)[i]=rdiv(qdd,2);
+	  (*A[i]._VECTptr)[j]=rdiv(qdd,2,contextptr);
+	  (*A[j]._VECTptr)[i]=rdiv(qdd,2,contextptr);
 	}
       }
     }
@@ -229,8 +229,8 @@ namespace giac {
     }
     if (r!=n) {
       //il y a des termes carres
-      u1=recursive_normal(rdiv(derive(q,x[r],contextptr),plus_two),contextptr);
-      q1=recursive_normal(q-rdiv(u1*u1,A[r][r]),contextptr);     
+      u1=recursive_normal(rdiv(derive(q,x[r],contextptr),plus_two,contextptr),contextptr);
+      q1=recursive_normal(q-rdiv(u1*u1,A[r][r],contextptr),contextptr);     
       vecteur y;
       //y contient les variables qui restent (on enleve x[r])	   
       for (int j=0;j<n;j++){
@@ -240,7 +240,7 @@ namespace giac {
       }
       L=gauss(q1,y,D,U,PR,contextptr);
       //on rajoute 1/a_r_r sur la diagonale D
-      R[0]=rdiv(1,A[r][r]);
+      R[0]=rdiv(1,A[r][r],contextptr);
       D=mergevecteur(R,D);
       //on rajoute u1 aux vecteurs constitue des formes lineaires
       //q= 1/a_r_r*(u1)^2+... 
@@ -260,7 +260,7 @@ namespace giac {
 	}
       }
       P=PP;
-      R[0]=rdiv(pow(u1,2),A[r][r]);
+      R[0]=rdiv(pow(u1,2),A[r][r],contextptr);
       return(mergevecteur(R,L));
     }
     //il n'y a pas de carres
@@ -276,11 +276,11 @@ namespace giac {
 	}
       }
     }
-    l1=rdiv(derive(q,x[r1],contextptr),2);
-    l2=rdiv(derive(q,x[r2],contextptr),2);
+    l1=rdiv(derive(q,x[r1],contextptr),2,contextptr);
+    l2=rdiv(derive(q,x[r2],contextptr),2,contextptr);
     u1=recursive_normal(l1+l2,contextptr);
     u2=recursive_normal(l1-l2,contextptr);
-    q1=recursive_normal(q-rdiv(plus_two*l1*l2,A[r1][r2]),contextptr);
+    q1=recursive_normal(q-rdiv(plus_two*l1*l2,A[r1][r2],contextptr),contextptr);
     vecteur y;
     for (int j=0;j<n;j++){
       if ((j!=r1) && (j!=r2)) {
@@ -289,8 +289,8 @@ namespace giac {
     }
     L=gauss(q1,y,D,U,PR,contextptr);
     //on rajoute 1/a_r1_r2 et -1/a_r1_r2 sur la diagonale D
-    R[0]=rdiv(1,plus_two*A[r1][r2]);
-    R.push_back(rdiv(-1,plus_two*A[r1][r2]));
+    R[0]=rdiv(1,plus_two*A[r1][r2],contextptr);
+    R.push_back(rdiv(-1,plus_two*A[r1][r2],contextptr));
     D=mergevecteur(R,D); 
     //on rajoute u1 et u2 au vecteur U constitue des formes lineaires
     //q= 1/a_r1_r2*(u1)^2 - 1/a_r1_r2*(u2)^2 + ... 
@@ -316,8 +316,8 @@ namespace giac {
       }
     }	
     P=PP;
-    R[0]=rdiv(pow(u1,2),plus_two*A[r1][r2]);
-    R[1]=rdiv(-pow(u2,2),plus_two*A[r1][r2]);
+    R[0]=rdiv(pow(u1,2),plus_two*A[r1][r2],contextptr);
+    R[1]=rdiv(-pow(u2,2),plus_two*A[r1][r2],contextptr);
     return(mergevecteur(R,L)); 
   } 
 
@@ -424,7 +424,7 @@ namespace giac {
     gen qp;
     qp=q;
     for (int i=0;i<n-1;i++){
-      qp=subst(qp,x[i],rdiv(x[i],x[2]),false,contextptr);           
+      qp=subst(qp,x[i],rdiv(x[i],x[2],contextptr),false,contextptr);           
     }
     qp=recursive_normal(x[2]*x[2]*qp,contextptr);
     //qp est l'equation en projective qp est quadratique
@@ -461,16 +461,16 @@ namespace giac {
 	//(X0,Y0) sont les coord du centre ds la base (V0,V1)
 	vp0=0;
 	vp1=a+c;
-	V0[0]=rdiv(b,norme);
-	V0[1]=rdiv(-a,norme);
+	V0[0]=rdiv(b,norme,contextptr);
+	V0[1]=rdiv(-a,norme,contextptr);
 	V1[0]=-V0[1]; V1[1]=V0[0];
-	Y0=-rdiv(d*a+e*b,norme*vp1);
+	Y0=-rdiv(d*a+e*b,norme*vp1,contextptr);
 	coeffy2=normal(a+c,contextptr);
 	//cout<<"Y0="<<Y0<<endl;	
 	coeffx=normal(2*(d*b-e*a)/norme,contextptr);
 	if (coeffx!=0){
 	  // parabole
-	  X0=rdiv((d*a+e*b)*(d*a+e*b)-f*(a*a+b*b)*vp1,gen(2)*vp1*(d*b-e*a)*norme);
+	  X0=rdiv((d*a+e*b)*(d*a+e*b)-f*(a*a+b*b)*vp1,gen(2)*vp1*(d*b-e*a)*norme,contextptr);
 	  equation_reduite=coeffy2*pow(x[1],2)+coeffx*x[0];
 	} else { 
 	  //si d*b-e*a==0 alors X0=0
@@ -483,9 +483,9 @@ namespace giac {
 	// a==0 => b==0 (puisque a*c-b*b==0) et c!=0
 	V0[0]=1; V0[1]=0;
 	V1[0]=0; V1[1]=1;
-	Y0=-rdiv(e,c);
+	Y0=-rdiv(e,c,contextptr);
 	if (d!=0){
-	  X0=rdiv(e*e-f*c,gen(2)*d*c);
+	  X0=rdiv(e*e-f*c,gen(2)*d*c,contextptr);
 	  coeffy2=c;
 	  coeffx=normal(2*d,contextptr);
 	  equation_reduite=c*pow(x[1],2)+coeffx*x[0];
@@ -524,7 +524,11 @@ namespace giac {
 	// parabola coeffy2*Y^2+coeffx*X=0 -> X=-coeffy2/coeffx*Y^2
 	// X+i*Y=-coeffy2/coeffx*Y^2+i*Y
 	gen coeff=-coeffy2/coeffx;
+#ifdef GIAC_HAS_STO_38
+	gen t(vx_var);
+#else
 	gen t(t__IDNT_e);
+#endif
 	ck_parameter_t(contextptr);
 	gen Z=coeff*t*t+cst_i*t;
 	Z=z0+zV0*Z;
@@ -563,7 +567,11 @@ namespace giac {
 	svp1(exact(sign(vp1,contextptr),contextptr)),
 	scoeffcst(exact(sign(coeffcst,contextptr),contextptr));
       if (svp0.type==_INT_ && svp1.type==_INT_ && scoeffcst.type==_INT_){
+#ifdef GIAC_HAS_STO_38
+	gen t(vx_var);
+#else
 	gen t(t__IDNT_e);
+#endif
 	ck_parameter_t(contextptr);
 	int sprodvp = svp0.val * svp1.val;
 	int sprodcoeff = svp0.val*scoeffcst.val;
@@ -589,8 +597,8 @@ namespace giac {
 	  // (x[0]/vp0)^2 + (x[1]/vp1)^2 = 1
 	  // => x[0]+i*x[1]=vp0*cos(t)+i*vp1*sin(t)
 	  // => x+i*y = x0+i*y0 + V0*(x[0]+i*y[0])
-	  gen tmp=vp0*symb_cos(t)+cst_i*vp1*symb_sin(t);
-	  tmp=z0+zV0*tmp;
+	  gen tmp=evalf(vp0,1,contextptr)*symb_cos(t)+cst_i*evalf(vp1,1,contextptr)*symb_sin(t);
+	  tmp=evalf(z0,1,contextptr)+evalf(zV0,1,contextptr)*tmp;
 	  bool rad=angle_radian(contextptr);
 	  param_curves.push_back(makevecteur(tmp,t,0,rad?cst_two_pi:360,rad?cst_two_pi/60:6));
 	} else {
@@ -615,11 +623,11 @@ namespace giac {
 	    vp1=-vp1;
 	  vp0=normalize_sqrt(sqrt(coeffcst/vp0,contextptr),contextptr);
 	  vp1=normalize_sqrt(sqrt(coeffcst/vp1,contextptr),contextptr);
-	  gen tmp=vp0*symbolic(sprodcoeff<0?at_cosh:at_sinh,t)+cst_i*vp1*symbolic(sprodcoeff<0?at_sinh:at_cosh,t);
-	  tmp=z0+zV0*tmp;
+	  gen tmp=evalf(vp0,1,contextptr)*symbolic(sprodcoeff<0?at_cosh:at_sinh,t)+cst_i*evalf(vp1,1,contextptr)*symbolic(sprodcoeff<0?at_sinh:at_cosh,t);
+	  tmp=evalf(z0,1,contextptr)+evalf(zV0,1,contextptr)*tmp;
 	  param_curves.push_back(makevecteur(tmp,t,-3,3,0.1));
-	  tmp=(sprodcoeff<0?-1:1)*vp0*symbolic(sprodcoeff<0?at_cosh:at_sinh,t)+(sprodcoeff<0?1:-1)*cst_i*vp1*symbolic(sprodcoeff<0?at_sinh:at_cosh,t);
-	  tmp=z0+zV0*tmp;
+	  tmp=(sprodcoeff<0?-1:1)*evalf(vp0,1,contextptr)*symbolic(sprodcoeff<0?at_cosh:at_sinh,t)+(sprodcoeff<0?1:-1)*cst_i*evalf(vp1,1,contextptr)*symbolic(sprodcoeff<0?at_sinh:at_cosh,t);
+	  tmp=evalf(z0,1,contextptr)+evalf(zV0,1,contextptr)*tmp;
 	  param_curves.push_back(makevecteur(tmp,t,-3,3,0.1));
 	}
       }
@@ -737,8 +745,8 @@ namespace giac {
 	      gen eq=makevecteur(a*upar*symb_cos(vpar),b*upar*symb_sin(vpar),upar);
 	      *logptr(contextptr) << gettext("Cone of center ") << centre << endl;
 	      eq=centre+multmatvecteur(P,*eq._VECTptr);
-	      gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
-	      gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+	      gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-5,5)));
+	      gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 	      ustep=symb_equal(ustep,1./2);
 	      vstep=symb_equal(vstep,cst_two_pi/20);
 	      param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
@@ -754,8 +762,8 @@ namespace giac {
 		gen eq=makevecteur(a*symb_sin(upar)*symb_cos(vpar),b*symb_sin(upar)*symb_sin(vpar),c*symb_cos(upar));
 		*logptr(contextptr) << gettext("Ellipsoid of center ") << centre << endl;
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
-		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,cst_pi)));
-		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+		gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(0,cst_pi)));
+		gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 		ustep=symb_equal(ustep,cst_pi/20);
 		vstep=symb_equal(vstep,cst_two_pi/20);
 		param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
@@ -768,8 +776,8 @@ namespace giac {
 		gen eq=makevecteur(a*symb_sinh(upar)*symb_cos(vpar),b*symb_sinh(upar)*symb_sin(vpar),c*symb_cosh(upar));
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
 		*logptr(contextptr) << gettext("2-fold hyperboloid of center ") << centre << endl;
-		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,3)));
-		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+		gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(0,3)));
+		gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 		ustep=symb_equal(ustep,3./20);
 		vstep=symb_equal(vstep,cst_two_pi/20);
 		param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
@@ -783,8 +791,8 @@ namespace giac {
 		gen eq=makevecteur(a*symb_cosh(upar)*symb_cos(vpar),b*symb_cosh(upar)*symb_sin(vpar),c*symb_sinh(upar));
 		*logptr(contextptr) << gettext("2-fold hyperboloid of center ") << centre << endl;
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
-		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-3,3)));
-		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+		gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-3,3)));
+		gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 		ustep=symb_equal(ustep,3./20);
 		vstep=symb_equal(vstep,cst_two_pi/20);
 		param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
@@ -815,8 +823,8 @@ namespace giac {
 		gen a(sqrt(-d/s1,contextptr)),b(sqrt(-d/s2,contextptr));
 		gen eq=makevecteur(a*symb_cos(vpar),b*symb_sin(vpar),upar);
 		eq=centre+multmatvecteur(P,*eq._VECTptr);
-		gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
-		gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+		gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-5,5)));
+		gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 		ustep=symb_equal(ustep,1./2);
 		vstep=symb_equal(vstep,cst_two_pi/20);
 		param_surface.push_back(makevecteur(eq,ueq,veq,ustep,vstep));
@@ -835,8 +843,8 @@ namespace giac {
 	    }
 	    else { // hyperbolic cylinder
 	      *logptr(contextptr) << gettext("Hyperbolic cylinder around ") << centre << endl;
-	      gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
-	      gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-3,3)));
+	      gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-5,5)));
+	      gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(-3,3)));
 	      ustep=symb_equal(ustep,1./2);
 	      vstep=symb_equal(vstep,0.3);
 	      if (s1s*ds<0){ // x^2/(-d/s1) - y^2/(d/s2)=1
@@ -876,9 +884,9 @@ namespace giac {
 	    *logptr(contextptr) << gettext("Elliptic paraboloid of center ") << centre << endl;
 	    // if (s1s*s2s>0) x^2+y^2/(s1/s2)=-2*c3*z/s1
 	    // x=u*cos(t), y=u*sqrt(s1/s2)*sin(t), z=-u^2*s1/2/c3
-	    gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(0,5)));
+	    gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(0,5)));
 	    ustep=symb_equal(ustep,1./2);
-	    gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(0,cst_two_pi)));
+	    gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(0,cst_two_pi)));
 	    vstep=symb_equal(vstep,cst_two_pi/20);
 	    gen a(sqrt(s1/s2,contextptr)),b(-s1/2/c3);
 	    gen eq=makevecteur(upar*symb_cos(vpar),a*upar*symb_sin(vpar),b*pow(upar,2));
@@ -889,9 +897,9 @@ namespace giac {
 	  else {
 	    // if (s1s*s2s<0) x^2-y^2/(-s1/s2)=-2*c3*z/s1
 	    *logptr(contextptr) << gettext("Hyperbolic paraboloid of center ") << centre << endl;
-	    gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-3,3)));
+	    gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-3,3)));
 	    ustep=symb_equal(ustep,0.3);
-	    gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-3,3)));
+	    gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(-3,3)));
 	    vstep=symb_equal(vstep,0.3);
 	    gen a(-s1/s2),b(s1/2/c3);
 	    gen eq=makevecteur(upar,sqrt(a,contextptr)*vpar,b*(pow(vpar,2)-pow(upar,2)));
@@ -919,8 +927,8 @@ namespace giac {
 	centre=*tmp._VECTptr;
 	// ??? dred=normal(subst(q,vxyz,centre),contextptr);
 	equation_reduite=s1*pow(x,2)+2*c4*z; // ???+dred;
-	gen ueq=symbolic(at_equal,makevecteur(upar,symb_interval(-5,5)));
-	gen veq=symbolic(at_equal,makevecteur(vpar,symb_interval(-5,5)));
+	gen ueq=symbolic(at_equal,makesequence(upar,symb_interval(-5,5)));
+	gen veq=symbolic(at_equal,makesequence(vpar,symb_interval(-5,5)));
 	ustep=symb_equal(ustep,1./2);
 	vstep=symb_equal(vstep,1./2);
 	*logptr(contextptr) << gettext("Paraboloid cylinder") << endl;

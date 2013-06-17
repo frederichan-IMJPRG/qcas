@@ -1,4 +1,4 @@
-/* -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c misc.cc -DHAVE_CONFIG_H -DIN_GIAC" -*- */
+/* -*- mode:C++ ; compile-command: "g++ -I.. -I../include -DHAVE_CONFIG_H -DIN_GIAC -DGIAC_GENERIC_CONSTANTS -fno-strict-aliasing -g -c misc.cc -Wall" -*- */
 #include "giacPCH.h"
 /*
  *  Copyright (C) 2001, 2007 R. De Graeve, B. Parisse, Institut Fourier, 38402 St Martin d'Heres
@@ -257,7 +257,7 @@ namespace giac {
 
   gen _cot(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
-    return rdiv(cos(args,contextptr),sin(args,contextptr));
+    return rdiv(cos(args,contextptr),sin(args,contextptr),contextptr);
   }    
   static const char _cot_s []="cot";
   static define_unary_function_eval (__cot,&_cot,_cot_s);
@@ -281,6 +281,8 @@ namespace giac {
 
   gen _acot(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (abs_calc_mode(contextptr)==38)
+      return cst_pi_over_2-atan(args,contextptr);
     return atan(inv(args,contextptr),contextptr);
   }    
   static const char _acot_s []="acot";
@@ -325,7 +327,7 @@ namespace giac {
 	tmp=preval(tmp,x,a,b,contextptr);
       return tmp+F;
     }
-    gen uprime(normal(rdiv(uprimev,v),contextptr));
+    gen uprime(normal(rdiv(uprimev,v,contextptr),contextptr));
     u=integrate_gen(uprime,x,contextptr);
     if (is_undef(u)) return u;
     F += u*v;
@@ -477,8 +479,11 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen p,x;
     if (args.type!=_VECT){
-      x=vx_var;
       p=args;
+      if (calc_mode(contextptr)==1)
+	x=ggb_var(p);
+      else
+	x=vx_var;
     }
     else {
       vecteur & v=*args._VECTptr;
@@ -531,14 +536,14 @@ namespace giac {
       s=v.size();
       if (!s)
 	return args;
-      if ( (args.subtype==_POLY1__VECT) || (s<2) )
+      if ( (args.subtype!=_SEQ__VECT) || (s<2) )
 	return v.front();
       x=v[1];
       p=v[0];
       if (s>2)
 	order=v[2];
     }
-    gen g=_e2r(makevecteur(p,x),contextptr),n,d;
+    gen g=_e2r(makesequence(p,x),contextptr),n,d;
     fxnd(g,n,d);
     if (n.type!=_VECT){
       if (n.type==_POLY){
@@ -578,12 +583,12 @@ namespace giac {
     else {
       vecteur& v=*args._VECTptr;
       int s=v.size();
-      if ( (args.subtype==_POLY1__VECT) || (s!=2) || (v[1].type!=_IDNT) )
+      if ( (args.subtype!=_SEQ__VECT) || (s!=2) || (v[1].type!=_IDNT) )
 	return tcoeff(v);
       x=v[1];
       p=v[0];
     }
-    gen g=_e2r(makevecteur(p,x),contextptr),n,d;
+    gen g=_e2r(makesequence(p,x),contextptr),n,d;
     fxnd(g,n,d);
     if (n.type!=_VECT)
       return zero;
@@ -603,18 +608,58 @@ namespace giac {
       res=res*pow(r2e(it->fact,l,contextptr),it->mult);
     return res;
   }
-  gen _sqrfree(const gen & args,GIAC_CONTEXT){
+  static vecteur sqrfree(const gen & g,const vecteur & l,int mult,GIAC_CONTEXT){
+    vecteur res;
+    if (g.type!=_POLY){
+      if (is_one(g))
+	return res;
+      return vecteur(1,makevecteur(r2sym(g,l,contextptr),mult));
+    }
+    factorization f(sqff(*g._POLYptr));
+    factorization::const_iterator it=f.begin(),itend=f.end();
+    for (;it!=itend;++it){
+      const polynome & p=it->fact;
+      gen pg=r2e(p,l,contextptr);
+      if (!is_one(pg))
+	res.push_back(makevecteur(pg,mult*it->mult));
+    }
+    return res;
+  }
+  gen _sqrfree(const gen & args_,GIAC_CONTEXT){
+    gen args(args_);
     if ( args.type==_STRNG && args.subtype==-1) return  args;
-    if (args.type==_VECT)
+    bool factors=false;
+    if (args.type==_VECT){
+      vecteur argv=*args._VECTptr;
+      if (!argv.empty() && argv.back()==at_factors){
+	factors=true;
+	argv.pop_back();
+	if (argv.size()==1)
+	  args=argv.front();
+	else
+	  args=gen(argv,args.subtype);
+      }
+    }
+    if (args.type==_VECT) // fixme take care of factors
       return apply(args,_sqrfree,contextptr);
     if (args.type!=_SYMB)
-      return args;
+      return factors?makevecteur(args,1):args;
     gen a,b;
-    if (is_algebraic_program(args,a,b))
-      return symbolic(at_program,makevecteur(a,0,_sqrfree(b,contextptr)));
+    if (is_algebraic_program(args,a,b)) // fixme take care of factors
+      return symbolic(at_program,makesequence(a,0,_sqrfree(b,contextptr)));
     vecteur l(alg_lvar(args));
-    fraction f(e2r(args,l,contextptr));
-    return sqrfree(f.num,l,contextptr)/sqrfree(f.den,l,contextptr);
+    gen g=e2r(args,l,contextptr);
+    if (g.type==_FRAC){
+      fraction f=*g._FRACptr;
+      if (factors)
+	return mergevecteur(sqrfree(f.num,l,1,contextptr),sqrfree(f.den,l,-1,contextptr));
+      return sqrfree(f.num,l,contextptr)/sqrfree(f.den,l,contextptr);
+    }
+    else {
+      if (factors)
+	return sqrfree(g,l,1,contextptr);
+      return sqrfree(g,l,contextptr);
+    }
   }
   static const char _sqrfree_s []="sqrfree";
   static define_unary_function_eval (__sqrfree,&_sqrfree,_sqrfree_s);
@@ -668,7 +713,7 @@ namespace giac {
       }
       num._POLYptr->coord=res;
     }
-    return r2e(rdiv(num,den),w,contextptr);
+    return r2e(rdiv(num,den,contextptr),w,contextptr);
   }    
   static const char _truncate_s []="truncate";
   static define_unary_function_eval (__truncate,&_truncate,_truncate_s);
@@ -678,10 +723,10 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen p,x,a,b,c;
     if (is_algebraic_program(args,a,b))
-      return symbolic(at_program,makevecteur(a,0,_canonical_form(gen(makevecteur(b,a[0]),_SEQ__VECT),contextptr)));
+      return symbolic(at_program,makesequence(a,0,_canonical_form(gen(makevecteur(b,a[0]),_SEQ__VECT),contextptr)));
     if (args.type!=_VECT){
-      x=vx_var;
       p=args;
+      x=ggb_var(p);
     }
     else {
       vecteur & v=*args._VECTptr;
@@ -845,7 +890,7 @@ namespace giac {
 	 )
       return gensizeerr(contextptr);
     if (ban.type!=_POLY)
-      return r2e(rdiv(aan*bad,ban*aad),lv,contextptr);
+      return r2e(rdiv(aan*bad,ban*aad,contextptr),lv,contextptr);
     vecteur a;
     if (aan.type==_POLY)
       a=polynome2poly1(*aan._POLYptr,1);
@@ -865,7 +910,7 @@ namespace giac {
     delete env;
     reverse(quo.begin(),quo.end());
     gen res(vecteur2polynome(quo,lv.size()));
-    res=rdiv(res*bad,aad);
+    res=rdiv(res*bad,aad,contextptr);
     return r2e(res,lv,contextptr);
   }
 
@@ -963,7 +1008,7 @@ namespace giac {
     g=evalf_double(g,1,contextptr);
     if (g.type!=_DOUBLE_)
       return gensizeerr(contextptr);
-    return vector_int_2_vecteur(float2continued_frac(g._DOUBLE_val,eps),contextptr);
+    return vector_int_2_vecteur(float2continued_frac(g._DOUBLE_val,eps));
   }
   static const char _dfc_s []="dfc";
   static define_unary_function_eval (__dfc,&_dfc,_dfc_s);
@@ -1051,12 +1096,12 @@ namespace giac {
       for (int i=1;i<s;++i){
 	gen cl;
 	for (int j=0;j<i;++j)
-	  cl=cl+rdiv(scalaire(gen(makevecteur(lv[i],lv[j]),_SEQ__VECT),contextptr),sc[j])*lv[j];
+	  cl=cl+rdiv(scalaire(gen(makevecteur(lv[i],lv[j]),_SEQ__VECT),contextptr),sc[j],contextptr)*lv[j];
 	lv[i]=lv[i]-cl;
 	sc.push_back(scalaire(gen(makevecteur(lv[i],lv[i]),_SEQ__VECT),contextptr));
       }
       for (int i=0;i<s;++i)
-	lv[i]=rdiv(lv[i],sqrt(sc[i],contextptr));
+	lv[i]=rdiv(lv[i],sqrt(sc[i],contextptr),contextptr);
       return lv;
     }
     return gensizeerr(contextptr);
@@ -1065,15 +1110,21 @@ namespace giac {
   static define_unary_function_eval (__gramschmidt,&_gramschmidt,_gramschmidt_s);
   define_unary_function_ptr5( at_gramschmidt ,alias_at_gramschmidt,&__gramschmidt,0,true);
 
-  void aplatir(const matrice & m,vecteur & v){
+  void aplatir(const matrice & m,vecteur & v,bool full){
     int s=m.size();
-    v.clear();
-    v.reserve(2*s);
+    if (!full){
+      v.clear();
+      v.reserve(2*s);
+    }
     const_iterateur it=m.begin(),itend=m.end(),jt,jtend;
     for (;it!=itend;++it){
-      if (it->type!=_VECT)
+      if (it->type!=_VECT || it->subtype==_GGB__VECT)
 	v.push_back(*it);
       else {
+	if (full){
+	  aplatir(*it->_VECTptr,v,full);
+	  continue;
+	}
 	jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();
 	for (;jt!=jtend;++jt)
 	  v.push_back(*jt);
@@ -1105,7 +1156,7 @@ namespace giac {
     }
     if (it==itend)
       return gensizeerr(contextptr);
-    gen t= _e2r(makevecteur(it->_VECTptr->back(),vx_var),contextptr);
+    gen t= _e2r(makesequence(it->_VECTptr->back(),vx_var),contextptr);
     if (t.type==_VECT)
       return t/lgcd(*t._VECTptr);
     else
@@ -1504,6 +1555,14 @@ namespace giac {
   static define_unary_function_eval (__maxnorm,&_maxnorm,_maxnorm_s);
   define_unary_function_ptr5( at_maxnorm ,alias_at_maxnorm,&__maxnorm,0,true);
 
+  gen l1norm(const vecteur & v,GIAC_CONTEXT){
+    gen res;
+    const_iterateur it=v.begin(),itend=v.end();
+    for (;it!=itend;++it)
+      res=res+linfnorm(*it,contextptr);
+    return res;
+  }
+
   gen _l1norm(const gen & g0,GIAC_CONTEXT){
     if ( g0.type==_STRNG && g0.subtype==-1) return  g0;
     gen g=remove_at_pnt(g0);
@@ -1511,11 +1570,7 @@ namespace giac {
       g=vector2vecteur(*g._VECTptr);
     if (g.type!=_VECT)
       return linfnorm(g,contextptr);
-    gen res;
-    const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
-    for (;it!=itend;++it)
-      res=res+linfnorm(*it,contextptr);
-    return res;
+    return l1norm(*g._VECTptr,contextptr);
   }
   static const char _l1norm_s []="l1norm";
   static define_unary_function_eval (__l1norm,&_l1norm,_l1norm_s);
@@ -1626,8 +1681,12 @@ namespace giac {
   // service=-3 for content -2 for primpart -1 for coeff, degree for coeff
   static gen primpartcontent(const gen& g,int service,GIAC_CONTEXT){
     vecteur v;
-    if (g.type==_VECT && g.subtype !=_SEQ__VECT)
-      v=makevecteur(g,vx_var);
+    if (g.type==_VECT && g.subtype !=_SEQ__VECT){
+      if (calc_mode(contextptr)==1)
+	v=makevecteur(g,ggb_var(g));
+      else
+	v=makevecteur(g,vx_var);
+    }
     else
       v=gen2vecteur(g);
     int s=v.size();
@@ -1697,6 +1756,8 @@ namespace giac {
     if (s!=1 && s!=2)
       return gensizeerr(contextptr);
     gen x(vx_var);
+    if (calc_mode(contextptr)==1)
+      x=ggb_var(v[0]);
     if (s==2)
       x=v[1];
     gen f(_e2r(gen(makevecteur(v[0],x),_SEQ__VECT),contextptr));
@@ -1789,7 +1850,7 @@ namespace giac {
       return gensizeerr(contextptr);
     gen res=*it;
     for (++it;it!=itend;++it){
-      res=_ichinrem(makevecteur(res,*it),contextptr);
+      res=_ichinrem(makesequence(res,*it),contextptr);
     }
     return res;
   }
@@ -1866,11 +1927,16 @@ namespace giac {
 	sort(v.begin(),v.end(),islesscomplexthanf);
 	return v[int(std::ceil(v.size()/2.0))-1]; // v[(v.size()-1)/4];
       }
-      return mtran(ascsort(mtran(vecteur(1,v)),true))[int(std::ceil(v.size()/2.0))-1][0];
+      matrice mt=mtran(ascsort(mtran(vecteur(1,v)),true));
+      if (calc_mode(contextptr)==1 && !v.empty() && !(v.size()%2))
+	return (mt[v.size()/2][0]+mt[v.size()/2-1][0])/2;
+      return mt[int(std::ceil(v.size()/2.0))-1][0];
     }
     else
       v=ascsort(v,true);
     v=mtran(v);
+    if (calc_mode(contextptr)==1 && !v.empty() && !(v.size()%2))
+      return (v[v.size()/2]+v[v.size()/2-1])/2;
     return v[int(std::ceil(v.size()/2.0))-1]; // v[(v.size()-1)/2];
   }
   static const char _median_s []="median";
@@ -1922,25 +1988,53 @@ namespace giac {
   gen _quantile(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     vecteur v(gen2vecteur(g));
-    if (v.size()<2 || v.front().type!=_VECT || v.back().type!=_DOUBLE_)
+    if (v.size()<2 || v.front().type!=_VECT)
       return gensizeerr(contextptr);
-    double d=v.back()._DOUBLE_val;
-    if (d<0 || d>=1)
-      return gendimerr(gettext(""));
-    if (g.type==_VECT && g.subtype==_SEQ__VECT && v.size()==3)
+    if (g.type==_VECT && g.subtype==_SEQ__VECT && v.size()==3){
+      gen tmp=evalf_double(v.back(),1,contextptr);
+      if (tmp.type!=_DOUBLE_)
+	return gensizeerr(contextptr);
+      double d=tmp._DOUBLE_val;
+      if (d<=0 || d>=1)
+	return gendimerr(contextptr);
       return freq_quantile(makevecteur(v[0],v[1]),d,contextptr);
+    }
+    if (v.size()!=2)
+      return gensizeerr(contextptr);
+    bool vect=v.back().type==_VECT;
+    vecteur w=gen2vecteur(v.back()),res;
     v=*v.front()._VECTptr;
+    bool matrix=true;
     if (!ckmatrix(v)){
+      matrix=false;
       if (!is_fully_numeric(evalf(v,1,contextptr))){
 	sort(v.begin(),v.end(),islesscomplexthanf);
-	return v[int(std::ceil(d*v.size()))-1]; // v[(v.size()-1)/4];
+	for (unsigned j=0;j<w.size();++j){
+	  gen tmp=evalf_double(w[j],1,contextptr);
+	  if (tmp.type!=_DOUBLE_ || tmp._DOUBLE_val<=0 || tmp._DOUBLE_val>=1)
+	    res.push_back(undef);
+	  else
+	    res.push_back(v[int(std::ceil(tmp._DOUBLE_val*v.size()))-1]);
+	}
+	return vect?res:res.front(); 
       }
       v=ascsort(mtran(vecteur(1,v)),true);
     }
     else
       v=ascsort(v,true);
     v=mtran(v);
-    return v[int(std::ceil(d*v.size()))-1];
+    for (unsigned j=0;j<w.size();++j){
+      gen tmp=evalf_double(w[j],1,contextptr);
+      if (tmp.type!=_DOUBLE_ || tmp._DOUBLE_val<=0 || tmp._DOUBLE_val>=1)
+	res.push_back(undef);
+      else {
+	gen data=v[int(std::ceil(tmp._DOUBLE_val*v.size()))-1];
+	if (!matrix && data.type==_VECT && data._VECTptr->size()==1)
+	  data=data._VECTptr->front();
+	res.push_back(data);
+      }
+    }
+    return vect?res:res.front();
   }
   static const char _quantile_s []="quantile";
   static define_unary_function_eval(unary_quantile,&_quantile,_quantile_s);
@@ -2107,10 +2201,10 @@ namespace giac {
       if (withstddev)
 	m2 = m2 + apply(v2[i],apply(v1[i],v1[i],prod),prod);
     }
-    m = apply(m,s,rdiv);
+    m = apply(m,s,contextptr,rdiv);
     if (withstddev){
       m2=m2-apply(s,apply(m,m,prod),prod);
-      m2=apply(m2,s-(withstddev==2),rdiv);
+      m2=apply(m2,s-(withstddev==2),contextptr,rdiv);
       if (withstddev==3)
 	return m2;
       return apply(m2,sqrt,contextptr);
@@ -2137,6 +2231,43 @@ namespace giac {
 
   gen _mean(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
+    int nd;
+    if (g.type==_SYMB && (nd=is_distribution(g))){
+      gen f=g._SYMBptr->feuille;
+      if (f.type==_VECT && f._VECTptr->size()==1)
+	f=f._VECTptr->front();
+      int s=f.type==_VECT?f._VECTptr->size():1;
+      if (s!=distrib_nargs(nd))
+	return gensizeerr(contextptr);
+      if (nd==1)
+	return f[0];
+      if (nd==2)
+	return f[0]*f[1];
+      if (nd==3)
+	return f[0]*f[1]/(1-f[1]);
+      if (nd==4 || nd==11)
+	return f;
+      if (nd==5)
+	return (f.type<_IDNT && is_strictly_greater(1,f,contextptr))?undef:0;
+      if (nd==6)
+	return (f[1].type<_IDNT && is_greater(2,f[1],contextptr))?undef:f[1]/(f[1]-2);
+      if (nd==8)
+	return f[1]*Gamma(1+inv(f[0],contextptr),contextptr);
+      if (nd==9)
+	return f[0]/(f[0]+f[1]);
+      if (nd==10)
+	return f[0]/f[1];
+      if (nd==12)
+	return inv(f[0],contextptr);
+      if (nd==13)
+	return (f[1]+f[0])/2;
+      if (nd==14)
+	return inv(f[0],contextptr);
+      return undef;
+    }
+    if (g.type==_VECT && !g._VECTptr->empty() && g._VECTptr->front().type==_FUNC && (nd=is_distribution(g._VECTptr->front()))){
+      return _mean(symbolic(*g._VECTptr->front()._FUNCptr,gen(vecteur(g._VECTptr->begin()+1,g._VECTptr->end()),_SEQ__VECT)),contextptr);
+    }
     if (g.type==_VECT && g.subtype==_SEQ__VECT)
       return stddevmean(g,0,contextptr);
     vecteur v(gen2vecteur(g));
@@ -2147,11 +2278,11 @@ namespace giac {
     return v;
   }
   static const char _mean_s []="mean";
-static define_unary_function_eval (__mean,&_mean,_mean_s);
+  static define_unary_function_eval (__mean,&_mean,_mean_s);
   define_unary_function_ptr5( at_mean ,alias_at_mean,&__mean,0,true);
 
   static const char _moyenne_s []="moyenne";
-static define_unary_function_eval (__moyenne,&_mean,_moyenne_s);
+  static define_unary_function_eval (__moyenne,&_mean,_moyenne_s);
   define_unary_function_ptr5( at_moyenne ,alias_at_moyenne,&__moyenne,0,true);
 
   gen _stdDev(const gen & g,GIAC_CONTEXT){
@@ -2166,19 +2297,61 @@ static define_unary_function_eval (__moyenne,&_mean,_moyenne_s);
     return v;
   }
   static const char _stdDev_s []="stdDev";
-static define_unary_function_eval (__stdDev,&_stdDev,_stdDev_s);
+  static define_unary_function_eval (__stdDev,&_stdDev,_stdDev_s);
   define_unary_function_ptr5( at_stdDev ,alias_at_stdDev,&__stdDev,0,true);
 
   static const char _stddevp_s []="stddevp";
-static define_unary_function_eval (__stddevp,&_stdDev,_stddevp_s);
+  static define_unary_function_eval (__stddevp,&_stdDev,_stddevp_s);
   define_unary_function_ptr5( at_stddevp ,alias_at_stddevp,&__stddevp,0,true);
 
   static const char _ecart_type_population_s []="ecart_type_population";
-static define_unary_function_eval (__ecart_type_population,&_stdDev,_ecart_type_population_s);
+  static define_unary_function_eval (__ecart_type_population,&_stdDev,_ecart_type_population_s);
   define_unary_function_ptr5( at_ecart_type_population ,alias_at_ecart_type_population,&__ecart_type_population,0,true);
 
   gen _stddev(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
+    int nd;
+    if (g.type==_SYMB && (nd=is_distribution(g))){
+      gen f=g._SYMBptr->feuille;
+      if (f.type==_VECT && f._VECTptr->size()==1)
+	f=f._VECTptr->front();
+      int s=f.type==_VECT?f._VECTptr->size():1;
+      if (s!=distrib_nargs(nd))
+	return gensizeerr(contextptr);
+      if (nd==1)
+	return f[1];
+      if (nd==2)
+	return sqrt(f[0]*f[1]*(1-f[1]),contextptr);
+      if (nd==3)
+	return sqrt(f[0]*f[1],contextptr)/(1-f[1]);
+      if (nd==4)
+	return sqrt(f,contextptr);
+      if (nd==11)
+	return sqrt(2*f,contextptr);
+      if (nd==5){
+	if (f.type<_IDNT && is_greater(1,f,contextptr)) return undef;
+	if (f.type<_IDNT && is_greater(2,f,contextptr)) return plus_inf;
+	return sqrt(f/(f-2),contextptr);
+      }
+      if (nd==6)
+	return (f[1].type<_IDNT && is_greater(4,f[1],contextptr))?undef:f[1]/(f[1]-2)*sqrt(2*(f[0]+f[1]-2)/f[0]/(f[1]-4),contextptr);
+      if (nd==8)
+	return f[1]*sqrt(Gamma(1+gen(2)/f[0],contextptr)-pow(Gamma(1+gen(1)/f[0],contextptr),2,contextptr),contextptr);
+      if (nd==9)
+	return sqrt(f[0]*f[1]/(f[0]+f[1]+1),contextptr)/(f[0]+f[1]);
+      if (nd==10)
+	return sqrt(f[0],contextptr)/f[1];
+      if (nd==12)
+	return sqrt(1-f[0],contextptr)/f[0];
+      if (nd==13)
+	return (f[1]-f[0])*sqrt(3,contextptr)/6;
+      if (nd==14)
+	return inv(f[0],contextptr);
+      return undef;
+    }
+    if (g.type==_VECT && !g._VECTptr->empty() && g._VECTptr->front().type==_FUNC && (nd=is_distribution(g._VECTptr->front()))){
+      return _stddev(symbolic(*g._VECTptr->front()._FUNCptr,gen(vecteur(g._VECTptr->begin()+1,g._VECTptr->end()),_SEQ__VECT)),contextptr);
+    }
     if (g.type==_VECT && g.subtype==_SEQ__VECT)
       return stddevmean(g,1,contextptr);
     vecteur v(gen2vecteur(g));
@@ -2189,11 +2362,11 @@ static define_unary_function_eval (__ecart_type_population,&_stdDev,_ecart_type_
     return v;
   }
   static const char _stddev_s []="stddev";
-static define_unary_function_eval (__stddev,&_stddev,_stddev_s);
+  static define_unary_function_eval (__stddev,&_stddev,_stddev_s);
   define_unary_function_ptr5( at_stddev ,alias_at_stddev,&__stddev,0,true);
 
   static const char _ecart_type_s []="ecart_type";
-static define_unary_function_eval (__ecart_type,&_stddev,_ecart_type_s);
+  static define_unary_function_eval (__ecart_type,&_stddev,_ecart_type_s);
   define_unary_function_ptr5( at_ecart_type ,alias_at_ecart_type,&__ecart_type,0,true);
 
   gen _variance(const gen & g,GIAC_CONTEXT){
@@ -2517,7 +2690,7 @@ static define_unary_function_eval (__logarithmic_regression,&_logarithmic_regres
 
   gen _power_regression(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-    gen res= function_regression(g,at_ln,at_ln,contextptr);
+    gen res= function_regression(evalf(g,1,contextptr),at_ln,at_ln,contextptr);
     if (res.type==_VECT && res._VECTptr->size()==2){
       vecteur v(*res._VECTptr);
       v[1]=exp(v[1],contextptr);
@@ -2587,7 +2760,7 @@ static define_unary_function_eval (__power_regression,&_power_regression,_power_
 	s += R2s;
       attributs.push_back(string2gen(s,false));
     }
-    return put_attributs(_droite(makevecteur(b*cst_i,1+(b+a)*cst_i),contextptr),attributs,contextptr);
+    return put_attributs(_droite(makesequence(b*cst_i,1+(b+a)*cst_i),contextptr),attributs,contextptr);
   }
   static const char _linear_regression_plot_s []="linear_regression_plot";
 static define_unary_function_eval (__linear_regression_plot,&_linear_regression_plot,_linear_regression_plot_s);
@@ -3034,7 +3207,7 @@ static define_unary_function_eval (__parabolic_interpolate,&_parabolic_interpola
 	    if (tmpval[i]._DOUBLE_val>=max_class)
 	      break;
 	  }
-	  res.push_back(makevecteur(symbolic(at_interval,makevecteur(min_class,max_class)),effectif));
+	  res.push_back(makevecteur(symbolic(at_interval,makesequence(min_class,max_class)),effectif));
 	}
 	return res;
       }
@@ -3060,7 +3233,7 @@ static define_unary_function_eval (__parabolic_interpolate,&_parabolic_interpola
 	if (*it>=max_class)
 	  break;
       }
-      res.push_back(makevecteur(symbolic(at_interval,makevecteur(min_class,max_class)),effectif));
+      res.push_back(makevecteur(symbolic(at_interval,makesequence(min_class,max_class)),effectif));
     }
     return res;
   }
@@ -3111,6 +3284,12 @@ static define_unary_function_eval (__parabolic_interpolate,&_parabolic_interpola
 	return vecteur(1,gensizeerr(contextptr));
       double milieu=g._DOUBLE_val;
       double fin=milieu+(milieu-debut);
+      if (it+1!=itend){
+	g=evalf_double(*(it+1),1,contextptr);
+	if (g.type!=_DOUBLE_)
+	  return vecteur(1,gensizeerr(contextptr));
+	fin=(milieu+g._DOUBLE_val)/2;
+      }
       if (fin<=debut)
 	return vecteur(1,gensizeerr(contextptr));
       res.push_back(symb_interval(debut,fin));
@@ -3142,6 +3321,15 @@ static define_unary_function_eval (__center2interval,&_center2interval,_center2i
     bool old_iograph=io_graph(contextptr);
     io_graph(false,contextptr);
 #endif
+    if (class_size<=0){
+      // find class_minimum and class_size from data and number of classes
+      int nc=class_minimum;
+      vector<double> w=prepare_effectifs(v,contextptr);
+      if (w.size()<2)
+	return gensizeerr(contextptr);
+      class_minimum=w.front();
+      class_size=((w.back()-w.front())*(1+1e-12))/nc;
+    }
     if (ckmatrix(v) && !v.empty() && v.front()._VECTptr->size()==2){
       // matrix format is 2 columns 1st column=interval, 2nd column=frequency
       // OR value/frequencies
@@ -3244,6 +3432,38 @@ static define_unary_function_eval (__center2interval,&_center2interval,_center2i
     vecteur attributs(1,default_color(contextptr));
     int s=read_attributs(args,attributs,contextptr);
     args=vecteur(args.begin(),args.begin()+s);
+    int nd;
+    if (s>=1 && (nd=is_distribution(args[0]))){
+      if (args[0].type==_SYMB){
+	vecteur tmp(gen2vecteur(args[0]._SYMBptr->feuille));
+	for (unsigned i=0;i<tmp.size();++i)
+	  args.insert(args.begin()+1+i,tmp[i]); // inefficient ...
+	args[0]=args[0]._SYMBptr->sommet;
+	s+=tmp.size();
+      }
+      gen a,b;
+      if (distrib_support(nd,a,b,true) || s!=distrib_nargs(nd)+1)
+	return gensizeerr(contextptr);
+      args.push_back(vx_var);
+      gen res;
+      if (args[0].type==_FUNC)
+	res=symbolic(*args[0]._FUNCptr,gen(vecteur(args.begin()+1,args.end()),_SEQ__VECT));
+      else
+	res=args[0](gen(vecteur(args.begin()+1,args.end()),_SEQ__VECT),contextptr);
+      if (nd==2) // binomial
+	b=args[1];
+      if (a.type!=_INT_ || !is_integral(b) || b.type!=_INT_ || b.val<=0)
+	return gensizeerr(contextptr);
+      int A=a.val,B=b.val;
+      vecteur v;
+      for (int i=A;i<B;++i){
+	gen y=subst(res,vx_var,i,false,contextptr);
+	vecteur w=makevecteur(i,i+1,i+1+cst_i*y,i+cst_i*y);
+	w.push_back(w.front());
+	v.push_back(pnt_attrib(gen(w,_GROUP__VECT),attributs,contextptr));
+      }
+      return v;
+    }
     if (s>=2){
       if (args[0].type!=_VECT)
 	return gensizeerr(contextptr);
@@ -3264,6 +3484,8 @@ static define_unary_function_eval (__center2interval,&_center2interval,_center2i
 	if (arg1.type==_DOUBLE_ && arg2.type==_DOUBLE_)
 	  return histogram(data,arg1._DOUBLE_val,arg2._DOUBLE_val,attributs,contextptr);
       }
+      if (s==2 && is_integral(arg1) && arg1.type==_INT_ && arg1.val>0)
+	return histogram(data,arg1.val,0.0,attributs,contextptr);
       if (s==2 && args[1].type==_VECT)
 	return _histogram(gen(makevecteur(mtran(args),class_minimum),_SEQ__VECT),contextptr);
       return gensizeerr(contextptr);
@@ -3282,7 +3504,7 @@ static define_unary_function_eval (__center2interval,&_center2interval,_center2i
 	if (is_undef(data[0]))
 	  return gensizeerr(contextptr);
 	data=mtran(data);
-	return histogram(data,0.0,0.0,attributs,contextptr);
+	return histogram(data,0.0,1e-14,attributs,contextptr);
       }
     }
     return histogram(args,class_minimum,class_size,attributs,contextptr);
@@ -3461,12 +3683,15 @@ static define_unary_function_eval (__histogram,&_histogram,_histogram_s);
       return vecteur(1,gensizeerr(contextptr));
     int s=read_attributs(*g._VECTptr,attributs,contextptr);
     vecteur v;
-    if (s>=2 && g._VECTptr->front().type==_INT_ && g[1].type==_VECT){
+    if (g.subtype==_SEQ__VECT && s>=4 && g[1].type==_IDNT)
+      return listplot(_seq(g,contextptr),attributs,contextptr);
+    if (s>=2 && g._VECTptr->front().type<=_DOUBLE_ && g[1].type==_VECT){
       int l=g[1]._VECTptr->size();
       v=*g._VECTptr;
       v[0]=vecteur(l);
+      double d=evalf_double(g._VECTptr->front(),1,contextptr)._DOUBLE_val;
       for (int j=0;j<l;++j){
-	(*v[0]._VECTptr)[j]=j+g._VECTptr->front().val;
+	(*v[0]._VECTptr)[j]=j+d;
       }
       if (!ckmatrix(v))
 	return vecteur(1,gendimerr(contextptr));
@@ -3744,11 +3969,8 @@ static define_unary_function_eval (__diagramme_batons,&_diagramme_batons,_diagra
 	  return gensizeerr(gettext("Negative value encoutered"));
 	da=2*cst_pi*Vals[i]/somme;
 	da100=evalf_double(100*Vals[i]/somme,1,contextptr)._DOUBLE_val;
-	if (da100>0){
-        
-#ifndef BESTA_OS // BP please comment, no sprintf avail?
-	  sprintf(ss,"%.4g",da100);
-#endif
+	if (da100>0){        
+	  sprintfdouble(ss,"%.4g",da100);
 	  if (is_positive(a-cst_pi/2,contextptr))
 	    pos=_QUADRANT2;
 	  if (is_positive(a-cst_pi,contextptr))
@@ -3800,8 +4022,13 @@ static define_unary_function_eval (__camembert,&_camembert,_camembert_s);
 	l.push_back(l0[i]);
     }
     s=l.size();
-    if (s<=3)
+    if (s<=3){
+#if 0
+      if (abs_calc_mode(contextptr)==38)
+	return _polygone(l,contextptr);
+#endif
       return l;
+    }
     gen zmin=l[0],zcur;
     gen ymin=im(zmin,contextptr),ycur,xmin=re(zmin,contextptr),xcur;
     for (int j=1;j<s;++j){
@@ -3843,6 +4070,10 @@ static define_unary_function_eval (__camembert,&_camembert,_camembert_s);
 	}
       }
     }
+#if 0
+    if (abs_calc_mode(contextptr)==38)
+      return _polygone(res,contextptr);
+#endif
     return gen(res,g.subtype);
   }
   static const char _convexhull_s []="convexhull";
@@ -4222,7 +4453,7 @@ static define_unary_function_eval (__spline,&_spline,_spline_s);
   }
 
   gen binop(const gen & g,gen (* f) (const gen &, const gen &)){
-    if (g.type!=_VECT && g._VECTptr->empty())
+    if (g.type!=_VECT || g._VECTptr->empty())
       return gensizeerr(gettext("binop"));
     const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
     gen res=*it;
@@ -4443,7 +4674,7 @@ static define_unary_function_eval (__remove_language,&_remove_language,_remove_l
 
   gen _show_language(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
-    return vector_int_2_vecteur(lexer_localization_vector(),contextptr);
+    return vector_int_2_vecteur(lexer_localization_vector());
   }
   static const char _show_language_s []="show_language";
 static define_unary_function_eval (__show_language,&_show_language,_show_language_s);
@@ -4499,11 +4730,11 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
       return gendimerr(contextptr);
     // check if coeffs>=0 and sum coeffs = 1 on rows or on columns
     gen g=_sum(args,contextptr);
-    if (g!=vecteur(ms,1)){
+    if (!is_zero(g-vecteur(ms,1))){
       m=mtran(m);
       ms=m.size();
       g=_sum(m,contextptr);
-      if (g!=vecteur(ms,1))
+      if (!is_zero(g-vecteur(ms,1)))
 	*logptr(contextptr) << gettext("Warning: not a graph matrix!") << endl;
     }
     // first make points, 
@@ -4636,6 +4867,646 @@ static define_unary_function_eval (__os_version,&_os_version,_os_version_s);
   static const char _plotproba_s []="plotproba";
   static define_unary_function_eval_quoted (__plotproba,&_plotproba,_plotproba_s);
   define_unary_function_ptr5( at_plotproba ,alias_at_plotproba,&__plotproba,_QUOTE_ARGUMENTS,true);
+#endif
+
+  gen _flatten(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type!=_VECT) return gensizeerr(contextptr);
+    vecteur res;
+    aplatir(*args._VECTptr,res,true);
+    return res;
+  }
+  static const char _flatten_s []="flatten";
+  static define_unary_function_eval (__flatten,&_flatten,_flatten_s);
+  define_unary_function_ptr5( at_flatten ,alias_at_flatten,&__flatten,0,true);
+
+  gen _caseval(const gen & args,GIAC_CONTEXT){
+#ifdef TIMEOUT
+    caseval_begin=time(0);
+#endif
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type!=_STRNG) return gensizeerr(contextptr);
+    if (*args._STRNGptr=="init geogebra")
+      init_geogebra(1,contextptr);
+    if (*args._STRNGptr=="close geogebra")
+      init_geogebra(0,contextptr);
+    return string2gen(caseval(args._STRNGptr->c_str()),false);
+  }
+  static const char _caseval_s []="caseval";
+  static define_unary_function_eval (__caseval,&_caseval,_caseval_s);
+  define_unary_function_ptr5( at_caseval ,alias_at_caseval,&__caseval,0,true);
+
+  gen scalarproduct(const vecteur & a,const vecteur & b,GIAC_CONTEXT){
+    vecteur::const_iterator ita=a.begin(), itaend=a.end();
+    vecteur::const_iterator itb=b.begin(), itbend=b.end();
+    gen res,tmp;
+    for (;(ita!=itaend)&&(itb!=itbend);++ita,++itb){
+      type_operator_times(conj(*ita,contextptr),(*itb),tmp);
+      res += tmp;
+    }
+    return res;
+  }
+
+  gen conjugate_gradient(const matrice & A,const vecteur & b_orig,const vecteur & x0,double eps,GIAC_CONTEXT){
+    int n=A.size();
+    vecteur b=subvecteur(b_orig,multmatvecteur(A,x0));
+    vecteur xk(x0);
+    vecteur rk(b),pk(b);
+    gen rk2=scalarproduct(rk,rk,contextptr);
+    vecteur Apk(n),tmp(n);
+    for (int k=1;k<=n;++k){
+      multmatvecteur(A,pk,Apk);
+      gen alphak=rk2/scalarproduct(pk,Apk,contextptr);
+      multvecteur(alphak,pk,tmp);
+      addvecteur(xk,tmp,xk);
+      multvecteur(alphak,Apk,tmp);
+      subvecteur(rk,tmp,rk);
+      gen newrk2=scalarproduct(rk,rk,contextptr);
+      if (is_greater(eps*eps,newrk2,contextptr))
+	return xk;
+      multvecteur(newrk2/rk2,pk,tmp);
+      addvecteur(rk,tmp,pk);
+      rk2=newrk2;
+    }
+    *logptr(contextptr) << gettext("Warning! Leaving conjugate gradient algorithm after dimension of matrix iterations. Check that your matrix is hermitian/symmetric definite.") << endl;
+    return xk;
+  }
+
+
+  // params: matrix A, vector b, optional init value x0, optional precision eps
+  gen _conjugate_gradient(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type!=_VECT || args._VECTptr->size()<2)
+      return gensizeerr(contextptr);
+    vecteur v = *args._VECTptr;
+    int s=v.size();
+    gen A=v[0];
+    gen b=v[1];
+    if (!is_squarematrix(A) || b.type!=_VECT)
+      return gensizeerr(contextptr);
+    int n=A._VECTptr->size();
+    if (n!=b._VECTptr->size())
+      return gensizeerr(contextptr);
+    vecteur x0(n);
+    gen eps;
+    if (s>=3){
+      if (v[2].type==_VECT){
+	if (v[2]._VECTptr->size()!=n)
+	  return gensizeerr(contextptr);
+	x0=*v[2]._VECTptr;
+	if (s>3)
+	  eps=v[3];
+      }
+      else
+	eps=v[2];
+    }
+    eps=evalf_double(eps,1,contextptr);
+    if (eps.type!=_DOUBLE_ || eps._DOUBLE_val < 0 || eps._DOUBLE_val>=1)
+      return gentypeerr(contextptr);
+    return conjugate_gradient(*A._VECTptr,*b._VECTptr,x0,eps._DOUBLE_val,contextptr);
+  }
+  static const char _conjugate_gradient_s []="conjugate_gradient";
+  static define_unary_function_eval (__conjugate_gradient,&_conjugate_gradient,_conjugate_gradient_s);
+  define_unary_function_ptr5( at_conjugate_gradient ,alias_at_conjugate_gradient,&__conjugate_gradient,0,true);
+
+  gen _subtype(const gen & args,GIAC_CONTEXT){
+    return args.subtype;
+  }
+  static const char _subtype_s []="subtype";
+  static define_unary_function_eval (__subtype,&_subtype,_subtype_s);
+  define_unary_function_ptr5( at_subtype ,alias_at_subtype,&__subtype,0,true);
+
+  // Graph utilities
+  // convert matrice of probability to matrice of booleans
+  // m[i][j]!=0 means there is a link from i to j
+  bool proba2adjacence(const matrice & m,vector< vector<unsigned> >& v,bool check,GIAC_CONTEXT){
+    if (!is_integer_matrice(m) && !is_zero(1-_plus(m.front(),contextptr),contextptr)){
+      if (!check)
+	return false;
+      return proba2adjacence(mtran(m),v,false,contextptr);
+    }
+    int l,c;
+    mdims(m,l,c);
+    v.resize(l);
+    for (int i=0;i<l;++i){
+      vecteur & mi=*m[i]._VECTptr;
+      vector<unsigned> & vi =v[i];
+      vi.clear();
+      vi.resize((c+31)/32);
+      for (int j=0;j<c;++j){
+	if (!is_zero(mi[j]))
+	  vi[j/32] |= 1<<(j%32);
+      }
+    }
+    return true;
+  }
+
+  // For large graphs, use Tarjan algorithm 
+  struct vertex {
+    int index,lowlink;
+    vertex():index(-1),lowlink(-1){}; // -1 means undefined
+  };
+
+  void strongconnect(const vector< vector<unsigned> > & G,vector<vertex> & V,int & index,vector<unsigned> & S,vector<bool> & inS,vector< vector<unsigned> > & SCC,unsigned v){
+    V[v].index=index;
+    V[v].lowlink=index;
+    ++index;
+    S.push_back(v);
+    inS[v]=true;
+    const vector<unsigned> & Gv=G[v];
+    for (unsigned i=0;i<Gv.size();++i){
+      unsigned Gvi=Gv[i];
+      if (!Gvi)
+	continue;
+      for (unsigned j=0;Gvi && j<32;Gvi/=2, ++j){
+	if (!(Gvi %2))
+	  continue;
+	unsigned w=i*32+j;
+	if (V[w].index==-1){
+	  // Successor w has not yet been visited; recurse on it
+	  strongconnect(G,V,index,S,inS,SCC,w);
+	  V[v].lowlink=giacmin(V[v].lowlink,V[w].lowlink);
+	  continue;
+	}
+	if (inS[w]){
+	  // successor of w is in stack S, hence is in the current SCC
+	  V[v].lowlink=giacmin(V[v].lowlink,V[w].index);
+	}
+      }
+    } // end for (visit all vertices connected to v)
+    // If v is a root node, pop the stack and generate a strongly connected component
+    if (V[v].lowlink==V[v].index){
+      vector<unsigned> scc;
+      for (;!S.empty();){
+	scc.push_back(S.back());
+	S.pop_back();
+	inS[scc.back()]=false;
+	if (scc.back()==v)
+	  break;
+      }
+      SCC.push_back(scc);
+    }
+  }
+
+  void tarjan(const vector< vector<unsigned> > & G,vector< vector<unsigned> > & SCC){
+    vector<vertex> V(G.size());
+    SCC.clear();
+    vector<unsigned> S;
+    S.reserve(G.size());
+    vector<bool> inS(G.size(),false);
+    int index=0;
+    for (unsigned v=0;v<G.size();++v){
+      if (V[v].index==-1)
+	strongconnect(G,V,index,S,inS,SCC,v);
+    }
+  }
+
+  void classify_scc(const vector< vector<unsigned> > & G,vector< vector<unsigned> > & SCC, vector< vector<unsigned> > & SCCrec,vector< vector<unsigned> > & SCCtrans){
+    // Look at each SCC: if it has all outgoing edges going to the same component, 
+    // then this is a recurrent positive, and we can compute the invariant probability
+    if (SCC.empty())
+      tarjan(G,SCC);
+    for (unsigned i=0;i<SCC.size();++i){
+      const vector<unsigned> & SCCi=SCC[i];
+      vector<bool> in(G.size(),false);
+      for (unsigned j=0;j<SCCi.size();++j){
+	in[SCCi[j]]=true;
+      }
+      bool recurrent=true;
+      for (unsigned j=0;recurrent && j<SCCi.size();++j){
+	unsigned source=SCCi[j];
+	const vector<unsigned> & targetv=G[source];
+	for (unsigned k=0;recurrent && k<targetv.size();++k){
+	  unsigned Gsk=targetv[k];
+	  unsigned l=k*32;
+	  for (;Gsk;++l,Gsk/=2){
+	    if (Gsk %2 && !in[l]){
+	      recurrent=false;
+	      break;
+	    }
+	  }
+	}
+      }
+      if (recurrent)
+	SCCrec.push_back(SCCi);
+      else
+	SCCtrans.push_back(SCCi);
+    } // end loop on strong connected components
+  }
+
+  void vector_unsigned2vecteur(const vector<unsigned> & V,vecteur & v){
+    v.clear();
+    v.reserve(V.size());
+    for (unsigned i=0;i<V.size();++i)
+      v.push_back(int(V[i]));
+  }
+
+  void matrix_unsigned2matrice(const vector< vector<unsigned> > & M,matrice & m){
+    m.clear();
+    m.reserve(M.size());
+    for (unsigned i=0;i<M.size();++i){
+      vecteur v;
+      vector_unsigned2vecteur(M[i],v);
+      m.push_back(v);
+    }
+  }
+
+  // Input matrix of adjacency or transition matrix
+  // Output a list of strongly connected components
+  gen _graph_scc(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (!is_squarematrix(args))
+      return gensizeerr(contextptr);
+    vector< vector<unsigned> > G,GRAPH_SCC;
+    if (!proba2adjacence(*args._VECTptr,G,true,contextptr))
+      return gensizeerr(contextptr);
+    tarjan(G,GRAPH_SCC);
+    matrice m;
+    matrix_unsigned2matrice(GRAPH_SCC,m);
+    return m;
+  }
+  static const char _graph_scc_s []="graph_scc";
+  static define_unary_function_eval (__graph_scc,&_graph_scc,_graph_scc_s);
+  define_unary_function_ptr5( at_graph_scc ,alias_at_graph_scc,&__graph_scc,0,true);
+
+  void extract_submatrix(const matrice & M,const vector<unsigned> & v,matrice & m){
+    m.reserve(v.size());
+    vecteur current(v.size());
+    for (unsigned j=0;j<v.size();++j){
+      vector<unsigned>::const_iterator it=v.begin(),itend=v.end();
+      const_iterateur jt=M[v[j]]._VECTptr->begin();
+      iterateur kt=current.begin();
+      for (;it!=itend;++kt,++it)
+	*kt=*(jt+*it);
+      m.push_back(current);
+    }
+  }
+
+  // check that g is a stochastic right or left matrix
+  // if so set M to the matrix with sum of rows=1
+  bool is_stochastic(const gen & g,matrice & M,GIAC_CONTEXT){
+    if (!is_squarematrix(g))
+      return false;
+    gen gd=evalf_double(g,1,contextptr);
+    if (!is_fully_numeric(gd))
+      return false;
+    M=*g._VECTptr;
+    int ms=M.size();
+    for (unsigned i=0;i<ms;++i){
+      const vecteur & v=*M[i]._VECTptr;
+      for (unsigned j=0;j<ms;++j){
+	if (is_strictly_greater(0,v[j],contextptr))
+	  return false;
+      }
+    }
+    gen sg=_sum(_tran(g,contextptr),contextptr);
+    if (!is_zero(sg-vecteur(ms,1),contextptr)){
+      M=mtran(M);
+      sg=_sum(g,contextptr);
+      if (!is_zero(sg-vecteur(ms,1),contextptr))
+	return false;
+    }
+    return true;
+  }
+
+  // returns
+  // -> recurrent states: a list of at least one list: 
+  //                      each sublist is a strongly connected component
+  // -> invariant probability state (1-eigenstate) for each recurrent loop
+  // -> transient states: a list of lists, each sublist is strongly connected
+  // -> final probability: starting from each site, probability to end up
+  //    in any of the invariant probability state
+  gen _markov(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    gen g;
+    double eps(epsilon(contextptr));
+    if (args.type==_VECT && args.subtype==_SEQ__VECT && args._VECTptr->size()>=2){
+      g=evalf_double(args._VECTptr->back(),1,contextptr);
+      if (g.type!=_DOUBLE_)
+	return gensizeerr(contextptr);
+      eps=g._DOUBLE_val;
+      g=args._VECTptr->front();
+    }
+    else
+      g=args;
+    matrice M;
+    if (!is_stochastic(g,M,contextptr))
+      return gensizeerr("Not a stochastic matrix!");
+    int ms=M.size();
+    vector< vector<unsigned> > G,GRAPH_SCC,SCCrec,SCCtrans;
+    proba2adjacence(M,G,true,contextptr);
+    classify_scc(G,GRAPH_SCC,SCCrec,SCCtrans);
+    matrice mrec,mtrans,meigen;
+    matrix_unsigned2matrice(SCCrec,mrec);
+    matrix_unsigned2matrice(SCCtrans,mtrans);
+    // Find eigenstate 1 for each component of SCCrec
+    for (unsigned i=0;i<SCCrec.size();++i){
+      vector<unsigned> v=SCCrec[i];
+      // extract corresponding submatrix from M
+      matrice m;
+      sort(v.begin(),v.end());
+      if (v.size()==M.size())
+	m=M;
+      else 
+	extract_submatrix(M,v,m);
+      m=mtran(m); // find standard linear algebra 1-eigenvector
+      vecteur w,z;
+      if (is_exact(m)){
+	vecteur k;
+	mker(subvecteur(m,midn(m.size())),k,contextptr);
+	//k=negvecteur(k);
+	if (k.size()==1 && k.front().type==_VECT){
+	  // if dim Ker(m-idn)>1 should find a vector with all coordinate >0
+	  z=divvecteur(*k.front()._VECTptr,prodsum(k.front(),false));
+	}
+      }
+      if (z.empty()){
+	w=vecteur(m.size(),evalf(1,1,contextptr)/int(m.size())),z; // initial guess
+	for (;;){
+	  multmatvecteur(m,w,z);
+	  if (is_greater(eps,l1norm(w-z,contextptr),contextptr))
+	    break;
+	  swap(w,z);
+	}
+      }
+      if (v.size()==M.size())
+	meigen.push_back(z);
+      else {
+	w.clear();
+	unsigned pos=0;
+	for (unsigned j=0;j<v.size();++j){
+	  for (;pos<v[j];++pos)
+	    w.push_back(0);
+	  w.push_back(z[j]);
+	  ++pos;
+	}
+	for (;pos<M.size();++pos)
+	  w.push_back(0);
+	meigen.push_back(w);
+      }
+    }
+    int nrec=meigen.size();
+    if (nrec==1)
+      return makesequence(mrec,meigen,mtrans,vecteur(ms,vecteur(1,1)));
+    // For each initial pure state, find probability to end in 
+    // the recurrents states from meigen
+    M=mtran(M); // linear algebra iteration v->M*v
+    matrice mfinal; // will have nrec columns
+    for (unsigned i=0;i<ms;++i){
+      vecteur line;
+      line.reserve(nrec);
+      // start at state i
+      // speedup: first look if i is in a recurrent strong component 
+      // if so the final state is the recurrent strong component eigenstate
+      for (unsigned j=0;j<SCCrec.size();++j){
+	if (equalposcomp(SCCrec[j],i)){
+	  line=vecteur(nrec,0);
+	  line[j]=1;
+	  break;
+	}
+      }
+      if (!line.empty()){
+	mfinal.push_back(line);
+	continue;
+      }
+      // otherwise iterate starting from 1 at position i
+      vecteur w(ms),z(ms);
+      w[i]=1;
+      for (;;){
+	multmatvecteur(M,w,z);
+	if (is_greater(eps,l1norm(w-z,contextptr),contextptr))
+	  break;
+	swap(w,z);
+      }
+      // find z as a linear combination of the vectors of meigen
+      for (unsigned j=0;j<meigen.size();++j){
+	const vecteur & cur=*meigen[j]._VECTptr;
+	// find the largest component of mcur
+	int pos=0;
+	gen maxcur=0;
+	for (unsigned k=0;k<cur.size();++k){
+	  if (is_strictly_greater(cur[k],maxcur,contextptr)){
+	    maxcur=cur[k];
+	    pos=k;
+	  }
+	}
+	// find coefficient
+	line.push_back(z[pos]/cur[pos]);
+      }
+      mfinal.push_back(line);
+    }
+    return makesequence(mrec,meigen,mtrans,mfinal);
+  }
+  static const char _markov_s []="markov";
+  static define_unary_function_eval (__markov,&_markov,_markov_s);
+  define_unary_function_ptr5( at_markov ,alias_at_markov,&__markov,0,true);
+
+  // random iterations for a Markov chain of transition matrix M, initial state i,
+  // number of iterations n
+  // randmarkov(M,i,n) returns the list of n+1 states starting at i
+  // randmarkov(M,[i1,..,ip],b) returns the matrix of p rows, each row is
+  //   the list of n+1 states starting at ip
+  // randmarkov([n1,..,np],nt) make a random Markov transition matrix
+  // with p recurrent loops of size n1,...,np and nt transient states
+  gen _randmarkov(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type!=_VECT)
+      return gensizeerr(contextptr);
+    vecteur v = *args._VECTptr;
+    if (v.size()<2 || v.size()>4)
+      return gensizeerr(contextptr);
+    if (v.size()==2){
+      is_integral(v[1]); 
+      if (v[1].type!=_INT_ || v[1].val<0)
+	return gensizeerr(contextptr);
+      vecteur w=gen2vecteur(v[0]);
+      if (!is_integer_vecteur(w))
+	return gensizeerr(contextptr);
+      unsigned ws=w.size(),n=0;
+      vector<unsigned> W(ws),Wc(ws+1);
+      for (unsigned i=0;i<ws;++i){
+	if (w[i].type!=_INT_ || w[i].val<=0)
+	  return gendimerr(contextptr);
+	n += (W[i]=w[i].val);
+	Wc[i+1]=Wc[i]+W[i];
+      }
+      int nt=v[1].val,nnt=n+nt;
+      if (nnt*nnt>LIST_SIZE_LIMIT)
+	return gendimerr(contextptr);
+      matrice res(nnt);
+      int pos=0; // position in W
+      // first lines (recurrent states)
+      int cur=Wc[0],next=Wc[1];
+      for (int i=0;i<n;++i){
+	if (i>=next){
+	  ++pos;
+	  cur=next;
+	  next=Wc[pos+1];
+	}
+	vecteur line(nnt);
+	// create Wc[pos] zeros
+	// then Wc[pos+1]-Wc[pos] probabilities
+	for (int j=cur;j<next;++j){
+	  line[j]=giac_rand(contextptr)/(rand_max2+1.0);
+	}
+	res[i]=divvecteur(line,prodsum(line,false));
+      }
+      // transient states
+      for (int i=n;i<nnt;++i){
+	vecteur line(nnt);
+	for (int j=0;j<nnt;++j){
+	  line[j]=giac_rand(contextptr)/(rand_max2+1.0);
+	}
+	res[i]=divvecteur(line,prodsum(line,false));
+      }
+      return res;
+    }
+    vecteur v1=gen2vecteur(v[1]);
+    if (!is_integer_vecteur(v1))
+      return gensizeerr();
+    is_integral(v[2]);
+    if (v[2].type!=_INT_ || v[2].val<0)
+      return gensizeerr(contextptr);
+    int n=v[2].val;
+    gen g=v[0];
+    matrice M;
+    if (!is_stochastic(g,M,contextptr))
+      return gensizeerr("Not a stochastic matrix!");
+    int shift=0;
+    if (xcas_mode(contextptr) || abs_calc_mode(contextptr)==38)
+      shift=1;
+    vector<unsigned> start(v1.size());
+    for (unsigned i=0;i<v1.size();++i){
+      int pos=v1[i].val-shift;
+      if (pos<0 || pos>=M.size())
+	return gendimerr(contextptr);
+      start[i]=pos;
+    }
+    // find cumulated frequencies for each row
+    matrix_double Mcumul(M.size());
+    for (unsigned I=0;I<Mcumul.size();++I){
+      const vecteur & v=*M[I]._VECTptr;
+      vector<giac_double> vcumul(v.size()+1);
+      vcumul[0]=0;
+      for (unsigned j=1;j<=v.size();++j){
+	vcumul[j] = vcumul[j-1]+evalf_double(v[j-1],1,contextptr)._DOUBLE_val;
+      }
+      Mcumul[I]=vcumul;
+    }
+    // iterate
+    matrice res;
+    for (unsigned pos=0;pos<start.size();++pos){
+      int i=start[pos];
+      vecteur line(1,i);
+      for (unsigned j=0;j<n;++j){
+	double d=giac_rand(contextptr)/(rand_max2+1.0);
+	if (i>Mcumul.size())
+	  return gendimerr(contextptr);	
+	int pos=dichotomy(Mcumul[i],d);
+	if (pos==-1)
+	  return gendimerr(contextptr);
+	i=pos;
+	line.push_back(i+shift);
+      }
+      res.push_back(line);
+    }
+    if (v[1].type==_INT_)
+      return res.front();
+    return res;
+  }
+  static const char _randmarkov_s []="randmarkov";
+  static define_unary_function_eval (__randmarkov,&_randmarkov,_randmarkov_s);
+  define_unary_function_ptr5( at_randmarkov ,alias_at_randmarkov,&__randmarkov,0,true);
+
+  gen _is_polynomial(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    vecteur v = gen2vecteur(args);
+    if (v.empty())
+      return gensizeerr(contextptr);
+    if (v.size()==1)
+      v.push_back(ggb_var(args));
+    if (v.size()>2)
+      return gendimerr(contextptr);
+    vecteur lv=lvarxwithinv(v,v[1],contextptr);
+    return lv.size()<2;
+  }
+  static const char _is_polynomial_s []="is_polynomial";
+  static define_unary_function_eval (__is_polynomial,&_is_polynomial,_is_polynomial_s);
+  define_unary_function_ptr5( at_is_polynomial ,alias_at_is_polynomial,&__is_polynomial,0,true);
+
+  // find positions of object in list
+  gen _find(const gen & args,GIAC_CONTEXT){
+    if ( args.type==_STRNG && args.subtype==-1) return  args;
+    vecteur v = gen2vecteur(args);
+    if (v.size()!=2 || v.back().type!=_VECT)
+      return gensizeerr(contextptr);
+    const gen a=v.front();
+    const vecteur & w =*v.back()._VECTptr;
+    int s=w.size(),shift=xcas_mode(contextptr)>0 || abs_calc_mode(contextptr)==38;
+    vecteur res;
+    for (int i=0;i<s;++i){
+      if (a==w[i])
+	res.push_back(i+shift);
+    }
+    return res;
+  }
+  static const char _find_s []="find";
+  static define_unary_function_eval (__find,&_find,_find_s);
+  define_unary_function_ptr5( at_find ,alias_at_find,&__find,0,true);
+
+
+#if 0
+  // Small graphs, not tested
+  bool different(const vector<unsigned> & a,const vector<unsigned> & b,vector<int> & pos){
+    pos.clear();
+    int s=a.size();
+    for (int i=0;i<s;++i){
+      unsigned ai=a[i],bi=b[i];
+      if (ai!=bi){
+	int p=i*32;
+	for (;ai&&bi;++p,ai/=2,bi/=2){
+	  if ( ai%2 != bi%2 )
+	    pos.push_back(p);
+	}
+      }
+    }
+    return !pos.empty();
+  }
+
+  // v[i][j]==true if i is connected to j
+  // compute w such that w[i][j]==true if i is connected to j using a path of length >= 1
+  // at the end, if w[i][i]=true then i is recurrent, else transient
+  // i is recurrent positive if for all j w[i][j]=true => w[j][i]=true
+  void connected(const vector< vector<unsigned> >& v,vector< vector<unsigned> > & w){
+    int l=v.size();
+    int c=v.front().size(); // number of columns = c*32
+    w=v;
+    vector<int> pos;
+    for (int i=0;i<l;++i){
+      // compute w[i]
+      vector<unsigned> oldvi(c);
+      vector<unsigned> curvi(w[i]);
+      vector<unsigned> newvi(c);
+      // oldvi[i/32] = 1 << (i%32); 
+      for (;;){
+	// find indices that differ between oldvi and curvi, 
+	if (!different(oldvi,curvi,pos))
+	  break;
+	newvi=curvi;
+	for (unsigned j=0;j<pos.size();++j){
+	  // make an OR of curvi with w[pos[j]]
+	  vector<unsigned>::const_iterator wit=w[pos[j]].begin();
+	  vector<unsigned>::iterator newit=newvi.begin(),newitend=newvi.end();
+	  for (;newit!=newitend;++wit,++newit){
+	    *newit |= *wit;
+	  }
+	}
+	oldvi=curvi;
+	curvi=newvi;
+      }
+      w[i]=curvi;
+    }
+  }
 #endif
 
 #ifndef NO_NAMESPACE_GIAC

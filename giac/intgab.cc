@@ -189,7 +189,7 @@ namespace giac {
 	return res;
       return 1;
     }
-    if (u==at_cos || u==at_cosh)
+    if (u==at_cos || u==at_cosh || u==at_abs)
       return 1;
     return 0;
   }
@@ -224,7 +224,7 @@ namespace giac {
     for (int ordre=2;ordre<max_series_expansion_order;ordre=2*ordre){
       sparse_poly1 s=series__SPOL1(g,*x._IDNTptr,a,ordre,0,contextptr);
       int n=s.size();
-      if (n && is_undef(s[0].coeff))
+      if (n && (is_undef(s[0].coeff) || is_undef(s[0].exponent)))
 	continue; // stop the loop, try a larger order
       for (int i=0;i<n;++i){
 	gen e1=s[i].exponent+1;
@@ -334,7 +334,7 @@ namespace giac {
       l.front()._VECTptr->front()=x;
       lnpart=0;
       if (r_num.type==_POLY)
-	ratpart=rdiv(r2e(r_num._POLYptr->integrate(),l,contextptr),r2sym(r_den,l,contextptr));
+	ratpart=rdiv(r2e(r_num._POLYptr->integrate(),l,contextptr),r2sym(r_den,l,contextptr),contextptr);
       else 
 	ratpart=e*x;
       return true;
@@ -440,7 +440,8 @@ namespace giac {
       // ok, now find roots of norm>1
       factorization fd;
       polynome Dp_content;
-      if (!factor(Dp,Dp_content,fd,false,true,true,1)){
+      gen extra_div=1;
+      if (!factor(Dp,Dp_content,fd,false,true,true,1,extra_div) || extra_div!=1){
 	*logptr(contextptr) << gettext("Unable to factor ") << r2sym(Dp,vX,contextptr) << endl;
 	res=undef;
 	return true;
@@ -854,11 +855,24 @@ namespace giac {
     // FIXME should check integrability at -/+inf
     if (a==minus_inf){
       if (b==plus_inf){
-	if (is_even_odd(g,x,contextptr)==2){
+	int ieo=is_even_odd(g,x,contextptr);
+	if (ieo==2){
 	  res=0;
 	  return true;
 	}
-	return intgab_r(g,x,a,b,rational,res,contextptr);
+	if (intgab_r(g,x,a,b,rational,res,contextptr))
+	  return true;
+	if (ieo==1){
+	  // simplify g on 0..inf
+	  assumesymbolic(symb_superieur_egal(x,0),0,contextptr);
+	  gen g1=eval(g,1,contextptr);
+	  _purge(x,contextptr);
+	  if (g1!=eval(g,1,contextptr)){
+	    res=2*_integrate(makesequence(g1,x,0,plus_inf),contextptr);
+	    return true;
+	  }
+	}
+	return false;
       }
       // subst x by x+b, check parity: even ->0 , odd -> 1/2 int(-inf,+inf)
       gen gb=subst(g,x,x+b,false,contextptr);
@@ -1058,10 +1072,10 @@ namespace giac {
     return true;
   }
 
-  // tmp1=sum_k a_k gx^k, find sum_k a_k/s(k) gx^k
-  // where s(k)=product(x-decals[i],i) and decals[i] is rationnal
-  // if decals[i] is an integer, multiply by gx^(-1-decals[i]), int
-  // and mult by gx^decals[i]
+  // tmp1=sum_k a_k x^k, find sum_k a_k/s_k x^k
+  // where s_x=product(k-decals[i],i) and decals[i] is rationnal
+  // if decals[i] is an integer, multiply by x^(-1-decals[i]), int
+  // and mult by x^decals[i]
   static bool in_sumab_int(gen & tmp1,const gen & gx,const vecteur & decals,const gen & lcoeff,GIAC_CONTEXT){
     int nstep=decals.size();
     gen coeff=lcoeff;
@@ -1098,21 +1112,206 @@ namespace giac {
   }
 
   static bool sumab_int(gen & tmp1,const gen & gx,const vecteur & decals,const gen & lcoeff,GIAC_CONTEXT){
-    // bool b=do_lnabs(contextptr);
-    // do_lnabs(false,contextptr);
-    bool b=complex_mode(contextptr);
-    complex_mode(true,contextptr);
+    bool b=do_lnabs(contextptr);
+    do_lnabs(false,contextptr);
+    // bool c=complex_mode(contextptr);
+    // complex_mode(true,contextptr);
     bool bres=in_sumab_int(tmp1,gx,decals,lcoeff,contextptr);
-    complex_mode(b,contextptr);
+    do_lnabs(b,contextptr);
+    // complex_mode(c,contextptr);
     return bres;
   }
 
-  static bool in_sumab(const gen & g,const gen & x,const gen & a_orig,const gen & b_orig,gen & res,bool testi,GIAC_CONTEXT){
+  static bool sumab_ps(const polynome & Q,const polynome & R,const vecteur & v,const gen & a,const gen & x,const gen & g,bool est_reel,const polynome & p,const polynome & s,gen & res,GIAC_CONTEXT){
+    // p corresponds to derivation, s to integration
+    // cerr << "p=" << p << " s=" << s << " Q=" << Q << " R=" << R << endl;
+    // Q must be independant of x
+    // If R is independant of x we use the geometric series
+    // If R=x-integer the exponential (must change bounds by integer)
+    // If R=2x(2x+1) sinh/cosh etc.
+    if (Q.degree(0)==0){
+      // count "integrations" step in s
+      int intstep;
+      vecteur decals;
+      polynome lcoeffs;
+      if (is_admissible_poly(s,intstep,lcoeffs,decals,contextptr)){
+	gen lcoeff=r2e(lcoeffs,v,contextptr);
+	identificateur idx(" sumw"); // identificateur idx(" x"); // 
+	gen gx(idx);
+	if (!assume_t_in_ab(gx,0,1,true,true,contextptr))
+	  return false;
+	// R must be the product of degree(R) consecutive terms
+	int r=R.degree(0);
+	if (r==1){
+	  vecteur Rv=iroots(R);
+	  if (Rv.size()!=1){
+	    _purge(gx,contextptr);
+	    return false;
+	  }
+	  gen R0=Rv[0];
+	  if (is_strictly_greater(R0,a,contextptr)){
+	    res=undef;
+	    _purge(gx,contextptr);
+	    return true;
+	  }
+	  // Q=Q/R.coord.front().value;
+	  index_t ind=R.coord.front().index.iref();
+	  ind[0]=0;
+	  gen Qg=r2e(Q,v,contextptr)/r2e(polynome(monomial<gen>(R.coord.front().value,ind)),v,contextptr);
+	  // (g|x=a)*s(a)/p(a)/Q^(a-R0)/(a-R0)!*sum(p(n)/s(n)*Q^(n-R0)/(n-R0)!,n=a..inf);
+	  // first compute sum(p(n)*Q^(n-R0)/(n-R0)!,n=R0..inf)
+	  // = sum(p(n+R0)*Q^(n)/n!,n=0..inf)
+	  int d=p.degree(0);
+	  gen Pg=r2e(p,v,contextptr);
+	  vecteur vx(d+1),vy(d+1);
+	  for (int i=0;i<=d;++i){
+	    vx[i]=i;
+	    vy[i]=ratnormal(subst(Pg,x,R0+i,false,contextptr));
+	  }
+	  vecteur w=divided_differences(vx,vy);
+	  // p(n+R0)=w[0]+w[1]*n+w[2]*n*(n-1)+...
+	  // hence the sum is exp(Q)*(w[0]+w[1]*Q+...)
+	  reverse(w.begin(),w.end());
+	  gen tmp1=symb_horner(w,gx)*exp(gx,contextptr),remains;
+	  // substract sum(p(n)*Q^(n-R0)/(n-R0)!,n=R0..a-1)
+	  for (int n=R0.val;n<a.val;++n){
+	    tmp1 -= subst(Pg,x,n,false,contextptr)*pow(Qg,n-R0.val)/factorial(n-R0.val);
+	  }
+	  // Integration step
+	  decals = subvecteur(decals,vecteur(decals.size(),R0));
+	  if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
+	    gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr)*factorial(a.val-R0.val),*x._IDNTptr,a,1,contextptr);
+	    res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr)/pow(Qg,a-R0,contextptr);
+	    if (est_reel)
+	      res=re(res,contextptr);
+	    res=ratnormal(res);
+	    _purge(gx,contextptr);
+	    return true;
+	  }
+	}
+	if (r>=2){
+	  polynome Rc=lgcd(R);
+	  vecteur Rv=polynome2poly1(R/Rc,1);
+	  // Rv should be a multiple of (r*x-R0)*(r*x-(R0+1))*...
+	  // -Rv[1]/Rv[0]= sum of roots = r*R0 + sum(j,j=0..r-1)
+	  // R0 = -Rv[1]/Rv[0] - (r-1)/2
+	  gen R0=-Rv[1]/Rv[0]-gen(r-1)/gen(2);
+	  if (R0.type!=_INT_){
+	    _purge(gx,contextptr);
+	    return false;
+	  }
+	  // check that Rv = cst*product(r*x-(R0+j),j=0..r-1)
+	  vecteur test(1,1);
+	  for (int j=0;j<r;++j){
+	    test=operator_times(test,makevecteur(r,-(R0+j)),0);
+	  }
+	  if (Rv[0]*test!=test[0]*Rv){
+	    _purge(gx,contextptr);
+	    return false;
+	  }
+	  int r0=R0.val;
+	  if (r0>r*a.val){
+	    res=undef;
+	    _purge(gx,contextptr);
+	    return true;
+	  }
+	  Rc=Rv[0]/pow(gen(r),r)*Rc;
+	  gen Qg=r2e(Q,v,contextptr)/r2e(Rc,v,contextptr);
+	  if (r==2)
+	    Qg=sqrt(Qg,contextptr);
+	  else
+	    Qg=pow(Qg,inv(gen(r),contextptr),contextptr);
+	  // (g|x=a)*s(a)/p(a)/Qg^(r*a-R0)/(r*a-R0)!*sum(p(n)/s(n)*Qg^(r*n-R0)/(r*n-R0)!,n=a..inf);
+	  gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr)/pow(Qg,r*a-R0,contextptr)/factorial(r*a.val-r0),*x._IDNTptr,a,1,contextptr);
+	  // Set k=r*n-R0 and compute sum((p/s)((k+R0)/r)*X^k/k!,k=r*a-R0..inf)
+	  int d=p.degree(0);
+	  gen Pg=r2e(p,v,contextptr);
+	  vecteur vx(d+1),vy(d+1);
+	  for (int i=0;i<=d;++i){
+	    vx[i]=i;
+	    vy[i]=ratnormal(subst(Pg,x,(i+R0)/r,false,contextptr));
+	  }
+	  vecteur w=divided_differences(vx,vy);
+	  reverse(w.begin(),w.end());
+	  gen tmp=symb_horner(w,gx)*exp(gx,contextptr),remains;
+	  // substract sum(...,k=0..r*a-R0-1)
+	  for (int k=0;k<r*a.val-r0;++k){
+	    tmp -= subst(Pg,x,(k+R0)/r,false,contextptr)*pow(Qg,k)/factorial(k);
+	  }
+	  // then keep terms which are = -R0 mod r = N
+	  // for example if r=2 and R0 even, keep even terms
+	  // that is (f(X)+f(-X))/2
+	  // more generally take 
+	  // 1/r*sum(f(X*exp(2i pi*k/r))*exp(-2i pi*k*N/r),k=0..r-1)
+	  int N= -r0 % r;
+	  gen tmp1=0,tmpadd;
+	  for (int k=0;k<r;++k){
+	    tmpadd = subst(tmp,gx,gx*exp(2*k*cst_i*cst_pi/r,contextptr),false,contextptr)*exp(-2*k*N*cst_i*cst_pi/r,contextptr);
+	    tmp1 += tmpadd;
+	  }
+	  tmp1=tmp1/r;
+	  // Integration step
+	  if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
+	    res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr);
+	    if (est_reel)
+	      res=re(res,contextptr);
+	    res=ratnormal(res);
+	    _purge(gx,contextptr);
+	    return true;
+	  }
+	}
+	if (!r){
+	  // (g|x=a)*s(a)/p(a)/Q^a*sum(p(n)/s(n)*X^n)|X=Q, will work 
+	  // first compute sum(p(n)*X^n)
+	  // then multiply by X^sdecal and integrate intstep times
+	  // then subst X by Q
+	  gen tmp=r2e(p,v,contextptr)*pow(gx,x,contextptr);
+	  gen remains,tmp1=sum(tmp,x,remains,contextptr);
+	  if (!is_zero(remains) || is_undef(tmp1)){
+	    *logptr(contextptr) << gettext("Unable to sum ")+remains.print(contextptr) << endl;
+	    return false;
+	  }
+	  tmp1=-subst(tmp1,x,a,false,contextptr);
+	  // bool b=do_lnabs(contextptr);
+	  // do_lnabs(false,contextptr);
+	  if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
+	    gen Qg=r2e(Q,v,contextptr)/r2e(R,v,contextptr);
+	    gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr),*x._IDNTptr,a,1,contextptr);
+	    res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr)/pow(Qg,a,contextptr);
+	    if (est_reel)
+	      res=re(res,contextptr);
+	    res=ratnormal(res);
+	    _purge(gx,contextptr);
+	    return true;
+	  }
+	}
+      }
+    }
+    return false;
+  }
+
+  static bool in_sumab(const gen & g,const gen & x,const gen & a_orig,const gen & b_orig,gen & res,bool testi,bool dopartfrac,GIAC_CONTEXT){
     if (x.type!=_IDNT || angle_radian(contextptr)==false)
       return false;
     if (is_zero(g)){
       res=zero;
       return true;
+    }
+    if (dopartfrac){
+      gen gp=_partfrac(gen(makevecteur(g,*x._IDNTptr),_SEQ__VECT),contextptr);
+      if (gp.is_symb_of_sommet(at_plus) && gp._SYMBptr->feuille.type==_VECT){
+	vecteur vp=*gp._SYMBptr->feuille._VECTptr;
+	res=0;
+	int i=0;
+	for (;i<int(vp.size());++i){
+	  gen resi;
+	  if (!in_sumab(vp[i],x,a_orig,b_orig,resi,testi,false,contextptr))
+	    break;
+	  res += resi;
+	}
+	if (i==vp.size())
+	  return true;
+      }
     }
     vecteur v=lvarx(g,x);
     v=loptab(v,sincostan_tab);
@@ -1137,13 +1336,18 @@ namespace giac {
     v.clear();
     polynome p,q,r;
     gen a(a_orig),b(b_orig);
-    if (!est_reel){
+    if (!est_reel || complex_mode(contextptr)){
       bool b=complex_mode(contextptr);
       complex_mode(contextptr)=false;
-      gen reg=re(g,contextptr),img=im(g,contextptr),reres,imres;
-      complex_mode(contextptr)=b;
-      if (!in_sumab(reg,x,a_orig,b_orig,reres,false,contextptr) || !in_sumab(img,x,a_orig,b_orig,imres,false,contextptr))
+      gen reg(g),img(0),reres,imres;
+      if (!est_reel){
+	reg=re(g,contextptr),img=im(g,contextptr);
+      }
+      if (!in_sumab(reg,x,a_orig,b_orig,reres,false,false,contextptr) || !in_sumab(img,x,a_orig,b_orig,imres,false,false,contextptr)){
+	complex_mode(contextptr)=b;
 	return false;
+      }
+      complex_mode(contextptr)=b;
       res=reres+cst_i*imres;
       return true;
     }
@@ -1195,7 +1399,7 @@ namespace giac {
 	    gen tmp=_quorem(gen(makevecteur(P,R,x),_SEQ__VECT),contextptr),tmpres;
 	    if (tmp.type!=_VECT || tmp._VECTptr->size()!=2)
 	      return false; // setsizeerr();
-	    if (!in_sumab(gsurP*prod,x,a_orig,b_orig,tmpres,false,contextptr))
+	    if (!in_sumab(gsurP*prod,x,a_orig,b_orig,tmpres,false,false,contextptr))
 	      return false;
 	    res += tmp._VECTptr->back()*tmpres;
 	    prod = prod*R;
@@ -1228,170 +1432,9 @@ namespace giac {
       AB2PQR(r,q,s,R,Q);
       R=taylor(R,-1);
       simplify(p,s);
-      // p corresponds to derivation, s to integration
-      // cerr << "p=" << p << " s=" << s << " Q=" << Q << " R=" << R << endl;
-      // Q must be independant of x
-      // If R is independant of x we use the geometric series
-      // If R=x-integer the exponential (must change bounds by integer)
-      // If R=2x(2x+1) sinh/cosh etc.
-      if (Q.degree(0)==0){
-	// count "integrations" step in s
-	int intstep;
-	vecteur decals;
-	polynome lcoeffs;
-	if (is_admissible_poly(s,intstep,lcoeffs,decals,contextptr)){
-	  gen lcoeff=r2e(lcoeffs,v,contextptr);
-	  identificateur idx(" x");
-	  gen gx(idx);
-	  if (!assume_t_in_ab(gx,-1,1,true,true,contextptr))
-	    return false;
-	  // R must be the product of degree(R) consecutive terms
-	  int r=R.degree(0);
-	  if (r==1){
-	    vecteur Rv=iroots(R);
-	    if (Rv.size()!=1){
-	      _purge(gx,contextptr);
-	      return false;
-	    }
-	    gen R0=Rv[0];
-	    if (is_strictly_greater(R0,a,contextptr)){
-	      res=undef;
-	      _purge(gx,contextptr);
-	      return true;
-	    }
-	    // Q=Q/R.coord.front().value;
-	    index_t ind=R.coord.front().index.iref();
-	    ind[0]=0;
-	    gen Qg=r2e(Q,v,contextptr)/r2e(polynome(monomial<gen>(R.coord.front().value,ind)),v,contextptr);
-	    // (g|x=a)*s(a)/p(a)/Q^(a-R0)/(a-R0)!*sum(p(n)/s(n)*Q^(n-R0)/(n-R0)!,n=a..inf);
-	    // first compute sum(p(n)*Q^(n-R0)/(n-R0)!,n=R0..inf)
-	    // = sum(p(n+R0)*Q^(n)/n!,n=0..inf)
-	    int d=p.degree(0);
-	    gen Pg=r2e(p,v,contextptr);
-	    vecteur vx(d+1),vy(d+1);
-	    for (int i=0;i<=d;++i){
-	      vx[i]=i;
-	      vy[i]=ratnormal(subst(Pg,x,R0+i,false,contextptr));
-	    }
-	    vecteur w=divided_differences(vx,vy);
-	    // p(n+R0)=w[0]+w[1]*n+w[2]*n*(n-1)+...
-	    // hence the sum is exp(Q)*(w[0]+w[1]*Q+...)
-	    reverse(w.begin(),w.end());
-	    gen tmp1=symb_horner(w,gx)*exp(gx,contextptr),remains;
-	    // substract sum(p(n)*Q^(n-R0)/(n-R0)!,n=R0..a-1)
-	    for (int n=R0.val;n<a.val;++n){
-	      tmp1 -= subst(Pg,x,n,false,contextptr)*pow(Qg,n-R0.val)/factorial(n-R0.val);
-	    }
-	    // Integration step
-	    decals = subvecteur(decals,vecteur(decals.size(),R0));
-	    if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
-	      gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr),*x._IDNTptr,a,1,contextptr);
-	      res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr)/pow(Qg,a-R0,contextptr);
-	      if (est_reel)
-		res=re(res,contextptr);
-	      res=ratnormal(res);
-	      _purge(gx,contextptr);
-	      return true;
-	    }
-	  }
-	  if (r>=2){
-	    polynome Rc=lgcd(R);
-	    vecteur Rv=polynome2poly1(R/Rc,1);
-	    // Rv should be a multiple of (r*x-R0)*(r*x-(R0+1))*...
-	    // -Rv[1]/Rv[0]= sum of roots = r*R0 + sum(j,j=0..r-1)
-	    // R0 = -Rv[1]/Rv[0] - (r-1)/2
-	    gen R0=-Rv[1]/Rv[0]-gen(r-1)/gen(2);
-	    if (R0.type!=_INT_){
-	      _purge(gx,contextptr);
-	      return false;
-	    }
-	    // check that Rv = cst*product(r*x-(R0+j),j=0..r-1)
-	    vecteur test(1,1);
-	    for (int j=0;j<r;++j){
-	      test=operator_times(test,makevecteur(r,-(R0+j)),0);
-	    }
-	    if (Rv[0]*test!=test[0]*Rv){
-	      _purge(gx,contextptr);
-	      return false;
-	    }
-	    int r0=R0.val;
-	    if (r0>r*a.val){
-	      res=undef;
-	      _purge(gx,contextptr);
-	      return true;
-	    }
-	    Rc=Rv[0]/pow(gen(r),r)*Rc;
-	    gen Qg=r2e(Q,v,contextptr)/r2e(Rc,v,contextptr);
-	    if (r==2)
-	      Qg=sqrt(Qg,contextptr);
-	    else
-	      Qg=pow(Qg,inv(gen(r),contextptr),contextptr);
-	    // (g|x=a)*s(a)/p(a)/Qg^(r*a-R0)/(r*a-R0)!*sum(p(n)/s(n)*Qg^(r*n-R0)/(r*n-R0)!,n=a..inf);
-	    gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr)/pow(Qg,r*a-R0,contextptr)/factorial(r*a.val-r0),*x._IDNTptr,a,1,contextptr);
-	    // Set k=r*n-R0 and compute sum((p/s)((k+R0)/r)*X^k/k!,k=r*a-R0..inf)
-	    int d=p.degree(0);
-	    gen Pg=r2e(p,v,contextptr);
-	    vecteur vx(d+1),vy(d+1);
-	    for (int i=0;i<=d;++i){
-	      vx[i]=i;
-	      vy[i]=ratnormal(subst(Pg,x,(i+R0)/r,false,contextptr));
-	    }
-	    vecteur w=divided_differences(vx,vy);
-	    reverse(w.begin(),w.end());
-	    gen tmp=symb_horner(w,gx)*exp(gx,contextptr),remains;
-	    // substract sum(...,k=0..r*a-R0-1)
-	    for (int k=0;k<r*a.val-r0;++k){
-	      tmp -= subst(Pg,x,(k+R0)/r,false,contextptr)*pow(Qg,k)/factorial(k);
-	    }
-	    // then keep terms which are = -R0 mod r = N
-	    // for example if r=2 and R0 even, keep even terms
-	    // that is (f(X)+f(-X))/2
-	    // more generally take 
-	    // 1/r*sum(f(X*exp(2i pi*k/r))*exp(-2i pi*k*N/r),k=0..r-1)
-	    int N= -r0 % r;
-	    gen tmp1=0,tmpadd;
-	    for (int k=0;k<r;++k){
-	      tmpadd = subst(tmp,gx,gx*exp(2*k*cst_i*cst_pi/r,contextptr),false,contextptr)*exp(-2*k*N*cst_i*cst_pi/r,contextptr);
-	      tmp1 += tmpadd;
-	    }
-	    tmp1=tmp1/r;
-	    // Integration step
-	    if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
-	      res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr);
-	      if (est_reel)
-		res=re(res,contextptr);
-	      res=ratnormal(res);
-	      _purge(gx,contextptr);
-	      return true;
-	    }
-	  }
-	  if (!r){
-	    // (g|x=a)*s(a)/p(a)/Q^a*sum(p(n)/s(n)*X^n)|X=Q, will work 
-	    // first compute sum(p(n)*X^n)
-	    // then multiply by X^sdecal and integrate intstep times
-	    // then subst X by Q
-	    gen tmp=r2e(p,v,contextptr)*pow(gx,x,contextptr);
-	    gen remains,tmp1=sum(tmp,x,remains,contextptr);
-	    if (!is_zero(remains) || is_undef(tmp1)){
-	      *logptr(contextptr) << gettext("Unable to sum ")+remains.print(contextptr) << endl;
-	      return false;
-	    }
-	    tmp1=-subst(tmp1,x,a,false,contextptr);
-	    // bool b=do_lnabs(contextptr);
-	    // do_lnabs(false,contextptr);
-	    if (sumab_int(tmp1,gx,decals,lcoeff,contextptr)){
-	      gen Qg=r2e(Q,v,contextptr)/r2e(R,v,contextptr);
-	      gen coeffa=limit(g*r2e(s,v,contextptr)/r2e(p,v,contextptr),*x._IDNTptr,a,1,contextptr);
-	      res=limit(coeffa*tmp1,*gx._IDNTptr,Qg,1,contextptr)/pow(Qg,a,contextptr);
-	      if (est_reel)
-		res=re(res,contextptr);
-	      res=ratnormal(res);
-	      _purge(gx,contextptr);
-	      return true;
-	    }
-	  }
-	}
-      }
+      // IMPROVE: make a partial fraction decomposition of p(n)/s(n)
+      // [could also make ln return ln(1-x) instead of ln(x-1)]
+      return sumab_ps(Q,R,v,a,x,g,est_reel,p,s,res,contextptr);
     }
     gen A,B,P;
     int type=is_meromorphic(g,x,A,B,P,contextptr);
@@ -1502,7 +1545,7 @@ namespace giac {
     // detect Heaviside 
     v=lop(g,at_Heaviside);
     if (v.empty())
-      return in_sumab(g,x,a_orig,b_orig,res,testi,contextptr);
+      return in_sumab(g,x,a_orig,b_orig,res,testi,true /* do partfrac */,contextptr);
     gen A,B,a,b;
     identificateur t(" tsumab");
     gen h=quotesubst(g,v.front(),t,contextptr);

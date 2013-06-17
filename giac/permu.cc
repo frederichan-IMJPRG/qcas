@@ -44,7 +44,7 @@ namespace giac {
     vector<int>::const_iterator it=v.begin(),itend=v.end();
     vecteur res;
     res.reserve(itend-it);
-    if (xcas_mode(contextptr)){
+    if (xcas_mode(contextptr) || abs_calc_mode(contextptr)==38){
       for (;it!=itend;++it)
 	res.push_back(*it+1);
     }
@@ -55,12 +55,22 @@ namespace giac {
     return res;
   } 
 
-  vector<int> vecteur_2_vector_int(const vecteur & v,GIAC_CONTEXT){
+  vecteur vector_int_2_vecteur(const vector<int> & v){
+    //transforme un vector<int> en vecteur 
+    vector<int>::const_iterator it=v.begin(),itend=v.end();
+    vecteur res;
+    res.reserve(itend-it);
+    for (;it!=itend;++it)
+      res.push_back(*it);
+    return res;
+  } 
+
+  static vector<int> vecteur_2_vector_int(const vecteur & v,GIAC_CONTEXT){
     //transforme un vecteur en vector<int>  -> empty vector on error
     vecteur::const_iterator it=v.begin(),itend=v.end();
     vector<int> res;
     res.reserve(itend-it);
-    if (xcas_mode(contextptr)){
+    if (xcas_mode(contextptr) || abs_calc_mode(contextptr)==38){
       for (;it!=itend;++it)
 	if ((*it).type==_INT_) 
 	  res.push_back((*it).val-1);
@@ -77,7 +87,21 @@ namespace giac {
     return res;
   } 
 
-  vector< vector<int> > vecteur_2_vectvector_int(const vecteur & v,GIAC_CONTEXT){
+  vector<int> vecteur_2_vector_int(const vecteur & v){
+    //transforme un vecteur en vector<int>  -> empty vector on error
+    vecteur::const_iterator it=v.begin(),itend=v.end();
+    vector<int> res;
+    res.reserve(itend-it);
+    for (;it!=itend;++it){
+      if ((*it).type==_INT_) 
+	res.push_back((*it).val); 
+      else 
+	return vector<int>(0);
+    }
+    return res;
+  } 
+
+  static vector< vector<int> > vecteur_2_vectvector_int(const vecteur & v,GIAC_CONTEXT){
     //transforme un vecteur en vector< vector<int> >  -> empty vector on error
     vecteur::const_iterator it=v.begin(),itend=v.end();
     vector< vector<int> > res;
@@ -90,13 +114,36 @@ namespace giac {
     return res;
   }
 
-  vecteur vectvector_int_2_vecteur(const vector< vector<int> > & v,GIAC_CONTEXT){
+  vector< vector<int> > vecteur_2_vectvector_int(const vecteur & v){
+    //transforme un vecteur en vector< vector<int> >  -> empty vector on error
+    vecteur::const_iterator it=v.begin(),itend=v.end();
+    vector< vector<int> > res;
+    res.reserve(itend-it);
+    for (;it!=itend;++it){
+      if (it->type!=_VECT)
+	return  vector< vector<int> >(0);
+      res.push_back(vecteur_2_vector_int(*it->_VECTptr));
+    }
+    return res;
+  }
+
+  static vecteur vectvector_int_2_vecteur(const vector< vector<int> > & v,GIAC_CONTEXT){
     //transforme un vector< vector<int> > en vecteur  
     int s=v.size();
     vecteur res;
     res.reserve(s);
     for (int i=0;i<s;++i)
       res.push_back(vector_int_2_vecteur(v[i],contextptr));
+    return res;
+  }
+
+  vecteur vectvector_int_2_vecteur(const vector< vector<int> > & v){
+    //transforme un vector< vector<int> > en vecteur  
+    int s=v.size();
+    vecteur res;
+    res.reserve(s);
+    for (int i=0;i<s;++i)
+      res.push_back(vector_int_2_vecteur(v[i]));
     return res;
   }
 
@@ -166,17 +213,26 @@ namespace giac {
     int m;
     m=n;
     for (int k=0;k<n;k++) {
-      int h;
-      h=int(m*(rand()/(RAND_MAX*1.0)));
+      int h=int(std::floor(m*(rand()/(RAND_MAX+1.0))));
       p[k]=temp[h]; m=m-1;
       //mise a jour de temp :il faut supprimer temp[h]
-      for (int j=h;j<m;j++) {temp[j]=temp[j+1];
+      for (int j=h;j<m;j++) {
+	temp[j]=temp[j+1];
       }
     }    
     return(p); 
   }
   gen _randperm(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (args.type==_VECT){
+      vecteur & v = *args._VECTptr;
+      vector<int> p=randperm(v.size());
+      vecteur w(v);
+      for (unsigned i=0;i<v.size();++i){
+	w[i]=v[p[i]];
+      }
+      return w;
+    }
     if (!is_integer(args)) 
       return gensizeerr(contextptr);
     gen n=args;
@@ -197,7 +253,7 @@ namespace giac {
     for (int j=0;j<n;j++){ if (p[j].type!=_INT_){return(false);}}
      
     for (int j=0;j<n;j++){
-      if (xcas_mode(contextptr)>0) 
+      if (xcas_mode(contextptr)>0 || abs_calc_mode(contextptr)==38) 
 	p1[j]=p[j].val-1; 
       else 
 	p1[j]=p[j].val;
@@ -238,7 +294,7 @@ namespace giac {
     vector<int> c2(n1);
     c1=c2;
     for (int j=0;j<n1;j++){
-      if (xcas_mode(contextptr)>0) 
+      if (xcas_mode(contextptr)>0 || abs_calc_mode(contextptr)==38) 
 	c1[j]=c[j].val-1; 
       else 
 	c1[j]=c[j].val;
@@ -615,7 +671,10 @@ namespace giac {
     if (args.type!=_VECT) 
       return gensizeerr(contextptr);
     vecteur v(*args._VECTptr);
-    return signature(vecteur_2_vector_int(v,contextptr));
+    vector<int> p;
+    if (!is_permu(v,p,contextptr))
+      return gensizeerr(contextptr);
+    return signature(p);
   }
 
   static const char _signature_s[]="signature";
@@ -661,7 +720,7 @@ namespace giac {
     for (int k=0;k<n;k++){
       vecteur l(p);
       for (int j=0;j<p;j++){
-	l[j]=rdiv(1,k+j+1);
+	l[j]=rdiv(1,k+j+1,contextptr);
       }
       c.push_back(l);
     } 
@@ -810,7 +869,7 @@ namespace giac {
       }
       c.push_back(l);
     }
-    return c;
+    return mtran(c);
   }
   static const char _vandermonde_s[]="vandermonde";
   static define_unary_function_eval (__vandermonde,&_vandermonde,_vandermonde_s);
@@ -952,6 +1011,8 @@ namespace giac {
     v[0]=pow(plus_two,n);
     for (int k=2;k<=n;k+=2){
       v[k]=-((n+2-k)*(n+1-k)*v[k-2])/(2*k);
+      if (is_undef(v[k]))
+	return v;
     }
     return v;
   }
@@ -989,6 +1050,8 @@ namespace giac {
       // v0, v1, tmp1 -> v1, v0, tmp1 -> v1, tmp1, v0
       v0.swap(v1);
       v1.swap(tmp1);
+      if (is_undef(v1))
+	return v1;
       // cerr << v0 << " " << v1 << endl;
     }
     return v1;
@@ -1014,7 +1077,7 @@ namespace giac {
       p1=p2;  
     } 
     //return normal(p2,contextptr);
-    return normal(rdiv(p2,factorial(n)),contextptr);
+    return normal(rdiv(p2,factorial(n),contextptr),contextptr);
   }
     
   static const char _laguerre_s[]="laguerre";
@@ -1029,6 +1092,8 @@ namespace giac {
     if (n==1) return v;
     for (int k=2;k<=n;k+=2){
       v[k]=-((n-k+2)*(n-k+1)*v[k-2])/(2*k*(n-k/2));
+      if (is_undef(v[k]))
+	return v;
     }
     return v;
   }
@@ -1050,6 +1115,8 @@ namespace giac {
     v[0]=pow(gen(2),n);
     for (int k=1;k<=n/2;++k){
       v[2*k]=-(n+2-2*k)*(n+1-2*k)*v[2*k-2]/(4*k*(n+1-k));
+      if (is_undef(v[2*k]))
+	return v;
     }
     return v;
   }
@@ -1125,7 +1192,7 @@ namespace giac {
 	//somme = somme + evalf(*jt);
 	somme = somme + *jt;
       }
-      res.push_back(rdiv(somme,s));
+      res.push_back(rdiv(somme,s,context0));
     }
     return res;
   }
@@ -1158,9 +1225,9 @@ namespace giac {
 	somme = somme + (*jt)*(*jt);
       }
       if (variance!=3)
-	res.push_back(sqrt(rdiv(somme-s*moyenne[i]*moyenne[i],s-(variance==2)),context0));
+	res.push_back(sqrt(rdiv(somme-s*moyenne[i]*moyenne[i],s-(variance==2),context0),context0));
       else
-	res.push_back(rdiv(somme,s)-moyenne[i]*moyenne[i]);
+	res.push_back(rdiv(somme,s,context0)-moyenne[i]*moyenne[i]);
     }
     return res;
   }
@@ -1216,7 +1283,7 @@ namespace giac {
     vecteur l(n); 
     for (int k=0;k<n;k++){
       for (int j=0;j<n;j++){
-	if (p[k]==j+(xcas_mode(contextptr)!=0)) {
+	if (p[k]==j+(xcas_mode(contextptr)!=0 || abs_calc_mode(contextptr)==38)) {
 	  l[j]=1;
 	} else {
 	  l[j]=0;
@@ -1416,7 +1483,7 @@ namespace giac {
     //on separe les variables du numerateur
     vecteur vb0(*b0._VECTptr);
     if ((vb0.size()==1)&& (vb0[0]==0))
-      return string2gen("ce n'est probablement pas une somme de riemann",false);
+      return string2gen(gettext("Probably not a Riemann sum"),false);
     var[0]=da;
     //var=[da,[n,x]]
     gen b1=_split(var,contextptr);
@@ -1424,7 +1491,7 @@ namespace giac {
     //on separe les variables du denominateur
     vecteur vb1(*b1._VECTptr);
     if ((vb1.size()==1)&& (vb1[0]==0)) 
-      return string2gen("ce n'est probablement pas une somme de riemann",false);
+      return string2gen(gettext("Probably not a Riemann sum"),false);
     gen an=vb0[0]/vb1[0];
     gen ax=vb0[1]/vb1[1];
     gen tmp=_integrate(makevecteur(ax,x,0,1),contextptr);
@@ -1435,9 +1502,9 @@ namespace giac {
     //return _limit(makevecteur(tmp*an,v2[0],plus_inf));
     //tmp ne doit pas etre infini qd tmp2 est nul et reciproquement
     if (is_inf(tmp)&& is_zero(tmp2))
-      return string2gen("ce n'est probablement pas une somme de riemann",false);
+      return string2gen(gettext("Probably not a Riemann sum"),false);
     if (is_zero(tmp)&& is_inf(tmp2))
-      return string2gen("ce n'est probablement pas une somme de riemann",false);
+      return string2gen(gettext("Probably not a Riemann sum"),false);
     return recursive_normal(tmp*_series(makevecteur(an,v2[0],plus_inf),contextptr),contextptr);
   }
   static const char _sum_riemann_s[]="sum_riemann";

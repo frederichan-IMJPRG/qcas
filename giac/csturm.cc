@@ -268,18 +268,18 @@ namespace giac {
   // Find complex sturm sequence for P(a+(b-a)*x)
   // If P is "pseudo"-real on [a,b] and eps>0 put roots in [a,b]
   // at precision eps inside realroots
-  // returns a,b,R,S,g,listquo,coeffP,coeffR
-  // and typeseq=0 (complex Sturm) or 1 (limit)
+  // returns a,b,R,S,g,listquo,coeffP,coeffR,typeseq
+  // with typeseq=0 (complex Sturm) or 1 (limit)
   // If b-a is real and horiz_sturm is not empty, it tries to replace
   // the variable by im(a)*i in horiz_sturm and if no quotient in horiz_sturm
   // has a leading 0 coefficient, 
-  // it returns im(a)*i,im(a)*i+1,R,S,g,listquo,coeffP,coeffR
+  // it returns im(a)*i,im(a)*i+1,R,S,g,listquo,coeffP,coeffR,typeseq
   // If b-a is pure imaginary and vert_sturm is not empty, it tries to replace
-  // the variable by re(a) and returns re(a),re(a)+i,R,S,g,listquo,coeffP,coeffR
+  // the variable by re(a) and returns re(a),re(a)+i,R,S,g,listquo,coeffP,coeffR,typeseq
   static vecteur csturm_segment_seq(const modpoly & P,const gen & a,const gen & b,vecteur & realroots,double eps,vecteur & horiz_sturm,vecteur & vert_sturm,GIAC_CONTEXT){
     // try with horiz_sturm and vert_sturm
     gen ab(b-a);
-    // /*
+    /* // Optimization fails for sturmab(x^3-1,-1-i,1+i)
     if (is_zero(re(ab,contextptr))){ // b-a is pure imaginary
       if (vert_sturm.empty()){
 	gen A=gen(makevecteur(1,0),_POLY1__VECT);
@@ -310,7 +310,7 @@ namespace giac {
 	  cerr << "list of quotients is not regular" << endl;
       }
     }
-    // */
+    */
     modpoly Q(taylor(P,a));
     change_scale(Q,b-a);
     // now x is in 0..1
@@ -1049,6 +1049,8 @@ namespace giac {
     ab2a0b0a1b1(a,b,a0,b0,a1,b1,context0);
     vecteur l;
     lvar(g,l);
+    if (l.empty())
+      return vecteur(0);
     if (l.size()!=1)
       return vecteur(1,gentypeerr(context0));
     gen px=_e2r(makevecteur(g,l),context0);
@@ -1085,7 +1087,10 @@ namespace giac {
   define_unary_function_ptr5( at_rationalroot ,alias_at_rationalroot,&__rationalroot,0,true);
 
   // convert numerator of g to a list
-  vecteur symb2poly_num(const gen & g,GIAC_CONTEXT){
+  vecteur symb2poly_num(const gen & g_,GIAC_CONTEXT){
+    gen g(g_);
+    if (g.type!=_VECT)
+      g=makesequence(g,ggb_var(g));
     gen tmp=_symb2poly(g,contextptr);
     if (tmp.type==_FRAC)
       tmp=tmp._FRACptr->num;

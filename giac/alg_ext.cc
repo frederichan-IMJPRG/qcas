@@ -1,4 +1,4 @@
-// -*- mode:C++ ; compile-command: "g++-3.4 -I.. -I../include -DHAVE_CONFIG_H -DIN_GIAC -g -c alg_ext.cc -Wall" -*-
+// -*- mode:C++ ; compile-command: "g++ -I.. -I../include -DHAVE_CONFIG_H -DIN_GIAC -DGIAC_GENERIC_CONSTANTS -fno-strict-aliasing -g -c alg_ext.cc -Wall" -*-
 #include "giacPCH.h"
 
 /*
@@ -117,7 +117,7 @@ namespace giac {
 
   gen alg_evalf(const gen & a,const gen &b,GIAC_CONTEXT){
     if (a.type==_FRAC)
-      return rdiv(alg_evalf(a._FRACptr->num,b,contextptr),alg_evalf(a._FRACptr->den,b,contextptr));
+      return rdiv(alg_evalf(a._FRACptr->num,b,contextptr),alg_evalf(a._FRACptr->den,b,contextptr),contextptr);
     gen a1=a.evalf(1,contextptr),b1=b.evalf(1,contextptr);
     if (a1.type!=_VECT)
       return a1;
@@ -529,8 +529,8 @@ namespace giac {
     polynome p(poly12polynome(*b__VECT._VECTptr));
     polynome p_content(p.dim);
     factorization f;
-    gen an;
-    ext_factor(p,algebraic_EXTension(a__VECT,a__VECT),an,p_content,f,false);
+    gen an,extra_div;
+    ext_factor(p,algebraic_EXTension(a__VECT,a__VECT),an,p_content,f,false,extra_div);
     // now choose in the factorization which factor is relevant for b
     // this is done by approximation if possible
     // or by choosing the factor of lowest degree
@@ -879,18 +879,35 @@ namespace giac {
     vecteur v(*g_orig._VECTptr);
     int s=v.size();
     gen P(v[0]),x(vx_var),a,b;
-    if (s==3){ a=v[1]; b=v[2]; } else { x=v[1]; a=v[2]; b=v[3]; }
+    if (s==3){ a=v[1]; b=v[2]; } 
+    else { 
+      x=v[1]; a=v[2]; b=v[3]; 
+      if (P.type==_VECT)
+	*logptr(contextptr) << gettext("Warning: variable name ignored: ") << x << endl;
+    }
     gen ai=im(a,contextptr);
     gen bi=im(b,contextptr);
     if (!is_zero(ai) || !is_zero(bi)){
       gen p=_e2r(gen(makevecteur(P,vecteur(1,x)),_SEQ__VECT),contextptr),n,d,g1,g2;
       if (is_undef(p)) return p;
       fxnd(p,n,d);
-      int n1=csturm_square(n,a,b,g1,contextptr);
+      vecteur nr;
+      int n1;
+#if 0 // replace by 1 if you want to count complex rational root on the edges
+      if (n.type==_POLY && n._POLYptr->dim==1){
+	polynome nrp=*n._POLYptr;
+	nr=crationalroot(nrp,true);
+	n1=csturm_square(nrp,a,b,g1,contextptr);
+      }
+      else
+	n1=csturm_square(n,a,b,g1,contextptr);
+#else
+      n1=csturm_square(n,a,b,g1,contextptr);
+#endif
       int d1=csturm_square(d,a,b,g2,contextptr);
       if (n1==-1 || d1==-1)
 	return gensizeerr(contextptr);
-      return gen(n1)/2+cst_i*gen(d1)/2;
+      return int(nr.size())+gen(n1)/2+cst_i*gen(d1)/2;
     }
     if (s==5 && v[4].type==_INT_)
       return sturmab(P,x,a,b,v[4].val!=0,contextptr);
@@ -1085,17 +1102,27 @@ namespace giac {
     gen df(derive(expr,var,contextptr));
     if (is_undef(df))
       return df;
-    gen savevar=var;
-    if (var._IDNTptr->in_eval(1,var,savevar,contextptr))
-      ;
-    giac_assume(symbolic(at_and,makevecteur(symb_superieur_egal(var,range[0]),symb_inferieur_egal(var,range[1]))),contextptr);
-    vecteur w=solve(df,var,2,contextptr);
-    if (savevar==var)
-      _purge(var,contextptr);
-    else
-      sto(savevar,var,contextptr);
+    vecteur w;
+    if (range==makevecteur(minus_inf,plus_inf))
+      w=solve(df,var,2,contextptr);
+    else {
+      // FIXME: check if var is quoted, otherwise it will be erased
+      gen savevar=var;
+      if (var._IDNTptr->in_eval(1,var,savevar,contextptr))
+	;
+      giac_assume(symbolic(at_and,makevecteur(symb_superieur_egal(var,range[0]),symb_inferieur_egal(var,range[1]))),contextptr);
+      w=solve(df,var,2,contextptr);
+      if (savevar==var)
+	_purge(var,contextptr);
+      else
+	sto(savevar,var,contextptr);
+    }
     if (w.empty() && debug_infolevel)
       *logptr(contextptr) << gettext("Warning: ") << df << gettext("=0: no solution found") << endl;
+    vecteur wvar=makevecteur(cst_pi);
+    lidnt(w,wvar);
+    if (wvar.size()>1)
+      return undef;
     gen resmin=plus_inf;
     gen resmax=minus_inf;
     vecteur xmin,xmax;
@@ -1137,7 +1164,7 @@ namespace giac {
       gen g2=g._IDNTptr->eval(1,g,contextptr);
       if ((g2.type==_VECT) && (g2.subtype==_ASSUME__VECT)){
 	vecteur v=*g2._VECTptr;
-	if ( (v.size()==3) && (v.front()==vecteur(0) || v.front()==_DOUBLE_ || v.front()==_ZINT || v.front()==_SYMB) && (v[1].type==_VECT)){
+	if ( (v.size()==3) && (v.front()==vecteur(0) || v.front()==_DOUBLE_ || v.front()==_ZINT || v.front()==_SYMB || v.front()==0) && (v[1].type==_VECT)){
 	  a=*v[1]._VECTptr;
 	  return 1;
 	}
@@ -1149,6 +1176,8 @@ namespace giac {
 #ifndef NO_STDEXCEPT
       try {
 #endif
+	if (g._SYMBptr->feuille.type==_SPOL1)
+	  return 0;
 	vecteur lv0(lvar(g._SYMBptr->feuille)),lv; // remove cst idnt
 	for (unsigned i=0;i<lv0.size();++i){
 	  if (!is_constant_idnt(lv0[i]))
@@ -1248,7 +1277,7 @@ namespace giac {
 	identificateur idnttmp("t");
 	gen testg(subst(g,v0,idnttmp,false,contextptr));
 	if (is_zero(limit(testg,idnttmp,last,-1,contextptr))){
-	  if (strict && v0.is_symb_of_sommet(at_sin) || v0.is_symb_of_sommet(at_cos))
+	  if (strict && (v0.is_symb_of_sommet(at_sin) || v0.is_symb_of_sommet(at_cos)))
 	    return 0;
 	  gen tmp=_fxnd(gg,contextptr);
 	  if (tmp.type!=_VECT || tmp._VECTptr->size()!=2){
@@ -1293,10 +1322,15 @@ namespace giac {
   int sturmsign(const gen & g0,bool strict,GIAC_CONTEXT){
     gen g=simplifier(g0,contextptr);
     // first check some operators inv, *, exp, sqrt
-    if (g.is_symb_of_sommet(at_neg))
-      return -sturmsign(g._SYMBptr->feuille,strict,contextptr);
-    if (g.is_symb_of_sommet(at_inv))
-      return sturmsign(g._SYMBptr->feuille,strict,contextptr);
+    int tmp;
+    if (g.is_symb_of_sommet(at_neg)){
+      tmp=sturmsign(g._SYMBptr->feuille,strict,contextptr);
+      return tmp==-2?tmp:-tmp;
+    }
+    if (g.is_symb_of_sommet(at_inv)){
+      tmp=sturmsign(g._SYMBptr->feuille,strict,contextptr);
+      return tmp;
+    }
     if (g.is_symb_of_sommet(at_exp))
       return 1;
     /* if (g.is_symb_of_sommet(at_pow) && g._SYMBptr->feuille[1]==plus_one_half)
@@ -1316,7 +1350,6 @@ namespace giac {
 	else
 	  w.push_back(v[i]);
       }
-      int tmp;
       switch (w.size()){
       case 0:
 	return res;

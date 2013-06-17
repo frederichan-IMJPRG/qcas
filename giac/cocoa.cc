@@ -204,7 +204,7 @@ namespace giac {
     res.reserve(itend-it);
     for (;it!=itend;++it)
       res.push_back(ringelem2polynome(*it,order));
-    sort(res.begin(),res.end(),tensor_is_greater<gen>);
+    sort(res.begin(),res.end(),tensor_is_strictly_greater<gen>);
     reverse(res.begin(),res.end());    
   }
 

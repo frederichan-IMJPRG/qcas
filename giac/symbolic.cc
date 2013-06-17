@@ -42,7 +42,7 @@ namespace giac {
   const unary_function_ptr * archive_function_tab(){
     static const unary_function_ptr archive_function_tab_ptr[]={*at_plus,*at_neg,*at_binary_minus,*at_prod,*at_division,*at_inv,*at_pow,*at_exp,*at_ln,*at_abs,*at_arg,*at_pnt,*at_point,*at_segment,*at_sto,*at_sin,
 								*at_cos,*at_tan,*at_asin,*at_acos,*at_atan,*at_sinh,*at_cosh,*at_tanh,*at_asinh,*at_acos,*at_atanh,*at_interval,*at_union,*at_minus,*at_intersect,*at_not,
-								*at_and,*at_ou,*at_inferieur_strict,*at_inferieur_egal,*at_superieur_strict,*at_superieur_egal,*at_different,*at_equal,*at_rpn_prog,*at_local,*at_return,*at_Dialog,*at_double_deux_points,*at_pointprod,*at_pointdivision,*at_pointpow,*at_hash,*at_pourcent,*at_tilocal,*at_break,*at_continue,*at_ampersand_times,*at_maple_lib,*at_unit,*at_plot_style,*at_xor,*at_check_type,*at_quote_pow,*at_case,*at_dollar,*at_IFTE,*at_RPN_CASE,*at_RPN_LOCAL,*at_RPN_FOR,*at_RPN_WHILE,*at_NOP,*at_unit,*at_ifte,*at_for,*at_bloc,*at_program,*at_same,*at_increment,*at_decrement,*at_multcrement,*at_divcrement,*at_sq,*at_display,*at_of,*at_at,*at_normalmod,0};
+								*at_and,*at_ou,*at_inferieur_strict,*at_inferieur_egal,*at_superieur_strict,*at_superieur_egal,*at_different,*at_equal,*at_rpn_prog,*at_local,*at_return,*at_Dialog,*at_double_deux_points,*at_pointprod,*at_pointdivision,*at_pointpow,*at_hash,*at_pourcent,*at_tilocal,*at_break,*at_continue,*at_ampersand_times,*at_maple_lib,*at_unit,*at_plot_style,*at_xor,*at_check_type,*at_quote_pow,*at_case,*at_dollar,*at_IFTE,*at_RPN_CASE,*at_RPN_LOCAL,*at_RPN_FOR,*at_RPN_WHILE,*at_NOP,*at_unit,*at_ifte,*at_for,*at_bloc,*at_program,*at_same,*at_increment,*at_decrement,*at_multcrement,*at_divcrement,*at_sq,*at_display,*at_of,*at_at,*at_normalmod,*at_equal2,0};
     archive_function_tab_length=sizeof(archive_function_tab_ptr)/sizeof(const unary_function_ptr *);
     return archive_function_tab_ptr;
   }
@@ -83,7 +83,7 @@ namespace giac {
     // 152
     alias_at_decrement,alias_at_multcrement,alias_at_divcrement,alias_at_sq,alias_at_display,
     // 162
-    alias_at_of,alias_at_at,alias_at_normalmod,
+    alias_at_of,alias_at_at,alias_at_normalmod,at_equal2,
     0
   };
   const unary_function_ptr * _archive_function_tab = (const unary_function_ptr *) &archive_function_tab_alias;
@@ -134,21 +134,21 @@ namespace giac {
       tmp.push_back(mys.feuille);
       tmp.push_back(e);
     }
-    feuille = tmp;
+    feuille = gen(tmp,_SEQ__VECT);
   };
   
   symbolic::symbolic(const gen & a,const unary_function_ptr & o,const gen & b):sommet(o) {
     if (b.type==_VECT)
-      feuille= mergevecteur(vecteur(1,a),*b._VECTptr);
+      feuille=gen(mergevecteur(vecteur(1,a),*b._VECTptr),b.subtype);
     else
-      feuille=makevecteur(a,b);
+      feuille=gen(makevecteur(a,b),_SEQ__VECT);
   };
   
   symbolic::symbolic(const gen & a,const unary_function_ptr * o,const gen & b):sommet(*o) {
     if (b.type==_VECT)
-      feuille= mergevecteur(vecteur(1,a),*b._VECTptr);
+      feuille=gen(mergevecteur(vecteur(1,a),*b._VECTptr),b.subtype);
     else
-      feuille=makevecteur(a,b);
+      feuille=gen(makevecteur(a,b),_SEQ__VECT);
   };
   
   int symbolic::size() const {
@@ -170,6 +170,11 @@ namespace giac {
   bool print_rewrite_prod_inv=false;
 
   static string & add_print_plus(string & s,const symbolic & g,GIAC_CONTEXT){
+    if (is_inf(g.feuille) 
+	// && calc_mode(contextptr)!=1
+	&& abs_calc_mode(contextptr)==38
+	)
+      return s+="∞";
     if (g.feuille.type!=_VECT){
       s += '+';
       return add_print(s,g.feuille,contextptr);
@@ -333,6 +338,7 @@ namespace giac {
       return s+=')';
     }
 #endif
+    bool argpar = ( (arg.type>_CPLX && arg.type!=_FLOAT_) || !is_positive(arg,contextptr)) && arg.type!=_IDNT ;
     if (abs_calc_mode(contextptr)==38){
       bool need=need_parenthesis(arg);
       if (pui==plus_one_half){
@@ -348,12 +354,13 @@ namespace giac {
       if (pui==minus_one){
 	s += (need?"(":"");
 	add_print(s,arg,contextptr);
+	return s += (need?")":"");
 	return s += (need?")\xe2\x81\xb2":"\xe2\x81\xb2");
       }
       if (pui==plus_two){
-	s += (need?"(":"");
+	s += (argpar?"(":"");
 	add_print(s,arg,contextptr);
-	return s += (need?")²":"²");
+	return s += (argpar?")²":"²");
       }
     }
     if (pui==plus_one_half){
@@ -388,7 +395,6 @@ namespace giac {
 	return add_print(s,pui,contextptr);
       }
     }
-    bool argpar = ( (arg.type>_CPLX && arg.type!=_FLOAT_) || !is_positive(arg,contextptr)) && arg.type!=_IDNT ;
     if (argpar)
       s += '(';
     add_print(s,arg,contextptr);
@@ -426,19 +432,14 @@ namespace giac {
       }
       i=-i;
     }
-#ifdef BESTA_OS
-    // BP: please comment why the code below does not work for besta
-    assert(0);
-#else
     switch (integer_format(contextptr)){
     case 16:
-      sprintf(ch,"0x%X",i);
+      my_sprintf(ch,"0x%X",i);
     case 8:
-      sprintf(ch,"0o%o",i);
+      my_sprintf(ch,"0o%o",i);
     default:
-      sprintf(ch,"%d",i);
+      my_sprintf(ch,"%d",i);
     }
-#endif
     s += ch;
     return s;
   }
@@ -498,9 +499,9 @@ namespace giac {
     if (g.type==_INT_ && g.subtype==0)
       return add_print_int(s,g.val,contextptr);
     if (g.type==_VECT && g.subtype==0){
-      s+='[';
+      s += calc_mode(contextptr)==1?'{':'[';
       add_printinner_VECT(s,*g._VECTptr,0,contextptr);
-      return s+=']';
+      return s += calc_mode(contextptr)==1?'}':']';
     }
     if (g.type==_FRAC && g._FRACptr->num.type==_INT_ && g._FRACptr->den.type==_INT_){
       add_print(s,g._FRACptr->num,contextptr);
@@ -510,7 +511,11 @@ namespace giac {
     }
     if (g.type==_SYMB)
       return add_print_symbolic(s,*g._SYMBptr,contextptr);
+#ifdef EMCC
+    const string tmp=g.print(contextptr);
+#else
     const string & tmp=g.print(contextptr);
+#endif
     // check +- -> - and -- -> +
     if (l && s[l-1]=='+' ){
       if (!tmp.empty() && tmp[0]=='-'){
@@ -581,6 +586,20 @@ namespace giac {
   }
 
   static gen eval_sto(const gen & feuille,std::vector<const char *> & last,int level,GIAC_CONTEXT){ // autoname function
+    // detect vector/matrix addressing with () parsed as function definition
+    // e.g. M(j,k):=j+k+1 parsed as M:=(j,k)->j+k+1
+    // these affectations are marked by a subtype==1 by the parser
+    // if destination is a matrix
+    if (feuille.type==_VECT && feuille.subtype==_SORTED__VECT && feuille._VECTptr->size()==2 && feuille._VECTptr->front().is_symb_of_sommet(at_program)){
+      gen prog=feuille._VECTptr->front()._SYMBptr->feuille;
+      if (prog.type==_VECT && prog._VECTptr->size()==3 && (prog._VECTptr->front()!=_VECT || prog._VECTptr->front()._VECTptr->size()==2)){
+	gen val=prog._VECTptr->back();
+	if (feuille._VECTptr->back().type==_IDNT && feuille._VECTptr->back()._IDNTptr->eval(1,feuille._VECTptr->back(),contextptr).type==_VECT){
+	  prog=symbolic(at_of,makesequence(feuille._VECTptr->back(),prog._VECTptr->front()));
+	  return eval_sto(gen(makevecteur(val,prog),_SORTED__VECT),last,level,contextptr);
+	}
+      }
+    }
     gen ans;
     gen & feuilleback=feuille._VECTptr->back();
     vecteur & lastarg=last_evaled_arg(contextptr);

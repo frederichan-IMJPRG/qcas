@@ -498,7 +498,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   // extract modular content of p wrt to all but the last variable
   template<class T>
   static bool pp_mod(vector< T_unsigned<T,hashgcd_U> > & p,const vector<int> * pminptr,int modulo,const std::vector<hashgcd_U> & vars,vector< T_unsigned<T,hashgcd_U> > & pcont,int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return false;
 #else
     typename vector< T_unsigned<T,hashgcd_U> >::const_iterator it=p.begin(),itend=p.end();
@@ -2102,8 +2102,10 @@ mpz_class smod(const mpz_class & a,int reduce){
 
   static bool mod_gcd(const vector< T_unsigned<int,hashgcd_U> > & p_orig,const vector< T_unsigned<int,hashgcd_U> > & q_orig,int modulo,vector< T_unsigned<int,hashgcd_U> > & d, vector< T_unsigned<int,hashgcd_U> > & pcofactor, vector< T_unsigned<int,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_pcofactor,bool compute_qcofactor,bool & divtest,vector< vector<int> > & pv,vector< vector<int> > & qv,int nthreads);
 
-#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS) && !defined(EMCC)
   static void * do_recursive_gcd_call(void * ptr_){
+    if (ctrl_c || interrupted)
+      return 0;
     gcd_call_param<int> * ptr = (gcd_call_param<int> *) ptr_;
     vector<int> & Delta = *ptr->Delta;
     vector<int> & lcoeffp = *ptr->lcoeffp;
@@ -2205,7 +2207,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 
   // Modular gcd in "internal form"
   static bool mod_gcd(const vector< T_unsigned<int,hashgcd_U> > & p_orig,const vector< T_unsigned<int,hashgcd_U> > & q_orig,int modulo,vector< T_unsigned<int,hashgcd_U> > & d, vector< T_unsigned<int,hashgcd_U> > & pcofactor, vector< T_unsigned<int,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_pcofactor,bool compute_qcofactor,bool & divtest,vector< vector<int> > & pv,vector< vector<int> > & qv,int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return false;
 #else
     divtest=true;
@@ -2754,6 +2756,8 @@ mpz_class smod(const mpz_class & a,int reduce){
 	do_recursive_gcd_call((void *)&gcd_call_param_v[thread]);
 #endif
       }
+      if (ctrl_c || interrupted)
+	return false;
 #ifdef HAVE_PTHREAD_H
       for (int thread=0;thread<nthreads-1;++thread){
 	int vpos=alphav.size()-(nthreads-thread);
@@ -3255,7 +3259,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   }
 
   bool gcd(const vector< T_unsigned<gen,hashgcd_U> > & p_orig,const vector< T_unsigned<gen,hashgcd_U> > & q_orig,vector< T_unsigned<gen,hashgcd_U> > & d, vector< T_unsigned<gen,hashgcd_U> > & pcofactor, vector< T_unsigned<gen,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_cofactors,int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return false;
 #else
     index_t shift_vars;
@@ -3551,8 +3555,8 @@ mpz_class smod(const mpz_class & a,int reduce){
   }
 
   static void mulextaux(const modpoly & a,const modpoly &b,int modulo,modpoly & new_coord){
-    if (ctrl_c) { 
-      interrupted = true; 
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       new_coord=vecteur(1, gensizeerr(gettext("Stopped by user interruption."))); 
       return;
     }
@@ -4332,7 +4336,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	       vector< T_unsigned<vecteur,hashgcd_U> > & D,
 	       vector< T_unsigned<vecteur,hashgcd_U> > & Pcof,vector< T_unsigned<vecteur,hashgcd_U> > & Qcof,bool compute_pcof,bool compute_qcof,
 	       int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return 0;
 #else
     // FIXME cofactors are not yet implemented
@@ -4510,7 +4514,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     std::vector<int> res(b);
     std::vector<int>::iterator itres=res.begin()+(t-s);  
     for (;ita!=itaend;++ita,++itres)
-      *itres += (*itb);
+      *itres += (*ita);
     return res;    
   }
 
@@ -4686,8 +4690,10 @@ mpz_class smod(const mpz_class & a,int reduce){
     return true;
   }
 
-#if !defined( RTOS_THREADX) && !defined(BESTA_OS)
+#if !defined( RTOS_THREADX) && !defined(BESTA_OS) && !defined(EMCC)
   static void * do_recursive_gcd_ext_call(void * ptr_){
+    if (ctrl_c || interrupted)
+      return 0;
     gcd_call_param< vector<int> > * ptr = (gcd_call_param< vector<int> > *) ptr_;
     vector< vector<int> > & Delta = *ptr->Delta;
     vector< vector<int> > & lcoeffp = *ptr->lcoeffp;
@@ -4778,7 +4784,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	      vector< T_unsigned<vector<int>,hashgcd_U> > & d,
 	      vector< T_unsigned<vector<int>,hashgcd_U> > & pcof,vector< T_unsigned<vector<int>,hashgcd_U> > & qcof,bool compute_pcofactor,bool compute_qcofactor,
 	      int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return 0;
 #else
     //nthreads=1; // FIXME, !=1 segfaults on compaq mini
@@ -4969,7 +4975,7 @@ mpz_class smod(const mpz_class & a,int reduce){
     int alpha,alpha1;
     if (debug_infolevel>20-dim)
       cerr << "gcdmod find alpha dim " << dim << " " << clock() << endl;
-    if (debug_infolevel>25-dim)
+    if (debug_infolevel>20-dim)
       cerr << " p " << p << " q " << q << endl;
     vector< T_unsigned<vector<int>,hashgcd_U> > palpha,qalpha,dp,dq; // d, dp and dq are the current interpolated values of gcd and cofactors
     vector<int> alphav;
@@ -5029,11 +5035,17 @@ mpz_class smod(const mpz_class & a,int reduce){
 	return -1;
       // First check if we are ready to interpolate
       if (!compute_cof && e>gcddeg_plus_delta){
+	if (debug_infolevel>20-dim){
+	  cerr << "gcdmod before interp " << dim << " clock= " << clock() << gcdv << endl;
+	}
 	interpolate(alphav,gcdv,d,var2,modulo);
-	if (debug_infolevel>20-dim)
-	  cerr << "gcdmod pp1mod dim " << dim << " " << clock() << " d " << d << endl;
 	vector< T_unsigned<vector<int>,hashgcd_U> > pquo,qquo,tmprem,pD(d);
 	pp_mod(pD,&pmin,modulo,varxn,var2,tmpcont);
+	if (debug_infolevel>20-dim){
+	  cerr << "gcdmod pp1mod dim " << dim << " clock= " << clock() << " d " << d << endl;
+	  cerr << "gcdmod alphav " << alphav << endl << "gcdv " << gcdv << endl
+	       << "gcdmod content " << tmpcont << endl;
+	}
 	// This removes the polynomial in xn that we multiplied by
 	// (it was necessary to know the lcoeff of the interpolated poly)
 	if (debug_infolevel>20-dim)
@@ -5176,7 +5188,7 @@ mpz_class smod(const mpz_class & a,int reduce){
 	// alpha is probably admissible 
 	// (we will test later if degree of palpha/qalpha wrt x1...xn-1 is max)
 	// prepare room for gcd and cofactors
-	if (debug_infolevel>25-dim)
+	if (debug_infolevel>20-dim)
 	  cerr << "dim " << dim << " palpha " << palpha << " qalpha " << qalpha << endl ;
 	alphav.push_back(alpha1);
 	gcdv.push_back(vector< T_unsigned< vector<int>,hashgcd_U> >(0));
@@ -5208,6 +5220,8 @@ mpz_class smod(const mpz_class & a,int reduce){
       }
       // wait for all threads before doing modifications in gcdv and co
       for (int thread=0;thread<nthreads-1;++thread){
+	if (ctrl_c || interrupted)
+	  return 0;
 	int vpos=alphav.size()-(nthreads-thread);
 	// wait for thread to finish
 #ifdef HAVE_PTHREAD_H
@@ -5429,7 +5443,7 @@ mpz_class smod(const mpz_class & a,int reduce){
   
   // should be called from gausspol.cc in gcdheu after monomial packing like in modpoly.cc gcd_modular
   bool gcd_ext(const vector< T_unsigned<gen,hashgcd_U> > & p_orig,const vector< T_unsigned<gen,hashgcd_U> > & q_orig,vector< T_unsigned<gen,hashgcd_U> > & d, vector< T_unsigned<gen,hashgcd_U> > & pcofactor, vector< T_unsigned<gen,hashgcd_U> > & qcofactor,const std::vector<hashgcd_U> & vars, bool compute_cofactors,int nthreads){
-#if defined( RTOS_THREADX) || defined(BESTA_OS)
+#if defined( RTOS_THREADX) || defined(BESTA_OS) || defined(EMCC)
     return false;
 #else
     // find extension

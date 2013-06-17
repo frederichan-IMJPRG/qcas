@@ -98,7 +98,7 @@ namespace giac {
 	return v.front();
       if (v.empty())
 	return zero;
-      return _plus(v,contextptr); // symbolic(at_plus,v);
+      return _plus(gen(v,_SEQ__VECT),contextptr); // symbolic(at_plus,v);
     }
     if (s.sommet==at_prod){
       if (s.feuille.type!=_VECT)
@@ -130,7 +130,7 @@ namespace giac {
 	return v.front();
       if (v.empty())
 	return zero;
-      return symbolic(at_plus,v);
+      return symbolic(at_plus,gen(v,_SEQ__VECT));
     }
     if (s.sommet==at_neg)
       return -derive(s.feuille,i,contextptr);
@@ -141,9 +141,10 @@ namespace giac {
       gen dbase=derive(base,i,contextptr),dexponent=derive(exponent,i,contextptr);
       // diff(base^exponent)=diff(exp(exponent*ln(base)))
       // =base^exponent*diff(exponent)*ln(base)+base^(exponent-1)*exponent*diff(base)
+      gen expm1=exponent+gen(-1);
       if (is_zero(dexponent))
-	return exponent*dbase*pow(base,exponent-1,contextptr);
-      return dexponent*ln(base,contextptr)*s+exponent*dbase*pow(base,exponent-1,contextptr);
+	return exponent*dbase*pow(base,expm1,contextptr);
+      return dexponent*ln(base,contextptr)*s+exponent*dbase*pow(base,expm1,contextptr);
     }
     if (s.sommet==at_inv){
       if (s.feuille.is_symb_of_sommet(at_pow)){
@@ -151,7 +152,7 @@ namespace giac {
 	if (f.type==_VECT && f._VECTptr->size()==2)
 	  return derive(symb_pow(f._VECTptr->front(),-f._VECTptr->back()),i,contextptr);
       }
-      return rdiv(-derive(s.feuille,i,contextptr),pow(s.feuille,2));
+      return rdiv(-derive(s.feuille,i,contextptr),pow(s.feuille,2),contextptr);
     }
     if (s.sommet==at_rootof)
       return gensizeerr(gettext("Derivative of rootof currently not handled"));
@@ -178,7 +179,7 @@ namespace giac {
     }
     if (s.sommet==at_ln){ 
       if (s.feuille.is_symb_of_sommet(at_abs) )
-	return rdiv(derive(s.feuille._SYMBptr->feuille,i,contextptr),s.feuille._SYMBptr->feuille);
+	return rdiv(derive(s.feuille._SYMBptr->feuille,i,contextptr),s.feuille._SYMBptr->feuille,contextptr);
       if (s.feuille.is_symb_of_sommet(at_inv))
 	return -derive(symbolic(at_ln,s.feuille._SYMBptr->feuille),i,contextptr);
       if (s.feuille.is_symb_of_sommet(at_prod)){
@@ -202,7 +203,7 @@ namespace giac {
 	  if (is_undef(tmp))
 	    return tmp;
 	}
-	return symbolic(s.sommet,v);
+	return symbolic(s.sommet,gen(v,s.feuille.subtype));
       }
       if (s.sommet==at_piecewise){
 	for (int j=0;j<vs/2;++j){
@@ -213,7 +214,7 @@ namespace giac {
 	  gen & tmp=v[vs-1];
 	  tmp=derive(tmp,i,contextptr); // v[vs-1]=derive(v[vs-1],i,contextptr);
 	}
-	return symbolic(s.sommet,v);
+	return symbolic(s.sommet,gen(v,s.feuille.subtype));
       }
       if (vs==2 && s.sommet==at_NTHROOT){
 	gen base = v[1],exponent=inv(v[0],contextptr);
@@ -223,6 +224,25 @@ namespace giac {
 	if (is_zero(dexponent))
 	  return exponent*dbase*s/v[1];
 	return dexponent*ln(base,contextptr)*s+exponent*dbase*s/v[1];
+      }
+      if (vs==3 && s.sommet==at_Beta){
+	gen v0=v[0],v1=v[1],v2=v[2]; 
+	if (!is_zero(derive(v0,i,contextptr)) || !is_zero(derive(v1,i,contextptr)) )
+	  return gensizeerr("diff of incomplete beta with respect to non constant 1st or 2nd arg not implemented");
+	// diff/v2(int_0^v2 t^(v0-1)*(1-t)^(v1-1) dt)
+	gen tmp=pow(v2,v0-1,contextptr)*pow(1-v2,v1-1,contextptr)*derive(v2,i,contextptr);
+	return tmp;
+      }
+      if ( (vs==2 || (vs==3 && is_zero(v[2]))) && (s.sommet==at_upper_incomplete_gamma || s.sommet==at_lower_incomplete_gamma || s.sommet==at_Gamma)){
+	gen v0=v[0],v1=v[1]; 
+	if (!is_zero(derive(v0,i,contextptr)))
+	  return gensizeerr("diff of incomplete gamma with respect to non constant 1st arg not implemented");
+	// diff(int_v1^inf exp(-t)*t^(v0-1) dt)
+	gen tmp1=exp(-v1,contextptr)*pow(v1,v0-1,contextptr)*derive(v1,i,contextptr);
+	return (s.sommet==at_lower_incomplete_gamma)?tmp1:-tmp1;
+      }
+      if (vs==3 && (s.sommet==at_lower_incomplete_gamma || s.sommet==at_lower_incomplete_gamma || s.sommet==at_Gamma)){
+	return derive(symbolic(s.sommet,makesequence(v[0],v[1]))/symbolic(at_Gamma,v[0]),i,contextptr);
       }
     }
     // now look at other operators, first onearg operator
@@ -246,7 +266,7 @@ namespace giac {
 	return v.front();
       if (v.empty())
 	return zero;
-      return symbolic(at_plus,v);
+      return symbolic(at_plus,gen(v,_SEQ__VECT));
     }
     // integrate
     if (s.sommet==at_integrate){
@@ -474,6 +494,8 @@ namespace giac {
   // "unary" version
   gen _derive(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
+    if (calc_mode(contextptr)==1 && args.type!=_VECT)
+      return _derive(makesequence(args,ggb_var(args)),contextptr);
     vecteur v;
     if (args.type==_VECT && args.subtype==_POLY1__VECT)
       return gen(derivative(*args._VECTptr),_POLY1__VECT);
@@ -488,7 +510,7 @@ namespace giac {
       if (var.type==_VECT && var.subtype==_SEQ__VECT && var._VECTptr->size()==1)
 	var=var._VECTptr->front();
       res=derive(res,var,contextptr);
-      return symbolic(at_program,makevecteur(var,0,res));
+      return symbolic(at_program,makesequence(var,0,res));
     }
     int s=v.size();
     if (s==2){
@@ -548,7 +570,7 @@ namespace giac {
     if ( g.type==_STRNG && g.subtype==-1) return  g;
     if (g.is_symb_of_sommet(at_function_diff)){
       gen & f = g._SYMBptr->feuille;
-      return symbolic(at_of,makevecteur(gen(symbolic(at_composepow,makevecteur(at_function_diff,2))),f));
+      return symbolic(at_of,makesequence(gen(symbolic(at_composepow,makesequence(at_function_diff,2))),f));
     }
     if (g.is_symb_of_sommet(at_of)){
       gen & f = g._SYMBptr->feuille;
@@ -558,7 +580,7 @@ namespace giac {
 	if (f1.is_symb_of_sommet(at_composepow)){
 	  gen & f1f=f1._SYMBptr->feuille;
 	  if (f1f.type==_VECT && f1f._VECTptr->size()==2 && f1f._VECTptr->front()==at_function_diff){
-	    return symbolic(at_of,makevecteur(gen(symbolic(at_composepow,makevecteur(at_function_diff,f1f._VECTptr->back()+1))),f2));
+	    return symbolic(at_of,makesequence(gen(symbolic(at_composepow,makesequence(at_function_diff,f1f._VECTptr->back()+1))),f2));
 	  }
 	}
       }

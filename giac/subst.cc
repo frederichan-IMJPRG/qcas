@@ -71,34 +71,34 @@ namespace giac {
 
   // sin, cos, tan in terms of tan(x/2)
   gen sin2tan2(const gen & e,GIAC_CONTEXT){
-    gen a=symb_tan(rdiv(e,plus_two));
-    return rdiv(plus_two*a,pow(a,2)+1);
+    gen a=symb_tan(rdiv(e,plus_two,contextptr));
+    return rdiv(plus_two*a,pow(a,2)+1,contextptr);
   }
 
   gen cos2tan2(const gen & e,GIAC_CONTEXT){
-    gen a=symb_tan(rdiv(e,plus_two));
-    return rdiv(1-pow(a,2),pow(a,2)+1);
+    gen a=symb_tan(rdiv(e,plus_two,contextptr));
+    return rdiv(1-pow(a,2),pow(a,2)+1,contextptr);
   }
 
   gen tan2tan2(const gen & e,GIAC_CONTEXT){
-    gen a=symb_tan(rdiv(e,plus_two));
-    return rdiv(plus_two*a,1-pow(a,2));
+    gen a=symb_tan(rdiv(e,plus_two,contextptr));
+    return rdiv(plus_two*a,1-pow(a,2),contextptr);
   }
 
   // hyperbolic trig to exp
   gen sinh2exp(const gen & e,GIAC_CONTEXT){
     gen a=exp(e,contextptr);
-    return rdiv(a-inv(a,contextptr),plus_two);
+    return rdiv(a-inv(a,contextptr),plus_two,contextptr);
   }
 
   gen cosh2exp(const gen & e,GIAC_CONTEXT){
     gen a=exp(e,contextptr);
-    return rdiv(a+inv(a,contextptr),plus_two);
+    return rdiv(a+inv(a,contextptr),plus_two,contextptr);
   }
 
   gen tanh2exp(const gen & e,GIAC_CONTEXT){
     gen a=pow(exp(e,contextptr),2);
-    return rdiv(a-plus_one,a+plus_one);
+    return rdiv(a-plus_one,a+plus_one,contextptr);
   }
 
   // trig to exp
@@ -114,15 +114,15 @@ namespace giac {
   }
   gen sin2exp(const gen & e,GIAC_CONTEXT){
     gen a=exp(cst_i*degtorad(e,contextptr),contextptr);
-    return rdiv(a-inv(a,contextptr),plus_two*cst_i);
+    return rdiv(a-inv(a,contextptr),plus_two*cst_i,contextptr);
   }
   gen cos2exp(const gen & e,GIAC_CONTEXT){
     gen a=exp(cst_i*degtorad(e,contextptr),contextptr);
-    return rdiv(a+inv(a,contextptr),plus_two);
+    return rdiv(a+inv(a,contextptr),plus_two,contextptr);
   }
   gen tan2exp(const gen & e,GIAC_CONTEXT){
     gen a=pow(exp(cst_i*degtorad(e,contextptr),contextptr),2);
-    return rdiv(a-plus_one,cst_i*(a+plus_one));
+    return rdiv(a-plus_one,cst_i*(a+plus_one),contextptr);
   }
 
   gen exp2sincos(const gen & e,GIAC_CONTEXT){
@@ -131,17 +131,17 @@ namespace giac {
   }
 
   gen tantosincos(const gen & e,GIAC_CONTEXT){
-    return rdiv(symb_sin(e),symb_cos(e));
+    return rdiv(symb_sin(e),symb_cos(e),contextptr);
   }
 
   gen tantosincos2(const gen & e,GIAC_CONTEXT){
     gen e2=ratnormal(2*e);
-    return rdiv(symb_sin(e2),(1+symb_cos(e2)));
+    return rdiv(symb_sin(e2),(1+symb_cos(e2)),contextptr);
   }
 
   gen tantocossin2(const gen & e,GIAC_CONTEXT){
     gen e2=ratnormal(2*e);
-    return rdiv((1-symb_cos(e2)),symb_sin(e2));
+    return rdiv((1-symb_cos(e2)),symb_sin(e2),contextptr);
   }
 
   gen asintoacos(const gen & e,GIAC_CONTEXT){
@@ -159,11 +159,11 @@ namespace giac {
   }
 
   gen asintoatan(const gen & e,GIAC_CONTEXT){
-    return symb_atan(rdiv(e,sqrt(1-pow(e,plus_two,contextptr),contextptr)));
+    return symb_atan(rdiv(e,sqrt(1-pow(e,plus_two,contextptr),contextptr),contextptr));
   }
 
   gen atantoasin(const gen & e,GIAC_CONTEXT){
-    return symb_asin(rdiv(e,sqrt(1+pow(e,plus_two,contextptr),contextptr)));
+    return symb_asin(rdiv(e,sqrt(1+pow(e,plus_two,contextptr),contextptr),contextptr));
   }
 
   gen acostoatan(const gen & e,GIAC_CONTEXT){
@@ -186,7 +186,7 @@ namespace giac {
 
   gen atan2ln(const gen & g_orig,GIAC_CONTEXT){
     gen g=degtorad(g_orig,contextptr);
-    return rdiv(cst_i*ln(rdiv(cst_i+g,cst_i-g),contextptr),plus_two);
+    return rdiv(cst_i*ln(rdiv(cst_i+g,cst_i-g),contextptr),plus_two,contextptr);
   }
 
   // g=[base, exponant]
@@ -206,8 +206,8 @@ namespace giac {
       return pow(1-pow(tmpcos,2),ediv)*pow(base,emod);
     if (base._SYMBptr->sommet==at_tan){
       gen tmp=pow(tmpcos,2);
-      tmp=rdiv(plus_one,tmp)-plus_one; // 1/ cos^2 -1
-      return pow(tmp,ediv)*pow(rdiv(symb_sin(base._SYMBptr->feuille),tmpcos),emod);
+      tmp=rdiv(plus_one,tmp,contextptr)-plus_one; // 1/ cos^2 -1
+      return pow(tmp,ediv)*pow(rdiv(symb_sin(base._SYMBptr->feuille),tmpcos,contextptr),emod);
     }
     return symbolic(at_pow,g);
   }
@@ -228,8 +228,8 @@ namespace giac {
       return pow(1-pow(tmpsin,2),ediv)*pow(base,emod);
     if (base._SYMBptr->sommet==at_tan){
       gen tmp=pow(tmpsin,2);
-      tmp=rdiv(tmp,plus_one-tmp); // sin^2/ (1-sin^2)
-      return pow(tmp,ediv)*pow(rdiv(tmpsin,symb_cos(base._SYMBptr->feuille)),emod);
+      tmp=rdiv(tmp,plus_one-tmp,contextptr); // sin^2/ (1-sin^2)
+      return pow(tmp,ediv)*pow(rdiv(tmpsin,symb_cos(base._SYMBptr->feuille),contextptr),emod);
     }
     return symbolic(at_pow,g);
   }
@@ -250,7 +250,7 @@ namespace giac {
       return pow(1+pow(tmptan,2),-ediv)*pow(base,emod);
     if (base._SYMBptr->sommet==at_sin){
       gen tmp=pow(tmptan,2);
-      tmp=rdiv(tmp,plus_one+tmp); // tan^2/ (1+tan^2)
+      tmp=rdiv(tmp,plus_one+tmp,contextptr); // tan^2/ (1+tan^2)
       return pow(tmp,ediv)*pow(tmptan*symb_cos(base._SYMBptr->feuille),emod);
     }
     return symbolic(at_pow,g);
@@ -386,7 +386,7 @@ namespace giac {
 	return gensizeerr(contextptr);
       v[1]=l.front();
       v=subst(v,i,newi,quotesubst,contextptr);
-      return rdiv(symbolic(at_derive,v),derive(newi,l.front(),contextptr)); 
+      return rdiv(symbolic(at_derive,v),derive(newi,l.front(),contextptr),contextptr); 
     }
     // Warning: ? return e for desolve (is_linear_diffeq)
     return symbolic(at_derive,subst(v,i,newi,quotesubst,contextptr));
@@ -721,7 +721,10 @@ namespace giac {
       if (e._SYMBptr->feuille.type==_VECT){
 	gen ef(sortsubst(*e._SYMBptr->feuille._VECTptr,i,newi,quotesubst,contextptr));
 	ef.subtype=e._SYMBptr->feuille.subtype;
-	if (quotesubst || e._SYMBptr->sommet.quoted() || e._SYMBptr->sommet==at_pow)
+	if (quotesubst || e._SYMBptr->sommet.quoted() 
+	    // || e._SYMBptr->sommet==at_pow
+	    || (e._SYMBptr->sommet==at_pow && ef.type==_VECT && ef._VECTptr->size()==2 && !is_zero(ef._VECTptr->front()))
+	    )
 	  return symbolic(e._SYMBptr->sommet,ef);
 	else
 	  return e._SYMBptr->sommet(ef,contextptr);
@@ -878,7 +881,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_halftan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_halftan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_halftan,contextptr);
     return halftan(args,contextptr);
@@ -941,7 +944,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_hyp2exp(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_hyp2exp(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_hyp2exp,contextptr);
     return hyp2exp(args,contextptr);
@@ -965,7 +968,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_sincos(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_sincos(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_sincos,contextptr);
     return sincos(args,contextptr);
@@ -984,7 +987,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_trig2exp(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_trig2exp(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_trig2exp,contextptr);
     return trig2exp(args,contextptr);
@@ -1001,7 +1004,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_halftan_hyp2exp(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_halftan_hyp2exp(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_halftan_hyp2exp,contextptr);
     return halftan_hyp2exp(args,contextptr);
@@ -1017,7 +1020,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_asin2acos(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_asin2acos(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_asin2acos,contextptr);
     return asin2acos(args,contextptr);
@@ -1033,7 +1036,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_asin2atan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_asin2atan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_asin2atan,contextptr);
     return asin2atan(args,contextptr);
@@ -1049,7 +1052,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_acos2asin(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_acos2asin(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,acos2asin,contextptr);
     return acos2asin(args,contextptr);
@@ -1065,7 +1068,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_acos2atan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_acos2atan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_acos2atan,contextptr);
     return acos2atan(args,contextptr);
@@ -1081,7 +1084,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_atan2asin(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_atan2asin(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_atan2asin,contextptr);
     return atan2asin(args,contextptr);
@@ -1097,7 +1100,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_atan2acos(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_atan2acos(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_atan2acos,contextptr);
     return atan2acos(args,contextptr);
@@ -1116,7 +1119,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_atrig2ln(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_atrig2ln(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_atrig2ln,contextptr);
     return atrig2ln(args,contextptr);
@@ -1185,7 +1188,7 @@ namespace giac {
       int i;
       for (i=0;i<n;++i){
 	if (v[i].type!=_POLY){
-	  gg=rdiv(g,wrt[i]);
+	  gg=rdiv(g,wrt[i],contextptr);
 	  if (gg.type==_INT_)
 	    break;
 	  if ( (gg.type==_FRAC) && (gg._FRACptr->num.type==_INT_) && (gg._FRACptr->den.type==_INT_) )
@@ -1457,7 +1460,7 @@ namespace giac {
       res=res+ln(r2e(gg,vars,contextptr),contextptr);
     }
     res=res+ln(r2e(a,vars,contextptr),contextptr);
-    gg=re(branch_evalf(rdiv(ln(r2e(a_orig,vars,contextptr),contextptr)-res,cst_pi_over_2*cst_i),contextptr),contextptr); 
+    gg=re(branch_evalf(rdiv(ln(r2e(a_orig,vars,contextptr),contextptr)-res,cst_pi_over_2*cst_i,contextptr),contextptr),contextptr); 
     if (gg.type==_DOUBLE_)
       res=res+cst_pi_over_2*cst_i*gen(int(floor(gg._DOUBLE_val+0.5)));
     return res;
@@ -1565,12 +1568,15 @@ namespace giac {
       return e;
     gen var,res;
     if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,_pow2exp(res,contextptr)));
-    if ( e._SYMBptr->sommet==at_pow && e._SYMBptr->feuille.type==_VECT && e._SYMBptr->feuille._VECTptr->size()==2){ 
-      vecteur & v=*e._SYMBptr->feuille._VECTptr;
+      return symbolic(at_program,makesequence(var,0,_pow2exp(res,contextptr)));
+    if ( (e._SYMBptr->sommet==at_pow || e._SYMBptr->sommet==at_surd || e._SYMBptr->sommet==at_NTHROOT) && e._SYMBptr->feuille.type==_VECT && e._SYMBptr->feuille._VECTptr->size()==2){ 
+      vecteur v=*e._SYMBptr->feuille._VECTptr;
+      if (e._SYMBptr->sommet==at_NTHROOT)
+	swapgen(v[0],v[1]);
       if (v[1].type!=_INT_ && v[1].type!=_FRAC){
 	gen tmp=-v[0];
-	gen tmp1=_pow2exp(v[1],contextptr);
+	gen tmp1=(e._SYMBptr->sommet==at_surd || e._SYMBptr->sommet==at_NTHROOT)?inv(v[1],contextptr):v[1];
+	tmp1=_pow2exp(tmp1,contextptr);
 	if (is_strictly_positive(tmp,contextptr))
 	  return exp(tmp1*_pow2exp(ln(tmp,contextptr),contextptr),contextptr)*symb_exp(v[1]*cst_i*cst_pi);
 	else
@@ -1666,6 +1672,64 @@ namespace giac {
     return subst(g,l,newl,false,contextptr);
   }
 
+  gen simplifypsi(const gen & g,GIAC_CONTEXT){
+    vecteur l(lop(g,at_Psi));
+    int s=l.size();
+    if (s<2)
+      return g;
+    // look if difference of arguments in l are integers
+    vecteur newl(s);
+    // newl will contain couples of arg of Psi and integers shift
+    newl[0]=makevecteur(l[0]._SYMBptr->feuille,zero);
+    for (int i=1;i<s;++i){
+      // look in newl for an arg of Psi with integer difference
+      gen current=l[i]._SYMBptr->feuille;
+      newl[i]=makevecteur(current,zero);
+      for (int j=0;j<i;++j){
+	if (!is_zero(newl[j][1]))
+	  continue;
+	gen base=newl[j][0];
+	gen difference=current-base;
+	difference=simplify(difference,contextptr); // recursive call
+	if (difference.type==_VECT && difference._VECTptr->size()==2 && difference._VECTptr->back()==0)
+	  difference=difference._VECTptr->front();
+	if (difference.type!=_INT_)
+	  continue;
+	int k=difference.val;
+	if (k>=0){
+	  newl[i]=makevecteur(base,difference);
+	  break;
+	}
+	// current is the new Psi basis, change base in newl
+	newl[i]=makevecteur(current,zero);
+	for (k=0;k<i;++k){
+	  vecteur & n=*newl[k]._VECTptr;
+	  if (n[0]==base){
+	    n[0]=current;
+	    n[1]=n[1]-difference;
+	  }
+	}
+	break;
+      }
+    }
+    // now replace in newl the couple by a factorial*a product
+    for (int i=0;i<s;++i){
+      gen base=newl[i][0];
+      gen expo=-1; gen base0=base;
+      if (base.type==_VECT && base._VECTptr->size()==2){
+	expo=-1-base._VECTptr->back();
+	base0=base._VECTptr->front();
+      }
+      int shift=newl[i][1].val;
+      gen somme=0;
+      for (int j=shift-1;j>=0;--j){
+	somme += pow(base0+j,expo,contextptr);
+      }
+      newl[i]=somme+symbolic(at_Psi,base);
+    }
+    return subst(g,l,newl,false,contextptr);
+  }
+
   gen gammatofactorial(const gen & x,GIAC_CONTEXT){
     if (x.is_symb_of_sommet(at_plus) && x._SYMBptr->feuille.type==_VECT){
       vecteur v = *x._SYMBptr->feuille._VECTptr;
@@ -1695,6 +1759,7 @@ namespace giac {
     gen g=pow2expln(e,contextptr);
     g=gamma2factorial(g,contextptr);
     g=simplifyfactorial(g,contextptr);
+    g=simplifypsi(g,contextptr);
     // analyse of args of ln
     g=simplifylnexp(g,contextptr);
     vecteur l(lop(g,at_ln));
@@ -1702,7 +1767,7 @@ namespace giac {
     if (s>1){
       vecteur argln(s);
       for (int i=0;i<s;++i)
-	argln[i]=tsimplify(l[i]._SYMBptr->feuille,contextptr);
+	argln[i]=tsimplify_common(l[i]._SYMBptr->feuille,contextptr); // was tsimplify, but replacing sin/cos in arg of ln is bad
       // check for common factors between args
       // now we make a vector of prime together values and rewrite
       // each arg as a product of these values + a multiple of 2*pi*i
@@ -1729,7 +1794,7 @@ namespace giac {
       for (int i=0;i<s;++i){
 	fxnd(argln[i],num,den);	
 	newln[i]=expanded_ln(num,primeargs,extargs,lnprimeargs,lnextargs,vars,contextptr)-expanded_ln(den,primeargs,extargs,lnprimeargs,lnextargs,vars,contextptr);
-	gen gg=evalf_double(re(branch_evalf(rdiv(l[i]-newln[i],cst_two_pi*cst_i),contextptr),contextptr),0,contextptr); 
+	gen gg=evalf_double(re(branch_evalf(rdiv(l[i]-newln[i],cst_two_pi*cst_i,contextptr),contextptr),contextptr),0,contextptr); 
 	if (gg.type==_DOUBLE_)
 	  newln[i]=newln[i]+cst_two_pi*cst_i*gen(int(floor(gg._DOUBLE_val+0.5)));
        }
@@ -1743,7 +1808,7 @@ namespace giac {
     // recursively simplify inside exp
     vecteur newl(s); // vector of args of the exponential
     for (int i=0;i<s;++i)
-      newl[i]=tsimplify(l[i]._SYMBptr->feuille,contextptr);
+      newl[i]=tsimplify_common(l[i]._SYMBptr->feuille,contextptr); // was tsimplify, but replacing sin/cos in terms of complex exp is bad
     // check for linear relations with rational coefficients between args
     // add i*pi and ln to the linear relations checking
     // First convert everything to multivariate fractions
@@ -1781,7 +1846,7 @@ namespace giac {
       if (i<n_ln)
 	independant[i]=pow(ln_vars[i]._SYMBptr->feuille,inv(lcmg,contextptr),contextptr);
       else
-	independant[i]=rewrite_strong_exp(r2e(rdiv(independant[i],lcmg),vars,contextptr),contextptr);
+	independant[i]=rewrite_strong_exp(r2e(rdiv(independant[i],lcmg,contextptr),vars,contextptr),contextptr);
     }
     m=mtran(mt);
     // compute exp[newl]
@@ -1815,7 +1880,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tsimplify(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tsimplify(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_tsimplify,contextptr);
     return tsimplify(args,contextptr);
@@ -1933,11 +1998,11 @@ namespace giac {
 	return ln(pow(gim,2),contextptr)/2+sign(gim,contextptr)*cst_i*cst_pi_over_2;
       if (is_zero(gim)){
 	if (complex_mode(contextptr))
-	  return rdiv(ln(pow(gre,2),contextptr),plus_two)+cst_i*(plus_one-sign(gre,contextptr))*cst_pi_over_2;
+	  return rdiv(ln(pow(gre,2),contextptr),plus_two,contextptr)+cst_i*(plus_one-sign(gre,contextptr))*cst_pi_over_2;
 	else
 	  return ln(f,contextptr);
       }
-      return rdiv(ln(pow(gre,2)+pow(gim,2),contextptr),plus_two)+cst_i*(atan(gim/gre,contextptr)+sign(gim,contextptr)*(plus_one-sign(gre,contextptr))*cst_pi_over_2);
+      return rdiv(ln(pow(gre,2)+pow(gim,2),contextptr),plus_two,contextptr)+cst_i*(atan(gim/gre,contextptr)+sign(gim,contextptr)*(plus_one-sign(gre,contextptr))*cst_pi_over_2);
     }
     return symbolic(g._SYMBptr->sommet,f);
   }
@@ -1954,8 +2019,10 @@ namespace giac {
     gen e=e_orig;
     if (e.type==_FRAC)
       return _evalc(e_orig,contextptr);
+    // ratnormal added for E:=2*exp(t/25)/(19+exp(t/25)); F:=simplifier(int(E,t)); 
+    // M:=(1/50)*int(E,t,50,100); simplify(M)
     if (!lop(e,at_ln).empty())
-      e=lncollect(e_orig,contextptr);
+      e=lncollect(ratnormal(e_orig),contextptr);
     if (!lop(e,at_exp).empty())
       e=_exp2pow(e,contextptr);
     if (e.type==_SYMB && e._SYMBptr->feuille.type!=_VECT){
@@ -2023,8 +2090,17 @@ namespace giac {
     gen reg=recursive_normal(re(g,contextptr),contextptr),
       img=recursive_normal(im(g,contextptr),contextptr);
     if (s1){
+      gen g1=normal(trigcos(reg,contextptr),contextptr)+cst_i*normal(trigcos(img,contextptr),contextptr);
+      gen g2=normal(trigsin(reg,contextptr),contextptr)+cst_i*normal(trigsin(img,contextptr),contextptr);
+      int g1s=lvar(g1).size(), g2s=lvar(g2).size();
+      if (g1s!=g2s)
+	return g1s<g2s?g1:g2;
+      g1s=taille(g1,RAND_MAX),g2s=taille(g2,RAND_MAX);
+      if (g1s!=g2s)
+	return g1s<g2s?g1:g2;      
       if (v1.front().is_symb_of_sommet(at_sin))
-	return normal(trigsin(reg,contextptr),contextptr)+cst_i*normal(trigsin(img,contextptr),contextptr);
+	return g2;
+      return g1;
     }
     g=normal(trigcos(reg,contextptr),contextptr)+cst_i*normal(trigcos(img,contextptr),contextptr);
     return g;
@@ -2033,7 +2109,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_simplify(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_simplify(res,contextptr)));
     if (args.type==_VECT){
       vecteur & v =*args._VECTptr;
       int vs=v.size();
@@ -2062,7 +2138,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_trigcos(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_trigcos(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_trigcos,contextptr);
     return normal(trigcos(args,contextptr),contextptr);
@@ -2078,7 +2154,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_trigsin(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_trigsin(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_trigsin,contextptr);
     return normal(trigsin(args,contextptr),contextptr);
@@ -2094,7 +2170,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_trigtan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_trigtan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_trigtan,contextptr);
     return normal(trigtan(args,contextptr),contextptr);
@@ -2110,7 +2186,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
      gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tan2sincos(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tan2sincos(res,contextptr)));
    if (is_equal(args))
       return apply_to_equal(args,_tan2sincos,contextptr);
     return tan2sincos(args,contextptr);
@@ -2131,7 +2207,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_sin2costan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_sin2costan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_sin2costan,contextptr);
     return sin2_costan(args,contextptr);
@@ -2152,7 +2228,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_cos2sintan(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_cos2sintan(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_cos2sintan,contextptr);
     return cos2sintan(args,contextptr);
@@ -2168,7 +2244,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tan2sincos2(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tan2sincos2(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_tan2sincos2,contextptr);
     return tan2sincos2(args,contextptr);
@@ -2184,7 +2260,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tan2cossin2(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tan2cossin2(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_tan2cossin2,contextptr);
     return tan2cossin2(args,contextptr);
@@ -2239,7 +2315,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tcollect(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tcollect(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_tcollect,contextptr);
     return apply(args,contextptr,tcollect);
@@ -2348,7 +2424,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_lncollect(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_lncollect(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_lncollect,contextptr);
     return apply(args,lncollect,contextptr);
@@ -2364,7 +2440,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_powexpand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_powexpand(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_powexpand,contextptr);
     return apply(args,powexpand,contextptr);
@@ -2380,7 +2456,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_exp2pow(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_exp2pow(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_exp2pow,contextptr);
     return apply(args,exp2pow,contextptr);
@@ -2409,7 +2485,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_factor_xn(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_factor_xn(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_factor_xn,contextptr);
     return apply(args,factor_xn,contextptr);
@@ -2584,7 +2660,10 @@ namespace giac {
     gen module=abs(args,contextptr),argument=arg(args,contextptr);
     if (is_zero(argument))
       return module;
-    return module*symbolic(at_exp,cst_i*argument);
+    gen res=module*symbolic(at_exp,cst_i*argument);
+    if (calc_mode(contextptr)==1)
+      return symb_quote(res);
+    return res;
   }
 
   gen _rectangular2polar(const gen & args,const context * contextptr){

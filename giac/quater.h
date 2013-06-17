@@ -62,7 +62,7 @@ namespace giac {
     }
     galois_field(const galois_field & q);
     galois_field(const gen p_,const gen & P_,const gen & x_,const gen & a_);
-    galois_field(const gen & g,GIAC_CONTEXT);
+    galois_field(const gen & g,bool primitive,GIAC_CONTEXT);
     void reduce(); // reduce a
     virtual gen operator + (const gen & g) const;
     virtual gen operator - (const gen & g) const;
@@ -96,8 +96,8 @@ namespace giac {
 
   // Is the polynomial v irreducible and primitive modulo p?
   // If it is only irreducible, returns 2 and sets vmin
-  int is_irreducible_primitive(const vecteur & v,const gen & p,vecteur & vmin);
-  vecteur find_irreducible_primitive(int p,int m,GIAC_CONTEXT);
+  int is_irreducible_primitive(const vecteur & v,const gen & p,vecteur & vmin,bool primitive,GIAC_CONTEXT);
+  vecteur find_irreducible_primitive(int p,int m,bool primitive,GIAC_CONTEXT);
   gen _galois_field(const gen & args,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC

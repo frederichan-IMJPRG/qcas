@@ -359,7 +359,8 @@ namespace giac {
 	// for each negative integer root of pres, multiply D
 	// find linear factors of pres -> FIXME does not work
 	factorization vden;
-	factor(pres,N1,vden,false,false,false,1);
+	gen extra_div=1;
+	factor(pres,N1,vden,false,false,false,1,extra_div);
 	factorization::const_iterator f_it=vden.begin(),f_itend=vden.end();
 	// bool ok=true;
 	for (;f_it!=f_itend;++f_it){
@@ -538,7 +539,10 @@ namespace giac {
     gen ipshift;
     partfrac(num,den,vden,pfdecomp,ipnum,ipden);
     // int( ipnum/ipden*exp(a*x),x)
+    int save=calc_mode(contextptr);
+    calc_mode(0,contextptr);
     prim += _integrate(gen(makevecteur(expax*r2sym(ipnum/ipden,l,contextptr),x),_SEQ__VECT),contextptr);
+    calc_mode(save,contextptr);
     if (is_undef(prim)) return false;
     // Hermite reduction 
     vector< pf<gen> >::iterator it=pfdecomp.begin();
@@ -557,7 +561,8 @@ namespace giac {
       vecteur itnum=polynome2poly1(tmp.num,1);
       vecteur itden=derivative(polynome2poly1(tmp.den,1));
       factorization vden;
-      factor(tmp.fact,p_content,vden,false,true,true,1); // complex+sqrt ok
+      gen extra_div=1;
+      factor(tmp.fact,p_content,vden,false,true,true,1,extra_div); // complex+sqrt ok
       factorization::const_iterator f_it=vden.begin(),f_itend=vden.end();
       gen add_prim;
       // bool ok=true;
@@ -615,7 +620,7 @@ namespace giac {
 	  remains_to_integrate=remains_to_integrate+symb_horner(e,X);
 	  return false;
 	}
-	eprim[s-1-j]=eprim[s-1-j]+rdiv(lnc,j+1);
+	eprim[s-1-j]=eprim[s-1-j]+rdiv(lnc,j+1,contextptr);
       }
       gen prim_add;
       bool ok=in_risch(e[s-1]-eprim[s-1]*dX,x,v1,zero,prim_add,lnc,remains,contextptr);
@@ -749,7 +754,8 @@ namespace giac {
 	// Factorization, should return 1st order factor independant of
 	// the tower variables
 	factorization vden;
-	factor(pres,p_content,vden,false,withsqrt(contextptr),true,1);
+	gen extra_div=1;
+	factor(pres,p_content,vden,false,withsqrt(contextptr),true,1,extra_div);
 	factorization::const_iterator f_it=vden.begin(),f_itend=vden.end();
 	gen add_prim;
 	bool ok=true;
@@ -774,7 +780,7 @@ namespace giac {
 	  identificateur t(" t");
 	  gen tmp1=r2sym(p1,mergevecteur(vecteur(1,t),l),contextptr);
 	  tmp1=subst(tmp1,t,root,false,contextptr);
-	  gen tmparg=_gcd(makevecteur(recursive_normal(tmp1,contextptr),recursive_normal(r2sym(it->den,l,contextptr),contextptr)),contextptr); 
+	  gen tmparg=_gcd(makevecteur(recursive_normal(tmp1,contextptr),recursive_normal(r2sym(it->fact,l,contextptr),contextptr)),contextptr); 
 	  add_prim=add_prim+root*ln(tmparg,contextptr);
 	  // If tmparg is of maximal degree, this will change the integral
 	  // part of the fraction by root*_quo(tmparg',tmparg,X)
@@ -849,9 +855,11 @@ namespace giac {
     SiCiexp.push_back(at_exp);
     if (!lop(res,SiCiexp).empty()){
       res=recursive_normal(res,contextptr);
-      if (has_i(res)){
+      if (!has_i(e_orig) && has_i(res)){
 	res=_exp2trig(res,contextptr);
 	res=recursive_normal(res,contextptr);
+	if (has_i(res))
+	  res=recursive_normal(re(halftan(res,contextptr),contextptr),contextptr);
       }
     }
     return res;
@@ -903,7 +911,8 @@ namespace giac {
       if (!is_integer(it->value)){
 #endif
 	factorization vden;
-	factor(p0,p1,vden,false,false,false,1);
+	gen extra_div=1;
+	factor(p0,p1,vden,false,false,false,1,extra_div);
 	factorization::const_iterator f_it=vden.begin(),f_itend=vden.end();
 	// bool ok=true;
 	for (;f_it!=f_itend;++f_it){

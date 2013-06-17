@@ -121,7 +121,7 @@ namespace giac {
     new_coord.reserve(p.size());
     modpoly::const_iterator itend=p.end(),it=p.begin();
     for (int d=0;it!=itend;++it,++d)
-      new_coord.push_back(normal(rdiv((*it),gen(d)+shift_coeff),context0));
+      new_coord.push_back(normal(rdiv((*it),gen(d)+shift_coeff,context0),context0));
     return new_coord;
   }
   
@@ -179,7 +179,7 @@ namespace giac {
     reverse(q.begin(),q.end());
     if (q!=qs)
       return 0;
-    // find arg of a root and _VECTare to 2*pi
+    // find arg of a root and compare to 2*pi
     gen r=a_root(qs,0,eps);
     if (is_undef(r)) return 0;
     double arg_d=evalf_double(arg(r,context0),1,context0)._DOUBLE_val;
@@ -445,8 +445,11 @@ namespace giac {
   
   // modular polynomial arithmetic: gcd, egcd, simplify
   modpoly operator_plus (const modpoly & th,const modpoly & other,environment * env) {
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor addition
@@ -460,8 +463,11 @@ namespace giac {
   } 
 
   modpoly operator + (const modpoly & th,const modpoly & other) {
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor addition
@@ -591,8 +597,11 @@ namespace giac {
   }
 
   modpoly operator_minus (const modpoly & th,const modpoly & other,environment * env) {  
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor sub
@@ -606,8 +615,11 @@ namespace giac {
   }
 
   modpoly operator - (const modpoly & th,const modpoly & other) {  
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor sub
@@ -679,8 +691,11 @@ namespace giac {
   } 
 
   modpoly operator * (const modpoly & th, const gen & fact){
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor constant multiplication
@@ -692,8 +707,11 @@ namespace giac {
   }
 
   modpoly operator * (const gen & fact,const modpoly & th){
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     if (is_one(fact))
@@ -712,8 +730,11 @@ namespace giac {
   
 
   modpoly operator_times (const modpoly & th, const gen & fact,environment * env){
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     // Tensor constant multiplication
@@ -725,8 +746,11 @@ namespace giac {
   }
 
   modpoly operator_times (const gen & fact,const modpoly & th,environment * env){
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       return modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
     }
     if (is_one(fact))
@@ -1107,8 +1131,11 @@ namespace giac {
   }
 
   void operator_times (const modpoly & a, const modpoly & b,environment * env,modpoly & new_coord) {
-    if (ctrl_c) { 
-      interrupted = true; 
+#ifdef TIMEOUT
+    control_c();
+#endif
+    if (ctrl_c || interrupted) { 
+      interrupted = true; ctrl_c=false;
       new_coord=modpoly(1,gensizeerr(gettext("Stopped by user interruption."))); 
       return;
     }
@@ -1292,12 +1319,12 @@ namespace giac {
 	modpoly::iterator it=new_coord.begin(),itend=new_coord.end();
 	for (;it!=itend;++it)
 	  //  *it =iquo(*it,fact);
-	  *it=rdiv(*it,fact);
+	  *it=rdiv(*it,fact,context0);
       }
       else {
 	modpoly::const_iterator it=th.begin(),itend=th.end();
 	for (;it!=itend;++it)
-	  new_coord.push_back(rdiv(*it,fact)); // was iquo
+	  new_coord.push_back(rdiv(*it,fact,context0)); // was iquo
 	  // new_coord.push_back(iquo(*it,fact));
       }
     }
@@ -1391,7 +1418,7 @@ namespace giac {
       if (env && env->moduloon)
 	q=smod(*tmpend,env->modulo);
       else {
-	q=rdiv(*tmpend,coeff);
+	q=rdiv(*tmpend,coeff,context0);
 	if (!allowrational){
 	  if (q.type==_FRAC){
 	    delete [] tmp;
@@ -2001,6 +2028,115 @@ namespace giac {
     }
   }
 
+  // invert a1 mod m
+  double invmod(double a1,double A){
+    double a(A),a2,u=0,u1=1,u2,q;
+    for (;a1;){
+      q=std::floor(a/a1);
+      a2=a-q*a1;
+      u2=u-q*u1;
+      a=a1;
+      a1=a2;
+      u=u1;
+      u1=u2;
+    }
+    if (a==-1){ a=1; u=-u; }
+    if (a!=1) return 0;
+    if (u<0) u+=A;
+    return u;
+  }
+
+  bool convertdouble(const modpoly & p,double M,vector<double> & v){
+    v.clear(); v.reserve(p.size());
+    int m=int(M);
+    const_iterateur it=p.begin(),itend=p.end();
+    for (;it!=itend;++it){
+      if (it->type==_INT_)
+	v.push_back(it->val % m);
+      else {
+	if (it->type==_ZINT)
+	  v.push_back(smod(*it,m).val);
+	else
+	  return false;
+      }
+    }
+    return true;    
+  }
+
+  bool convertfromdouble(const vector<double> & A,modpoly & a,double M){
+    a.clear(); a.reserve(A.size());
+    int m( (int)M);
+    vector<double>::const_iterator it=A.begin(),itend=A.end();
+    for (;it!=itend;++it){
+      double d=*it;
+      if (d!=int(d))
+	return false;
+      if (d>M/2)
+	a.push_back(int(d)-m);
+      else
+	a.push_back(int(d));
+    }
+    return true;
+  }
+
+  void multdoublepoly(double x,vector<double> & v,double m){
+    if (x==1)
+      return;
+    vector<double>::iterator it=v.begin(),itend=v.end();
+    for (;it!=itend;++it){
+      double t=*it * x;
+      double q=std::floor(t/m);
+      *it = t-q*m;
+    }
+  }
+
+  // A = BQ+R mod m with B leading coeff = 1
+  void quoremdouble(const vector<double> & A,const vector<double> & B,vector<double> & Q,vector<double> & R,double m){
+    Q.clear();
+    R=A;
+    int rs=R.size(),bs=B.size();
+    if (rs<bs)
+      return;
+    if (rs==bs+1){ } // possible improvement
+    vector<double>::iterator it=R.begin(),itend=it+(rs-bs+1);
+    for (;it!=itend;){
+      double q=*it;
+      Q.push_back(q);
+      *it=0;
+      ++it;
+      vector<double>::iterator kt=it;
+      vector<double>::const_iterator jt=B.begin()+1,jtend=B.end();
+      for (;jt!=jtend;++kt,++jt){
+	double d= *kt- q*(*jt);
+	*kt=d-std::floor(d/m)*m;
+      }
+      for (;it!=itend;++it){
+	if (*it)
+	  break;
+      }
+    }
+    for (;it!=R.end();++it){
+      if (*it)
+	break;
+    }
+    R.erase(R.begin(),it);
+  }
+
+  bool gcddoublemodpoly(const modpoly &p,const modpoly & q,double m,modpoly &a){
+    vector<double> A,B,Q,R;
+    if (!convertdouble(p,m,A) || !convertdouble(q,m,B))
+      return false;
+    while (!B.empty()){
+      multdoublepoly(invmod(B.front(),m),B,m);
+      quoremdouble(A,B,Q,R,m);
+      swap(A,B);
+      swap(B,R);
+    }
+    if (!A.empty())
+      multdoublepoly(invmod(A.front(),m),A,m);
+    return convertfromdouble(A,a,m);
+  }
+
   bool gcdmodpoly(const modpoly &p,const modpoly & q,environment * env,modpoly &a){
     if (!env){
 #ifndef NO_STDEXCEPT
@@ -2008,10 +2144,18 @@ namespace giac {
 #endif
       return false;
     }
+#ifndef EMCC
     if (env->moduloon && !env->complexe && env->modulo.type==_INT_ && env->modulo.val < (1 << 15) ){
       gcdsmallmodpoly(p,q,env->modulo.val,a);
       return true;
     }
+#endif
+#if 0
+    if (env->moduloon && !env->complexe && env->modulo.type==_INT_ && env->modulo.val < (1 << 26) ){
+      if (gcddoublemodpoly(p,q,env->modulo.val,a))
+	return true;
+    }
+#endif
     a=p;
     modpoly b(q);
     modpoly quo,rem;
@@ -3323,6 +3467,27 @@ namespace giac {
       res=p;
       return;
     }
+#if 1
+    modpoly p2k(p),tmp,tmpq;
+    res=one();
+    gen N(n),q,r;
+    while (!is_zero(N)){
+      r=irem(N,2,q);
+      N=iquo(N,2); // not sure q can be used because of inplace operations
+      if (is_one(r)){
+	operator_times(res,p2k,env,tmp);
+	if (env)
+	  DivRem(tmp,pmod,env,tmpq,res);
+	else
+	  swap(res,tmp); // res=tmp
+      }
+      operator_times(p2k,p2k,env,tmp);
+      if (env)
+	DivRem(tmp,pmod,env,tmpq,p2k);
+      else
+	swap(p2k,tmp); // res=tmp      
+    }
+#else    
     inpowmod(p,iquo(n,2),pmod,env,res);
     modpoly tmp,q;
     operator_times(res,res,env,tmp); 
@@ -3337,6 +3502,7 @@ namespace giac {
       else
 	res=tmp;
     }
+#endif
   }
 
   modpoly powmod(const modpoly & p,const gen & n,const modpoly & pmod,environment * env){
@@ -3386,7 +3552,7 @@ namespace giac {
 	break;
       d=d*den;   
     }
-    return rdiv(res,d);
+    return rdiv(res,d,context0);
   }
 
   gen horner(const modpoly & p,const gen & x,environment * env){

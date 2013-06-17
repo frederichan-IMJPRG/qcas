@@ -52,16 +52,17 @@ namespace giac {
 
   vecteur vector_double_2_vecteur(const std::vector<double> & v);
   vecteur vectvector_double_2_vecteur(const std::vector< std::vector<double> > & v);
+  vecteur vector_int_2_vecteur(const std::vector<int> & v);
   vecteur vector_int_2_vecteur(const std::vector<int> & v,GIAC_CONTEXT);
-  std::vector<int> vecteur_2_vector_int(const vecteur & v,GIAC_CONTEXT);
-  std::vector< std::vector<int> > vecteur_2_vectvector_int(const vecteur & v,GIAC_CONTEXT);
-  vecteur vectvector_int_2_vecteur(const std::vector< std::vector<int> > & v,GIAC_CONTEXT);
+  std::vector<int> vecteur_2_vector_int(const vecteur & v);
+  std::vector< std::vector<int> > vecteur_2_vectvector_int(const vecteur & v);
+  vecteur vectvector_int_2_vecteur(const std::vector< std::vector<int> > & v);
   std::vector<int> sizes(const std::vector< std::vector<int> > & v);
 
   std::vector<int> randperm(const int & n);
   bool is_permu(const vecteur &p,std::vector<int> & p1,GIAC_CONTEXT);
   bool is_cycle(const vecteur & c,std::vector<int> & c1,GIAC_CONTEXT);
-  int signature(const vector<int> & p) ;
+  int signature(const std::vector<int> & p) ;
   std::vector< std::vector<int> > permu2cycles(const std::vector<int> & p) ;
   std::vector<int> cycle2permu(const std::vector< std::vector<int> > & c);
   std::vector<int> cycle2perm(const std::vector<int> & c) ;
@@ -87,7 +88,7 @@ namespace giac {
   gen _curl(const gen & args,GIAC_CONTEXT);
   bool find_n_x(const gen & args,int & n,gen & x,gen & a);
 
-  vector< vector<int> > groupermu(const vector<int> & p1,const vector<int> & p2) ;
+  std::vector< std::vector<int> > groupermu(const std::vector<int> & p1,const std::vector<int> & p2) ;
   gen _groupermu(const gen & args,GIAC_CONTEXT);
   gen _nextperm(const gen & args,GIAC_CONTEXT);
   gen _prevperm(const gen & args,GIAC_CONTEXT);

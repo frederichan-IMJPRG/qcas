@@ -205,7 +205,7 @@ namespace giac {
   static gen t_POLMOD2gen(const GEN & G,const vecteur & vars){
     gen tmp;
     find_or_make_symbol("Mod",tmp,0,false,context0);
-    return symbolic(at_of,makevecteur(tmp,gen(makevecteur(GEN2gen((GEN) G[2],vars),GEN2gen((GEN) G[1],vars)),_SEQ__VECT)));
+    return symbolic(at_of,makesequence(tmp,gen(makevecteur(GEN2gen((GEN) G[2],vars),GEN2gen((GEN) G[1],vars)),_SEQ__VECT)));
   }
 
   static gen t_COMPLEX2gen(const GEN & G,const vecteur & vars){
@@ -225,7 +225,7 @@ namespace giac {
     gen O;
     find_or_make_symbol("O",O,0,false,context0);
     gen p(GEN2gen((GEN) G[2],vars)),val(longlong(valp(G)));
-    return pow(p,val,context0)*(GEN2gen((GEN) G[4],vars)+symbolic(at_of,makevecteur(O,symb_pow(p,longlong(precp(G)))))); // removed symb_quote for p-adic
+    return pow(p,val,context0)*(GEN2gen((GEN) G[4],vars)+symbolic(at_of,makesequence(O,symb_pow(p,longlong(precp(G)))))); // removed symb_quote for p-adic
   }
 
   // WARNING: If g is a matrix this print the transpose of the matrix
@@ -591,6 +591,18 @@ namespace giac {
     return res;
   }
 
+  gen pari_ffinit(const gen & p,int n){
+    gen tmp;
+    abort_if_locked();
+    pthread_cleanup_push(pari_cleanup, (void *) pari_mutex_ptr);
+    long av=avma;
+    tmp=GEN2gen(ffinit(gen2GEN(p,vecteur(0),0),n,0),vecteur(0));
+    avma=av;
+    if (pari_mutex_ptr) pthread_mutex_unlock(pari_mutex_ptr);    
+    pthread_cleanup_pop(0);
+    return tmp;
+  }
+
   // for factorization over Z when many modular factors arise
   // This is a call to PARI combine_factors
   // WARNING: You must remove static from the declaration of combine_factors
@@ -952,6 +964,10 @@ namespace giac {
     return "please recompile giac with PARI";
   }
   
+  gen pari_ffinit(const gen & p,int n){
+    return string2gen("please recompile giac with PARI",false);
+  }
+
   gen pari_gamma(const gen & e){
     return pari_error();
   }

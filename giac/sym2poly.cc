@@ -388,9 +388,15 @@ namespace giac {
       else
 	g=fraction(tmpmult*pptr,tmpmult); // polynome(tmpmult,np.dim));
       // changed 4 nov. 2012 failure on f(x):=sqrt(x)/(x+1); F:=normal(f'(x));
-      n=np;
-      d=dp;
-      return g;
+      // Fix 9/2/2013: np and dp may have denominators if there are _EXT coeffs
+      tmpmult=1;
+      lcmdeno(np,tmpmult);
+      lcmdeno(dp,tmpmult);
+      if (tmpmult.type==_POLY)
+	tmpmult=polynome(monomial<gen>(tmpmult,index_t(pptr->t.dim)));
+      n=np*tmpmult;
+      d=dp*tmpmult;
+      return g*tmpmult;
     }
     if (n.type==_POLY) {
       polynome np(*n._POLYptr);
@@ -678,7 +684,8 @@ namespace giac {
     polynome p(poly12polynome(v));
     polynome p_content(p.dim);
     factorization f;
-    if (!factor(p,p_content,f,true,false,false,1)){
+    gen extra_div=1;
+    if (!factor(p,p_content,f,true,false,false,1,extra_div)){
 #ifndef NO_STDEXCEPT
       setsizeerr(gettext("Can't check irreducibility extracting rootof"));
 #endif
@@ -695,7 +702,7 @@ namespace giac {
       if (deg==1){
 	v=polynome2poly1(irr_p);
 	lowest_degree=1;
-	num=rdiv(-v.back(),v.front());
+	num=rdiv(-v.back(),v.front(),contextptr);
 	// cerr << "xroot" << num << endl;
 	gen numlv=r2sym(num,lv,contextptr);
 	if (!lvar(numlv).empty())
@@ -756,6 +763,58 @@ namespace giac {
     }
   }
 
+  static factorization rsqff(const polynome & p){
+    polynome s(lgcd(p));
+    factorization f(sqff(p/s));
+    if (p.dim==0){
+      f.push_back(facteur<polynome>(p,1));
+      return f;
+    }
+    if (p.dim==1){
+      // adjust const coeff
+      gen p1=1;
+      factorization::iterator it=f.begin(),itend=f.end();
+      for (;it!=itend;++it){
+	p1 = p1*pow(it->fact.coord.front().value,it->mult);
+      }
+      p1=p.coord.front().value/p1;
+      if (is_positive(-p1,context0)){ // ok
+	for (it=f.begin();it!=itend;++it){
+	  if (it->mult%2){
+	    it->fact=-it->fact;
+	    p1=-p1;
+	    break;
+	  }
+	}
+      }
+      if (!is_one(p1))
+	f.push_back(facteur<polynome>(polynome(p1,1),1));
+      return f;
+    }
+    factorization ff(rsqff(s.trunc1()));
+    factorization::const_iterator it=ff.begin(),itend=ff.end();
+    for (;it!=itend;++it)
+      f.push_back(facteur<polynome>(it->fact.untrunc1(),it->mult));
+    return f;
+  }
+
+  void smaller_factor(vecteur & v){
+    // factor v, select smaller factor
+    polynome vp(1),vp_content;
+    vp=poly12polynome(v,1);
+    factorization vf;
+    gen extra_div=1;
+    if (factor(vp,vp_content,vf,true,false,false,1,extra_div) && vf.size()>1){
+      polynome2poly1(vf.front().fact,1,v);
+      for (unsigned i=1;i<vf.size();++i){
+	vecteur vi;
+	polynome2poly1(vf[i].fact,1,vi);
+	if (vi.size()<v.size())
+	  v=vi;
+      }
+    }
+  }
+  
   static bool sym2rxroot(gen & num,gen & den,int n,int d,const vecteur & l,GIAC_CONTEXT){
     if (is_zero(num))
       return true;
@@ -768,6 +827,10 @@ namespace giac {
       deni=gcd(gcd(numr,denr),numi);
       num=num/deni;
       den=den/deni;
+    }
+    if (is_positive(r2e(-den,l,contextptr),contextptr)){
+      num=-num;
+      den=-den;
     }
     bool sign_changed=false;
     if (d<0){
@@ -835,18 +898,57 @@ namespace giac {
       num=num._FRACptr->num*pow(num._FRACptr->den,d-1);
     }
     vecteur v(d+1,zero);
-    v.front()=plus_one;
-    v.back()=-num;
     gen tmpden=1; 
-    if (d==2 && is_integer(num)){
-      gen simpl,doubl;
-      bool pos;
-      zint2simpldoublpos(num,simpl,doubl,pos,contextptr);
-      v.back()=pos?-simpl:simpl;
-      num=algebraic_EXTension(makevecteur(doubl,0),v);
-    }
-    else 
+    if (num.type==_POLY){
+      const factorization f=rsqff(*num._POLYptr);
+      polynome S(plus_one,num._POLYptr->dim),D(plus_one,S.dim);
+      factorization::const_iterator jt=f.begin(),jtend=f.end();
+      for (;jt!=jtend;++jt){
+	if (jt->mult%d)
+	  S=S*pow(jt->fact,jt->mult % d);
+	D=D*pow(jt->fact,jt->mult/d);
+      }
+      // Check sign of D
+      vecteur Dl(l);
+      if (embeddings && Dl[embeddings].type==_VECT)
+	Dl=*Dl[embeddings]._VECTptr;
+      if (!is_positive(r2e(D,Dl,contextptr),contextptr)){
+	D=-D;
+	if (d%2)
+	  S=-S;
+      }
+      gen cont=ppz(S);
+      gen simpl,doubl; bool pos;
+      zint2simpldoublpos(cont,simpl,doubl,pos,d,contextptr);
+      if (!pos) simpl=-simpl;
+      num=simpl*S;
+      D=doubl*D;
+      v.front()=plus_one;
+      v.back()=-num;
       sym2rxrootnum(v,vecteur(l.begin()+embeddings,l.end()),num,tmpden,contextptr);
+      if (num.type==_EXT && num._EXTptr->type==_VECT){
+	num=algebraic_EXTension(multvecteur(D,*(*num._EXTptr)._VECTptr),*(num._EXTptr+1));
+      }
+      else
+	num=D*num;
+    }
+    else {
+      v.front()=plus_one;
+      v.back()=-num;
+      if (is_integer(num)){
+	gen simpl,doubl;
+	bool pos;
+	zint2simpldoublpos(num,simpl,doubl,pos,d,contextptr);
+	v.back()=pos?-simpl:simpl;
+	smaller_factor(v);
+	if (is_minus_one(v.back()))
+	  num=doubl;
+	else
+	  num=algebraic_EXTension(makevecteur(doubl,0),v);
+      }
+      else 
+	sym2rxrootnum(v,vecteur(l.begin()+embeddings,l.end()),num,tmpden,contextptr);
+    }
     // end else num integer
     // and eventually we embedd num 
     for (;embeddings;--embeddings){
@@ -1072,7 +1174,7 @@ namespace giac {
       ++it;
       den=*it;
       ++it;
-      numv.push_back(num*rdiv(lcmdeno,den));
+      numv.push_back(num*rdiv(lcmdeno,den,contextptr));
     }
     den=lcmdeno;
     num=numv;
@@ -1082,7 +1184,7 @@ namespace giac {
   static bool sym2rmod (const gen * gptr,const vecteur &l, const vecteur & lv, const vecteur & lvnum,const vecteur & lvden, int l_size,gen & num,gen & den,GIAC_CONTEXT){
     gen modnum,modden,modulo;
     bool totally_converted=sym2r(*(gptr+1),l,lv,lvnum,lvden,l_size,modnum,modden,contextptr);
-    modulo=rdiv(modnum,modden);
+    modulo=rdiv(modnum,modden,contextptr);
     totally_converted=totally_converted && sym2r(*gptr,l,lv,lvnum,lvden,l_size,num,den,contextptr);
     num=makemod(num,modulo);
     den=makemod(den,modulo);
@@ -1214,6 +1316,8 @@ namespace giac {
       minpoly=common_EXT(curext,oldminpoly,&l,contextptr);
       if (minpoly.type!=_VECT)
 	return vecteur(1,gensizeerr(contextptr));
+      if (minpoly._VECTptr->size()>unsigned(MAX_COMMON_ALG_EXT_ORDER_SIZE))
+	return vecteur(1,undef);
       // compute alg_extoutnum/den using newminpoly
       int s=alg_extin.size();
       for (int i=0;i<s;++i){
@@ -1363,8 +1467,10 @@ namespace giac {
     bool totally_converted=true;
     vecteur lv,lvnum,lvden;
     lvar(e,lv);
-    if (!compute_lv_lvnum_lvden(l,lv,lvnum,lvden,totally_converted,l_size,contextptr))
+    if (!compute_lv_lvnum_lvden(l,lv,lvnum,lvden,totally_converted,l_size,contextptr)){
+      num=undef;
       return false;
+    }
     totally_converted =totally_converted && sym2r(e,l,lv,lvnum,lvden,l_size,num,den,contextptr);
     // If den is a _POLY, multiply den by the _EXT conjugate of it's lcoeff
     // FIXME this should be done recursively if the 1st coeff is a _POLY!
@@ -1437,7 +1543,7 @@ namespace giac {
   static gen niceprod(ref_vecteur * res,bool negatif){
     gen tmp;
     if (res->v.size()!=1)
-      tmp=symbolic(at_prod,res);
+      tmp=symbolic(at_prod,gen(res,_SEQ__VECT));
     else {
       tmp=res->v.front();
       delete_ref_vecteur(res);
@@ -1492,7 +1598,7 @@ namespace giac {
     }
     if (increasing_power(contextptr)) 
       reverse(res->v.begin(),res->v.end());
-    return symbolic(at_plus,res);
+    return symbolic(at_plus,gen(res,_SEQ__VECT));
   }
 
   gen r2sym(const polynome & p, const vecteur & l,GIAC_CONTEXT){
@@ -1508,7 +1614,7 @@ namespace giac {
 
   gen r2sym(const fraction & f, const vecteur & l,GIAC_CONTEXT){
     if (f.den.type==_POLY && is_positive(-f.den._POLYptr->coord.front())){
-      return rdiv(r2sym(-f.num,l,contextptr),r2sym(-f.den,l,contextptr));
+      return rdiv(r2sym(-f.num,l,contextptr),r2sym(-f.den,l,contextptr),contextptr);
     }
     // workaround for e.g. normal(sqrt(3)*sqrt(15))
     gen fn=r2sym(f.num,l,contextptr);
@@ -1527,7 +1633,7 @@ namespace giac {
       }
       fn=c*fn;
     }
-    return rdiv(fn,fd);
+    return rdiv(fn,fd,contextptr);
   }
 
   gen r2sym(const vecteur & v,const vecteur & l,GIAC_CONTEXT){
@@ -1550,7 +1656,7 @@ namespace giac {
       return symb_rootof(p,r2sym(pmin,lt,ltend,contextptr),contextptr);
     if (p._VECTptr->size()!=2)
       return gensizeerr(gettext("sym2poly.cc/ckdeg2_rootof"));  
-    gen b_over_2=rdiv(w[1],plus_two);
+    gen b_over_2=rdiv(w[1],plus_two,contextptr);
     if (is_zero(b_over_2))
       return p._VECTptr->front()*sqrt(r2sym(-w.back()/w.front(),lt,ltend,contextptr),contextptr)+p._VECTptr->back();
     gen x;
@@ -1558,13 +1664,13 @@ namespace giac {
       gen a=r2sym(w.front(),lt,ltend,contextptr);
       gen minus_b_over_2=r2sym(-b_over_2,lt,ltend,contextptr);
       gen delta_prime=r2sym(pow(b_over_2,2,contextptr)-w.front()*w.back(),lt,ltend,contextptr);
-      x=rdiv(minus_b_over_2+sqrt(delta_prime,contextptr),a);
+      x=rdiv(minus_b_over_2+sqrt(delta_prime,contextptr),a,contextptr);
     }
     else {
       gen two_a=r2sym(plus_two*w.front(),lt,ltend,contextptr);
       gen minus_b=r2sym(-w[1],lt,ltend,contextptr);
       gen delta=r2sym(w[1]*w[1]-gen(4)*w.front()*w.back(),lt,ltend,contextptr);
-      x=rdiv(minus_b+sqrt(delta,contextptr),two_a);
+      x=rdiv(minus_b+sqrt(delta,contextptr),two_a,contextptr);
     }
     return p._VECTptr->front()*x+p._VECTptr->back();
   }
@@ -1644,11 +1750,11 @@ namespace giac {
     gen a=boundaries[0],b=boundaries[1];
     if (a==minus_inf){
       if (b==plus_inf)
-	return _rand(makevecteur(-100,100),contextptr);
-      return _rand(makevecteur(b-100,b-1),contextptr);
+	return _rand(makesequence(-100,100),contextptr);
+      return _rand(makesequence(b-100,b-1),contextptr);
     }
     if (b==plus_inf)
-      return _rand(makevecteur(a+1,a+100),contextptr);
+      return _rand(makesequence(a+1,a+100),contextptr);
     return _rand(boundaries,contextptr);
   }
 
@@ -1669,9 +1775,9 @@ namespace giac {
     if (p.type==_FRAC){
       gen res;
       if (p._FRACptr->den.type==_CPLX)
-	res=rdiv(r2sym(p._FRACptr->num*conj(p._FRACptr->den,contextptr),lt,ltend,contextptr),r2sym(p._FRACptr->den*conj(p._FRACptr->den,contextptr),lt,ltend,contextptr));
+	res=rdiv(r2sym(p._FRACptr->num*conj(p._FRACptr->den,contextptr),lt,ltend,contextptr),r2sym(p._FRACptr->den*conj(p._FRACptr->den,contextptr),lt,ltend,contextptr),contextptr);
       else
-	res=rdiv(r2sym(p._FRACptr->num,lt,ltend,contextptr),r2sym(p._FRACptr->den,lt,ltend,contextptr));
+	res=rdiv(r2sym(p._FRACptr->num,lt,ltend,contextptr),r2sym(p._FRACptr->den,lt,ltend,contextptr),contextptr);
       return (p._FRACptr->num.type==_EXT)?ratnormal(res):res;
     }
     if (p.type==_MOD)
@@ -1732,8 +1838,12 @@ namespace giac {
 	  for (int ntry=0;ntry<10;++ntry,tst=false){
 	    gen tmp00=subst(tmp0,vinit,vzero,false,contextptr);
 	    gen tmp10=subst(tmp1,vinit,vzero,false,contextptr);
-	    tmp00=algebraic_EXTension(tmp00,tmp10);
-	    tmp00=tmp00.evalf_double(1,contextptr);
+	    if (tmp10.type==_VECT && _size(_gcd(makesequence(tmp10,derivative(*tmp10._VECTptr)),contextptr),contextptr)>1)
+	      tmp00=cst_i; // retry
+	    else {
+	      tmp00=algebraic_EXTension(tmp00,tmp10);
+	      tmp00=tmp00.evalf_double(1,contextptr);
+	    }
 	    if (tmp00.type<=_CPLX){
 	      gen tmp3=eval(subst(w.front(),vinit,vzero,false,contextptr),1,contextptr);
 	      tmp3=tmp3.evalf_double(1,contextptr);
@@ -1800,7 +1910,7 @@ namespace giac {
       return res.front();
     if (increasing_power(contextptr)) 
       reverse(res.begin(),res.end());
-    return symbolic(at_plus,res);
+    return symbolic(at_plus,gen(res,_SEQ__VECT));
   }
 
   gen r2sym(const gen & p, const vecteur & l,GIAC_CONTEXT){
@@ -1901,7 +2011,7 @@ namespace giac {
     gen res(0);
     vector< pf<gen> >::const_iterator it=pfde_VECT.begin(),itend=pfde_VECT.end();
     for (;it!=itend;++it){
-      res=res+rdiv(r2sym(gen(it->num),l,contextptr),(r2sym(gen(it->den/pow(it->fact,it->mult)),l,contextptr)*pow(r2sym(gen(it->fact),l,contextptr),it->mult)));
+      res=res+rdiv(r2sym(gen(it->num),l,contextptr),(r2sym(gen(it->den/pow(it->fact,it->mult)),l,contextptr)*pow(r2sym(gen(it->fact),l,contextptr),it->mult)),contextptr);
     }
     return res;
   }
@@ -1930,38 +2040,7 @@ namespace giac {
     return res;
   }
 
-  static factorization rsqff(const polynome & p){
-    polynome s(lgcd(p));
-    factorization f(sqff(p/s));
-    if (p.dim==1){
-      // adjust const coeff
-      gen p1=1;
-      factorization::iterator it=f.begin(),itend=f.end();
-      for (;it!=itend;++it){
-	p1 = p1*pow(it->fact.coord.front().value,it->mult);
-      }
-      p1=p.coord.front().value/p1;
-      if (is_positive(-p1,context0)){ // ok
-	for (it=f.begin();it!=itend;++it){
-	  if (it->mult%2){
-	    it->fact=-it->fact;
-	    p1=-p1;
-	    break;
-	  }
-	}
-      }
-      if (!is_one(p1))
-	f.push_back(facteur<polynome>(polynome(p1,1),1));
-      return f;
-    }
-    factorization ff(rsqff(s.trunc1()));
-    factorization::const_iterator it=ff.begin(),itend=ff.end();
-    for (;it!=itend;++it)
-      f.push_back(facteur<polynome>(it->fact.untrunc1(),it->mult));
-    return f;
-  }
-
-  gen normalize_sqrt(const gen & e,GIAC_CONTEXT){
+  gen in_normalize_sqrt(const gen & e,vecteur & L,GIAC_CONTEXT){
     if (complex_mode(contextptr)) 
       return e;
     // remove multiple factors inside sqrt
@@ -1991,19 +2070,36 @@ namespace giac {
 	continue;
       if (is_one(expnum) && is_integer(arg[0]))
 	continue;
-      vecteur lv(lvar(arg[0]));
-      gen a,num,den;
+      gen var=ggb_var(arg[0]),a,b,hyp;
+      // if var is not assigned and arg[0] depends linearly on var, add an assumption
+      if (complex_mode(contextptr)==false && var.type==_IDNT && var._IDNTptr->eval(1,var,contextptr)==var){
+	if (is_linear_wrt(arg[0],var,a,b,contextptr) && !is_zero(a)){
+	  if (is_strictly_positive(a,contextptr))
+	    hyp=symbolic(at_superieur_egal,makesequence(var,-b/a));
+	  if (is_strictly_positive(-a,contextptr))
+	    hyp=symbolic(at_inferieur_egal,makesequence(var,-b/a));
+	  if (!is_zero(hyp))
+	    L.push_back(hyp);
+	}
+      }
+      vecteur lv(alg_lvar(arg[0]));
+      gen num,den;
       a=e2r(arg[0],lv,contextptr);
       fxnd(a,num,den);
-      gen nd=num*den;
-      gen nover2=rdiv(expnum,plus_two);      
+      gen nd=num*den,out(1);
+      gen nover2=rdiv(expnum,plus_two,contextptr);      
+      if (nd.type==_EXT && nd._EXTptr->type==_VECT){ // extract content
+	gen tmp=lgcd(*nd._EXTptr->_VECTptr);
+	out=pow(r2e(nd/tmp,lv,contextptr),expnum/expden,contextptr);
+	nd=tmp;
+      }
       if (nd.type==_INT_ || nd.type==_ZINT){
 	gen simpl,doubl;
 	bool pos;
-	zint2simpldoublpos(nd,simpl,doubl,pos,contextptr);
+	zint2simpldoublpos(nd,simpl,doubl,pos,2,contextptr);
 	if (!pos) simpl=-simpl;
 	lin.push_back(*it);
-	lout.push_back(pow(doubl/abs(r2e(den,lv,contextptr),contextptr),expnum,contextptr)*pow(simpl,nover2,contextptr));
+	lout.push_back(pow(doubl/abs(r2e(den,lv,contextptr),contextptr),expnum,contextptr)*pow(simpl,nover2,contextptr)*out);
 	continue;
       }
       if (nd.type!=_POLY)
@@ -2020,11 +2116,17 @@ namespace giac {
       // Extract integer content of s
       gen cont=Tppz<gen>(s);
       gen simpl,doubl; bool pos;
-      zint2simpldoublpos(cont,simpl,doubl,pos,contextptr);
+      zint2simpldoublpos(cont,simpl,doubl,pos,2,contextptr);
       if (!pos) simpl=-simpl;
-      lout.push_back(pow(simpl,nover2,contextptr)*pow(doubl,expnum,contextptr)*pow(recursive_normal(r2e(s,lv,contextptr),contextptr),nover2,contextptr)*pow(abs(r2e(d,lv,contextptr),contextptr),expnum,contextptr)*pow(abs(r2e(den,lv,contextptr),contextptr),-expnum,contextptr));
+      simpl=r2e(simpl,lv,contextptr); // if simpl is not an integer
+      lout.push_back(pow(simpl,nover2,contextptr)*pow(doubl,expnum,contextptr)*pow(recursive_normal(r2e(s,lv,contextptr),contextptr),nover2,contextptr)*pow(abs(r2e(d,lv,contextptr),contextptr),expnum,contextptr)*pow(abs(r2e(den,lv,contextptr),contextptr),-expnum,contextptr)*out);
     }
     return subst(e,lin,lout,false,contextptr);
+  }
+
+  gen normalize_sqrt(const gen & e,GIAC_CONTEXT){
+    vecteur L;
+    return in_normalize_sqrt(e,L,contextptr);
   }
 
   static bool has_embedded_fractions(const gen & g){
@@ -2126,16 +2228,16 @@ namespace giac {
 	num=makemod(num,m);
 	if (!is_one(den))
 	  den=makemod(den,m);
-	p=rdiv(num,den);
+	p=rdiv(num,den,contextptr);
 	return r2e(p,l,contextptr);
       }
-      return _quorem(makevecteur(p,m),contextptr)[1];
+      return _quorem(makesequence(p,m),contextptr)[1];
     }
     if (e.type!=_SYMB)
       return e;
     if (e._SYMBptr->sommet==at_equal){
       vecteur & v=*e._SYMBptr->feuille._VECTptr;
-      return symbolic(at_equal,makevecteur(normal(v.front(),distribute_div,contextptr),normal(v.back(),distribute_div,contextptr)));
+      return symbolic(at_equal,makesequence(normal(v.front(),distribute_div,contextptr),normal(v.back(),distribute_div,contextptr)));
     }
     if (is_inf(e) || is_undef(e) )
       return e;
@@ -2145,10 +2247,24 @@ namespace giac {
 #ifndef NO_STDEXCEPT
     try {
 #endif
-      ee=normalize_sqrt(e,contextptr);
+      vecteur L;
+      ee=in_normalize_sqrt(e,L,contextptr);
       l=alg_lvar(ee);
       sort0(l);
+      if (!L.empty())
+	*logptr(contextptr) << gettext("Making implicit assumption for sqrt argument ") << L << endl;
+      for (unsigned k=0;k<L.size();++k)
+	giac_assume(L[k],contextptr);
       tmp=e2r(ee,l,contextptr);
+      for (unsigned k=0;k<L.size();++k){
+	gen Lk=ggb_var(L[k]);
+	_purge(Lk,contextptr);
+      }
+      if (is_undef(tmp)){
+	*logptr(contextptr) << gettext("Unable to build a single algebraic extension for simplifying. Trying rational simplification only.") << endl;
+	l=lvar(ee);
+	tmp=e2r(ee,l,contextptr);	
+      }
 #ifndef NO_STDEXCEPT
     }
     catch (std::runtime_error & err){
@@ -2190,6 +2306,10 @@ namespace giac {
       }
     }
     ee=r2sym(f,l,contextptr);
+    if (is_integer(f.den) && !is_one(f.den)){
+      ee=ratnormal(ratnormal(ee)); // first ratnormal will expand sqrt()^
+      // second will remove them
+    }
     return ee;
   }
 
@@ -2219,7 +2339,8 @@ namespace giac {
       if (it->_SYMBptr->sommet!=at_pow){
 	gen tmp=it->_SYMBptr->feuille;
 	tmp=liste2symbolique(symbolique2liste(tmp,contextptr));
-	*it=it->_SYMBptr->sommet(recursive_normal(tmp,false,contextptr),contextptr);
+	tmp=recursive_normal(tmp,false,contextptr);
+	*it=it->_SYMBptr->sommet(tmp,contextptr);
 	continue;
       }
       if (it->_SYMBptr->feuille._VECTptr->front().type==_INT_ && it->_SYMBptr->feuille._VECTptr->back()==plus_one_half)
@@ -2236,14 +2357,32 @@ namespace giac {
       gen num=r2sym(f_num,l,contextptr),den=r2sym(f_den,l,contextptr);
       gen base=recursive_normal(it->_SYMBptr->feuille._VECTptr->front(),false,contextptr);
       if ( is_zero(base) || num.type!=_INT_ || den.type!=_INT_ )
-	*it= pow(base,rdiv(num,den),contextptr);
-      else 
-	*it= pow(base, num.val /den.val,contextptr) *pow(base,rdiv(num.val%den.val,den),contextptr);
+	*it= pow(base,rdiv(num,den,contextptr),contextptr);
+      else {
+	if (den.val>1 && (is_integer(base) || base.type==_FRAC)){
+	  // should also handle more general base.type 
+	  vecteur vtmp(den.val+1);
+	  vtmp[0]=1;
+	  vtmp.back()=-pow(base,num.val % den.val,contextptr);
+	  smaller_factor(vtmp);
+	  gen tmp;
+	  if (vtmp.size()>2)
+	    tmp=r2e(algebraic_EXTension(makevecteur(1,0),vtmp),vecteur(1,vecteur(0)),contextptr);
+	  else
+	    tmp=-vtmp.back()/vtmp.front();
+	  *it=pow(base,rdiv(num.val/den.val,den),contextptr)*tmp;
+	}
+	else
+	  *it= pow(base, num.val /den.val,contextptr) *pow(base,rdiv(num.val%den.val,den),contextptr);
+      }
     }
     if (l!=l_subst) 
       e_copy=subst(e_copy,l,l_subst,false,contextptr);
     // return global_eval(normal(e_copy),100);
-    return normal(e_copy,distribute_div,contextptr);
+    gen res=normal(e_copy,distribute_div,contextptr);
+    if ( (calc_mode(contextptr)==1 || abs_calc_mode(contextptr)==38) && !lop(res,at_rootof).empty())
+      return ratnormal(normalize_sqrt(e_copy,contextptr));
+    return res;
     // removed eval since it eats neg(x-y)
     // eval(normal(e_copy,distribute_div),contextptr);
   }
@@ -2255,8 +2394,10 @@ namespace giac {
 
   gen _recursive_normal(const gen & e,GIAC_CONTEXT){
     gen var,res;
+    if (e.is_symb_of_sommet(at_equal))
+      return apply_to_equal(e,recursive_normal,contextptr); // symb_equal(_recursive_normal(equal2diff(e),contextptr),0);
     if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,recursive_normal(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,recursive_normal(res,contextptr)));
     res=recursive_normal(e,true,contextptr);
     return res;
   }
@@ -2295,16 +2436,20 @@ namespace giac {
       f.normal();
       return r2sym(f,l,context0); // ok
     }
-    else
-      return r2sym(fg,l,context0);
+    if (fg.type==_FRAC && fg._FRACptr->den.type==_CPLX){
+      gen tmp=conj(fg._FRACptr->den,context0);
+      fg._FRACptr->num = fg._FRACptr->num * tmp;
+      fg._FRACptr->den = fg._FRACptr->den * tmp;
+    }
+    return r2sym(fg,l,context0);
   }
   gen rationalgcd(const gen & a, const gen & b){
     gen A,B,C,D;
     if (is_algebraic_program(a,A,B) && is_algebraic_program(b,C,D)){
       if (A==C)
-	return symbolic(at_program,makevecteur(A,0,gcd(B,D)));
+	return symbolic(at_program,makesequence(A,0,gcd(B,D)));
       D=subst(D,C,A,false,context0);
-      return symbolic(at_program,makevecteur(A,0,gcd(B,D)));
+      return symbolic(at_program,makesequence(A,0,gcd(B,D)));
     }
     vecteur l(alg_lvar(a));
     alg_lvar(b,l);
@@ -2320,9 +2465,9 @@ namespace giac {
     return r2sym(gcd(fa.num,fb.num),l,context0); // ok
   }
 
-  static gen factor(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,GIAC_CONTEXT);
+  static gen factor(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,gen & extra_div,GIAC_CONTEXT);
 
-  static gen factor_multivar(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,GIAC_CONTEXT){
+  static gen factor_multivar(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,gen & extra_div,GIAC_CONTEXT){
     polynome pp(p);
     int nvars=l.size();
     if (l.front().type==_VECT)
@@ -2381,7 +2526,7 @@ namespace giac {
       lp=l;
     factorization v;
     polynome p_content(pp.dim);
-    if (!factor(pp,p_content,v,false,with_sqrt,complex_mode(contextptr),divide_an_by))
+    if (!factor(pp,p_content,v,false,with_sqrt,complex_mode(contextptr),divide_an_by,extra_div))
       return gentypeerr(gettext("Not implemented, e.g. for multivariate mod polynomials"));
     // factor p_content
     pp=p_content.trunc1();
@@ -2392,10 +2537,11 @@ namespace giac {
     }
     else
       ll=cdr_VECT(lp);
-    return factor(pp,ll,false,with_sqrt,1,contextptr)*r2sym(v,lp,contextptr);
+    gen tmp=factor(pp,ll,false,with_sqrt,1,extra_div,contextptr);
+    return tmp*r2sym(v,lp,contextptr)/r2sym(extra_div,lp,contextptr);
   }
 
-  static gen factor(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,GIAC_CONTEXT){
+  static gen factor(const polynome & p,const vecteur &l,bool fixed_order,bool with_sqrt,gen divide_an_by,gen & extra_div,GIAC_CONTEXT){
     // find main var, make permutation on f.num, f.den and l
     //    cout << "Factor " << p << " " << l << endl;
     if (is_one(p))
@@ -2403,33 +2549,50 @@ namespace giac {
     if (l.empty() )
       return r2sym(p,l,contextptr);
     if (!p.dim){
+      gen tmp;
       if (l.front().type==_VECT)
-	return r2sym(p,l.begin(),l.end(),contextptr);
-      return r2sym(p,l,contextptr);
+	tmp=r2sym(p,l.begin(),l.end(),contextptr);
+      else
+	tmp=r2sym(p,l,contextptr);
+      return ratfactor(tmp,with_sqrt,contextptr);
     }
     if (p.dim>1)
-      return factor_multivar(p,l,fixed_order,with_sqrt,divide_an_by,contextptr);
+      return factor_multivar(p,l,fixed_order,with_sqrt,divide_an_by,extra_div,contextptr);
     factorization v;
     polynome p_content(p.dim);
-    if (!factor(p,p_content,v,false,with_sqrt,complex_mode(contextptr),divide_an_by))
+    if (!factor(p,p_content,v,false,with_sqrt,complex_mode(contextptr),divide_an_by,extra_div))
       return gentypeerr(gettext("Not implemented, e.g. for multivariate mod polynomials"));
     // factor p_content
     if (is_one(p_content))
-      return r2sym(v,l,contextptr);
+      return r2sym(v,l,contextptr)/r2sym(extra_div,l,contextptr);
     else {
       gen tmp(p_content);
-      if (tmp.type>=_POLY && !v.empty() && v.front().mult==1 && (v.size()==1 || v.front().fact.degree(0)==0)){ // for GF factorization
+      simplify(tmp,extra_div);
+      if ( (tmp.type>_POLY || (tmp.type==_POLY && !tmp._POLYptr->coord.empty() && tmp._POLYptr->coord.front().value.type==_USER)) && 
+	   !v.empty() && v.front().mult==1 && (v.size()==1 || v.front().fact.degree(0)==0)
+	   ){ // for GF factorization
 	v.front().fact = tmp.type==_POLY?(*tmp._POLYptr*v.front().fact):(tmp*v.front().fact);
-	return r2sym(v,l,contextptr);
+	return r2sym(v,l,contextptr)/r2sym(extra_div,l,contextptr);
       }
-      return r2sym(tmp,l,contextptr)*r2sym(v,l,contextptr);
+      polynome pp=p_content.trunc1();
+      vecteur ll;
+      if (l.front().type==_VECT){
+	ll=l;
+	ll[0]=cdr_VECT(*(ll[0]._VECTptr));
+      }
+      else
+	ll=cdr_VECT(l);
+      tmp=factor(pp,ll,false,with_sqrt,1,extra_div,contextptr);
+      return tmp*r2sym(v,l,contextptr)/r2sym(extra_div,l,contextptr);
+      // return r2sym(tmp,l,contextptr)*r2sym(v,l,contextptr)/r2sym(extra_div,l,contextptr);
     }
   }
 
   static gen var_factor(const gen & e,const vecteur & l,bool fixed_order,bool with_sqrt,const gen & divide_an_by,GIAC_CONTEXT){
     if (e.type!=_POLY)
       return r2sym(e/divide_an_by,l,contextptr);
-    return factor(*e._POLYptr,l,fixed_order,with_sqrt,divide_an_by,contextptr);
+    gen extra_div=1;
+    return factor(*e._POLYptr,l,fixed_order,with_sqrt,divide_an_by,extra_div,contextptr);
   }
 
   gen ordered_factor(const gen & ee,vecteur & l,bool with_sqrt,GIAC_CONTEXT){
@@ -2470,6 +2633,9 @@ namespace giac {
     }
     vecteur l;
     alg_lvar(e,l);
+    /* if (calc_mode(contextptr)==1 && l.size()==1 && l.front().type==_VECT){
+      sort(l.front()._VECTptr->begin(),l.front()._VECTptr->end(),islesscomplexthanf);
+      } */
     gen f_num,f_den,f,dnum,dden(1);
     f=e2r(e,l,contextptr);
     fxnd(f,f_num,f_den);
@@ -2493,7 +2659,9 @@ namespace giac {
       f_num=f_num*tmp;
       f_den=f_den*tmp;
     }
-    return rdiv(var_factor(f_num,l,false,with_sqrt,dnum,contextptr),var_factor(f_den,l,false,with_sqrt,dden,contextptr));
+    gen N=var_factor(f_num,l,false,with_sqrt,dnum,contextptr);
+    gen D=var_factor(f_den,l,false,with_sqrt,dden,contextptr);
+    return rdiv(N,D);
   }
 
   gen factor(const gen & ee,bool with_sqrt,GIAC_CONTEXT){
@@ -2516,7 +2684,10 @@ namespace giac {
     gen f_num,f_den,f;
     f=e2r(e,l,contextptr);
     fxnd(f,f_num,f_den);
-    return rdiv(var_factor(f_num,l,false,with_sqrt,1,contextptr),var_factor(f_den,l,false,with_sqrt,1,contextptr));
+    if (with_sqrt)
+      l=vecteur(1,l);
+    gen tmp=rdiv(var_factor(f_num,l,false,with_sqrt,1,contextptr),var_factor(f_den,l,false,with_sqrt,1,contextptr));
+    return tmp;
   }
 
   gen factor(const gen & ee,const gen & f,bool with_sqrt,GIAC_CONTEXT){
@@ -2604,7 +2775,8 @@ namespace giac {
       f_num=polynome(r_num,l_size);
     factorization vden;
     polynome p_content(l_size);
-    factor(f_den,p_content,vden,false,with_sqrt,complex_mode(contextptr),1);
+    gen extra_div=1;
+    factor(f_den,p_content,vden,false,with_sqrt,complex_mode(contextptr),1,extra_div);
     vector< pf<gen> > pfde_VECT;
     polynome ipnum(l_size),ipden(l_size);
     partfrac(f_num,f_den,vden,pfde_VECT,ipnum,ipden,!with_sqrt);
@@ -2618,7 +2790,7 @@ namespace giac {
 	res += reste/cur_deno/deno;
       else {
 	for (int i=0;i<current.mult;++i){
-	  gen tmp(_quorem(makevecteur(reste,deno,xvar),contextptr));
+	  gen tmp(_quorem(makesequence(reste,deno,xvar),contextptr));
 	  if (tmp.type!=_VECT)
 	    return gensizeerr(contextptr);
 	  vecteur & vtmp=*tmp._VECTptr;
@@ -2669,14 +2841,14 @@ namespace giac {
     gen res;
     gen tmp2(polynome2poly1(temp,1));
     res=l.empty()?tmp2:r2e(tmp2,l,contextptr); // (tmp2.type==_FRAC?gen(fraction(r2e(tmp2._FRACptr->num,l,contextptr),r2e(tmp2._FRACptr->den,l,contextptr))):r2e(tmp2,l,contextptr));
-    if (res.type==_VECT)
+    if (res.type==_VECT && calc_mode(contextptr)!=1)
       res.subtype=_POLY1__VECT;
     return res;
   }
   gen _e2r(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type!=_VECT)
-      return _e2r(makevecteur(args,vx_var),contextptr);
+      return _e2r(makesequence(args,vx_var),contextptr);
     vecteur & v=*args._VECTptr;
     int s=v.size();
     if (s<2)
@@ -2686,14 +2858,14 @@ namespace giac {
       res=symb2poly(res,v[i],contextptr);
     }
     if (res.type!=_VECT && res.type!=_FRAC && res.type!=_POLY) 
-      return gen(vecteur(1,res),_POLY1__VECT);
+      return gen(vecteur(1,res),calc_mode(contextptr)!=1?_POLY1__VECT:0);
     else
       return res;
   }
 
   static const char _e2r_s []="e2r";
   symbolic symb_e2r(const gen & arg1,const gen & arg2){
-    return symbolic(at_e2r,makevecteur(arg1,arg2));
+    return symbolic(at_e2r,makesequence(arg1,arg2));
   }
   static define_unary_function_eval (__e2r,&giac::_e2r,_e2r_s);
   define_unary_function_ptr5( at_e2r ,alias_at_e2r,&__e2r,0,true);
@@ -2720,7 +2892,7 @@ namespace giac {
 
   static const char _r2e_s []="r2e";
   symbolic symb_r2e(const gen & arg1,const gen & arg2){
-    return symbolic(at_r2e,makevecteur(arg1,arg2));
+    return symbolic(at_r2e,makesequence(arg1,arg2));
   }
   static define_unary_function_eval (__r2e,&giac::_r2e,_r2e_s);
   define_unary_function_ptr5( at_r2e ,alias_at_r2e,&__r2e,0,true);
@@ -2809,7 +2981,7 @@ namespace giac {
     if (f1.type==_VECT && f1.subtype==_SEQ__VECT && f1._VECTptr->size()==1)
       f1=f1._VECTptr->front();
     f3=g._SYMBptr->feuille._VECTptr->back();
-    bool res= (f3.type==_SYMB || f3.type==_IDNT && !f3.is_symb_of_sommet(at_bloc));
+    bool res= ((f3.type==_SYMB || f3.type==_IDNT) && !f3.is_symb_of_sommet(at_bloc));
     if (res)
       f3=eval(f3,1,context0); // eval operators like /
     return res;
@@ -2824,7 +2996,7 @@ namespace giac {
       return apply_to_equal(args,_factor,contextptr);
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_factor(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_factor(res,contextptr)));
     if (xcas_mode(contextptr)==3)
       res=factorcollect(args,lvar(args).size()==1,contextptr);
     else
@@ -2839,7 +3011,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_collect(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_collect(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_collect,contextptr);
     res=factorcollect(args,false,contextptr);
@@ -2856,7 +3028,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_partfrac(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_partfrac(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_partfrac,contextptr);
     if (args.type!=_VECT)
@@ -2963,7 +3135,11 @@ namespace giac {
       readargs_from_stream(cin,args,contextptr);
     else {
       if (ARGC==2) {
-	if (!secure_run && access(ARGV[1],R_OK)==0){
+	if (!secure_run 
+#ifndef __MINGW_H
+	    && access(ARGV[1],R_OK)==0
+#endif
+	    ){
 	  ifstream inf(ARGV[1]);
 	  readargs_from_stream(inf,args,contextptr);
 	}

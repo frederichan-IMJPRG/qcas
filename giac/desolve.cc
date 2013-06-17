@@ -58,7 +58,7 @@ namespace giac {
     gen t(s);
     if (s==x){
 #ifdef GIAC_HAS_STO_38
-      t=identificateur("s");
+      t=identificateur("_s38");
 #else
       t=identificateur(" t");
 #endif
@@ -226,7 +226,8 @@ namespace giac {
       vector< pf<gen> > rest,finalde_VECT;
       for (;it!=itend;++it){
 	pf<gen> single(laplace_reduce_pf(*it,*glap._POLYptr));
-	factor(single.den,p_content,vden,false,withsqrt(contextptr),complex_mode(contextptr),1);
+	gen extra_div=1;
+	factor(single.den,p_content,vden,false,withsqrt(contextptr),complex_mode(contextptr),1,extra_div);
 	partfrac(single.num,single.den,vden,finalde_VECT,temp,tmp);
       }
       it=finalde_VECT.begin();
@@ -244,11 +245,11 @@ namespace giac {
 	switch (deg) {
 	case 1: // 1st order
 	  findde(it->den,a,b);	
-	  lnpart=lnpart+rdiv(r2e(it->num,l,contextptr),r2e(firstcoeff(a),lprime,contextptr))*exp(r2e(rdiv(-b,a),lprime,contextptr)*laplace_var,contextptr);
+	  lnpart=lnpart+rdiv(r2e(it->num,l,contextptr),r2e(firstcoeff(a),lprime,contextptr),contextptr)*exp(r2e(rdiv(-b,a,contextptr),lprime,contextptr)*laplace_var,contextptr);
 	  break; 
 	case 2: // 2nd order
 	  findabcdelta(it->fact,a,b,c,delta);
-	  exppart=exp(r2e(rdiv(-b,gen(2)*a),lprime,contextptr)*laplace_var,contextptr);
+	  exppart=exp(r2e(rdiv(-b,gen(2)*a,contextptr),lprime,contextptr)*laplace_var,contextptr);
 	  uselog=is_positive(delta);
 	  alpha=(it->den/it->fact).trunc1()*a;
 	  findde(it->num,d,E);
@@ -259,14 +260,14 @@ namespace giac {
 	  if (uselog){
 	    sqrtdelta=normal(sqrt(r2e(delta,lprime,contextptr),contextptr),contextptr);
 	    gen racine=ratnormal(sqrtdelta/gen(2)/r2e(a,lprime,contextptr));
-	    lnpart=lnpart+rdiv(r2e(d,lprime,contextptr),r2e(lnpartden,lprime,contextptr))*cosh(racine*laplace_var,contextptr)*exppart;
+	    lnpart=lnpart+rdiv(r2e(d,lprime,contextptr),r2e(lnpartden,lprime,contextptr),contextptr)*cosh(racine*laplace_var,contextptr)*exppart;
 	    gen aa=ratnormal(r2e(atannum,lprime,contextptr)/r2e(alpha,lprime,contextptr)/sqrtdelta);
 	    lnpart=lnpart+aa*sinh(racine*laplace_var,contextptr)*exppart;
 	  }
 	  else {
 	    sqrtdelta=normal(sqrt(r2e(-delta,lprime,contextptr),contextptr),contextptr);
 	    gen racine=ratnormal(sqrtdelta/gen(2)/r2e(a,lprime,contextptr));
-	    lnpart=lnpart+rdiv(r2e(d,lprime,contextptr),r2e(lnpartden,lprime,contextptr))*cos(racine*laplace_var,contextptr)*exppart;
+	    lnpart=lnpart+rdiv(r2e(d,lprime,contextptr),r2e(lnpartden,lprime,contextptr),contextptr)*cos(racine*laplace_var,contextptr)*exppart;
 	    gen aa=ratnormal(r2e(atannum,lprime,contextptr)/r2e(alpha,lprime,contextptr)/sqrtdelta);
 	    lnpart=lnpart+aa*sin(racine*laplace_var,contextptr)*exppart;
 	  }
@@ -280,7 +281,7 @@ namespace giac {
       gen deno=r2e(ipden,l,contextptr);
       int nums=ipnumv.size();
       for (int i=0;i<nums;++i){
-	gen tmp = rdiv(r2e(ipnumv[i],lprime,contextptr),deno);
+	gen tmp = rdiv(r2e(ipnumv[i],lprime,contextptr),deno,contextptr);
 	tmp = tmp*symbolic(at_Dirac,(i==nums-1)?laplace_var:gen(makevecteur(laplace_var,nums-1-i),_SEQ__VECT));
 	res += tmp;
       }
@@ -373,7 +374,7 @@ namespace giac {
     v.clear();
     gen f(f_orig),a,b,cur_y(y);
 #ifdef GIAC_HAS_STO_38
-    identificateur t("t");
+    identificateur t("_t38");
 #else
     identificateur t(" t");
 #endif
@@ -425,13 +426,23 @@ namespace giac {
     return v[0];
   }
 
-  static gen in_desolve_with_conditions(const vecteur & v,const gen & x,const gen & y,const gen & solution_generale,const vecteur & parameters,GIAC_CONTEXT){
+  static gen in_desolve_with_conditions(const vecteur & v_,const gen & x,const gen & y,const gen & solution_generale,const vecteur & parameters,GIAC_CONTEXT){
     gen yy(y);
+    vecteur v(v_);
     if (yy.type!=_IDNT)
       yy=function_of(y,x);
     if (is_undef(yy))
       return yy;
     // solve boundary conditions
+    iterateur jt=v.begin()+1,jtend=v.end();
+    for (unsigned ndiff=0;jt!=jtend;++ndiff,++jt){
+      if (jt->type==_VECT && jt->_VECTptr->size()==2){
+	if (ndiff)
+	  *jt=symbolic(at_of,makesequence(symbolic(at_derive,makesequence(y,x,int(ndiff))),jt->_VECTptr->front()))-jt->_VECTptr->back();
+	else
+	  *jt=symbolic(at_of,makesequence(y,jt->_VECTptr->front()))-jt->_VECTptr->back();
+      }
+    }
     const_iterateur it=v.begin()+1,itend=v.end();
     vecteur conditions(remove_equal(it,itend));
     if (conditions.empty())
@@ -476,16 +487,21 @@ namespace giac {
     // replace in conditions
     conditions=*eval(subst(conditions,substin,substout,false,contextptr),eval_level(contextptr),contextptr)._VECTptr;
     // solve system over _c0..._cn-1
-    bool save_maple_mode=xcas_mode(contextptr)!=0;
+    bool save_xcas_mode=xcas_mode(contextptr)?true:false;
     xcas_mode(contextptr)=0;
+    bool save_calc_mode=calc_mode(contextptr)?true:false;
+    calc_mode(contextptr)=0;
     vecteur parameters_solutions=*_solve(gen(makevecteur(conditions,parameters),_SEQ__VECT),contextptr)._VECTptr;
-    xcas_mode(contextptr)=save_maple_mode;
+    xcas_mode(contextptr)=save_xcas_mode;
+    calc_mode(contextptr)=save_calc_mode;
     // replace _c0..._cn-1 in solution_generale
     it=parameters_solutions.begin(),itend=parameters_solutions.end();
     vecteur res;
     for (;it!=itend;++it){
       res.push_back(eval(subst(solution_generale,parameters,*it,false,contextptr),eval_level(contextptr),contextptr));
     }
+    if (res.size()==1) 
+      return res.front();
     return res;
   }
   static gen desolve_with_conditions(const vecteur & v,const gen & x,const gen & y,GIAC_CONTEXT){
@@ -532,12 +548,36 @@ namespace giac {
     return true;
   }
 
+  void ggb_varxy(const gen & f_orig,gen & vx,gen & vy,GIAC_CONTEXT){
+    vecteur lv=lidnt(f_orig);
+    vx=vx_var;
+    vy=y__IDNT_e;
+    if (calc_mode(contextptr)==1){
+      vx=gen("ggbtmpvarx",contextptr);
+      vy=gen("ggbtmpvary",contextptr);
+    }
+    for (unsigned i=0;i<lv.size();++i){
+      string s=lv[i].print(contextptr);
+      char c=s[s.size()-1];
+      if (c=='x')
+	vx=lv[i];
+      if (c=='y')
+	vy=lv[i];
+    }
+  }
+
   gen desolve(const gen & f_orig,const gen & x_orig,const gen & y_orig,int & ordre,vecteur & parameters,GIAC_CONTEXT){
     gen x(x_orig);
     if ( (x_orig.type==_VECT) && (x_orig._VECTptr->size()==1) )
       x=x_orig._VECTptr->front();
-    if (x.type!=_IDNT)
-      return gensizeerr(contextptr);
+    if (x.type!=_IDNT){
+      gen vx,vy;
+      ggb_varxy(f_orig,vx,vy,contextptr);
+      if (x_orig.type==_VECT)
+	return desolve_with_conditions(makevecteur(f_orig,x_orig,y_orig),vx,vy,contextptr);
+      else
+	return desolve_with_conditions(makevecteur(f_orig,makevecteur(x_orig,y_orig)),vx,vy,contextptr);
+    }
     if (y_orig.type==_VECT) // FIXME: differential system
       return gensizeerr(contextptr);
     gen f(remove_and(f_orig,at_and));
@@ -554,14 +594,21 @@ namespace giac {
       y=function_of(y_orig,x);
     if (is_undef(y))
       return y;
-    f=quotesubst(remove_equal(eval(f,eval_level(contextptr),contextptr)),yof,y,contextptr);
+    gen save_vx=vx_var;
+    vx_var=x;
+    int save=calc_mode(contextptr);
+    calc_mode(0,contextptr);
+    f=remove_equal(eval(f,eval_level(contextptr),contextptr));
+    calc_mode(save,contextptr);
+    f=quotesubst(f,yof,y,contextptr);
+    vx_var=save_vx;
     // Here f= f(derive(y,x),y) for a 1st order equation
     int n=diffeq_order(f,y);
     if (n<=0)
       return gensizeerr(contextptr);
     vecteur v;
 #ifdef GIAC_HAS_STO_38
-    identificateur t("t");
+    identificateur t("_t38");
 #else
     identificateur t(" t");
 #endif
@@ -572,8 +619,8 @@ namespace giac {
 	gen & a=v[0];
 	gen & b=v[1];
 	gen & c=v[2];
-	gen i=simplify(exp(integrate_without_lnabs(rdiv(b,a),x,contextptr),contextptr),contextptr);
-	gen C=integrate_without_lnabs(ratnormal(rdiv(-c,a)*i),x,contextptr);
+	gen i=simplify(exp(integrate_without_lnabs(rdiv(b,a,contextptr),x,contextptr),contextptr),contextptr);
+	gen C=integrate_without_lnabs(ratnormal(rdiv(-c,a,contextptr)*i),x,contextptr);
 	parameters.push_back(diffeq_constante(0,contextptr));
 	return ratnormal(_lin((C+parameters.front())/i,contextptr));
       }
@@ -745,6 +792,11 @@ namespace giac {
     }
     return unable_to_solve_diffeq();
   }
+  gen ggbputinlist(const gen & g,GIAC_CONTEXT){
+    if (g.type==_VECT || calc_mode(contextptr)!=1)
+      return g;
+    return makevecteur(g);
+  }
   // "unary" version
   gen _desolve(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -756,11 +808,15 @@ namespace giac {
       vecteur f;
       if (lv.size()>=1 && lv[0]._SYMBptr->feuille.type==_VECT && (f=*lv[0]._SYMBptr->feuille._VECTptr).size()==2)
 	return desolve(args,f[1],f[0],ordre,parameters,contextptr);
-      return _desolve(makevecteur(args,y__IDNT_e),contextptr);
+      gen vx,vy;
+      ggb_varxy(args,vx,vy,contextptr);
+      return _desolve(makesequence(args,vx,vy),contextptr);
     }
     vecteur v=*args._VECTptr;
     int s=v.size();
-    if (s>=2 && v[1].type==_VECT && v[1]._VECTptr->size()==2){
+    if (s==3 && v[1].type==_VECT && v[2].type==_VECT)
+      swapgen(v[1],v[2]);
+    if (s==2 && v[1].type==_VECT && v[1]._VECTptr->size()==2){
       gen a=v[1]._VECTptr->front();
       gen b=v[1]._VECTptr->back();
       v[1]=a;
@@ -770,11 +826,15 @@ namespace giac {
     if (s==2){
       if ( (v[1].type==_SYMB && v[1]._SYMBptr->sommet==at_of && v[1]._SYMBptr->feuille.type==_VECT &&v [1]._SYMBptr->feuille._VECTptr->size()==2 ) )
 	return desolve(v[0],(*v[1]._SYMBptr->feuille._VECTptr)[1],(*v[1]._SYMBptr->feuille._VECTptr)[0],ordre,parameters,contextptr);
-      return desolve( v[0],vx_var,v[1],ordre,parameters,contextptr);
+      return ggbputinlist(desolve( v[0],vx_var,v[1],ordre,parameters,contextptr),contextptr);
     }
+    if (s==4)
+      return ggbputinlist(desolve_with_conditions(makevecteur(v[0],v[3]),v[1],v[2],contextptr),contextptr);
+    if (s==5)
+      return ggbputinlist(desolve_with_conditions(makevecteur(v[0],v[3],v[4]),v[1],v[2],contextptr),contextptr);
     if (s!=3)
       return gensizeerr(contextptr);
-    return desolve( v[0],v[1],v[2],ordre,parameters,contextptr);    
+    return ggbputinlist(desolve( v[0],v[1],v[2],ordre,parameters,contextptr),contextptr);    
   }
   static const char _desolve_s []="desolve";
   static define_unary_function_eval (__desolve,&_desolve,_desolve_s);
@@ -790,7 +850,7 @@ namespace giac {
     gen t(s);
     if (s==x){
 #ifdef GIAC_HAS_STO_38
-      t=identificateur("z");
+      t=identificateur("_z38");
 #else
       t=identificateur(" tztrans");
 #endif
@@ -833,7 +893,7 @@ namespace giac {
     gen t(s);
     if (s==x){
 #ifdef GIAC_HAS_STO_38
-      t=identificateur("s");
+      t=identificateur("_s38");
 #else
       t=identificateur(" tinvztrans");
 #endif
@@ -878,7 +938,8 @@ namespace giac {
       polynome p_content(lgcd(den));
       den=den/p_content;
       factorization vden; gen an;
-      if (!cfactor(den,an,vden,true))
+      gen extra_div;
+      if (!cfactor(den,an,vden,true,extra_div))
 	return invztranserr(contextptr);
       vector< pf<gen> > pfde_VECT;
       polynome ipnum(dim),ipden(dim);
@@ -911,7 +972,7 @@ namespace giac {
 	  A=r2e(a,lprime,contextptr);
 	  gen z_minus_a=x-A,res0;
 	  for (int i=it->mult-1;i>=0;--i){
-	    gen tmp=_quorem(makevecteur(cur,z_minus_a,x),contextptr);
+	    gen tmp=_quorem(makesequence(cur,z_minus_a,x),contextptr);
 	    if (is_undef(tmp)) return tmp;
 	    gen rem=tmp[1];
 	    cur=tmp[0];

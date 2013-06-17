@@ -80,6 +80,7 @@ namespace giac {
 #undef HAVE_LIBMPFR
 #endif
 
+  void my_mpz_gcd(mpz_t &z,const mpz_t & A,const mpz_t & B);
 
   class gen ; 
   // errors
@@ -650,6 +651,8 @@ namespace giac {
     inline void * ref_POINTER_val() const ;
   };
 
+  gen change_subtype(const gen &g,int newsubtype);
+  gen genfromstring(const std::string & s);
   // pointer to an int describing display mode for complex numbers
   int * complex_display_ptr(const gen & g); 
   // value==0 to cartesian, 1 to polar, 2 toggle, 3 count complex
@@ -810,7 +813,7 @@ namespace giac {
   gen smod(const gen & a,const gen & b); // same
   void smod(const vecteur & v,const gen & g,vecteur & w); 
   vecteur smod(const vecteur & a,const gen & b); // same
-  gen rdiv(const gen & a,const gen & b); // rational division
+  gen rdiv(const gen & a,const gen & b,GIAC_CONTEXT0); // rational division
   inline gen operator /(const gen & a,const gen & b){ return rdiv(a,b); };
   gen operator %(const gen & a,const gen & b); // for int only
   // gen inv(const gen & a);
@@ -859,6 +862,7 @@ namespace giac {
   bool operator !=(const gen & a,const gen & b);
   inline bool operator !=(const gen & a,const identificateur & b){ return !(a==b); }
   gen equal(const gen & a,const gen &b,GIAC_CONTEXT);
+  gen equal2(const gen & a,const gen &b,GIAC_CONTEXT);
 
   gen operator !(const gen & a);
 
@@ -944,9 +948,9 @@ namespace giac {
   gen liste2symbolique(const vecteur & v);
 
   bool is_atomic(const gen & e);
-  symbolic _FRAC2_SYMB(const fraction & f);
-  symbolic _FRAC2_SYMB(const gen & e);
-  symbolic _FRAC2_SYMB(const gen & n,const gen & d);
+  gen _FRAC2_SYMB(const fraction & f);
+  gen _FRAC2_SYMB(const gen & e);
+  gen _FRAC2_SYMB(const gen & n,const gen & d);
   gen string2gen(const std::string & ss,bool remove_ss_quotes=true);
   // by default ss is assumed to be delimited by " and "
   std::complex<double> gen2complex_d(const gen & e);
@@ -1326,89 +1330,89 @@ namespace giac {
 #define  _POINTER_val ref_POINTER_val()
 
   // function that are indexed
-  extern const unsigned long alias_at_plus;
-  extern const unsigned long alias_at_neg;
-  extern const unsigned long alias_at_binary_minus;
-  extern const unsigned long alias_at_prod;
-  extern const unsigned long alias_at_division;
-  extern const unsigned long alias_at_inv;
-  extern const unsigned long alias_at_pow;
-  extern const unsigned long alias_at_exp;
-  extern const unsigned long alias_at_ln;
-  extern const unsigned long alias_at_abs;
-  extern const unsigned long alias_at_arg;
-  extern const unsigned long alias_at_pnt;
-  extern const unsigned long alias_at_point;
-  extern const unsigned long alias_at_segment;
-  extern const unsigned long alias_at_sto;
-  extern const unsigned long alias_at_sin;
-  extern const unsigned long alias_at_cos;
-  extern const unsigned long alias_at_tan;
-  extern const unsigned long alias_at_asin;
-  extern const unsigned long alias_at_acos;
-  extern const unsigned long alias_at_atan;
-  extern const unsigned long alias_at_sinh;
-  extern const unsigned long alias_at_cosh;
-  extern const unsigned long alias_at_tanh;
-  extern const unsigned long alias_at_asinh;
-  extern const unsigned long alias_at_acosh;
-  extern const unsigned long alias_at_atanh;
-  extern const unsigned long alias_at_interval;
-  extern const unsigned long alias_at_union;
-  extern const unsigned long alias_at_minus;
-  extern const unsigned long alias_at_intersect;
-  extern const unsigned long alias_at_not;
-  extern const unsigned long alias_at_and;
-  extern const unsigned long alias_at_ou;
-  extern const unsigned long alias_at_inferieur_strict;
-  extern const unsigned long alias_at_inferieur_egal;
-  extern const unsigned long alias_at_superieur_strict;
-  extern const unsigned long alias_at_superieur_egal;
-  extern const unsigned long alias_at_different;
-  extern const unsigned long alias_at_equal;
-  extern const unsigned long alias_at_rpn_prog;
-  extern const unsigned long alias_at_local;
-  extern const unsigned long alias_at_return;
-  extern const unsigned long alias_at_Dialog;
-  extern const unsigned long alias_at_double_deux_points;
-  extern const unsigned long alias_at_pointprod;
-  extern const unsigned long alias_at_pointdivision;
-  extern const unsigned long alias_at_pointpow;
-  extern const unsigned long alias_at_hash;
-  extern const unsigned long alias_at_pourcent;
-  extern const unsigned long alias_at_tilocal;
-  extern const unsigned long alias_at_break;
-  extern const unsigned long alias_at_continue;
-  extern const unsigned long alias_at_ampersand_times;
-  extern const unsigned long alias_at_maple_lib;
-  extern const unsigned long alias_at_unit;
-  extern const unsigned long alias_at_plot_style;
-  extern const unsigned long alias_at_xor;
-  extern const unsigned long alias_at_check_type;
-  extern const unsigned long alias_at_quote_pow;
-  extern const unsigned long alias_at_case;
-  extern const unsigned long alias_at_dollar;
-  extern const unsigned long alias_at_IFTE;
-  extern const unsigned long alias_at_RPN_CASE;
-  extern const unsigned long alias_at_RPN_LOCAL;
-  extern const unsigned long alias_at_RPN_FOR;
-  extern const unsigned long alias_at_RPN_WHILE;
-  extern const unsigned long alias_at_NOP;
-  extern const unsigned long alias_at_unit;
-  extern const unsigned long alias_at_ifte;
-  extern const unsigned long alias_at_for;
-  extern const unsigned long alias_at_bloc;
-  extern const unsigned long alias_at_program;
-  extern const unsigned long alias_at_same;
-  extern const unsigned long alias_at_increment;
-  extern const unsigned long alias_at_decrement;
-  extern const unsigned long alias_at_multcrement;
-  extern const unsigned long alias_at_divcrement;
-  extern const unsigned long alias_at_sq;
-  extern const unsigned long alias_at_display;
-  extern const unsigned long alias_at_of;
-  extern const unsigned long alias_at_at;
-  extern const unsigned long alias_at_normalmod;  
+  extern const alias_type alias_at_plus;
+  extern const alias_type alias_at_neg;
+  extern const alias_type alias_at_binary_minus;
+  extern const alias_type alias_at_prod;
+  extern const alias_type alias_at_division;
+  extern const alias_type alias_at_inv;
+  extern const alias_type alias_at_pow;
+  extern const alias_type alias_at_exp;
+  extern const alias_type alias_at_ln;
+  extern const alias_type alias_at_abs;
+  extern const alias_type alias_at_arg;
+  extern const alias_type alias_at_pnt;
+  extern const alias_type alias_at_point;
+  extern const alias_type alias_at_segment;
+  extern const alias_type alias_at_sto;
+  extern const alias_type alias_at_sin;
+  extern const alias_type alias_at_cos;
+  extern const alias_type alias_at_tan;
+  extern const alias_type alias_at_asin;
+  extern const alias_type alias_at_acos;
+  extern const alias_type alias_at_atan;
+  extern const alias_type alias_at_sinh;
+  extern const alias_type alias_at_cosh;
+  extern const alias_type alias_at_tanh;
+  extern const alias_type alias_at_asinh;
+  extern const alias_type alias_at_acosh;
+  extern const alias_type alias_at_atanh;
+  extern const alias_type alias_at_interval;
+  extern const alias_type alias_at_union;
+  extern const alias_type alias_at_minus;
+  extern const alias_type alias_at_intersect;
+  extern const alias_type alias_at_not;
+  extern const alias_type alias_at_and;
+  extern const alias_type alias_at_ou;
+  extern const alias_type alias_at_inferieur_strict;
+  extern const alias_type alias_at_inferieur_egal;
+  extern const alias_type alias_at_superieur_strict;
+  extern const alias_type alias_at_superieur_egal;
+  extern const alias_type alias_at_different;
+  extern const alias_type alias_at_equal;
+  extern const alias_type alias_at_rpn_prog;
+  extern const alias_type alias_at_local;
+  extern const alias_type alias_at_return;
+  extern const alias_type alias_at_Dialog;
+  extern const alias_type alias_at_double_deux_points;
+  extern const alias_type alias_at_pointprod;
+  extern const alias_type alias_at_pointdivision;
+  extern const alias_type alias_at_pointpow;
+  extern const alias_type alias_at_hash;
+  extern const alias_type alias_at_pourcent;
+  extern const alias_type alias_at_tilocal;
+  extern const alias_type alias_at_break;
+  extern const alias_type alias_at_continue;
+  extern const alias_type alias_at_ampersand_times;
+  extern const alias_type alias_at_maple_lib;
+  extern const alias_type alias_at_unit;
+  extern const alias_type alias_at_plot_style;
+  extern const alias_type alias_at_xor;
+  extern const alias_type alias_at_check_type;
+  extern const alias_type alias_at_quote_pow;
+  extern const alias_type alias_at_case;
+  extern const alias_type alias_at_dollar;
+  extern const alias_type alias_at_IFTE;
+  extern const alias_type alias_at_RPN_CASE;
+  extern const alias_type alias_at_RPN_LOCAL;
+  extern const alias_type alias_at_RPN_FOR;
+  extern const alias_type alias_at_RPN_WHILE;
+  extern const alias_type alias_at_NOP;
+  extern const alias_type alias_at_unit;
+  extern const alias_type alias_at_ifte;
+  extern const alias_type alias_at_for;
+  extern const alias_type alias_at_bloc;
+  extern const alias_type alias_at_program;
+  extern const alias_type alias_at_same;
+  extern const alias_type alias_at_increment;
+  extern const alias_type alias_at_decrement;
+  extern const alias_type alias_at_multcrement;
+  extern const alias_type alias_at_divcrement;
+  extern const alias_type alias_at_sq;
+  extern const alias_type alias_at_display;
+  extern const alias_type alias_at_of;
+  extern const alias_type alias_at_at;
+  extern const alias_type alias_at_normalmod;  
 
 #ifdef BCD
   inline bool ck_gentobcd(const gen & g,accurate_bcd_float * bcdptr){
@@ -1425,6 +1429,10 @@ namespace giac {
   // should be in input_lexer.h
   // return true/false to tell if s is recognized. return the appropriate gen if true
   bool CasIsBuildInFunction(char const *s, gen &g);
+
+  void sprintfdouble(char *,const char *,double d);
+
+  const char * caseval(const char *);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

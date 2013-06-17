@@ -82,30 +82,34 @@ namespace giac {
   void lrdm(modpoly & p,int n); // form intg.cc
 
   // Is the polynomial v irreducible and primitive modulo p?
-  // If it is only irreducible, returns 2 and sets vmin
-  int is_irreducible_primitive(const modpoly & v,const gen & p,modpoly & vmin){
+  // If it is only irreducible, returns 2 and sets vmin to a primitive poly mod p if primitive is true
+  int is_irreducible_primitive(const modpoly & v,const gen & p,modpoly & vmin,bool primitive,GIAC_CONTEXT){
     vmin=v;
     int m=v.size()-1;
     if (m<2)
       return 0; // setsizeerr(gettext("irreducibility: degree too short")+gen(v).print());
     gen gpm=pow(p,m);
-    int pm=gpm.type==_INT_?gpm.val:RAND_MAX;
-    environment * env=new environment;
+    int pm=gpm.type==_INT_?gpm.val:RAND_MAX; // max number of tries
+    environment E;
+    environment * env=&E;
     env->modulo=p;
     env->pn=env->modulo;
     env->moduloon=true;
     vecteur polyx(2),g;
     polyx[0]=1;
-    vecteur test(p.val+1);
+    vecteur test(2);
     test[0]=1;
     // Irreducible: v must be prime with x^(p^k)-x, for k<=m/2
     for (int k=1;k<=m/2;k++){
+      test=powmod(test,p,v,env);
       gcdmodpoly(operator_minus(test,polyx,env),v,env,g);
       if (!is_one(g)){
-	delete env;
 	return 0;
       }
-      test=powmod(test,p,v,env);
+    }
+    if (!primitive){
+      *logptr(contextptr) << gettext("Warning, minimal polynomial is only irreducible, not necessarily primitive") << endl;
+      return 3;
     }
     // Primi: must not divide x^[(p^m-1)/d]-1 for any prime divisor d of p^m-1
     gen pm_minus_1=gpm-1;
@@ -120,11 +124,17 @@ namespace giac {
 	// Find a cyclic element in GF, [1,0] does not work
 	for (int k=p.val+1;k<pm;k++){
 	  cyclic=vecteur(m);
-	  // decompose k in base p
-	  for (int j=0,k1=k;j<m;++j){
+#if 0
+	  // decompose k in base p -> REPLACED by random init
+	  int k1=k;
+	  for (int j=0;j<m;++j){
 	    cyclic[j]=k1%p.val;
 	    k1/=p.val;
 	  }
+#else
+	  for (int j=0;j<m;++j)
+	    cyclic[j]=giac_rand(context0) % p.val;
+#endif
 	  cyclic=trim(cyclic,0);
 	  // ?cyclic
 	  for (int i=0;i<ntest;i+=2){
@@ -154,23 +164,28 @@ namespace giac {
 	  vmin[i]=-minred[m-i][m];
 	// vecteur tmpv;
 	// cout << is_irreducible_primitive(vmin,p,tmpv) << endl;
-	delete env;
 	return 2;
       }
       /* vecteur test(pm_d+1);
 	 test[0]=1;
 	 test[pm_d]=-1; 
       if (is_zero(operator_mod(test,v,env))){
-	delete env;
 	return false;
       }
       */
     }
-    delete env;
     return 1;
   }
 
-  vecteur find_irreducible_primitive(int p,int m,GIAC_CONTEXT){
+  vecteur find_irreducible_primitive(int p,int m,bool primitive,GIAC_CONTEXT){
+#ifdef HAVE_LIBPARI
+    if (!primitive){
+      gen pari=pari_ffinit(p,m);
+      pari=unmod(pari);
+      if (pari.type==_VECT)
+	return *pari._VECTptr;
+    }
+#endif
     // First check m*20 random polynomials
     int M=100*m;
     for (int k=0;k<M;++k){
@@ -184,7 +199,7 @@ namespace giac {
 	  test[j]=giac_rand(contextptr)%p;
       }
       // *logptr(contextptr) << test << endl;
-      if (is_irreducible_primitive(test,p,test2))
+      if (is_irreducible_primitive(test,p,test2,primitive,contextptr))
 	return test2;
     }
     *logptr(contextptr) << gettext("Warning, random search for irreducible polynomial did not work, starting exhaustive search") << endl;
@@ -198,7 +213,7 @@ namespace giac {
 	test[j]=k1%p;
 	k1/=p;
       }
-      if (is_irreducible_primitive(test,p,test2))
+      if (is_irreducible_primitive(test,p,test2,primitive,contextptr))
 	return test2;
     }
     return vecteur(1,gensizeerr(gettext("No irreducible primitive polynomial found")));
@@ -228,7 +243,7 @@ namespace giac {
     }
     else {
       if (args.type!=_VECT)
-	return galois_field(args,contextptr);
+	return galois_field(args,true,contextptr);
       v=*args._VECTptr;
     }
     int s=v.size();
@@ -246,6 +261,12 @@ namespace giac {
     if (s==3 && v[1].type!=_INT_){
       v.push_back(undef);
       ++s;
+    }
+    bool primitive=true;
+    if (s>=3 && is_integer(v[0]) && is_zero(v.back())){
+      primitive=false;
+      v.pop_back();
+      --s;
     }
     if (s==2){
 #ifdef GIAC_HAS_STO_38
@@ -270,7 +291,7 @@ namespace giac {
 	// make_free_variable(g,contextptr,true,k,K);
 	v[2]=makevecteur(k,K,g);
       }
-      gen fieldvalue=galois_field(gen(v,args.subtype),contextptr);
+      gen fieldvalue=galois_field(gen(v,args.subtype),primitive,contextptr);
       if (v.back().type==_VECT && v.back()._VECTptr->size()==3 && fieldvalue.type==_USER){
 	// assign field and generator
 	gen K=(*v.back()._VECTptr)[1];
@@ -293,12 +314,12 @@ namespace giac {
     if (x.type==_VECT && !x._VECTptr->empty())
       xid=x._VECTptr->front();
     if (!is_undef(v[3]) && v[3].type!=_VECT)
-      v[3]=_e2r(makevecteur(v[3],xid),contextptr); // ok
+      v[3]=_e2r(makesequence(v[3],xid),contextptr); // ok
     if (v[1].type!=_VECT)
-      v[1]=_e2r(makevecteur(v[1],xid),contextptr); // ok
+      v[1]=_e2r(makesequence(v[1],xid),contextptr); // ok
     if (v[1].type!=_VECT)
       return gensizeerr();
-    int res=is_irreducible_primitive(*v[1]._VECTptr,v[0],vmin);
+    int res=is_irreducible_primitive(*v[1]._VECTptr,v[0],vmin,primitive,contextptr);
     if (!res)
       return gensizeerr(gettext("Not irreducible or not primitive polynomial")+args.print());
     if (res==2)
@@ -330,7 +351,7 @@ namespace giac {
     return "";
   }
 
-  galois_field::galois_field(const gen & g,GIAC_CONTEXT){
+  galois_field::galois_field(const gen & g,bool primitive,GIAC_CONTEXT){
     if (g.type==_USER){
       const galois_field  * q =dynamic_cast<const galois_field *>(g._USERptr);
       if (q)
@@ -352,7 +373,7 @@ namespace giac {
 	    P=gensizeerr(gettext("Exponent must be >=2: ")+print_INT_(m0));
 	  else {
 	    p=p0;
-	    P=find_irreducible_primitive(p0,m0,contextptr);
+	    P=find_irreducible_primitive(p0,m0,primitive,contextptr);
 	    if (g._VECTptr->size()>2)
 	      x=(*g._VECTptr)[2];
 	    else {
@@ -390,7 +411,7 @@ namespace giac {
       return galois_field(p,P,x,a+*g._MODptr);
     }
     if (g.type!=_USER)
-      return sym_add(*this,g,context0); // ok symbolic(at_plus,makevecteur(g,*this));
+      return sym_add(*this,g,context0); // ok symbolic(at_plus,makesequence(g,*this));
     if (galois_field * gptr=dynamic_cast<galois_field *>(g._USERptr)){
       if (gptr->p!=p || gptr->P!=P || is_undef(P) || is_undef(gptr->P))
 	return gensizeerr();
@@ -419,7 +440,7 @@ namespace giac {
       return galois_field(p,P,x,a-*g._MODptr);
     }
     if (g.type!=_USER)
-      return sym_add(*this,-g,context0); // ok symbolic(at_plus,makevecteur(-g,*this));
+      return sym_add(*this,-g,context0); // ok symbolic(at_plus,makesequence(-g,*this));
     if (galois_field * gptr=dynamic_cast<galois_field *>(g._USERptr)){
       if (gptr->p!=p || gptr->P!=P || is_undef(P) || is_undef(gptr->P))
 	return gensizeerr();
@@ -465,7 +486,7 @@ namespace giac {
       return *this*(*g._MODptr);
     }
     if (g.type!=_USER)
-      return sym_mult(*this,g,context0); // ok symbolic(at_prod,makevecteur(g,*this));
+      return sym_mult(*this,g,context0); // ok symbolic(at_prod,makesequence(g,*this));
     if (galois_field * gptr=dynamic_cast<galois_field *>(g._USERptr)){
       if (gptr->p!=p || gptr->P!=P || P.type!=_VECT || is_undef(P) || is_undef(gptr->P))
 	return gensizeerr();
@@ -568,7 +589,7 @@ namespace giac {
 	  }
 	}
 	else
-	  res=_e2r(makevecteur(g,xid),contextptr);
+	  res=_e2r(makesequence(g,xid),contextptr);
       }
       if (res.type==_VECT){
 	environment env;
@@ -643,8 +664,7 @@ namespace giac {
     environment env;
     env.modulo=p;
     gen gpm=pow(p.val,m);
-    if (gpm.type!=_INT_)
-      return gensizeerr(gettext("Field too large"));
+    // if (gpm.type!=_INT_) return gensizeerr(gettext("Field too large"));
     // int pn=gpm.val;
     env.moduloon=true;
     modpoly & A=*a._VECTptr;
@@ -669,7 +689,7 @@ namespace giac {
     polynome px(unmodularize(X));
     factorization sqff_f(squarefree_fp(px,env.modulo.val,m)),f;
     if (p.val!=2){
-      if (!sqff_ffield_factor(sqff_f,gpm.val,&env,f) || f.size()!=2)
+      if (!sqff_ffield_factor(sqff_f,env.modulo.val,&env,f) || f.size()!=2)
 	return undef;
       sqff_f.swap(f);
     }

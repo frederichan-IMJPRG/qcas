@@ -55,6 +55,13 @@ using namespace std;
   u32 AspenGetNow();
 #endif
 
+#ifdef EMCC
+extern "C" double emcctime(); 
+// definition of emcctime should be added in emscripten directory src/library.js
+// search for _time definition, and return only Date.now() for _emcctime
+// otherwise time() will not work
+#endif
+
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
@@ -311,6 +318,16 @@ namespace giac {
     double delta;
     int ntimes=1,i=0;
     int level=eval_level(contextptr);
+#ifdef EMCC
+    // time_t t1,t2;
+    // time(&t1);
+    // eval(a,level,contextptr);
+    // time(&t2);
+    // return difftime(t2,t1);
+    double t1=emcctime();
+    eval(a,level,contextptr);
+    return (emcctime()-t1)/1000;
+#endif
 #ifdef __APPLE__
     unsigned u1=clock();
     eval(a,level,contextptr);
@@ -534,7 +551,12 @@ namespace giac {
     if (g.type!=_VECT || g._VECTptr->size()!=2)
       return gensizeerr();
     int shift = xcas_mode(contextptr)!=0 || abs_calc_mode(contextptr)==38;
-    gen res=g._VECTptr->front()[g._VECTptr->back()-shift];
+    gen indice=g._VECTptr->back();
+    if (indice.is_symb_of_sommet(at_interval) && indice._SYMBptr->feuille.type==_VECT)
+      indice=symbolic(at_interval,indice._SYMBptr->feuille-gen(shift)*vecteur(indice._SYMBptr->feuille._VECTptr->size(),1));
+    else
+      indice -= shift;
+    gen res=g._VECTptr->front().operator_at(indice,contextptr);
     if (ckmatrix(res))
       return gen(*res._VECTptr,_SEQ__VECT);
     else
@@ -585,6 +607,39 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if ( (args.type!=_VECT) || (args._VECTptr->size()<2))
       return symbolic(at_count,args);
+    if (args.subtype!=_SEQ__VECT && is_integer_vecteur(*args._VECTptr)){
+      // count elements in list of integers
+      vector<int> x=vecteur_2_vector_int(*args._VECTptr);
+      int m=giacmin(x),M=giacmax(x),s=x.size();
+      if (M-m<3*s){
+	vector<int> eff(M-m+1);
+	effectif(x,eff,m);
+	matrice res;
+	for (int i=m;i<=M;++i){
+	  int e=eff[i-m];
+	  if (e>0)
+	    res.push_back(makevecteur(i,e));
+	}
+	return res;
+      }
+      sort(x.begin(),x.end());
+      int old=M,eff=0,cur;
+      matrice res;
+      for (int pos=0;pos<s;++pos){
+	cur=x[pos];
+	if (cur==old){
+	  ++eff;
+	  continue;
+	}
+	if (eff)
+	  res.push_back(makevecteur(old,eff));
+	old=cur;
+	eff=1;
+      }
+      if (eff)
+	res.push_back(makevecteur(old,eff));
+      return res;
+    }
     gen v((*args._VECTptr)[1]);
     gen f(args._VECTptr->front());
     gen param;
@@ -755,11 +810,8 @@ namespace giac {
   // open a file, returns a FD
   gen _open(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#if defined(VISUALC) || defined(__MINGW_H) 
+#if defined(VISUALC) || defined(__MINGW_H) || defined (BESTA_OS)
     return gensizeerr(gettext("not implemented"));
-#elif defined BESTA_OS
-    // BP: why not return the error above?
-    assert(0);
 #else
     gen tmp=check_secure();
     if (is_undef(tmp)) return tmp;
@@ -828,17 +880,18 @@ namespace giac {
   static define_unary_function_eval (__fprint,&_fprint,_fprint_s);
   define_unary_function_ptr5( at_fprint ,alias_at_fprint,&__fprint,0,true);
 
-  gen _close(const gen & g,GIAC_CONTEXT){
+  gen _close(const gen & g0,GIAC_CONTEXT){
+    gen g=eval(g0,1,contextptr);
     if ( g.type==_STRNG && g.subtype==-1) return  g;
-#ifndef VISUALC
-#ifndef BESTA_OS
+#if !defined(VISUALC) && !defined(BESTA_OS) && !defined(__MINGW_H)
     if (g.type==_INT_ && g.subtype==_INT_FD){
+      _purge(g0,contextptr);
       close(g.val);
       return plus_one;
     }
 #endif
-#endif
     if (g.type==_POINTER_){
+      _purge(g0,contextptr);
       fclose((FILE *)g._POINTER_val);
       return plus_one;
     }
@@ -846,11 +899,11 @@ namespace giac {
   }
   static const char _close_s []="close";
   static define_unary_function_eval (__close,&_close,_close_s);
-  define_unary_function_ptr5( at_close ,alias_at_close,&__close,0,true);
+  define_unary_function_ptr5( at_close ,alias_at_close,&__close,_QUOTE_ARGUMENTS,true);
 
   static const char _fclose_s []="fclose";
   static define_unary_function_eval (__fclose,&_close,_fclose_s);
-  define_unary_function_ptr5( at_fclose ,alias_at_fclose,&__fclose,0,true);
+  define_unary_function_ptr5( at_fclose ,alias_at_fclose,&__fclose,_QUOTE_ARGUMENTS,true);
 
   gen _blockmatrix(const gen & g,GIAC_CONTEXT){
     if ( g.type==_STRNG && g.subtype==-1) return  g;
@@ -1007,7 +1060,10 @@ namespace giac {
     if (m.size()!=v.size())
       return gendimerr();
     m=mtran(m);
-    m.push_back(v);
+    if (ckmatrix(v))
+      m=mergevecteur(m,mtran(v));
+    else
+      m.push_back(v);
     return mtran(m);
   }
   static const char _border_s []="border";
@@ -1483,16 +1539,20 @@ namespace giac {
   static define_unary_function_eval (__animate3d,&_animate3d,_animate3d_s);
   define_unary_function_ptr5( at_animate3d ,alias_at_animate3d,&__animate3d,0,true);
 
-  gen _even(const gen & g,GIAC_CONTEXT){
+  gen _even(const gen & g_,GIAC_CONTEXT){
+    gen g(g_);
     if ( g.type==_STRNG && g.subtype==-1) return  g;
+    if (!is_integral(g)) return gentypeerr(contextptr);
     return is_zero(smod(g,2));
   }
   static const char _even_s []="even";
   static define_unary_function_eval (__even,&_even,_even_s);
   define_unary_function_ptr5( at_even ,alias_at_even,&__even,0,true);
 
-  gen _odd(const gen & g,GIAC_CONTEXT){
+  gen _odd(const gen & g_,GIAC_CONTEXT){
+    gen g(g_);
     if ( g.type==_STRNG && g.subtype==-1) return  g;
+    if (!is_integral(g)) return gentypeerr(contextptr);
     return !is_zero(smod(g,2));
   }
   static const char _odd_s []="odd";
@@ -1696,8 +1756,8 @@ namespace giac {
     // for other factors multiply remains by the factor
     polynome Pcont;
     factorization f;
-    gen divan=1,res;
-    if (!factor(P,Pcont,f,/* is_primitive*/false,/* with_sqrt*/true,/* complex */true,divan)){
+    gen divan=1,res,extra_div=1;
+    if (!factor(P,Pcont,f,/* is_primitive*/false,/* with_sqrt*/true,/* complex */true,divan,extra_div) || extra_div!=1){
       remains=r2e(P,v,contextptr);
       return 1;
     }
@@ -1797,8 +1857,8 @@ namespace giac {
     a=e2r(a,v1,contextptr);
     remains=0;
     // solve u(n+1)=l*u(n)+a^n*P(n)
-    if (a==l){ // let v(n)=u(n)/l^n, then v(n+1)=v(n)+P(n)
-      return pow(l0,n,contextptr)*sum(r2e(P,v,contextptr),n,remains,contextptr)/r2e(P0d,v,contextptr);
+    if (a==l){ // let v(n)=u(n)/l^n, then v(n+1)=v(n)+P(n)/l
+      return pow(l0,n,contextptr)*sum(r2e(P,v,contextptr),n,remains,contextptr)/l/r2e(P0d,v,contextptr);
     }
     // search u(n)=a^n*Q(n) with Q a polynomial of same degree than P
     // we have u(n+1)=a^(n+1)*Q(n+1)=l*a^n*Q(n)+a^n*P(n)

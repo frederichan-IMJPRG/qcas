@@ -45,7 +45,11 @@ namespace giac {
     cerr << ptr()->s << endl; 
   }
 
+#ifdef __x86_64__
+  bool unary_function_ptr::quoted() const { return (ptr()->index_quoted_function & 0x1) || ( ((longlong) _ptr) & 0x1); }
+#else
   bool unary_function_ptr::quoted() const { return (ptr()->index_quoted_function & 0x1) || ( ((long) _ptr) & 0x1); }
+#endif
 
   /*
   unary_function_ptr::unary_function_ptr(const unary_function_ptr & myptr):ptr(myptr.ptr),ref_count(myptr.ref_count),quoted(myptr.quoted){

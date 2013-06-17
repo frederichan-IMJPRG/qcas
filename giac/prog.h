@@ -29,6 +29,7 @@ namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
   extern bool user_screen; 
   extern int user_screen_io_x,user_screen_io_y,user_screen_fontsize;
+  extern const int rand_max2; // replace RAND_MAX if giac_rand(contextptr) is used
 
   struct user_function;
   struct module_info {
@@ -192,7 +193,7 @@ namespace giac {
   gen _intersect(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_intersect;
   gen _inter(const gen & args,GIAC_CONTEXT);
-  extern const unsigned long alias_at_inter;
+  extern const alias_type alias_at_inter;
   extern const unary_function_ptr * const  at_inter;
 
   gen _minus(const gen & args,GIAC_CONTEXT);
@@ -935,6 +936,7 @@ namespace giac {
   const unary_function_ptr * binary_op_tab();
 
   extern const unary_function_ptr * const  at_piecewise;
+  extern const unary_function_ptr * const  at_PIECEWISE;
   gen _piecewise(const gen & g,GIAC_CONTEXT);
 
   extern const unary_function_ptr * const  at_geo2d ;
@@ -966,6 +968,11 @@ namespace giac {
   gen symb_union(const gen & args);
   gen symb_minus(const gen & args);
   gen symb_compose(const gen & args);
+
+  // test if m(i) is an array index: that will not be the case if
+  // i is an _IDNT or a list of _IDNT
+  // AND m is not already defined as an array
+  bool is_array_index(const gen & m,const gen & i,GIAC_CONTEXT);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

@@ -224,16 +224,16 @@ namespace giac {
       return ; // 1*exp(arg)
     }
     if (s==at_cosh){
-      v.push_back(rdiv(1,2));
+      v.push_back(rdiv(1,2,contextptr));
       v.push_back(f);
-      v.push_back(rdiv(1,2));
+      v.push_back(rdiv(1,2,contextptr));
       v.push_back(-f);
       return ; // 1/2*exp(arg)+1/2*exp(-arg)
     }
     if (s==at_sinh){
-      v.push_back(rdiv(1,2));
+      v.push_back(rdiv(1,2,contextptr));
       v.push_back(f);
-      v.push_back(rdiv(-1,2));
+      v.push_back(rdiv(-1,2,contextptr));
       v.push_back(-f);
       return ; // 1/2*exp(arg)-1/2*exp(-arg)
     }
@@ -250,7 +250,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_lin(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_lin(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_lin,contextptr);
     vecteur v;
@@ -314,13 +314,13 @@ namespace giac {
 	newcoeff=coeff*(*it);
 	++it;
 	if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_cos) ){
-	  newcoeff=normal(rdiv(newcoeff,plus_two),false,contextptr);
+	  newcoeff=normal(rdiv(newcoeff,plus_two,contextptr),false,contextptr);
 	  tadd(res,newcoeff,cos(normal(arg._SYMBptr->feuille-it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  tadd(res,newcoeff,cos(normal(arg._SYMBptr->feuille+it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  continue;
 	}
 	if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_sin) ){
-	  newcoeff=normal(rdiv(newcoeff,plus_two),false,contextptr);
+	  newcoeff=normal(rdiv(newcoeff,plus_two,contextptr),false,contextptr);
 	  tadd(res,newcoeff,sin(normal(it->_SYMBptr->feuille+arg._SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  tadd(res,newcoeff,sin(normal(it->_SYMBptr->feuille-arg._SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  continue;
@@ -337,13 +337,13 @@ namespace giac {
 	newcoeff=coeff*(*it);
 	++it;
 	if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_cos) ){
-	  newcoeff=normal(rdiv(newcoeff,plus_two),false,contextptr);
+	  newcoeff=normal(rdiv(newcoeff,plus_two,contextptr),false,contextptr);
 	  tadd(res,newcoeff,sin(normal(arg._SYMBptr->feuille+it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  tadd(res,newcoeff,sin(normal(arg._SYMBptr->feuille-it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  continue;
 	}
 	if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_sin)){
-	  newcoeff=normal(rdiv(newcoeff,plus_two),false,contextptr);
+	  newcoeff=normal(rdiv(newcoeff,plus_two,contextptr),false,contextptr);
 	  tadd(res,newcoeff,cos(normal(arg._SYMBptr->feuille-it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  tadd(res,-newcoeff,cos(normal(arg._SYMBptr->feuille+it->_SYMBptr->feuille,false,contextptr),contextptr),contextptr);
 	  continue;
@@ -479,7 +479,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_tlin(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_tlin(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_tlin,contextptr);
     vecteur v;
@@ -767,6 +767,11 @@ namespace giac {
   static gen sin_expand(const gen & e,GIAC_CONTEXT){
     if (e.type!=_SYMB)
       return sin(e,contextptr);
+    if (lidnt(e)==vecteur(1,cst_pi)){
+      gen sine=sin(e,contextptr);
+      if (!contains(lidnt(sine),cst_pi))
+	return sine;
+    }
     if (e._SYMBptr->sommet==at_plus){
       vecteur v=*e._SYMBptr->feuille._VECTptr;
       gen last=v.back(),first;
@@ -790,6 +795,11 @@ namespace giac {
   static gen cos_expand(const gen & e,GIAC_CONTEXT){
     if (e.type!=_SYMB)
       return cos(e,contextptr);
+    if (lidnt(e)==vecteur(1,cst_pi)){
+      gen cose=cos(e,contextptr);
+      if (!contains(lidnt(cose),cst_pi))
+	return cose;
+    }
     if (e._SYMBptr->sommet==at_plus){
       vecteur v=*e._SYMBptr->feuille._VECTptr;
       gen last=v.back(),first;
@@ -827,6 +837,11 @@ namespace giac {
   static gen tan_expand(const gen & e,GIAC_CONTEXT){
     if (e.type!=_SYMB)
       return tan(e,contextptr);
+    if (lidnt(e)==vecteur(1,cst_pi)){
+      gen tane=tan(e,contextptr);
+      if (!contains(lidnt(tane),cst_pi))
+	return tane;
+    }
     if (e._SYMBptr->sommet==at_plus){
       vecteur v=*e._SYMBptr->feuille._VECTptr;
       gen last=v.back(),first;
@@ -837,14 +852,14 @@ namespace giac {
 	first=symbolic(at_plus,v);
       gen ta=tan_expand(first,contextptr);
       gen tb=tan_expand(last,contextptr);
-      return rdiv(ta+tb,1-ta*tb);
+      return rdiv(ta+tb,1-ta*tb,contextptr);
     }
     if (e._SYMBptr->sommet==at_neg)
       return -tan_expand(e._SYMBptr->feuille,contextptr);
     gen coeff,arg;
     split(e,coeff,arg,contextptr);
     if (!is_one(coeff) && coeff.type==_INT_ && coeff.val<max_texpand_expansion_order){
-      gen g=rdiv(symhorner(tchebycheff(coeff.val,false),cos(arg,contextptr))*sin(arg,contextptr),symhorner(tchebycheff(coeff.val,true),cos(arg,contextptr)));
+      gen g=rdiv(symhorner(tchebycheff(coeff.val,false),cos(arg,contextptr))*sin(arg,contextptr),symhorner(tchebycheff(coeff.val,true),cos(arg,contextptr)),contextptr);
       vector<const unary_function_ptr *> v;
       vector< gen_op_context > w;
       v.push_back(at_sin);
@@ -868,7 +883,7 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     gen var,res;
     if (is_algebraic_program(args,var,res))
-      return symbolic(at_program,makevecteur(var,0,_texpand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,_texpand(res,contextptr)));
     if (is_equal(args))
       return apply_to_equal(args,_texpand,contextptr);
     vector<const unary_function_ptr *> v;
@@ -900,36 +915,38 @@ namespace giac {
       return apply_to_equal(e,expand,contextptr);
     gen var,res;
     if (e.type!=_VECT && is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,expand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,expand(res,contextptr)));
     if (e.type==_VECT && e.subtype==_SEQ__VECT && e._VECTptr->size()==2){
       gen last=e._VECTptr->back();
-      vector<const unary_function_ptr *> v;
-      vector< gen_op_context > w;
-      if (contains(last,gen(at_prod)) || (last.type==_STRNG && !strcmp(last._STRNGptr->c_str(),"*"))){ // expand * with no further simplification
-	v.push_back(at_prod);
-	w.push_back(prod_expand_nosimp);
+      if (last.type==_STRNG || last.type==_FUNC){
+	vector<const unary_function_ptr *> v;
+	vector< gen_op_context > w;
+	if (contains(last,gen(at_prod)) || (last.type==_STRNG && !strcmp(last._STRNGptr->c_str(),"*"))){ // expand * with no further simplification
+	  v.push_back(at_prod);
+	  w.push_back(prod_expand_nosimp);
+	}
+	if (contains(last,gen(at_ln))){
+	  v.push_back(at_ln);
+	  w.push_back(&ln_expand);
+	}
+	if (contains(last,gen(at_exp))){
+	  v.push_back(at_exp);
+	  w.push_back(&exp_expand);
+	}
+	if (contains(last,gen(at_sin))){ 
+	  v.push_back(at_sin);
+	  w.push_back(&sin_expand);
+	}
+	if (contains(last,gen(at_cos))){
+	  v.push_back(at_cos);
+	  w.push_back(&cos_expand);
+	}
+	if (contains(last,gen(at_tan))){
+	  v.push_back(at_tan);
+	  w.push_back(&tan_expand);
+	}
+	return subst(e._VECTptr->front(),v,w,false,contextptr);	
       }
-      if (contains(last,gen(at_ln))){
-	v.push_back(at_ln);
-	w.push_back(&ln_expand);
-      }
-      if (contains(last,gen(at_exp))){
-	v.push_back(at_exp);
-	w.push_back(&exp_expand);
-      }
-      if (contains(last,gen(at_sin))){ 
-	v.push_back(at_sin);
-	w.push_back(&sin_expand);
-      }
-      if (contains(last,gen(at_cos))){
-	v.push_back(at_cos);
-	w.push_back(&cos_expand);
-      }
-      if (contains(last,gen(at_tan))){
-	v.push_back(at_tan);
-	w.push_back(&tan_expand);
-      }
-      return subst(e._VECTptr->front(),v,w,false,contextptr);	
     }
     vector<const unary_function_ptr *> v;
     vector< gen_op_context > w;
@@ -953,7 +970,7 @@ namespace giac {
       return apply_to_equal(e,expexpand,contextptr);
     gen var,res;
     if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,expexpand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,expexpand(res,contextptr)));
     vector<const unary_function_ptr *> v(1,at_exp);
     vector< gen_op_context > w(1,&exp_expand);
     return subst(e,v,w,false,contextptr);
@@ -967,7 +984,7 @@ namespace giac {
       return apply_to_equal(e,lnexpand,contextptr);
     gen var,res;
     if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,lnexpand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,lnexpand(res,contextptr)));
     vector<const unary_function_ptr *> v(1,at_ln);
     vector< gen_op_context > w(1,&ln_expand);
     return subst(e,v,w,false,contextptr);
@@ -981,7 +998,7 @@ namespace giac {
       return apply_to_equal(e,trigexpand,contextptr);
     gen var,res;
     if (is_algebraic_program(e,var,res))
-      return symbolic(at_program,makevecteur(var,0,trigexpand(res,contextptr)));
+      return symbolic(at_program,makesequence(var,0,trigexpand(res,contextptr)));
     vector<const unary_function_ptr *> v;
     vector< gen_op_context > w;
     v.push_back(at_sin);
@@ -990,6 +1007,8 @@ namespace giac {
     w.push_back(&cos_expand);
     v.push_back(at_tan);
     w.push_back(&tan_expand);
+    v.push_back(at_prod);
+    w.push_back(&prod_expand);    
     return subst(e,v,w,false,contextptr);
   }
   static const char _trigexpand_s []="trigexpand";

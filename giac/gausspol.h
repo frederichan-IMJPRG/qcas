@@ -62,6 +62,7 @@ namespace giac {
   // arithmetic
   bool is_one(const polynome & p);
   bool operator < (const polynome & f,const polynome & g);
+  bool operator < (const facteur<polynome> & f,const facteur<polynome> & g);
   polynome firstcoeff(const polynome & p);
   void Add_gen ( std::vector< monomial<gen> >::const_iterator & a,
 		 std::vector< monomial<gen> >::const_iterator & a_end,
@@ -116,7 +117,7 @@ namespace giac {
   polynome poly12polynome(const vecteur & v);
   gen untrunc(const gen & e,int degree,int dimension);
   gen vecteur2polynome(const vecteur & v,int dimension);
-  bool divrem1(const polynome & a,const polynome & b,polynome & quo,polynome & r,int exactquo=0) ;
+  bool divrem1(const polynome & a,const polynome & b,polynome & quo,polynome & r,int exactquo=0,bool allowrational=false) ;
   bool divrem (const polynome & th, const polynome & other, polynome & quo, polynome & rem, bool allowrational = false );
   bool divremmod (const polynome & th,const polynome & other, const gen & modulo,polynome & quo, polynome & rem);
   bool exactquotient(const polynome & a,const polynome & b,polynome & quo,bool allowrational=true);
@@ -167,13 +168,13 @@ namespace giac {
   bool sqfffactor(const polynome &p, vectpoly & v,bool with_sqrt,bool test_composite,bool complexmode);
   bool sqff_evident(const polynome & p,factorization & f,bool withsqrt,bool complexmode);
   // factorization over Z[i]
-  bool cfactor(const polynome & p, gen & an,factorization & f,bool withsqrt);
+  bool cfactor(const polynome & p, gen & an,factorization & f,bool withsqrt,gen & extra_div);
   // factorization over an algebraic extension
   // the main variable of G is the algebraic extension variable
   // the minimal polynomial of this variable is p_mini
   // G is assumed to be square-free
   // See algorithm 3.6.4 in Henri Cohen book starting at step 3
-  bool algfactor(const polynome & G,const polynome & p_mini,int & k,factorization & f,bool complexmode);
+  bool algfactor(const polynome & G,const polynome & p_mini,int & k,factorization & f,bool complexmode,gen & extra_div);
   // sqff factorization over a finite field
   factorization squarefree_fp(const polynome & p,unsigned n,unsigned exposant);
   // univariate factorization over a finite field, once sqff
@@ -182,9 +183,9 @@ namespace giac {
   bool mod_factor(const polynome & p_orig,polynome & p_content,int n,factorization & f);
 
   // factorization over Z[e] where e is an algebraic extension
-  bool ext_factor(const polynome &p,const gen & e,gen & an,polynome & p_content,factorization & f,bool complexmode);
+  bool ext_factor(const polynome &p,const gen & e,gen & an,polynome & p_content,factorization & f,bool complexmode,gen &extra_div);
   // factorization over Z[coeff_of_p]
-  bool factor(const polynome &p,polynome & p_content,factorization & f,bool isprimitive,bool withsqrt,bool complexmode,const gen & divide_by_an);
+  bool factor(const polynome &p,polynome & p_content,factorization & f,bool isprimitive,bool withsqrt,bool complexmode,const gen & divide_by_an,gen & extra_div);
   void unitarize(const polynome &pcur, polynome &unitaryp, polynome & an);
   polynome ununitarize(const polynome & unitaryp, const polynome & an);
   void partfrac(const polynome & num, const polynome & den, const std::vector< facteur< polynome > > & v , std::vector < pf <gen> > & pfde_VECT, polynome & ipnum, polynome & ipden, bool rational=true );

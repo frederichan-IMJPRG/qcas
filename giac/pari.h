@@ -20,6 +20,8 @@ namespace giac {
   gen pari_isprime(const gen & e,int certif=0);
   // FIXME for pari 2.2 use 1 instead of 2, 2 is for APRCL test
 
+  gen pari_ffinit(const gen & p,int n); // irreducible polynomial of deg n over F_p
+
   std::string pari_ifactor(const gen & e);
   gen pari_gamma(const gen & e);
   gen pari_zeta(const gen & e);

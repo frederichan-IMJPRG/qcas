@@ -155,7 +155,7 @@ namespace giac {
       */
     }
     else 
-      k=rdiv(a,15);
+      k=rdiv(a,15,context0);
     return is_multiple_of_12(k,l);
   }
 
@@ -248,7 +248,7 @@ namespace giac {
     vecteur & v=*g._SYMBptr->feuille._VECTptr;
     if (v.empty())
       return gensizeerr(gettext("apply_to_equal"));
-    return symbolic(at_equal,makevecteur(f(v.front()),f(v.back())));
+    return symbolic(at_equal,gen(makevecteur(f(v.front()),f(v.back())),_SEQ__VECT));
   }
 
   gen apply_to_equal(const gen & g,gen (* f) (const gen &, GIAC_CONTEXT),GIAC_CONTEXT){
@@ -257,7 +257,7 @@ namespace giac {
     vecteur & v=*g._SYMBptr->feuille._VECTptr;
     if (v.empty())
       return gensizeerr(contextptr);
-    return symbolic(at_equal,makevecteur(f(v.front(),contextptr),f(v.back(),contextptr)));
+    return symbolic(at_equal,gen(makevecteur(f(v.front(),contextptr),f(v.back(),contextptr)),_SEQ__VECT));
   }
 
   // one arg
@@ -330,8 +330,7 @@ namespace giac {
   }
 
   gen ln(const gen & e,GIAC_CONTEXT){
-    if (abs_calc_mode(contextptr)==38 && !complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr))
-      return gensizeerr(contextptr);
+    // if (abs_calc_mode(contextptr)==38 && do_lnabs(contextptr) && !complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr)) return gensizeerr(contextptr);
     if (e.type==_FLOAT_){
 #ifdef BCD
       if (!is_positive(e,contextptr))
@@ -390,7 +389,7 @@ namespace giac {
     if (e.type==_VECT)
       return apply(e,giac::ln,contextptr);
     if (is_zero(e,contextptr))
-      return minus_inf;
+      return calc_mode(contextptr)==1?unsigned_inf:minus_inf;
     if (is_one(e))
       return 0;
     if (is_minus_one(e))
@@ -411,9 +410,11 @@ namespace giac {
 	  return e._SYMBptr->feuille;
       }
     }
+    if (e.type==_FRAC && e._FRACptr->num==1)
+      return -ln(e._FRACptr->den,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,ln(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,ln(b,contextptr)),_SEQ__VECT));
     if (e.is_symb_of_sommet(at_pow) && e._SYMBptr->feuille.type==_VECT && e._SYMBptr->feuille._VECTptr->size()==2){
       gen a=e._SYMBptr->feuille._VECTptr->front();
       gen b=e._SYMBptr->feuille._VECTptr->back();
@@ -476,7 +477,7 @@ namespace giac {
       return log10(a,contextptr);
 #endif
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,log10(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,log10(b,contextptr)),_SEQ__VECT));
     int n=0; gen e1(e),q;
     if (is_integer(e1) && !is_zero(e1)){
       while (is_zero(irem(e1,10,q))){
@@ -487,7 +488,7 @@ namespace giac {
 	++n;
       }
     }
-    return rdiv(ln(e1,contextptr),ln(10,contextptr))+n;
+    return rdiv(ln(e1,contextptr),ln(10,contextptr),contextptr)+n;
   }
   static const char _log10_s []="log10"; // Using C notation, log for natural
   static gen d_log10(const gen & args,GIAC_CONTEXT){
@@ -514,7 +515,7 @@ namespace giac {
       return apply_to_equal(e,alog10,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,alog10(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,alog10(b,contextptr)),_SEQ__VECT));
     return pow(gen(10),e,contextptr);
   }
   static const char _alog10_s []="alog10"; 
@@ -525,7 +526,7 @@ namespace giac {
     return symbolic(at_atan,e);
   }
   static gen atanasln(const gen & e,GIAC_CONTEXT){
-    return plus_one_half*cst_i*ln(rdiv(cst_i+e,cst_i-e),contextptr);
+    return plus_one_half*cst_i*ln(rdiv(cst_i+e,cst_i-e,contextptr),contextptr);
   }
   gen atan(const gen & e0,GIAC_CONTEXT){
     if (e0.type==_FLOAT_)
@@ -566,22 +567,22 @@ namespace giac {
       return e;
     if (is_one(e)){
       if (angle_radian(contextptr)) 
-	return rdiv(cst_pi,4);
+	return rdiv(cst_pi,4,contextptr);
       return 45;
     }
     if (is_minus_one(e)){
       if (angle_radian(contextptr)) 
-	return rdiv(-cst_pi,4);
+	return rdiv(-cst_pi,4,contextptr);
       return -45;
     }
     if (e==plus_sqrt3_3){
       if (angle_radian(contextptr)) 
-	return rdiv(cst_pi,6);
+	return rdiv(cst_pi,6,contextptr);
       return 30;
     }
     if (e==plus_sqrt3){
       if (angle_radian(contextptr)) 
-	return rdiv(cst_pi,3);
+	return rdiv(cst_pi,3,contextptr);
       return 60;
     }
     if (e==plus_inf){
@@ -600,28 +601,28 @@ namespace giac {
       return undef;
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,atan(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,atan(b,contextptr)),_SEQ__VECT));
     gen tmp=evalf_double(e,0,contextptr);
     if (tmp.type==_DOUBLE_){
       gen tmp2=normal(2*e/(1-e*e),contextptr);
       if (is_one(tmp2)){
 	if (angle_radian(contextptr)) 
-	  return tmp._DOUBLE_val>0?rdiv(cst_pi,8):rdiv(-3*cst_pi,8);
+	  return tmp._DOUBLE_val>0?rdiv(cst_pi,8,contextptr):rdiv(-3*cst_pi,8,contextptr);
 	return tmp._DOUBLE_val>0?fraction(45,2):fraction(-145,2);
       }
       if (is_minus_one(tmp2)){
 	if (angle_radian(contextptr)) 
-	  return tmp._DOUBLE_val>0?rdiv(3*cst_pi,8):rdiv(-cst_pi,8);
+	  return tmp._DOUBLE_val>0?rdiv(3*cst_pi,8,contextptr):rdiv(-cst_pi,8,contextptr);
 	return tmp._DOUBLE_val>0?fraction(145,2):fraction(-45,2);
       }
       if (tmp2==plus_sqrt3_3){
 	if (angle_radian(contextptr)) 
-	  return tmp._DOUBLE_val>0?rdiv(cst_pi,12):rdiv(-5*cst_pi,12);
+	  return tmp._DOUBLE_val>0?rdiv(cst_pi,12,contextptr):rdiv(-5*cst_pi,12,contextptr);
 	return tmp._DOUBLE_val>0?15:-165;
       }
-      if (tmp2==rdiv(minus_sqrt3,3)){
+      if (tmp2==rdiv(minus_sqrt3,3,contextptr)){
 	if (angle_radian(contextptr)) 
-	  return tmp._DOUBLE_val>0?rdiv(5*cst_pi,12):rdiv(-cst_pi,12);
+	  return tmp._DOUBLE_val>0?rdiv(5*cst_pi,12,contextptr):rdiv(-cst_pi,12,contextptr);
 	return tmp._DOUBLE_val>0?165:-15;
       }
     }
@@ -745,7 +746,7 @@ namespace giac {
       return inv(e._SYMBptr->feuille._SYMBptr->feuille,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,exp(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,exp(b,contextptr)),_SEQ__VECT));
     int k;
     if (contains(e,cst_pi)){ // if (!approx_mode(contextptr)) 
       gen a,b;
@@ -756,7 +757,7 @@ namespace giac {
 	  gen kk;
 	  kk=normal(a*cst_i,contextptr);
 	  if (is_assumed_integer(kk,contextptr)){ 
-	    if (is_assumed_integer(normal(rdiv(kk,plus_two),contextptr),contextptr))
+	    if (is_assumed_integer(normal(rdiv(kk,plus_two,contextptr),contextptr),contextptr))
 	      return exp(b,contextptr);
 	    else
 	      return pow(minus_one,kk,contextptr)*exp(b,contextptr);
@@ -797,7 +798,7 @@ namespace giac {
       return v;
     gen factorielle(1);
     for (int i=1;i<=ordre;++i,factorielle=factorielle*gen(i))
-      v.push_back(rdiv(image,factorielle));
+      v.push_back(rdiv(image,factorielle,contextptr));
     v.push_back(undef);
     return v;
   }
@@ -814,15 +815,20 @@ namespace giac {
 
   // static symbolic symb_sqrt(const gen & e){  return symbolic(at_sqrt,e);  }
 
-  void zint2simpldoublpos(const gen & e,gen & simpl,gen & doubl,bool & pos,GIAC_CONTEXT){
+  void zint2simpldoublpos(const gen & e,gen & simpl,gen & doubl,bool & pos,int d,GIAC_CONTEXT){
+    simpl=1;
+    doubl=1;
+    if (!is_integer(e)){
+      pos=true;
+      simpl=e;
+      return;
+    }
     gen e_copy;
     pos=ck_is_positive(e,context0); // ok
     if (!pos)
       e_copy=-e;
     else
       e_copy=e;
-    simpl=1;
-    doubl=1;
     if (is_zero(e)){
       simpl=e;
       return;
@@ -840,9 +846,9 @@ namespace giac {
       f=*it;
       ++it;
       m=it->val;
-      if (m%2)
-	simpl = simpl*f;
-      for (k=0;k<m/2;++k)
+      if (m%d)
+	simpl = simpl*pow(f,m%d,contextptr);
+      for (k=0;k<m/d;++k)
 	doubl = doubl*f;
     }
   }
@@ -997,8 +1003,7 @@ namespace giac {
   }
 
   gen sqrt(const gen & e,GIAC_CONTEXT){
-    if (abs_calc_mode(contextptr)==38 && !complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr))
-      return gensizeerr(contextptr);
+    // if (abs_calc_mode(contextptr)==38 && do_lnabs(contextptr) &&!complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr)) return gensizeerr(contextptr);
     if (e.type==_FLOAT_){
       if (fsign(e._FLOAT_val)==1)
 	return fsqrt(e._FLOAT_val);
@@ -1045,20 +1050,30 @@ namespace giac {
 #ifdef _SOFTMATH_H
 	return std::giac_gnuwince_sqrt(gen2complex_d(e));
 #else
+#ifdef EMCC
+	return std::exp(std::log(gen2complex_d(e))/2.0);
+#else
 	return std::sqrt(gen2complex_d(e));
 #endif
+#endif
       }
-      // sqrt of an exact complex number
       // sqrt of an exact complex number
       a=re(e,contextptr);b=im(e,contextptr);
       if (is_zero(b,contextptr))
 	return sqrt(a,contextptr);
       gen rho=sqrt(a*a+b*b,contextptr);
+#ifdef EMCC
+      if (rho.type>=_IDNT)
+	rho=evalf(rho,1,contextptr);
+#endif
       gen realpart=normalize_sqrt(sqrt(2*(a+rho),contextptr),contextptr);
       return ratnormal(realpart/2)*(1+cst_i*b/(a+rho));
     }
-    if (e.type==_VECT)
+    if (e.type==_VECT){
+      if (is_squarematrix(e))
+	return analytic_apply(at_sqrt,*e._VECTptr,contextptr);
       return apply(e,giac::sqrt,contextptr);
+    }
     if (is_zero(e) || is_undef(e) || (e==plus_inf) || (e==unsigned_inf))
       return e;
     if (is_perfect_square(e))
@@ -1076,7 +1091,7 @@ namespace giac {
 	}
       }
       bool pos;
-      zint2simpldoublpos(e,a,b,pos,contextptr);
+      zint2simpldoublpos(e,a,b,pos,2,contextptr);
       if (!pos)
 	return (a==1)?cst_i*b:cst_i*b*symbolic(at_pow,gen(makevecteur(a,plus_one_half),_SEQ__VECT));
       else
@@ -1085,7 +1100,7 @@ namespace giac {
     if (e.type==_FRAC)
       return sqrt(e._FRACptr->num*e._FRACptr->den,contextptr)/abs(e._FRACptr->den,contextptr);
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,sqrt(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));
     if (e.is_symb_of_sommet(at_inv))
       return inv(sqrt(e._SYMBptr->feuille,contextptr),contextptr);
     return pow(e,plus_one_half,contextptr);
@@ -1116,7 +1131,7 @@ namespace giac {
     if ( e.type==_STRNG && e.subtype==-1) return  e;
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,_sq(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,_sq(b,contextptr)),_SEQ__VECT));
     return pow(e,2,contextptr);
   }
   static gen d_sq(const gen & e,GIAC_CONTEXT){
@@ -1205,7 +1220,7 @@ namespace giac {
     int k;
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,cos(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,cos(b,contextptr)),_SEQ__VECT));
     bool doit=false,est_multiple;
     if (angle_radian(contextptr)){
       if (contains(e,cst_pi) && is_linear_wrt(e,cst_pi,a,b,contextptr) && !is_zero(a)){
@@ -1227,7 +1242,7 @@ namespace giac {
       }
       else {
 	if (is_assumed_integer(a,contextptr)){
-	  if (is_assumed_integer(normal(rdiv(a,plus_two),contextptr),contextptr))
+	  if (is_assumed_integer(normal(rdiv(a,plus_two,contextptr),contextptr),contextptr))
 	    return cos(b,contextptr);
 	  else
 	    return pow(minus_one,a,contextptr)*cos(b,contextptr);
@@ -1251,12 +1266,12 @@ namespace giac {
 	    if (angle_radian(contextptr)) 
 	      return -q*sin((r-d)/2*cst_pi/d,contextptr);
 	    else 
-	      return -q*sin(rdiv((r-d)*90,d),contextptr);
+	      return -q*sin(rdiv((r-d)*90,d,contextptr),contextptr);
 	  }
 	  if (angle_radian(contextptr)) 
 	    return q*symb_cos(r*cst_pi/d);
 	  else
-	    return q*symb_cos(rdiv(r*180,d));
+	    return q*symb_cos(rdiv(r*180,d,contextptr));
 	}
       }
     }
@@ -1364,7 +1379,7 @@ namespace giac {
     int k;
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,sin(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,sin(b,contextptr)),_SEQ__VECT));
     bool doit=false,est_multiple;
     if (angle_radian(contextptr)){
       if (contains(e,cst_pi) && is_linear_wrt(e,cst_pi,a,b,contextptr) && !is_zero(a)){
@@ -1412,12 +1427,12 @@ namespace giac {
 	    if (angle_radian(contextptr))
 	      return q*cos((r-d)/2*cst_pi/d,contextptr);
 	    else
-	      return q*cos(rdiv((r-d)*90,d),contextptr);
+	      return q*cos(rdiv((r-d)*90,d,contextptr),contextptr);
 	  }
 	  if (angle_radian(contextptr)) 
 	    return q*symb_sin(r*cst_pi/d);
 	  else
-	    return q*symb_sin(rdiv(r*180,d));
+	    return q*symb_sin(rdiv(r*180,d,contextptr));
 	}
       }
     }
@@ -1431,7 +1446,7 @@ namespace giac {
       if (u==at_acos)
 	return sqrt(1-pow(f,2),contextptr);
       if (u==at_atan)
-	return rdiv(f,sqrt(pow(f,2)+1,contextptr));
+	return rdiv(f,sqrt(pow(f,2)+1,contextptr),contextptr);
     }
     if (is_equal(e))
       return apply_to_equal(e,sin,contextptr);
@@ -1521,17 +1536,19 @@ namespace giac {
       return -tan(-e,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,tan(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,tan(b,contextptr)),_SEQ__VECT));
     int k;
     if (!approx_mode(contextptr)){ 
       if (is_multiple_of_pi_over_12(e,k,angle_radian(contextptr),contextptr)) 
 	return *table_tan[(k%12)];
+      if (is_multiple_of_pi_over_12(2*e,k,angle_radian(contextptr),contextptr)) 
+	return normal(sin(2*e,contextptr)/(1+cos(2*e,contextptr)),contextptr); 
       else {
 	gen kk;
 	if (angle_radian(contextptr)) 
-	  kk=normal(rdiv(e,cst_pi),contextptr);
+	  kk=normal(rdiv(e,cst_pi,contextptr),contextptr);
 	else
-	  kk=normal(rdiv(e,180),contextptr);
+	  kk=normal(rdiv(e,180,contextptr),contextptr);
 	if (is_assumed_integer(kk,contextptr))
 	  return zero;
 	int n,d;
@@ -1539,7 +1556,7 @@ namespace giac {
 	  if (angle_radian(contextptr)) 
 	    return symb_tan((n%d)*inv(d,contextptr)*cst_pi);
 	  else
-	    return symb_tan(rdiv((n%d)*180,d));
+	    return symb_tan(rdiv((n%d)*180,d,contextptr));
 	}
       }
     }
@@ -1551,9 +1568,9 @@ namespace giac {
       if (u==at_atan)
 	return f;
       if (u==at_acos)
-	return rdiv(sqrt(1-pow(f,2),contextptr),f);
+	return rdiv(sqrt(1-pow(f,2),contextptr),f,contextptr);
       if (u==at_asin)
-	return rdiv(f,sqrt(1-pow(f,2),contextptr));
+	return rdiv(f,sqrt(1-pow(f,2),contextptr),contextptr);
     }
     if (is_equal(e))
       return apply_to_equal(e,tan,contextptr);
@@ -1645,7 +1662,7 @@ namespace giac {
 #endif
 	){
       if (angle_radian(contextptr))
-	return rdiv(cst_pi,12);
+	return rdiv(cst_pi,12,contextptr);
       return 15;
     }
     if (e==cos_pi_12 
@@ -1659,24 +1676,24 @@ namespace giac {
     }
     if (e==plus_sqrt3_2){
       if (angle_radian(contextptr))
-	return rdiv(cst_pi,3);
+	return rdiv(cst_pi,3,contextptr);
       return 60;
     }
     if (e==plus_sqrt2_2){
       if (angle_radian(contextptr)) 
-	return rdiv(cst_pi,4);
+	return rdiv(cst_pi,4,contextptr);
       return 45;
     }
     if (e==plus_one_half){
       if (angle_radian(contextptr)) 
-	return rdiv(cst_pi,6);
+	return rdiv(cst_pi,6,contextptr);
       return 30;
     }
     if (is_undef(e))
       return e;
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,asin(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,asin(b,contextptr)),_SEQ__VECT));
     if ((e.type==_SYMB) && (e._SYMBptr->sommet==at_neg))
       return -asin(e._SYMBptr->feuille,contextptr);
     if (e.is_symb_of_sommet(at_cos))
@@ -1791,7 +1808,7 @@ namespace giac {
       return apply_to_equal(e,acos,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,acos(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,acos(b,contextptr)),_SEQ__VECT));
     gen g=asin(e,contextptr);
     if ( (g.type==_SYMB) && (g._SYMBptr->sommet==at_asin) )
       return symb_acos(e);
@@ -1883,7 +1900,7 @@ namespace giac {
       return apply_to_equal(e,sinh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,sinh(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,sinh(b,contextptr)),_SEQ__VECT));
     if (e.is_symb_of_sommet(at_neg))
       return -sinh(e._SYMBptr->feuille,contextptr);
     return symb_sinh(e);
@@ -1948,7 +1965,7 @@ namespace giac {
       return apply_to_equal(e,cosh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,cosh(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,cosh(b,contextptr)),_SEQ__VECT));
     if (e.is_symb_of_sommet(at_neg))
       return cosh(e._SYMBptr->feuille,contextptr);
     return symb_cosh(e);
@@ -2009,7 +2026,7 @@ namespace giac {
       return apply_to_equal(e,tanh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,tanh(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,tanh(b,contextptr)),_SEQ__VECT));
     if (e.is_symb_of_sommet(at_neg))
       return -tanh(e._SYMBptr->feuille,contextptr);
     return symbolic(at_tanh,e);
@@ -2059,7 +2076,7 @@ namespace giac {
       return apply_to_equal(e,asinh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,asinh(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,asinh(b,contextptr)),_SEQ__VECT));
     return ln(e+sqrt(pow(e,2)+1,contextptr),contextptr);
     // return symbolic(at_asinh,e);
   }
@@ -2110,7 +2127,7 @@ namespace giac {
       return apply_to_equal(e,acosh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,acosh(b,contextptr)));
+      return symbolic(at_program,gen(makevecteur(a,0,acosh(b,contextptr)),_SEQ__VECT));
     return ln(e+sqrt(pow(e,2)-1,contextptr),contextptr);
     // return symbolic(at_acosh,e);
   }
@@ -2130,7 +2147,7 @@ namespace giac {
   gen atanh(const gen & e0,GIAC_CONTEXT){
     if (e0.type==_FLOAT_){
       if (is_strictly_greater(e0,1,contextptr) || is_strictly_greater(-1,e0,contextptr))
-	return rdiv(ln(rdiv(1+e0,1-e0),contextptr),plus_two);
+	return rdiv(ln(rdiv(1+e0,1-e0),contextptr),plus_two,contextptr);
 #ifdef BCD
       return fatanh(e0._FLOAT_val);
 #else
@@ -2148,7 +2165,7 @@ namespace giac {
     if (e.type==_REAL)
       return e._REALptr->atanh();
     if ( (e.type==_CPLX) && (e.subtype || e._CPLXptr->type==_REAL))
-      return no_context_evalf(rdiv(ln(rdiv(1+e,1-e),contextptr),plus_two));
+      return no_context_evalf(rdiv(ln(rdiv(1+e,1-e,contextptr),contextptr),plus_two));
     if (is_squarematrix(e))
       return analytic_apply(at_atanh,*e._VECTptr,0);
     if (e.type==_VECT)
@@ -2165,8 +2182,8 @@ namespace giac {
       return apply_to_equal(e,atanh,contextptr);
     gen a,b;
     if (is_algebraic_program(e,a,b))
-      return symbolic(at_program,makevecteur(a,0,atanh(b,contextptr)));
-    return rdiv(ln(rdiv(1+e,1-e),contextptr),plus_two);
+      return symbolic(at_program,gen(makevecteur(a,0,atanh(b,contextptr)),_SEQ__VECT));
+    return rdiv(ln(rdiv(1+e,1-e,contextptr),contextptr),plus_two);
     // return symbolic(at_atanh,e);
   }
   static gen d_atanh(const gen & args,GIAC_CONTEXT){
@@ -2241,7 +2258,7 @@ namespace giac {
       return apply_to_equal(a,re,contextptr);
     gen a1,b;
     if (is_algebraic_program(a,a1,b))
-      return symbolic(at_program,makevecteur(a1,0,symbolic(at_re,b)));
+      return symbolic(at_program,gen(makevecteur(a1,0,symbolic(at_re,b)),_SEQ__VECT));
     return a.re(contextptr);
   }
   static const char _re_s []="re";
@@ -2256,7 +2273,7 @@ namespace giac {
       return apply_to_equal(a,im,contextptr);
     gen a1,b;
     if (is_algebraic_program(a,a1,b))
-      return symbolic(at_program,makevecteur(a1,0,symbolic(at_im,b)));
+      return symbolic(at_program,gen(makevecteur(a1,0,symbolic(at_im,b)),_SEQ__VECT));
     return a.im(contextptr);
   }
   static const char _im_s []="im";
@@ -2272,7 +2289,7 @@ namespace giac {
       return apply_to_equal(a,conj,contextptr);
     gen a1,b;
     if (is_algebraic_program(a,a1,b))
-      return symbolic(at_program,makevecteur(a1,0,symbolic(at_conj,b)));
+      return symbolic(at_program,gen(makevecteur(a1,0,symbolic(at_conj,b)),_SEQ__VECT));
     return a.conj(contextptr);
   }
   static const char _conj_s []="conj";
@@ -2346,7 +2363,7 @@ namespace giac {
   gen _cyclotomic(const gen & a,GIAC_CONTEXT){
     if ( a.type==_STRNG && a.subtype==-1) return  a;
     if (a.type!=_INT_)
-      return symb_cyclotomic(a);
+      return gentypeerr(contextptr); // symb_cyclotomic(a);
     return cyclotomic(a.val);
   }
   static const char _cyclotomic_s []="cyclotomic";
@@ -2357,12 +2374,25 @@ namespace giac {
     if ( (feuille.type!=_VECT) || (feuille._VECTptr->size()!=2) )
       return sommetstr+('('+feuille.print(contextptr)+')');
     vecteur & v=*feuille._VECTptr;
+    if (feuille.subtype==_SORTED__VECT && feuille._VECTptr->front().is_symb_of_sommet(at_program)){
+      gen prog=feuille._VECTptr->front()._SYMBptr->feuille;
+      if (prog.type==_VECT && prog._VECTptr->size()==3 && (prog._VECTptr->front()!=_VECT || prog._VECTptr->front()._VECTptr->size()==2)){
+	gen val=prog._VECTptr->back();
+	gen arg=prog._VECTptr->front();
+	if (arg.type==_VECT && arg.subtype==_SEQ__VECT && arg._VECTptr->size()==1)
+	  arg=arg._VECTptr->front();
+	prog=symbolic(at_of,makesequence(feuille._VECTptr->back(),arg));
+	return printassto(gen(makevecteur(val,prog),_SORTED__VECT),sommetstr,contextptr);
+      }
+    }
+#if 0
     if (abs_calc_mode(contextptr)==38 && v.back().type!=_VECT){
       string s=v.back().print(contextptr);
       if (s.size()>2 && s[0]=='1' && s[1]=='_')
 	s=s.substr(1,s.size()-1);
       return v.front().print(contextptr)+(calc_mode(contextptr)==38?"\xe2\x96\xba":"=>")+s;
     }
+#endif
     if (xcas_mode(contextptr)==3){
       if ( (v.front().type==_SYMB) && (v.front()._SYMBptr->sommet==at_program)){
 	gen & b=v.front()._SYMBptr->feuille._VECTptr->back();
@@ -2383,7 +2413,7 @@ namespace giac {
 	return v.front().print(contextptr)+" => "+v.back().print(contextptr);
     }
 #ifndef GIAC_HAS_STO_38
-    if (v.back().is_symb_of_sommet(at_of)){
+    if (v.back().is_symb_of_sommet(at_of) && feuille.subtype!=_SORTED__VECT){
       gen f=v.back()._SYMBptr->feuille;
       if (f.type==_VECT && f._VECTptr->size()==2){
 	return f._VECTptr->front().print(contextptr)+"[["+f._VECTptr->back().print(contextptr)+"]] := " + v.front().print(contextptr);
@@ -2527,6 +2557,21 @@ namespace giac {
 #ifdef HAVE_SIGNAL_H_OLD
   bool signal_store=true;
 #endif
+
+  bool is_local(const gen & b,GIAC_CONTEXT){
+    if (b.type!=_IDNT)
+      return false;
+    if (contextptr){
+      const context * ptr=contextptr;
+      for (;ptr->previous && ptr->tabptr;ptr=ptr->previous){
+	sym_tab::iterator it=ptr->tabptr->find(b._IDNTptr->id_name),itend=ptr->tabptr->end();
+	if (it!=itend)
+	  return true;
+      }
+    }
+    return false;
+  }
+
   gen sto(const gen & a,const gen & b,const context * contextptr){
     gen res= sto(a,b,false,contextptr);
     return res;
@@ -2549,7 +2594,7 @@ namespace giac {
 	gen a1,bb,error;
 	if (!check_binary(b._SYMBptr->feuille,a1,bb))
 	  return a1;
-	if (sto_38 && abs_calc_mode(contextptr)==38 && a1.type==_IDNT && bb.type==_IDNT && sto_38(a,a1._IDNTptr->id_name,bb._IDNTptr->id_name,0,error,contextptr)){
+	if (sto_38 && !is_local(b,contextptr) && abs_calc_mode(contextptr)==38 && a1.type==_IDNT && bb.type==_IDNT && sto_38(a,a1._IDNTptr->id_name,bb._IDNTptr->id_name,0,error,contextptr)){
 	  return is_undef(error)?error:a;
 	}
 #ifndef RTOS_THREADX
@@ -2611,21 +2656,11 @@ namespace giac {
 #endif
       }
       gen aa(a),error;
-      if (abs_calc_mode(contextptr)==38){
-	if (sto_38 && b._IDNTptr->id_name[1]==0 && sto_38(aa,0,b._IDNTptr->id_name,0,error,contextptr) )
-	  return is_undef(error)?error:aa;
-	// if (!check_sto_38(aa,b._IDNTptr->id_name))
-	//  return gentypeerr(gettext("Sto not allowed"));
-	if (sto_38 && sto_38(aa,0,b._IDNTptr->id_name,0,error,contextptr))
-	  return is_undef(error)?error:aa;
-      }
-      if (strcmp(b._IDNTptr->id_name,string_pi)==0 || strcmp(b._IDNTptr->id_name,string_infinity)==0)
+      if (strcmp(b._IDNTptr->id_name,string_pi)==0 || strcmp(b._IDNTptr->id_name,string_infinity)==0 || strcmp(b._IDNTptr->id_name,string_undef)==0)
 	return gensizeerr(b.print(contextptr)+": reserved word");
-      if (b._IDNTptr->quoted)
-	*b._IDNTptr->quoted |= 2; // set dirty bit
-      gen ans(aa);
       if (a==b)
 	return _purge(b,contextptr);
+      gen ans(aa);
       if ( (a.type==_SYMB) && (a._SYMBptr->sommet==at_parameter)){
 	gen inter=a._SYMBptr->feuille,debut,fin,saut;
 	bool calc_aa=false;
@@ -2635,7 +2670,13 @@ namespace giac {
 	  if (inters>=3){
 	    debut=interv[0];
 	    fin=interv[1];
+	    if (is_strictly_greater(debut,fin,contextptr))
+	      swapgen(debut,fin);
 	    aa=interv[2];
+	    if (is_strictly_greater(aa,fin,contextptr))
+	      aa=fin;
+	    if (is_strictly_greater(debut,aa,contextptr))
+	      aa=debut;
 	    if (inters>=4)
 	      saut=interv[3];
 	  }
@@ -2651,11 +2692,17 @@ namespace giac {
 	  fin=inter._SYMBptr->feuille._VECTptr->back();
 	}
 	if (calc_aa)
-	  aa=rdiv(debut+fin,plus_two);
+	  aa=rdiv(debut+fin,plus_two,contextptr);
 	if (is_zero(saut,contextptr))
 	  saut=(fin-debut)/100.;
-	ans=symbolic(at_parameter,makevecteur(b,debut,fin,aa,saut));
+	ans=symbolic(at_parameter,makesequence(b,debut,fin,aa,saut));
       } // end parameter
+      if (abs_calc_mode(contextptr)==38){
+	if (sto_38 && !is_local(b,contextptr) && sto_38(aa,0,b._IDNTptr->id_name,0,error,contextptr) )
+	  return is_undef(error)?error:ans;
+      }
+      if (b._IDNTptr->quoted)
+	*b._IDNTptr->quoted |= 2; // set dirty bit
       if (contextptr){
 	const context * ptr=contextptr;
 	bool done=false;
@@ -2690,7 +2737,7 @@ namespace giac {
 	}
 #ifdef HAVE_SIGNAL_H_OLD
 	if (!child_id && signal_store)
-	  _signal(symb_quote(symbolic(at_sto,makevecteur(aa,b))),contextptr);
+	  _signal(symb_quote(symbolic(at_sto,gen(makevecteur(aa,b),_SEQ__VECT))),contextptr);
 #endif
 	return ans;
       } // end if (contextptr)
@@ -2717,7 +2764,7 @@ namespace giac {
 	  *current_folder_name._IDNTptr->value=gv;
 #ifdef HAVE_SIGNAL_H_OLD
 	  if (!child_id && signal_store)
-	    _signal(symb_quote(symbolic(at_sto,makevecteur(gv,current_folder_name))),contextptr);
+	    _signal(symb_quote(symbolic(at_sto,gen(makevecteur(gv,current_folder_name),_SEQ__VECT))),contextptr);
 #endif
 	  return ans;
 	}
@@ -2728,7 +2775,7 @@ namespace giac {
 	    b._IDNTptr->value = new gen(aa);
 #ifdef HAVE_SIGNAL_H_OLD
 	  if (!child_id && signal_store)
-	    _signal(symb_quote(symbolic(at_sto,makevecteur(aa,b))),contextptr);
+	    _signal(symb_quote(symbolic(at_sto,gen(makevecteur(aa,b),_SEQ__VECT))),contextptr);
 #endif
 	  if (!secure_run && variables_are_files(contextptr)){
 	    ofstream a_out((b._IDNTptr->name()+string(cas_suffixe)).c_str());
@@ -2769,7 +2816,7 @@ namespace giac {
 	if (indice.type==_VECT)
 	  indice = indice - vecteur(indice._VECTptr->size(),1);
       }
-      if ( (destination.type!=_IDNT && !destination.is_symb_of_sommet(at_double_deux_points)) || (valeur.type!=_VECT && valeur.type!=_MAP && valeur.type!=_IDNT && valeur.type!=_STRNG) )
+      if ( (destination.type!=_IDNT && !destination.is_symb_of_sommet(at_double_deux_points)) || (valeur.type!=_VECT && valeur.type!=_MAP && valeur.type!=_IDNT && valeur.type!=_STRNG && valeur.type!=_SYMB) )
 	return gentypeerr(gettext("sto ")+b.print(contextptr)+ "="+valeur.print(contextptr)+" not allowed!");
       if (valeur.type==_IDNT){ 
 	// no previous vector at destination, 
@@ -2800,6 +2847,102 @@ namespace giac {
 	  m[indice.val]=(*a._STRNGptr)[0];
 	  return sto(string2gen(m,false),destination,in_place,contextptr);
 	}
+      }
+      if (valeur.type==_SYMB){
+	if (indice.type==_VECT){
+	  gen v(valeur);
+	  vecteur empile;
+	  iterateur it=indice._VECTptr->begin(),itend=indice._VECTptr->end();
+	  for (;;){
+	    if (it->type!=_INT_)
+	      return gentypeerr(gettext("Bad index ")+indice.print(contextptr));
+	    empile.push_back(v);
+	    v=v[*it];
+	    ++it;
+	    if (it==itend)
+	      break;
+	  }
+	  --itend;
+	  v=empile.back();
+	  if (v.type==_VECT){
+	    vecteur vv=*v._VECTptr;
+	    if (itend->val>=0&&itend->val<int(vv.size())) // additional check
+	      vv[itend->val]=a;
+	    v=gen(vv,v.subtype);
+	  }
+	  else {
+	    if (v.type==_SYMB){
+	      if (itend->val==0){
+		if (a.type==_FUNC)
+		  v=symbolic(*a._FUNCptr,v._SYMBptr->feuille);
+		else
+		  v=symbolic(at_of,makesequence(a,v._SYMBptr->feuille));
+	      }
+	      else {
+		if (v._SYMBptr->feuille.type!=_VECT)
+		  v=symbolic(v._SYMBptr->sommet,a);
+		else {
+		  vecteur vv=*v._SYMBptr->feuille._VECTptr;
+		  if (itend->val>0&&itend->val<=int(vv.size())) // additional check
+		    vv[itend->val-1]=a;
+		  v=symbolic(v._SYMBptr->sommet,gen(vv,v._SYMBptr->feuille.subtype));
+		}
+	      }
+	    }
+	    else
+	      v=a;
+	  }
+	  gen oldv;
+	  it=indice._VECTptr->begin();
+	  for (;;){
+	    if (itend==it)
+	      break;
+	    --itend;
+	    empile.pop_back();
+	    oldv=empile.back();
+	    if (oldv.type==_VECT){
+	      vecteur vv=*oldv._VECTptr;
+	      if (itend->val>=0&&itend->val<int(vv.size())) // additional check
+		vv[itend->val]=v;
+	      v=gen(vv,oldv.subtype);
+	    }
+	    else {
+	      if (oldv.type==_SYMB){
+		if (oldv._SYMBptr->feuille.type!=_VECT) // index should be 1
+		  v=symbolic(oldv._SYMBptr->sommet,v);
+		else {
+		  vecteur vv=*oldv._SYMBptr->feuille._VECTptr;
+		  if (itend->val>0 && itend->val<=int(vv.size())) // additional check
+		    vv[itend->val-1]=v;
+		  v=symbolic(oldv._SYMBptr->sommet,gen(vv,oldv._SYMBptr->feuille.subtype));
+		}
+	      }
+	    } // end else oldv.type==_VECT
+	  } // end for loop
+	  return sto(v,destination,in_place,contextptr);
+	}
+	if (indice.type!=_INT_)
+	  return gensizeerr(contextptr);
+	if (indice.val<0 || indice.val>(int) gen2vecteur(valeur._SYMBptr->feuille).size())
+	  return gendimerr(contextptr);
+	gen nvaleur;
+	if (indice.val==0){
+	  if (a.type==_FUNC)
+	    nvaleur=symbolic(*a._FUNCptr,valeur._SYMBptr->feuille);
+	  else
+	    nvaleur=symbolic(at_of,makesequence(a,valeur._SYMBptr->feuille));
+	}
+	else {
+	  nvaleur=valeur._SYMBptr->feuille;
+	  if (indice==1 && nvaleur.type!=_VECT)
+	    nvaleur=a;
+	  else {
+	    nvaleur=gen(*nvaleur._VECTptr,nvaleur.subtype);
+	    (*nvaleur._VECTptr)[indice.val-1]=a;
+	  }
+	  nvaleur=symbolic(valeur._SYMBptr->sommet,nvaleur);
+	}
+	return sto(nvaleur,destination,in_place,contextptr);
       }
       if (valeur.type==_MAP){
 	if (valeur.subtype==1){ // array
@@ -2896,15 +3039,16 @@ namespace giac {
     }
     if (b.type==_FUNC){
       string errmsg=b.print(contextptr)+ gettext(" is a reserved word, sto not allowed:");
-      *logptr(contextptr) << errmsg << endl;
+      if (abs_calc_mode(contextptr)!=38)
+	*logptr(contextptr) << errmsg << endl;
       return makevecteur(string2gen(errmsg,false),a);
     }
     return gentypeerr(gettext("sto ")+b.print(contextptr)+ gettext(" not allowed!"));
   }
   symbolic symb_sto(const gen & a,gen & b,bool in_place){
     if (in_place)
-      return symbolic(at_array_sto,makevecteur(a,b));
-    return symbolic(at_sto,makevecteur(a,b));
+      return symbolic(at_array_sto,gen(makevecteur(a,b),_SEQ__VECT));
+    return symbolic(at_sto,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_sto(const gen & e){
     return symbolic(at_sto,e);
@@ -3075,6 +3219,24 @@ namespace giac {
   static const char _divcrement_s []="divcrement";
   static define_unary_function_eval4_index (157,__divcrement,&giac::_divcrement,_divcrement_s,&printasdivcrement,&texprintasdivcrement);
   define_unary_function_ptr5( at_divcrement ,alias_at_divcrement,&__divcrement,_QUOTE_ARGUMENTS,true); 
+
+  bool is_assumed_real(const gen & g,GIAC_CONTEXT){
+    if (g.type!=_IDNT)
+      return false;
+    if (g==cst_euler_gamma || g==cst_pi)
+      return true;
+    gen tmp=g._IDNTptr->eval(1,g,contextptr);
+    if (tmp.type==_VECT && tmp.subtype==_ASSUME__VECT){
+      vecteur & v = *tmp._VECTptr;
+      if (!v.empty()){
+	if ((v.front()==_INT_ || v.front()==_ZINT || v.front()==_DOUBLE_) )
+	  return true;
+	if (v.front()==_CPLX)
+	  return false;
+      }
+    }
+    return !complex_variables(contextptr);
+  }
 
   bool is_assumed_integer(const gen & g,GIAC_CONTEXT){
     if (is_integer(g))
@@ -3329,11 +3491,11 @@ namespace giac {
   symbolic symb_plus(const gen & a,const gen & b){
     if (a.is_symb_of_sommet(at_plus) && !is_inf(a._SYMBptr->feuille)){
       if (b.is_symb_of_sommet(at_plus) && !is_inf(b._SYMBptr->feuille))
-	  return symbolic(at_plus,mergevecteur(*(a._SYMBptr->feuille._VECTptr),*(b._SYMBptr->feuille._VECTptr)));
+	return symbolic(at_plus,gen(mergevecteur(*(a._SYMBptr->feuille._VECTptr),*(b._SYMBptr->feuille._VECTptr)),_SEQ__VECT));
 	else
 	  return symbolic(*a._SYMBptr,b);
     }
-    return symbolic(at_plus,makevecteur(a,b));
+    return symbolic(at_plus,gen(makevecteur(a,b),_SEQ__VECT));
   }
 
   inline bool plus_idnt_symb(const gen & a){
@@ -3383,7 +3545,7 @@ namespace giac {
       if (sum.type==_SYMB && sum._SYMBptr->sommet==at_plus && sum._SYMBptr->feuille.type==_VECT && sum._SYMBptr->feuille._VECTptr->size()>1){
 	// Add remaining elements to the symbolic sum, check float/inf/undef
 	ref_vecteur * vptr=new ref_vecteur(*sum._SYMBptr->feuille._VECTptr);
-	vptr->v.reserve(vptr->v.size()+itend-it);
+	vptr->v.reserve(vptr->v.size()+(itend-it));
 	for (;it!=itend;++it){
 	  if (it->type==_USER && vptr->v.front().type==_USER){
 	    vptr->v.front()=operator_plus(vptr->v.front(),*it,contextptr);
@@ -3403,7 +3565,7 @@ namespace giac {
 	if (vptr->v.size()==1)
 	  sum=vptr->v.front();
 	else
-	  sum=symbolic(at_plus,vptr);
+	  sum=symbolic(at_plus,gen(vptr,_SEQ__VECT));
 	if (it==itend)
 	  break;
       }
@@ -3422,12 +3584,51 @@ namespace giac {
   static define_unary_function_eval2_index (2,__plus,&_plus,_plus_s,&printsommetasoperator);
   define_unary_function_ptr( at_plus ,alias_at_plus ,&__plus);
 
+  gen _pointplus(const gen & args,GIAC_CONTEXT){
+    if (args.type!=_VECT && args._VECTptr->size()!=2)
+      return gensizeerr();
+    gen a=args._VECTptr->front(),b=args._VECTptr->back();
+    if (a.type==_VECT && b.type!=_VECT)
+      return apply1st(a,b,contextptr,operator_plus);
+    if (a.type!=_VECT && b.type==_VECT)
+      return apply2nd(a,b,contextptr,operator_plus);
+    return operator_plus(a,b,contextptr);
+  }
+  static const char _pointplus_s []=" .+ ";
+  static define_unary_function_eval2_index (2,__pointplus,&_pointplus,_pointplus_s,&printsommetasoperator);
+  define_unary_function_ptr( at_pointplus ,alias_at_pointplus ,&__pointplus);
+
+  gen _pointminus(const gen & args,GIAC_CONTEXT){
+    if (args.type!=_VECT && args._VECTptr->size()!=2)
+      return gensizeerr();
+    gen a=args._VECTptr->front(),b=args._VECTptr->back();
+    if (a.type==_VECT && b.type!=_VECT)
+      return apply1st(a,b,contextptr,operator_minus);
+    if (a.type!=_VECT && b.type==_VECT)
+      return apply2nd(a,b,contextptr,operator_minus);
+    return operator_minus(a,b,contextptr);
+  }
+  static const char _pointminus_s []=" .- ";
+  static define_unary_function_eval2_index (2,__pointminus,&_pointminus,_pointminus_s,&printsommetasoperator);
+  define_unary_function_ptr( at_pointminus ,alias_at_pointminus ,&__pointminus);
+
   inline bool prod_idnt_symb(const gen & a){
     return (a.type==_IDNT && strcmp(a._IDNTptr->id_name,"undef") && strcmp(a._IDNTptr->id_name,"infinity")) || (a.type==_SYMB && !is_inf(a) && (a._SYMBptr->sommet==at_plus || a._SYMBptr->sommet==at_pow || a._SYMBptr->sommet==at_neg));
   }
   
-  symbolic symb_prod(const gen & a,const gen & b){
-    return symbolic(at_prod,makevecteur(a,b));
+  gen symb_prod(const gen & a,const gen & b){
+    if (a.is_symb_of_sommet(at_neg)){
+      if (b.is_symb_of_sommet(at_neg))
+	return symb_prod(a._SYMBptr->feuille,b._SYMBptr->feuille);
+      return -symb_prod(a._SYMBptr->feuille,b);
+    }
+    if (b.is_symb_of_sommet(at_neg))
+      return -symb_prod(a,b._SYMBptr->feuille);
+    if ((a.type<=_REAL || a.type==_FLOAT_) && is_strictly_positive(-a,context0))
+      return -symb_prod(-a,b);
+    if ((b.type<=_REAL || b.type==_FLOAT_) && is_strictly_positive(-b,context0))
+      return -symb_prod(a,-b);
+    return symbolic(at_prod,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen _prod(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -3456,7 +3657,7 @@ namespace giac {
     */
     for (;it!=itend;++it){
       if ( (it->type==_SYMB) && (it->_SYMBptr->sommet==at_inv) && (it->_SYMBptr->feuille.type!=_VECT) )
-	prod = rdiv(prod,it->_SYMBptr->feuille);
+	prod = rdiv(prod,it->_SYMBptr->feuille,contextptr);
       else
 	prod = operator_times(prod,*it,contextptr);
     }
@@ -3683,7 +3884,7 @@ namespace giac {
   define_unary_function_ptr5( at_powmod ,alias_at_powmod,&__powmod,0,true);
 
   symbolic symb_inferieur_strict(const gen & a,const gen & b){
-    return symbolic(at_inferieur_strict,makevecteur(a,b));
+    return symbolic(at_inferieur_strict,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_inferieur_strict(const gen & a){
     return symbolic(at_inferieur_strict,a);
@@ -3699,13 +3900,13 @@ namespace giac {
   define_unary_function_ptr( at_inferieur_strict ,alias_at_inferieur_strict ,&__inferieur_strict);
 
   symbolic symb_inferieur_egal(const gen & a,const gen & b){
-    return symbolic(at_inferieur_egal,makevecteur(a,b));
+    return symbolic(at_inferieur_egal,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_inferieur_egal(const gen & a){
     return symbolic(at_inferieur_egal,a);
   }
   static string printasinferieur_egal(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if (xcas_mode(contextptr) > 0 || calc_mode(contextptr)!=38)
+    if (xcas_mode(contextptr) > 0 || abs_calc_mode(contextptr)!=38)
       return printsommetasoperator(feuille,"<=",contextptr);
     else
       return printsommetasoperator(feuille,"≤",contextptr);
@@ -3724,7 +3925,7 @@ namespace giac {
   define_unary_function_ptr( at_inferieur_egal ,alias_at_inferieur_egal ,&__inferieur_egal);
 
   symbolic symb_superieur_strict(const gen & a,const gen & b){
-    return symbolic(at_superieur_strict,makevecteur(a,b));
+    return symbolic(at_superieur_strict,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_superieur_strict(const gen & a){
     return symbolic(at_superieur_strict,a);
@@ -3740,14 +3941,14 @@ namespace giac {
   define_unary_function_ptr( at_superieur_strict ,alias_at_superieur_strict ,&__superieur_strict);
 
   static string printassuperieur_egal(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if (xcas_mode(contextptr) > 0 || calc_mode(contextptr)!=38)
+    if (xcas_mode(contextptr) > 0 || abs_calc_mode(contextptr)!=38)
       return printsommetasoperator(feuille,">=",contextptr);
     else
       return printsommetasoperator(feuille,"≥",contextptr);
   }
   
   symbolic symb_superieur_egal(const gen & a,const gen & b){
-    return symbolic(at_superieur_egal,makevecteur(a,b));
+    return symbolic(at_superieur_egal,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_superieur_egal(const gen & a){
     return symbolic(at_superieur_egal,a);
@@ -3766,7 +3967,7 @@ namespace giac {
   define_unary_function_ptr( at_superieur_egal ,alias_at_superieur_egal ,&__superieur_egal);
 
   static string printasdifferent(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if (xcas_mode(contextptr) > 0 || calc_mode(contextptr)!=38)
+    if (xcas_mode(contextptr) > 0 || abs_calc_mode(contextptr)!=38)
       return printsommetasoperator(feuille,"<>",contextptr);
     else
       return printsommetasoperator(feuille,"≠",contextptr);
@@ -3805,7 +4006,10 @@ namespace giac {
 
   static void warn_implicit(const gen & a,const gen &b,GIAC_CONTEXT){
 #ifndef GIAC_HAS_STO_38
-    *logptr(contextptr) << gettext("Warning : using implicit multiplication for (") << a.print(contextptr) << ")(" << b.print(contextptr) << ')' << endl;
+    if (contains(lidnt(b),i__IDNT_e))
+      *logptr(contextptr) << gettext("Implicit multiplication does not work with complex numbers.")<<endl;
+    else
+      *logptr(contextptr) << gettext("Warning : using implicit multiplication for (") << a.print(contextptr) << ")(" << b.print(contextptr) << ')' << endl;
 #endif
   }
   gen check_symb_of(const gen& a,const gen & b0,GIAC_CONTEXT){
@@ -3852,11 +4056,14 @@ namespace giac {
   }
   symbolic symb_of(const gen & a,const gen & b){
     if (b.type==_VECT && b.subtype==_SEQ__VECT && b._VECTptr->size()==1)
-      return symbolic(at_of,makevecteur(a,b._VECTptr->front()));
-    return symbolic(at_of,makevecteur(a,b));
+      return symbolic(at_of,gen(makevecteur(a,b._VECTptr->front()),_SEQ__VECT));
+    return symbolic(at_of,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_of(const gen & a){
-    return symbolic(at_of,a);
+    gen aa(a);
+    if (aa.type==_VECT)
+      aa.subtype=_SEQ__VECT;
+    return symbolic(at_of,aa);
   }
   static bool tri2_(const char * a,const char * b){
     return strcmp(a,b)<0;
@@ -3914,10 +4121,12 @@ namespace giac {
     */
     if (rcl_38){
       if (qf.type==_IDNT){
+#if 0
 	if (strlen(qf._IDNTptr->id_name)==2 && qf._IDNTptr->id_name[0]=='U' && qf._IDNTptr->id_name[1]>='0' && qf._IDNTptr->id_name[1]<='9'){
 	  gensizeerr(gettext("Not implemented"),value);
 	  return value;
 	}
+#endif
 	if (rcl_38(value,0,qf._IDNTptr->id_name,b,true,contextptr)){
 	  return value;
 	}
@@ -3993,13 +4202,16 @@ namespace giac {
 	bb=b-vecteur(b._VECTptr->size(),plus_one);
       else
 	bb=b-plus_one;
-      return symbolic(at_at,makevecteur(a,bb));
+      return symbolic(at_at,gen(makevecteur(a,bb),_SEQ__VECT));
     }
     else
-      return symbolic(at_at,makevecteur(a,b));
+      return symbolic(at_at,gen(makevecteur(a,b),_SEQ__VECT));
   }
   symbolic symb_at(const gen & a){
-    return symbolic(at_at,a);
+    gen aa(a);
+    if (aa.type==_VECT)
+      aa.subtype=_SEQ__VECT;
+    return symbolic(at_at,aa);
   }
   gen _at(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -4062,6 +4274,8 @@ namespace giac {
   static string printasand(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     if (abs_calc_mode(contextptr)==38)
       return printsommetasoperator(feuille," AND ",contextptr);
+    if (calc_mode(contextptr)==1)
+      return printsommetasoperator(feuille," && ",contextptr);
     if (xcas_mode(contextptr) > 0)
       return printsommetasoperator(feuille," and ",contextptr);
     else
@@ -4071,7 +4285,7 @@ namespace giac {
     return texprintsommetasoperator(g,"\\mbox{ and }",contextptr);
   }
   symbolic symb_and(const gen & a,const gen & b){
-    return symbolic(at_and,makevecteur(a,b));
+    return symbolic(at_and,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen and2(const gen & a,const gen & b){
     return a && b;
@@ -4103,13 +4317,15 @@ namespace giac {
   static string printasor(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     if (abs_calc_mode(contextptr)==38)
       return printsommetasoperator(feuille," OR ",contextptr);
+    if (calc_mode(contextptr)==1)
+      return printsommetasoperator(feuille," || ",contextptr);
     if (xcas_mode(contextptr) > 0)
       return printsommetasoperator(feuille," or ",contextptr);
     else
       return "("+printsommetasoperator(feuille,sommetstr,contextptr)+")";
   }
   symbolic symb_ou(const gen & a,const gen & b){
-    return symbolic(at_ou,makevecteur(a,b));
+    return symbolic(at_ou,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen ou2(const gen & a,const gen & b){
     return a || b;
@@ -4160,7 +4376,7 @@ namespace giac {
     return res;
   }
 #ifdef GIAC_HAS_STO_38
-  static const char _xor_s []=" XOR ";
+  static const char _xor_s []="XOR";
 #else
   static const char _xor_s []=" xor ";
 #endif
@@ -4168,7 +4384,7 @@ namespace giac {
   define_unary_function_ptr5( at_xor ,alias_at_xor,&__xor,_QUOTE_ARGUMENTS,0);
 
   symbolic symb_min(const gen & a,const gen & b){
-    return symbolic(at_min,makevecteur(a,b));
+    return symbolic(at_min,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen _min(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -4208,7 +4424,7 @@ namespace giac {
   define_unary_function_ptr5( at_min ,alias_at_min,&giac__min,0,true);
 
   symbolic symb_max(const gen & a,const gen & b){
-    return symbolic(at_max,makevecteur(a,b));
+    return symbolic(at_max,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen _max(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -4380,6 +4596,16 @@ namespace giac {
   static define_unary_function_eval4_index (80,__equal,&giac::_equal,_equal_s,&printasequal,&texprintsommetasoperator);
   define_unary_function_ptr( at_equal ,alias_at_equal ,&__equal);
 
+  gen _equal2(const gen & a,GIAC_CONTEXT){
+    if ( a.type==_STRNG && a.subtype==-1) return  a;
+    if ((a.type!=_VECT) || (a._VECTptr->size()!=2))
+      return equal2(a,gen(vecteur(0),_SEQ__VECT),contextptr);
+    return equal2( (*(a._VECTptr))[0],(*(a._VECTptr))[1],contextptr);
+  }
+  static const char _equal2_s []="%=";
+  static define_unary_function_eval4_index (168,__equal2,&giac::_equal2,_equal2_s,&printsommetasoperator,&texprintsommetasoperator);
+  define_unary_function_ptr( at_equal2 ,alias_at_equal2 ,&__equal2);
+
   static string printassame(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
     if (xcas_mode(contextptr) > 0)
       return printsommetasoperator(feuille," = ",contextptr);
@@ -4387,7 +4613,7 @@ namespace giac {
       return "("+printsommetasoperator(feuille,sommetstr,contextptr)+")";
   }
   symbolic symb_same(const gen & a,const gen & b){
-    return symbolic(at_same,makevecteur(a,b));
+    return symbolic(at_same,gen(makevecteur(a,b),_SEQ__VECT));
   }
   gen symb_same(const gen & a){
     return symbolic(at_same,a);
@@ -4429,7 +4655,7 @@ namespace giac {
   gen _rdiv(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (!check_2d_vecteur(args)) return gensizeerr(contextptr);
-    return rdiv(args._VECTptr->front(),args._VECTptr->back());
+    return rdiv(args._VECTptr->front(),args._VECTptr->back(),contextptr);
   }
   static const char _rdiv_s []="rdiv";
   static define_unary_function_eval (__rdiv,&giac::_rdiv,_rdiv_s);
@@ -4502,10 +4728,13 @@ namespace giac {
     if (v.front().type==_IDNT)
       return v.front();
     gen vf(v.front()),vb(v.back());
-    if (!is_integral(vf) || !is_integral(vb) )
+    if (!is_integral(vf) || !is_integral(vb) ){
+      if (vf.type==_DOUBLE_ || vb.type==_DOUBLE_)
+	return gensizeerr(contextptr);
       return symbolic(at_irem,args);
+    }
     gen r=irem(vf,vb,q);
-    if (is_strictly_positive(-r,contextptr)){
+    if (is_integer(vb) && is_strictly_positive(-r,contextptr)){
       if (is_strictly_positive(vb,contextptr)){
 	r = r + vb;
 	q=q-1;
@@ -4592,7 +4821,7 @@ namespace giac {
     if (!check_2d_vecteur(args)) return gensizeerr(contextptr);
     vecteur v=*args._VECTptr;
     if (!is_integral(v.front()) || !is_integral(v.back()) )
-      return symbolic(at_iquorem,args);
+      return gensizeerr(contextptr); // symbolic(at_iquorem,args);
     return iquorem(args._VECTptr->front(),args._VECTptr->back());
   }
   static const char _iquorem_s []="iquorem";
@@ -4603,6 +4832,8 @@ namespace giac {
   gen quorem(const gen & a,const gen & b){
     if ((a.type!=_VECT) || (b.type!=_VECT))
       return symb_quorem(a,b);
+    if (b._VECTptr->empty())
+      return gensizeerr(gettext("Division by 0"));
     vecteur q,r;
     environment * env=new environment;
     DivRem(*a._VECTptr,*b._VECTptr,env,q,r,true);
@@ -4652,7 +4883,7 @@ namespace giac {
 	polynome rem,quo;
 	if ( !divrem1(*aan._POLYptr,*bbn._POLYptr,quo,rem,args._VECTptr->back().val) )
 	  return gensizeerr(gettext("Unable to divide, perhaps due to rounding error")+aan.print(contextptr)+" / "+bbn.print(contextptr));
-	u=rdiv(r2e(bbd,lv,contextptr),ad)*r2e(quo,lv,contextptr);
+	u=rdiv(r2e(bbd,lv,contextptr),ad,contextptr)*r2e(quo,lv,contextptr);
 	v=inv(ad,contextptr)*r2e(rem,lv,contextptr);
 	return makevecteur(u,v);
       }
@@ -4660,13 +4891,13 @@ namespace giac {
       environment env;
       DivRem(aav,bbv,&env,un,vn);
       vecteur lvprime(lv.begin()+1,lv.end());
-      u=rdiv(r2e(bbd,lv,contextptr),ad)*symb_horner(*r2e(un,lvprime,contextptr)._VECTptr,lv.front());
+      u=rdiv(r2e(bbd,lv,contextptr),ad,contextptr)*symb_horner(*r2e(un,lvprime,contextptr)._VECTptr,lv.front());
       v=inv(ad,contextptr)*symb_horner(*r2e(vn,lvprime,contextptr)._VECTptr,lv.front());
       return makevecteur(u,v);
     }
     else {
       if ( (bbn.type!=_POLY) || !bbn._POLYptr->lexsorted_degree() ){
-	u=rdiv(aan,bbn);
+	u=rdiv(aan,bbn,contextptr);
 	v=zero;
       }
       else {
@@ -4677,7 +4908,7 @@ namespace giac {
     // aan=u*bbn+v -> aan/aad=u*bbd/aad * bbn/bbd +v/aad
     u=r2e(u*bbd,lv,contextptr);
     v=r2e(v,lv,contextptr);
-    return makevecteur(rdiv(u,ad),rdiv(v,ad));
+    return makevecteur(rdiv(u,ad,contextptr),rdiv(v,ad,contextptr));
   }
   static const char _quorem_s []="quorem";
   static define_unary_function_eval (__quorem,&giac::_quorem,_quorem_s);
@@ -4729,6 +4960,8 @@ namespace giac {
       return args;
     if (args.is_symb_of_sommet(at_unit))
       return apply_unit(args,_floor,contextptr);
+    if (args.is_symb_of_sommet(at_floor) || args.is_symb_of_sommet(at_ceil))
+      return args;
     if (args.type==_VECT)
       return apply(args,contextptr,_floor);
     if (args.type==_CPLX)
@@ -4765,7 +4998,7 @@ namespace giac {
     if (tmp.type==_REAL){
 #ifdef HAVE_LIBMPFR
       // reeval with the right precision
-      gen lntmp=ln(tmp,contextptr);
+      gen lntmp=ln(abs(tmp,contextptr),contextptr);
       if (is_greater(lntmp,40,contextptr)){
 	int prec=real2int(lntmp,contextptr).val+30;
 	int oldprec=decimal_digits(contextptr);
@@ -4816,6 +5049,8 @@ namespace giac {
       return args;
     if (args.type==_VECT)
       return apply(args,contextptr,_ceil);
+    if (args.is_symb_of_sommet(at_floor) || args.is_symb_of_sommet(at_ceil))
+      return args;
     if (args.type==_CPLX)
       return _ceil(*args._CPLXptr,contextptr)+cst_i*_ceil(*(args._CPLXptr+1),contextptr);
     if ( (args.type==_INT_) || (args.type==_ZINT))
@@ -4891,12 +5126,22 @@ namespace giac {
 	if (args._VECTptr->front().type==_FLOAT_)
 	  return fround(args._VECTptr->front()._FLOAT_val,b.val); 
 #endif
+	/*
 #ifdef _SOFTMATH_H
 	double d=std::giac_gnuwince_pow(10.0,double(b.val));
 #else
 	double d=std::pow(10.0,double(b.val));
 #endif
-	return _round(d*args._VECTptr->front(),contextptr)/d;
+	*/
+	gen d=10.0;
+	if (b.val>14)
+	  d=accurate_evalf(gen(10),int(b.val*3.32192809489+.5));
+	d=pow(d,b.val,contextptr);
+	gen e=_round(d*args._VECTptr->front(),contextptr);
+	if (b.val>14)
+	  e=accurate_evalf(e,int(b.val*3.32192809489+.5));
+	e=rdiv(e,d,contextptr);
+	return e;
       }
     }
     if (args.type==_CPLX)
@@ -4977,10 +5222,14 @@ namespace giac {
     gen args(args0);
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     int certif=0;
-    if (args0.type==_VECT && args0._VECTptr->size()==2 && args0._VECTptr->back().type==_INT_){
+#ifdef HAVE_LIBPARI
+    if (args0.type==_VECT && args0.subtype==_SEQ__VECT && args0._VECTptr->size()==2 && args0._VECTptr->back().type==_INT_){
       args=args0._VECTptr->front();
       certif=args0._VECTptr->back().val;
     }
+#endif
+    if (args.type==_VECT)
+      return apply(args,_is_prime,contextptr);
     if (!is_integral(args))
       return gentypeerr(contextptr);
 #ifdef HAVE_LIBPARI
@@ -5023,7 +5272,10 @@ namespace giac {
   gen _jacobi_symbol(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (!check_2d_vecteur(args)) return gensizeerr(contextptr);
-    return jacobi(args._VECTptr->front(),args._VECTptr->back());    
+    int res=jacobi(args._VECTptr->front(),args._VECTptr->back());
+    if (res==-RAND_MAX)
+      return gensizeerr(contextptr);
+    return res;
   }
   static const char _jacobi_symbol_s []="jacobi_symbol";
   static define_unary_function_eval (__jacobi_symbol,&giac::_jacobi_symbol,_jacobi_symbol_s);
@@ -5048,11 +5300,11 @@ namespace giac {
       a=makevecteur(*a._MODptr,*(a._MODptr+1));
     if (b.type==_MOD)
       b=makevecteur(*b._MODptr,*(b._MODptr+1));
-    vecteur l(lvar(a)); lvar(b,l);
+    vecteur l(lidnt(makevecteur(a,b)));
     if (l.empty()){
       if (!check_2d_vecteur(a)
 	  || !check_2d_vecteur(b)) 
-	return gensizeerr(gettext("check_2d_vecteur"));
+	return gensizeerr(gettext("Vector of 2 integer arguments expected"));
       vecteur & av=*a._VECTptr;
       vecteur & bv=*b._VECTptr;
       gen ab=av.back();
@@ -5060,12 +5312,17 @@ namespace giac {
       gen aa=av.front();
       gen ba=bv.front();
       if (!is_integral(ab) || !is_integral(bb) || !is_integral(aa) || !is_integral(ba))
-	return gentypeerr(gettext("Non integral argument"));
+	return gentypeerr(gettext("Non integer argument"));
+      if (is_greater(1,bb,context0) || is_greater(1,ab,context0))
+	return gentypeerr(gettext("Bad mod value"));
       gen res=ichinrem(aa,ba,ab,bb);
+      if (is_undef(res))
+	return res;
       if (a_orig.type==_MOD)
 	return makemod(res,lcm(ab,bb));
       return makevecteur(res,lcm(ab,bb));
     }
+    l=lvar(a); lvar(b,l);    
     gen x=l.front();
     if (a.type!=_VECT || b.type!=_VECT ){
       // a and b are polynomial, must have the same degrees
@@ -5076,6 +5333,14 @@ namespace giac {
       int as=ax._VECTptr->size(),bs=bx._VECTptr->size();
       if (!as || !bs)
 	return gensizeerr(gettext("Null polynomial"));
+      while (as<bs){
+	ax._VECTptr->insert(ax._VECTptr->begin(),0);
+	++as;
+      }
+      while (bs<as){
+	bx._VECTptr->insert(bx._VECTptr->begin(),0);
+	++bs;
+      }
       gen a0=ax._VECTptr->front(),b0=bx._VECTptr->front(),m,n;
       if (a0.type==_MOD)
 	m=*(a0._MODptr+1);
@@ -5108,10 +5373,16 @@ namespace giac {
       const_iterateur it=ax._VECTptr->begin(),itend=ax._VECTptr->end(),jt=bx._VECTptr->begin();
       vecteur res;
       for (;as>bs;--as,++it){
-	res.push_back(*it);
+	gen tmp=ichinrem2(makevecteur(*it,m),makevecteur(0,n));
+	if (tmp.type!=_VECT)
+	  return gensizeerr(gettext("ichinrem2 3"));
+	res.push_back(tmp._VECTptr->front());
       }
       for (;bs>as;--bs,++jt){
-	res.push_back(*jt);
+	gen tmp=ichinrem2(makevecteur(0,m),makevecteur(*jt,n));
+	if (tmp.type!=_VECT)
+	  return gensizeerr(gettext("ichinrem2 3"));
+	res.push_back(tmp._VECTptr->front());
       }
       for (;it!=itend;++it,++jt){
 	gen tmp=ichinrem2(makevecteur(*it,m),makevecteur(*jt,n));
@@ -5217,7 +5488,7 @@ namespace giac {
   define_unary_function_ptr5( at_chinrem ,alias_at_chinrem,&__chinrem,0,true);
 
   static string printasfactorial(const gen & feuille,const char * sommetstr,GIAC_CONTEXT){
-    if (feuille.type!=_SYMB)
+    if (feuille.type==_IDNT || ((feuille.type<=_DOUBLE_ || feuille.type==_FLOAT_ || feuille.type==_REAL) && is_positive(feuille,contextptr)))
       return feuille.print(contextptr)+"!";
     return "("+feuille.print(contextptr)+")!";
   }
@@ -5225,10 +5496,13 @@ namespace giac {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type==_VECT)
       return apply(args,_factorial,contextptr);
+    gen tmp=evalf_double(args,1,contextptr);
+    if (tmp.type>=_IDNT)
+      return symbolic(at_factorial,args);
     if (args.type!=_INT_)
       return Gamma(args+1,contextptr);
     if (args.val<0)
-      return plus_inf;
+      return unsigned_inf;
     return factorial((unsigned long int) args.val);
   }
   static const char _factorial_s []="factorial";
@@ -5274,15 +5548,17 @@ namespace giac {
 
   gen perm(const gen & a,const gen &b){
     if (a.type!=_INT_ || b.type!=_INT_)
-      return symbolic(at_perm,makevecteur(a,b));
+      return symbolic(at_perm,gen(makevecteur(a,b),_SEQ__VECT));
     return perm((unsigned long int) a.val,(unsigned long int) b.val);
   }
   gen _perm(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (ckmatrix(args))
       return apply(args._VECTptr->front(),args._VECTptr->back(),perm);
-    if ( (args.type!=_VECT) || (args._VECTptr->size()!=2) || (args._VECTptr->front().type!=_INT_) || (args._VECTptr->back().type!=_INT_) )
+    if ( (args.type!=_VECT) || (args._VECTptr->size()!=2))
       return gentypeerr(contextptr);
+    if ( (args._VECTptr->front().type!=_INT_) || (args._VECTptr->back().type!=_INT_) )
+      return _factorial(args._VECTptr->front(),contextptr)/_factorial(args._VECTptr->front()-args._VECTptr->back(),contextptr);
     if (args._VECTptr->front().val<args._VECTptr->back().val)
       return zero;
     if (args._VECTptr->front().val<0)
@@ -5325,32 +5601,97 @@ namespace giac {
     return symbolic(at_image,a);
   }
   symbolic symb_moyal(const gen & a,const gen & b, const gen &vars,const gen & order){
-    return symbolic(at_moyal,makevecteur(a,b,vars,order));
+    return symbolic(at_moyal,gen(makevecteur(a,b,vars,order),_SEQ__VECT));
   }
 
-  gen _evalf(const gen & a,GIAC_CONTEXT){
-    if ( a.type==_STRNG && a.subtype==-1) return  a;
+  gen _evalf(const gen & a,int ndigits,GIAC_CONTEXT){
+    int save_decimal_digits=decimal_digits(contextptr);
+#ifndef HAVE_LIBMPFR
+    if (ndigits>14)
+      return gensizeerr(gettext("Longfloat library not available"));
+#endif
+    set_decimal_digits(ndigits,contextptr);
+    gen res=a.evalf(1,contextptr);
+    if (res.type==_REAL || res.type==_CPLX)
+      res=accurate_evalf(res,digits2bits(ndigits));
+#if 0
+    if (ndigits<=14 && calc_mode(contextptr)==1 && (res.type==_DOUBLE_ || res.type==_CPLX)){
+      int decal=0;
+      decal=int(std::floor(std::log10(abs(res,contextptr)._DOUBLE_val)));
+      res=res*pow(10,ndigits-decal-1,contextptr);
+      res=_floor(re(res,contextptr)+.5,contextptr)+cst_i*_floor(im(res,contextptr)+.5,contextptr);
+      res=evalf(res,1,contextptr)*pow(10,decal+1-ndigits,contextptr);
+    }
+    else {
+      if (ndigits<=14 && !is_undef(res)){
+	res=_round(gen(makevecteur(res,ndigits),_SEQ__VECT),contextptr);
+      }
+    }
+#else
+    if (ndigits<=14 && !is_undef(res))
+      res=gen(res.print(contextptr),contextptr);
+#endif
+    set_decimal_digits(save_decimal_digits,contextptr);
+    return res;
+  }
+
+  gen evalf_nbits(const gen & g,int nbits){
+    if (g.type==_REAL)
+      return real_object(g,nbits);
+    if (g.type==_CPLX)
+      return real_object(*g._CPLXptr,nbits)+cst_i*real_object(*(g._CPLXptr+1),nbits);
+    if (g.type==_VECT){
+      vecteur v=*g._VECTptr;
+      for (unsigned i=0;i<v.size();++i)
+	v[i]=evalf_nbits(v[i],nbits);
+      return gen(v,g.subtype);
+    }
+    if (g.type==_SYMB)
+      return symbolic(g._SYMBptr->sommet,evalf_nbits(g._SYMBptr->feuille,nbits));
+    return g;
+  }
+
+  bool need_workaround(const gen & g){
+    if (g.type<=_CPLX)
+      return g!=0 && g/g!=1;
+    if (is_inf(g) || is_undef(g))
+      return true;
+    if (g.type!=_VECT)
+      return false;
+    for (unsigned i=0;i<g._VECTptr->size();++i){
+      if (need_workaround((*g._VECTptr)[i]))
+	return true;
+    }
+    return false;
+  }
+
+  gen _evalf(const gen & a_orig,GIAC_CONTEXT){
+    gen a(a_orig);
+    if (a.type==_STRNG && a.subtype==-1) return  a;
     if (a.is_symb_of_sommet(at_equal)&&a._SYMBptr->feuille.type==_VECT && a._SYMBptr->feuille._VECTptr->size()==2){
       vecteur & v(*a._SYMBptr->feuille._VECTptr);
-      return symbolic(at_equal,makevecteur(evalf(v.front(),1,contextptr),evalf(v.back(),1,contextptr)));
+      return symbolic(at_equal,gen(makevecteur(evalf(v.front(),1,contextptr),evalf(v.back(),1,contextptr)),_SEQ__VECT));
     }
+    gen res;
+    int ndigits=decimal_digits(contextptr);
     if (a.type==_VECT && a.subtype==_SEQ__VECT && a._VECTptr->size()==2 && a._VECTptr->back().type==_INT_){
-      int save_decimal_digits=decimal_digits(contextptr);
-      int ndigits=a._VECTptr->back().val;
-#ifndef HAVE_LIBMPFR
-      if (ndigits>14)
-	return gensizeerr(gettext("Longfloat library not available"));
-#endif
-      set_decimal_digits(ndigits,contextptr);
-      gen res=a._VECTptr->front().evalf(1,contextptr);
-      if (res.type==_REAL || res.type==_CPLX)
-	res=accurate_evalf(res,digits2bits(a._VECTptr->back().val));
-      set_decimal_digits(save_decimal_digits,contextptr);
-      if (ndigits<14 && !is_undef(res))
-	res=_round(gen(makevecteur(res,ndigits),_SEQ__VECT),contextptr);
+      ndigits=a._VECTptr->back().val;
+      a=a._VECTptr->front();
+      res=_evalf(a,ndigits,contextptr);
+    }
+    else
+      res=a.evalf(1,contextptr);
+#ifdef HAVE_LIBMPFR
+    if ( ndigits<=14 && need_workaround(res)){
+      // evalf again with 30 digits (overflow workaround)
+      res=_evalf(a,30,contextptr);
+      // and round to ndigits
+      int nbits=digits2bits(ndigits);
+      res=evalf_nbits(res,nbits);
       return res;
     }
-    return a.evalf(1,contextptr);
+#endif
+    return res;
   }
   static const char _evalf_s []="evalf";
   static define_unary_function_eval (__evalf,&giac::_evalf,_evalf_s);
@@ -5363,7 +5704,7 @@ namespace giac {
     if ( a.type==_STRNG && a.subtype==-1) return  a;
     if (a.is_symb_of_sommet(at_equal)&&a._SYMBptr->feuille.type==_VECT && a._SYMBptr->feuille._VECTptr->size()==2){
       vecteur & v(*a._SYMBptr->feuille._VECTptr);
-      return symbolic(at_equal,makevecteur(eval(v.front(),eval_level(contextptr),contextptr),eval(v.back(),eval_level(contextptr),contextptr)));
+      return symbolic(at_equal,gen(makevecteur(eval(v.front(),eval_level(contextptr),contextptr),eval(v.back(),eval_level(contextptr),contextptr)),_SEQ__VECT));
     }
     if (a.type==_VECT && a.subtype==_SEQ__VECT && a._VECTptr->size()==2){
       gen a1=a._VECTptr->front(),a2=a._VECTptr->back();
@@ -5483,6 +5824,8 @@ namespace giac {
   }
   gen _version(const gen & a,GIAC_CONTEXT){
     if ( a.type==_STRNG && a.subtype==-1) return  a;
+    if (abs_calc_mode(contextptr)==38)
+      return string2gen(gettext("Powered by Giac 1.1, B. Parisse and R. De Graeve, Institut Fourier, Universite Grenoble I, France"),false);
     return string2gen(version(),false);
   }
   static const char _version_s []="version";
@@ -5593,13 +5936,32 @@ namespace giac {
   static define_unary_function_eval (__multistring,&giac::_multistring,_multistring_s);
   define_unary_function_ptr( at_multistring ,alias_at_multistring ,&__multistring);
 
-  static const long double LN_SQRT2PI = 0.9189385332046727418L; //log(2*PI)/2
-  static const long double M_PIL=3.141592653589793238462643383279L;
-  static const long double LC1 = 0.08333333333333333L,
+#ifndef HAVE_LONG_DOUBLE
+  static const double LN_SQRT2PI = 0.9189385332046727418; //log(2*PI)/2
+  static const double M_PIL=3.141592653589793238462643383279;
+  static const double LC1 = 0.08333333333333333,
+    LC2 = -0.002777777777777778,
+    LC3 = 7.936507936507937E-4,
+    LC4 = -5.952380952380953E-4;
+  static const double L9[] = {
+    0.99999999999980993227684700473478,
+    676.520368121885098567009190444019,
+    -1259.13921672240287047156078755283,
+    771.3234287776530788486528258894,
+    -176.61502916214059906584551354,
+    12.507343278686904814458936853,
+    -0.13857109526572011689554707,
+    9.984369578019570859563e-6,
+    1.50563273514931155834e-7
+  };
+#else
+  static const long_double LN_SQRT2PI = 0.9189385332046727418L; //log(2*PI)/2
+  static const long_double M_PIL=3.141592653589793238462643383279L;
+  static const long_double LC1 = 0.08333333333333333L,
     LC2 = -0.002777777777777778L,
     LC3 = 7.936507936507937E-4L,
     LC4 = -5.952380952380953E-4L;
-  static const long double L9[] = {
+  static const long_double L9[] = {
     0.99999999999980993227684700473478L,
     676.520368121885098567009190444019L,
     -1259.13921672240287047156078755283L,
@@ -5610,29 +5972,46 @@ namespace giac {
     9.984369578019570859563e-6L,
     1.50563273514931155834e-7L
   };
+#endif
 
   // Stirling/Lanczos approximation for ln(Gamma())
   double lngamma(double X){
-    long double res,x(X);
+    long_double res,x(X);
     if (x<0.5)
+#ifndef HAVE_LONG_DOUBLE
+      res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.-x);
+#else
       res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.L-x);
+#endif
     else {
       --x;
       if (x<20){
-	long double a = L9[0];
+	long_double a = L9[0];
 	for (int i = 1; i < 9; ++i) {
-	  a+= L9[i]/(x+double(i));
+	  a+= L9[i]/(x+(long_double)(i));
 	}
+#ifndef HAVE_LONG_DOUBLE
+	res= (LN_SQRT2PI + std::log(a) - 7.) + (x+.5)*(std::log(x+7.5)-1.);
+#else
 	res= (LN_SQRT2PI + std::log(a) - 7.L) + (x+.5L)*(std::log(x+7.5L)-1.L);
+#endif
       }
       else {
-	long double
+	long_double
+#ifndef HAVE_LONG_DOUBLE
+	  r1 = 1./x,
+#else
 	  r1 = 1.L/x,
+#endif
 	  r2 = r1*r1,
 	  r3 = r1*r2,
 	  r5 = r2*r3,
 	  r7 = r3*r3*r1;
+#ifndef HAVE_LONG_DOUBLE
+	res=(x+.5)*std::log(x) - x + LN_SQRT2PI + LC1*r1 + LC2*r3 + LC3*r5 + LC4*r7;
+#else
 	res=(x+.5L)*std::log(x) - x + LN_SQRT2PI + LC1*r1 + LC2*r3 + LC3*r5 + LC4*r7;
+#endif
       }
     }
     return res;
@@ -5641,20 +6020,26 @@ namespace giac {
   static complex_long_double lngamma(complex_long_double x){
     complex_long_double res;
     if (x.real()<0.5)
-#ifdef BESTA_OS
-		assert(0);
-		// besta compiler does not like this next line, it is unable to resolve the "-" operator
-	    // code looks okay to me, but putting this here to move forward, needs to be fixed sometime....
+#ifndef HAVE_LONG_DOUBLE
+      res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.-x);
 #else
       res=std::log(M_PIL) -std::log(std::sin(M_PIL*x)) - lngamma(1.L-x);
 #endif
 	else {
+#ifndef HAVE_LONG_DOUBLE
+      x=x-1.;
+#else
       x=x-1.L;
+#endif
       complex_long_double a = L9[0];
       for (int i = 1; i < 9; ++i) {
-	a+= L9[i]/(x+(long double)(i));
+	a+= L9[i]/(x+(long_double)(i));
       }
+#ifndef HAVE_LONG_DOUBLE
+      res= (LN_SQRT2PI + std::log(a) - 7.) + (x+.5)*(std::log(x+7.5)-1.);
+#else
       res= (LN_SQRT2PI + std::log(a) - 7.L) + (x+.5L)*(std::log(x+7.5L)-1.L);
+#endif
     }
     return res;
   }
@@ -5751,12 +6136,23 @@ namespace giac {
   }
   define_partial_derivative_onearg_genop( D_at_Gamma," D_at_Gamma",&d_Gamma);
   gen Gamma(const gen & x,GIAC_CONTEXT){
+    if (x.type==_VECT && x.subtype==_SEQ__VECT && x._VECTptr->size()>=2){
+      gen s=x._VECTptr->front(),z=(*x._VECTptr)[1];
+      if (s.type==_DOUBLE_)
+	z=evalf_double(z,1,contextptr);
+      if (z.type==_DOUBLE_)
+	s=evalf_double(s,1,contextptr);
+      if (s.type==_DOUBLE_ && z.type==_DOUBLE_){
+	return upper_incomplete_gammad(s._DOUBLE_val,z._DOUBLE_val,x._VECTptr->size()==3?!is_zero(x._VECTptr->back()):false);
+      }
+      return symbolic(at_Gamma,x);
+    }
     if (x.type==_FLOAT_)
       return fgamma(x._FLOAT_val);
     // return Gamma(get_double(x._FLOAT_val),contextptr);
     if (x.type==_INT_){
       if (x.val<=0)
-	return plus_inf;
+	return unsigned_inf;
       return factorial(x.val-1);
     }
     if (x.type==_FRAC && x._FRACptr->den==2 && x._FRACptr->num.type==_INT_){
@@ -5798,10 +6194,10 @@ namespace giac {
 			      )
 	) {
 #if 1
-      return exp(lngamma(x,contextptr),contextptr);
-#else
       if (is_strictly_positive(.5-re(x,contextptr),contextptr))
 	return cst_pi / (sin(M_PI*x,contextptr)*Gamma(1-x,contextptr));
+      return exp(lngamma(x,contextptr),contextptr);
+#else
       static const double p[] = {
 	0.99999999999980993, 676.5203681218851, -1259.1392167224028,
 	771.32342877765313, -176.61502916214059, 12.507343278686905,
@@ -5818,6 +6214,7 @@ namespace giac {
 #ifdef GIAC_HAS_STO_38
     return gammatofactorial(x,contextptr);
 #else
+    // if (x.is_symb_of_sommet(at_plus) && x._SYMBptr->feuille.type==_VECT && !x._SYMBptr->feuille._VECTptr->empty() && is_one(x._SYMBptr->feuille._VECTptr->back())) return gammatofactorial(x,contextptr);
     return symbolic(at_Gamma,x);
 #endif
   }
@@ -6035,7 +6432,7 @@ namespace giac {
     if (x.type==_DOUBLE_)
       return gsl_sf_psi_n(n,x._DOUBLE_val);
 #endif 
-    return symbolic(at_Psi,makevecteur(x,n));
+    return symbolic(at_Psi,gen(makevecteur(x,n),_SEQ__VECT));
   }
   gen _Psi(const gen & args,GIAC_CONTEXT) {
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -6208,14 +6605,14 @@ namespace giac {
 	return plus_inf;
       if (n<0){
 	if (n%2)
-	  return -rdiv(bernoulli(1-n),(1-n)) ;
+	  return -rdiv(bernoulli(1-n),(1-n),contextptr) ;
 	else
 	  return zero;
       }
       if (n%2)
 	return symbolic(at_Zeta,x);
       else
-	return pow(cst_pi,n)*abs(bernoulli(x),contextptr)*rdiv(pow(plus_two,n-1),factorial(n));
+	return pow(cst_pi,n)*ratnormal(abs(bernoulli(x),contextptr)*rdiv(pow(plus_two,n-1),factorial(n),contextptr));
     }
 #ifdef HAVE_LIBGSL
     if (x.type==_DOUBLE_)
@@ -6365,7 +6762,7 @@ namespace giac {
 	// numerical computation of int(exp(-t^2),t=0..x) 
 	// by series expansion at x=0
 	// x*sum( (-1)^n*(x^2)^n/n!/(2*n+1),n=0..inf)
-	long double z=x._DOUBLE_val,z2=z*z,res=0,pi=1;
+	long_double z=x._DOUBLE_val,z2=z*z,res=0,pi=1;
 	for (int n=0;;){
 	  res += pi/(2*n+1);
 	  ++n;
@@ -6380,7 +6777,7 @@ namespace giac {
 	// asymptotic expansion at infinity of int(exp(-t^2),t=x..inf)
 	// z=1/x
 	// z*exp(-x^2)*(1/2 - 1/4 z^2 +3/8 z^4-15/16 z^6 + ...)
-	long double z=1/absx,z2=z*z/2,res=0,pi=0.5;
+	long_double z=1/absx,z2=z*z/2,res=0,pi=0.5;
 	for (int n=0;;++n){
 	  res += pi;
 	  pi = -pi*(2*n+1)*z2;
@@ -6398,8 +6795,8 @@ namespace giac {
 	// erf(x)=2*x*exp(-x^2)/sqrt(pi)*sum(2^j*x^(2j)/1/3/5/.../(2j+1),j=0..inf)
 	// or continued fraction
 	// 2*exp(z^2)*int(exp(-t^2),t=z..inf)=1/(z+1/2/(z+1/(z+3/2/(z+...))))
-	long double z=absx,res=0;
-	for (long double n=40;n>=1;n--){
+	long_double z=absx,res=0;
+	for (long_double n=40;n>=1;n--){
 	  res=n/2/(z+res);
 	}
 	res=1/(z+res);
@@ -6414,9 +6811,9 @@ namespace giac {
       // a:=convert(series(erfc(x)*exp(x^2),x=X,24),polynom):; b:=subst(a,x=X+h):;
       if (absx>3 && absx<=5){
 	// Digits:=30; evalf(symb2poly(subst(b,X,4),h))
-	long double Zl=absx-4,res=0;
-	long double taberf[]={0.9323573505930262336910814663629e-18,-0.5637770672346891132663122366369e-17,0.3373969923698176600796949171416e-16,-0.1997937342757611758805760309387e-15,0.1170311628709846086671746844320e-14,-0.6779078623355796103927587022047e-14,0.3881943235655598141099274338263e-13,-0.2196789805508621713379735090290e-12,0.1228090799753488475137690971599e-11,-0.6779634525816110746734938098109e-11,0.3694326453071165814527058450923e-10,-0.1986203171147991823844885265211e-9,0.1053084120195192127202221248092e-8,-0.5503368542058483880654875851859e-8,0.2833197888944711586737808090450e-7,-0.1435964425391227330876779173688e-6,0.7160456646037012951391007806358e-6,-0.3510366649840828060143659147374e-5,0.1690564925777814684043808381146e-4,-0.7990888030555549397777128848414e-4,0.3703524689955564311420527395424e-3,-0.1681182076746114476323671722330e-2,0.7465433244975570766528102818814e-2,-0.3238350609502145478059791886069e-1,0.1369994576250613898894451230325};
-	unsigned N=sizeof(taberf)/sizeof(long double);
+	long_double Zl=absx-4,res=0;
+	long_double taberf[]={0.9323573505930262336910814663629e-18,-0.5637770672346891132663122366369e-17,0.3373969923698176600796949171416e-16,-0.1997937342757611758805760309387e-15,0.1170311628709846086671746844320e-14,-0.6779078623355796103927587022047e-14,0.3881943235655598141099274338263e-13,-0.2196789805508621713379735090290e-12,0.1228090799753488475137690971599e-11,-0.6779634525816110746734938098109e-11,0.3694326453071165814527058450923e-10,-0.1986203171147991823844885265211e-9,0.1053084120195192127202221248092e-8,-0.5503368542058483880654875851859e-8,0.2833197888944711586737808090450e-7,-0.1435964425391227330876779173688e-6,0.7160456646037012951391007806358e-6,-0.3510366649840828060143659147374e-5,0.1690564925777814684043808381146e-4,-0.7990888030555549397777128848414e-4,0.3703524689955564311420527395424e-3,-0.1681182076746114476323671722330e-2,0.7465433244975570766528102818814e-2,-0.3238350609502145478059791886069e-1,0.1369994576250613898894451230325};
+	unsigned N=sizeof(taberf)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Zl;
 	  res += taberf[i];
@@ -6426,9 +6823,9 @@ namespace giac {
       }
       if (absx>5 && absx<=6.5){
 	// Digits:=30; evalf(symb2poly(subst(b,X,5.75),h))
-	long double Zl=absx-5.75,res=0;
-	long double taberf[]={-0.3899077949952308336341205103240e-12,0.2064555746398182434172952813760e-13,-0.7079917646274828801231710613009e-12,-0.2043006626755557967429543230042e-12,-0.2664588032913413248313045028978e-11,-0.3182230691773937386262907009549e-11,-0.4508687162250923186571888867300e-12,-0.2818971742901571639195611759894e-11,-0.4771270499789446447101554995178e-11,0.2345376254096117543212461524786e-11,-0.6529305258174487397807156793042e-11,0.9817004987916722489154147719630e-12,0.2085292084663647123257426988484e-10,-0.1586500138272075839895787048265e-9,0.1056533982771769784560244626854e-8,-0.6964568016562765632682760517056e-8,0.4530411628438409475101496352516e-7,-0.2918364042864784155554051827879e-6,0.1859299481340192895158490699981e-5,-0.1171241494503672776195474661763e-4,0.7292428889065898343608897828825e-4,-0.4485956983428598110336671805311e-3,0.2725273842847326036320664185043e-2,-0.1634321814380709002113440890281e-1,0.9669877816971385564543076482100e-1};
-	unsigned N=sizeof(taberf)/sizeof(long double);
+	long_double Zl=absx-5.75,res=0;
+	long_double taberf[]={-0.3899077949952308336341205103240e-12,0.2064555746398182434172952813760e-13,-0.7079917646274828801231710613009e-12,-0.2043006626755557967429543230042e-12,-0.2664588032913413248313045028978e-11,-0.3182230691773937386262907009549e-11,-0.4508687162250923186571888867300e-12,-0.2818971742901571639195611759894e-11,-0.4771270499789446447101554995178e-11,0.2345376254096117543212461524786e-11,-0.6529305258174487397807156793042e-11,0.9817004987916722489154147719630e-12,0.2085292084663647123257426988484e-10,-0.1586500138272075839895787048265e-9,0.1056533982771769784560244626854e-8,-0.6964568016562765632682760517056e-8,0.4530411628438409475101496352516e-7,-0.2918364042864784155554051827879e-6,0.1859299481340192895158490699981e-5,-0.1171241494503672776195474661763e-4,0.7292428889065898343608897828825e-4,-0.4485956983428598110336671805311e-3,0.2725273842847326036320664185043e-2,-0.1634321814380709002113440890281e-1,0.9669877816971385564543076482100e-1};
+	unsigned N=sizeof(taberf)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Zl;
 	  res += taberf[i];
@@ -6448,14 +6845,18 @@ namespace giac {
 	// by series expansion at x=0
 	// x*sum( (-1)^n*(x^2)^n/n!/(2*n+1),n=0..inf)
 	complex_long_double z2=z*z,res=0,pi=1;
-	for (long double n=0;;){
+	for (long_double n=0;;){
 	  res += pi/(2*n+1);
 	  ++n;
 	  pi = -pi*z2/n;
 	  if (std::abs(pi)<1e-17)
 	    break;
 	}
+#ifndef HAVE_LONG_DOUBLE
+	res=(2.0/std::sqrt(M_PI))*z*res;
+#else
 	res=(2.0L/std::sqrt(M_PI))*z*res;
+#endif
 	gen e(double(res.real()),double(res.imag()));
 	erfc=1.0-e;
 	return e;
@@ -6467,15 +6868,24 @@ namespace giac {
 	// asymptotic expansion at infinity of int(exp(-t^2),t=x..inf)
 	// z=1/x
 	// z*exp(-x^2)*(1/2 - 1/4 z^2 +3/8 z^4-15/16 z^6 + ...)
+#ifndef HAVE_LONG_DOUBLE
+	z=1.0/z;
+	complex_long_double z2=z*z/2.0,res=0,pi=0.5;
+#else
 	z=1.0L/z;
 	complex_long_double z2=z*z/2.0L,res=0,pi=0.5;
-	for (long double n=0;;++n){
+#endif
+	for (long_double n=0;;++n){
 	  res += pi;
 	  pi = -pi*(2*n+1)*z2;
 	  if (std::abs(pi)<1e-16)
 	    break;
 	}
+#ifndef HAVE_LONG_DOUBLE
+	res=complex_long_double(2.0/std::sqrt(M_PI))*std::exp(-1.0/z/z)*z*res;
+#else
 	res=complex_long_double(2.0/std::sqrt(M_PI))*std::exp(-1.0L/z/z)*z*res;
+#endif
 	erfc=gen(double(res.real()),double(res.imag()));
 	gen e=1-erfc;
 	if (!neg)
@@ -6487,10 +6897,14 @@ namespace giac {
 	// continued fraction
 	// 2*exp(z^2)*int(exp(-t^2),t=z..inf)=1/(z+1/2/(z+1/(z+3/2/(z+...))))
 	complex_long_double res=0;
-	for (long double n=40;n>=1;n--){
+	for (long_double n=40;n>=1;n--){
 	  res=(n/2)/(z+res);
 	}
+#ifndef HAVE_LONG_DOUBLE
+	res=1.0/(z+res);
+#else
 	res=1.0L/(z+res);
+#endif
 	res=std::exp(-z*z)*res/complex_long_double(std::sqrt(M_PI));
 	erfc=gen(double(res.real()),double(res.imag()));
 	gen e=1-erfc;
@@ -6610,7 +7024,7 @@ namespace giac {
 #if 0 // def GIAC_HAS_STO_38
     return 2*symbolic(at_UTPN,x*plus_sqrt2);
 #else
-    return 1-symbolic(at_erf,x);
+    return 1-erf(x,contextptr); // 1-symbolic(at_erf,x);
 #endif
     gen e=x.evalf(1,contextptr);
 #ifdef HAVE_LIBGSL
@@ -6711,11 +7125,11 @@ namespace giac {
 	// use series expansion at infinity
 	// Si: 1/2*PI - 1/z*cos(z) - 1/z^2*sin(z) + 2/z^3*cos(z) + 6/z^4*sin(z) - 24/z^5*cos(z) - 120/z^6*sin(z) + 720/z^7*cos(z) + 5040/z^8*sin(z) + O(1/z^9)	= 1/z^8( (pi/2*z-cz)*z ...)
 	// Ci:1/z*sin(z) - 1/z^2*cos(z) - 2/z^3*sin(z) + 6/z^4*cos(z) + 24/z^5*sin(z) - 120/z^6*cos(z) - 720/z^7*sin(z) + 5040/z^8*cos(z)
-	long double sz=std::sin(Z);
-	long double cz=std::cos(Z);
-	long double invZ=1/Z;
-	long double pi=invZ;
-	long double sizd=Z>0?M_PI/2:-M_PI/2,cizd=0;
+	long_double sz=std::sin(Z);
+	long_double cz=std::cos(Z);
+	long_double invZ=1/Z;
+	long_double pi=invZ;
+	long_double sizd=Z>0?M_PI/2:-M_PI/2,cizd=0;
 	for (int n=1;;++n){
 	  switch (n%4){
 	  case 1:
@@ -6753,8 +7167,8 @@ namespace giac {
       bool neg=Z<0;
       if (neg) Z=-Z;
       if (Z<=8){
-	long double si=1,ci=0,z2=Z*Z,pi=1;
-	for (long double n=1;;n++){
+	long_double si=1,ci=0,z2=Z*Z,pi=1;
+	for (long_double n=1;;n++){
 	  pi = -pi*z2/2/n;
 	  if (std::abs(pi)<1e-15)
 	    break;
@@ -6769,12 +7183,12 @@ namespace giac {
       // a:=convert(series(Si(x),x=X,24),polynom):; b:=subst(a,x=X+h):; 
       // c:=convert(series(Ci(x),x=X,24),polynom):; d:=subst(c,x=X+h):; 
       if (Z>8 && Z<=12){
-	long double Zl=Z-10,ress=0,resc=0;
+	long_double Zl=Z-10,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,10),h))
-	long double tabsi[]={-0.1189416530979229549237628888274e-25,0.1535274533580010929112764295251e-23,0.5949595042899632105631168585106e-23,-0.8443813569533766615075729254715e-21,-0.2314493549701736156628360858149e-20,0.3873999840160633357506392314227e-18,0.6314325721978121436699115557946e-18,-0.1454512706077874699091092895960e-15,-0.7966560468972510895796615830931e-16,0.4362654888706402638259447137657e-13,-0.2168961216095219762135154593351e-13,-0.1013156299801104705978428503741e-10,0.1511362807589119975552764377684e-10,0.1746079592768605042057230051441e-8,-0.4215112103088864749315276215891e-8,-0.2100827763936543847478539598343e-6,0.6768578499749603731655034337648e-6,0.1604768832104729109406272571796e-4,-0.6129221770634575410555873017014e-4,-0.6629459359846050378314018176664e-3,0.2619937628043294083259734576549e-2,0.1168258324144788179314042496964e-1,-0.3923347089937577354591945908199e-1,-0.5440211108893698134047476618518e-1,1.658347594218874049330971879387};
+	long_double tabsi[]={-0.1189416530979229549237628888274e-25,0.1535274533580010929112764295251e-23,0.5949595042899632105631168585106e-23,-0.8443813569533766615075729254715e-21,-0.2314493549701736156628360858149e-20,0.3873999840160633357506392314227e-18,0.6314325721978121436699115557946e-18,-0.1454512706077874699091092895960e-15,-0.7966560468972510895796615830931e-16,0.4362654888706402638259447137657e-13,-0.2168961216095219762135154593351e-13,-0.1013156299801104705978428503741e-10,0.1511362807589119975552764377684e-10,0.1746079592768605042057230051441e-8,-0.4215112103088864749315276215891e-8,-0.2100827763936543847478539598343e-6,0.6768578499749603731655034337648e-6,0.1604768832104729109406272571796e-4,-0.6129221770634575410555873017014e-4,-0.6629459359846050378314018176664e-3,0.2619937628043294083259734576549e-2,0.1168258324144788179314042496964e-1,-0.3923347089937577354591945908199e-1,-0.5440211108893698134047476618518e-1,1.658347594218874049330971879387};
 	// evalf(symb2poly(subst(d,X,10),h))
-	long double tabci[]={-0.1031363603561483377414206719978e-24,0.1612636587877966055062771505636e-24,0.3224608155602632232346779331477e-22,0.1692359618263088728225313523766e-21,-0.1902123006508838353447776226346e-19,-0.3515542663511577547829464092398e-19,0.7651991655644681341759387392123e-17,0.8949035335940300076443987350711e-17,-0.2601535596364695291068633323882e-14,0.1492297097331336833098183955735e-16,0.6873241144777191906667850002758e-12,-0.6815990267379124633604933192924e-12,-0.1385917806100726110447949877846e-9,0.2729216217490738797188995072400e-9,0.2012042413927794669971423802132e-7,-0.5698511913235728873777759634867e-7,-0.1960205632344228431569991958688e-5,0.6982250568929225912819532196480e-5,0.1127699306487082097807313715561e-3,-0.4465373163022154950275303555869e-3,-0.3158611974102019356519036678335e-2,0.1189143127195082400887895227495e-1,0.3139641318985075293153170283171e-1,-0.8390715290764524522588639478252e-1,-0.4545643300445537263453282995265e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={-0.1031363603561483377414206719978e-24,0.1612636587877966055062771505636e-24,0.3224608155602632232346779331477e-22,0.1692359618263088728225313523766e-21,-0.1902123006508838353447776226346e-19,-0.3515542663511577547829464092398e-19,0.7651991655644681341759387392123e-17,0.8949035335940300076443987350711e-17,-0.2601535596364695291068633323882e-14,0.1492297097331336833098183955735e-16,0.6873241144777191906667850002758e-12,-0.6815990267379124633604933192924e-12,-0.1385917806100726110447949877846e-9,0.2729216217490738797188995072400e-9,0.2012042413927794669971423802132e-7,-0.5698511913235728873777759634867e-7,-0.1960205632344228431569991958688e-5,0.6982250568929225912819532196480e-5,0.1127699306487082097807313715561e-3,-0.4465373163022154950275303555869e-3,-0.3158611974102019356519036678335e-2,0.1189143127195082400887895227495e-1,0.3139641318985075293153170283171e-1,-0.8390715290764524522588639478252e-1,-0.4545643300445537263453282995265e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6785,12 +7199,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>12 && Z<=16){
-	long double Zl=Z-14,ress=0,resc=0;
+	long_double Zl=Z-14,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,14),h))
-	long double tabsi[]={0.4669904672048171207530336926784e-25,-0.9121786080411940331362079921979e-24,-0.2670914489796227617771058426181e-22,0.5191793400822084981037748064947e-21,0.1272661806026797328866077155393e-19,-0.2467115711789321804079825604360e-18,-0.4949985288801387245191790228644e-17,0.9598983157925822187983801948972e-16,0.1531267131408434243475192526878e-14,-0.2983793513482513341175920391396e-13,-0.3640741847215956508751181538961e-12,0.7178248462975320846576276463699e-11,0.6346880693851116027919629277690e-10,-0.1280755925139665180236732107401e-8,-0.7574841879361234814393864898316e-8,0.1596987755895423889046710494666e-6,0.5558236361973162161308791480329e-6,-0.1276894967030880532682787806556e-4,-0.2074774698099097315147678882137e-4,0.5764575129603710060263581799849e-3,0.2308201450150731015736777254153e-3,-0.1190515482960545313209358846732e-1,0.2356412497996938805126656809673e-2,0.7075766826391930770538248600113e-1,1.556211050077665053703631892805};
+	long_double tabsi[]={0.4669904672048171207530336926784e-25,-0.9121786080411940331362079921979e-24,-0.2670914489796227617771058426181e-22,0.5191793400822084981037748064947e-21,0.1272661806026797328866077155393e-19,-0.2467115711789321804079825604360e-18,-0.4949985288801387245191790228644e-17,0.9598983157925822187983801948972e-16,0.1531267131408434243475192526878e-14,-0.2983793513482513341175920391396e-13,-0.3640741847215956508751181538961e-12,0.7178248462975320846576276463699e-11,0.6346880693851116027919629277690e-10,-0.1280755925139665180236732107401e-8,-0.7574841879361234814393864898316e-8,0.1596987755895423889046710494666e-6,0.5558236361973162161308791480329e-6,-0.1276894967030880532682787806556e-4,-0.2074774698099097315147678882137e-4,0.5764575129603710060263581799849e-3,0.2308201450150731015736777254153e-3,-0.1190515482960545313209358846732e-1,0.2356412497996938805126656809673e-2,0.7075766826391930770538248600113e-1,1.556211050077665053703631892805};
 	// evalf(symb2poly(subst(d,X,14),h))
-	long double tabci[]={0.3590233410769916717046880365555e-25,0.1141530173081541381259185089975e-23,-0.2223749846955296806257123587014e-22,-0.5971404695883450494036609310213e-21,0.1158813189176036949355044721895e-19,0.2578286744261932540063357506560e-18,-0.4996649806240905822071761629155e-17,-0.8975849912962755765138097664122e-16,0.1743615446376990117868764420851e-14,0.2446425362039524592303128232180e-13,-0.4789979360061655431004102341364e-12,-0.5015267234200784104185754752298e-11,0.9985346701639551763361641926310e-10,0.7310382166844782587890268654904e-9,-0.1502609970889405144661999732289e-7,-0.6957715037844896183079492333545e-7,0.1519752625305293353227780696896e-5,0.3762397782384872898110463611961e-5,-0.9310463095669218193046370118801e-4,-0.8685445941902185669380116006632e-4,0.2944299062831149098901196099828e-2,0.7349281020023392469738413739405e-4,-0.3572765356616331098087728605326e-1,0.9766944157702399589209205476559e-2,0.6939635592758454727438326824349e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={0.3590233410769916717046880365555e-25,0.1141530173081541381259185089975e-23,-0.2223749846955296806257123587014e-22,-0.5971404695883450494036609310213e-21,0.1158813189176036949355044721895e-19,0.2578286744261932540063357506560e-18,-0.4996649806240905822071761629155e-17,-0.8975849912962755765138097664122e-16,0.1743615446376990117868764420851e-14,0.2446425362039524592303128232180e-13,-0.4789979360061655431004102341364e-12,-0.5015267234200784104185754752298e-11,0.9985346701639551763361641926310e-10,0.7310382166844782587890268654904e-9,-0.1502609970889405144661999732289e-7,-0.6957715037844896183079492333545e-7,0.1519752625305293353227780696896e-5,0.3762397782384872898110463611961e-5,-0.9310463095669218193046370118801e-4,-0.8685445941902185669380116006632e-4,0.2944299062831149098901196099828e-2,0.7349281020023392469738413739405e-4,-0.3572765356616331098087728605326e-1,0.9766944157702399589209205476559e-2,0.6939635592758454727438326824349e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6801,12 +7215,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>16 && Z<=20){
-	long double Zl=Z-18,ress=0,resc=0;
+	long_double Zl=Z-18,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,18),h))
-	long double tabsi[]={-0.5458114686729331288343465771243e-25,-0.8535297797031477670863377809864e-25,0.3197608273507048053143023106525e-22,0.1246720240695204431925986220740e-22,-0.1566961070193290350813150654958e-19,0.1120194984050557421284180749579e-19,0.6303732529750142701943836944779e-17,-0.1093865529886308098492342051935e-16,-0.2034127294195017035840150503185e-14,0.5391577496552481117289518608625e-14,0.5113326950563000131064845650605e-12,-0.1755022270416406807283368583049e-11,-0.9642855115888351354955178064729e-10,0.3896583006063678015119758986001e-9,0.1297996094042326342264874814159e-7,-0.5741523749720224155210168829004e-7,-0.1165550911079956021485851292181e-5,0.5260587329402175094599529167340e-5,0.6336730653896082851113120333026e-4,-0.2682059741680869878136005839481e-3,-0.1788149401756335521591446074162e-2,0.6231324073036488917300258847156e-2,0.1950106172093382517043203223869e-1,-0.4172151370953756131945311580259e-1,1.536608096861185462361173893885};
+	long_double tabsi[]={-0.5458114686729331288343465771243e-25,-0.8535297797031477670863377809864e-25,0.3197608273507048053143023106525e-22,0.1246720240695204431925986220740e-22,-0.1566961070193290350813150654958e-19,0.1120194984050557421284180749579e-19,0.6303732529750142701943836944779e-17,-0.1093865529886308098492342051935e-16,-0.2034127294195017035840150503185e-14,0.5391577496552481117289518608625e-14,0.5113326950563000131064845650605e-12,-0.1755022270416406807283368583049e-11,-0.9642855115888351354955178064729e-10,0.3896583006063678015119758986001e-9,0.1297996094042326342264874814159e-7,-0.5741523749720224155210168829004e-7,-0.1165550911079956021485851292181e-5,0.5260587329402175094599529167340e-5,0.6336730653896082851113120333026e-4,-0.2682059741680869878136005839481e-3,-0.1788149401756335521591446074162e-2,0.6231324073036488917300258847156e-2,0.1950106172093382517043203223869e-1,-0.4172151370953756131945311580259e-1,1.536608096861185462361173893885};
 	// evalf(symb2poly(subst(d,X,18),h))
-	long double tabci[]={0.4605275954646862944758091918129e-26,-0.1349519299011741936395476560680e-23,-0.1307682310402805091861215069192e-23,0.7246129197780950670155731691447e-21,-0.1246271694903983843859628582537e-21,-0.3225645499768452910431606017148e-18,0.3989357101823634351098507496171e-18,0.1165949042798889880769685702457e-15,-0.2573970823221046721180373208376e-15,-0.3334412559655945734048458981847e-13,0.1020420669194920098922521974402e-12,0.7298982331099322669182907795178e-11,-0.2745289334776461767357052328935e-10,-0.1171271721735576258954174760357e-8,0.4994621772350737506214065546293e-8,0.1300541789133113153488950327832e-6,-0.5864843122180159884437825091296e-6,-0.9221666449442426870101941344121e-5,0.4080390556697611593508057267335e-4,0.3702810510394427353858531043357e-3,-0.1453024604178293371013986047647e-2,-0.6848923209258520415117450659078e-2,0.1984174958896001500414615659760e-1,0.3668426156911556360089444693281e-1,-0.4347510299950100478344114920850e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={0.4605275954646862944758091918129e-26,-0.1349519299011741936395476560680e-23,-0.1307682310402805091861215069192e-23,0.7246129197780950670155731691447e-21,-0.1246271694903983843859628582537e-21,-0.3225645499768452910431606017148e-18,0.3989357101823634351098507496171e-18,0.1165949042798889880769685702457e-15,-0.2573970823221046721180373208376e-15,-0.3334412559655945734048458981847e-13,0.1020420669194920098922521974402e-12,0.7298982331099322669182907795178e-11,-0.2745289334776461767357052328935e-10,-0.1171271721735576258954174760357e-8,0.4994621772350737506214065546293e-8,0.1300541789133113153488950327832e-6,-0.5864843122180159884437825091296e-6,-0.9221666449442426870101941344121e-5,0.4080390556697611593508057267335e-4,0.3702810510394427353858531043357e-3,-0.1453024604178293371013986047647e-2,-0.6848923209258520415117450659078e-2,0.1984174958896001500414615659760e-1,0.3668426156911556360089444693281e-1,-0.4347510299950100478344114920850e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6817,12 +7231,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>20 && Z<=24){
-	long double Zl=Z-22,ress=0,resc=0;
+	long_double Zl=Z-22,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,22),h))
-	long double tabsi[]={0.3374532347188926046754549614410e-25,0.9070719831057349388641148466696e-24,-0.2050470901003743543468128570765e-22,-0.4594235790411492575575248293744e-21,0.1043077621302187913107676015839e-19,0.1910932463670378689024003307389e-18,-0.4360804036884663718921536467101e-17,-0.6379227769542456535760586922387e-16,0.1464704096058402216999762277897e-14,0.1660737164480043388814198356103e-13,-0.3842072518362213364190884929092e-12,-0.3249870299707868231630032306411e-11,0.7591535353403568501001826557431e-10,0.4554066973680817003059315739181e-9,-0.1077692372064168550494073939261e-7,-0.4274452798917825988601610781581e-7,0.1030486252719749122401833140117e-5,0.2434192199039423608811016740448e-5,-0.6042868558775171616279520355687e-4,-0.7128407780774990405916452478794e-4,0.1868111001271415320776084256504e-2,0.7554565401849909491334584321080e-3,-0.2271723850350373234098156405564e-1,-0.4023322404729034509859207643533e-3,1.616083736594366543114431027190};
+	long_double tabsi[]={0.3374532347188926046754549614410e-25,0.9070719831057349388641148466696e-24,-0.2050470901003743543468128570765e-22,-0.4594235790411492575575248293744e-21,0.1043077621302187913107676015839e-19,0.1910932463670378689024003307389e-18,-0.4360804036884663718921536467101e-17,-0.6379227769542456535760586922387e-16,0.1464704096058402216999762277897e-14,0.1660737164480043388814198356103e-13,-0.3842072518362213364190884929092e-12,-0.3249870299707868231630032306411e-11,0.7591535353403568501001826557431e-10,0.4554066973680817003059315739181e-9,-0.1077692372064168550494073939261e-7,-0.4274452798917825988601610781581e-7,0.1030486252719749122401833140117e-5,0.2434192199039423608811016740448e-5,-0.6042868558775171616279520355687e-4,-0.7128407780774990405916452478794e-4,0.1868111001271415320776084256504e-2,0.7554565401849909491334584321080e-3,-0.2271723850350373234098156405564e-1,-0.4023322404729034509859207643533e-3,1.616083736594366543114431027190};
 	// evalf(symb2poly(subst(d,X,22),h))
-	long double tabci[]={-0.3765941636516127667565314425887e-25,0.8496429623966734299562910340895e-24,0.2089658856058364573723209071877e-22,-0.4733667956308362832271784627271e-21,-0.9616010057686047674500629395344e-20,0.2188568968552838678620763986263e-18,0.3594653788547495746845572205294e-17,-0.8227046014999096676822143059749e-16,-0.1063984308386789623300816541173e-14,0.2451691569424535439026086961327e-13,0.2414081477262495987003288682969e-12,-0.5610174912354327213432820922583e-11,-0.4025699100579353159380991679438e-10,0.9460092423484752010231070364358e-9,0.4662816039604651635851886085410e-8,-0.1112697436829371328490149410190e-6,-0.3461508105965530058056263010906e-6,0.8452332929171272742294005025613e-5,0.1452920166854777888625357916022e-4,-0.3688187418989882360609440618036e-3,-0.2737432060552935755550251671918e-3,0.7538061305932840665075723970069e-2,0.1234183502875539666044793790453e-2,-0.4545276483611986938428066996417e-1,0.1640691915737749726680980654224e-2};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={-0.3765941636516127667565314425887e-25,0.8496429623966734299562910340895e-24,0.2089658856058364573723209071877e-22,-0.4733667956308362832271784627271e-21,-0.9616010057686047674500629395344e-20,0.2188568968552838678620763986263e-18,0.3594653788547495746845572205294e-17,-0.8227046014999096676822143059749e-16,-0.1063984308386789623300816541173e-14,0.2451691569424535439026086961327e-13,0.2414081477262495987003288682969e-12,-0.5610174912354327213432820922583e-11,-0.4025699100579353159380991679438e-10,0.9460092423484752010231070364358e-9,0.4662816039604651635851886085410e-8,-0.1112697436829371328490149410190e-6,-0.3461508105965530058056263010906e-6,0.8452332929171272742294005025613e-5,0.1452920166854777888625357916022e-4,-0.3688187418989882360609440618036e-3,-0.2737432060552935755550251671918e-3,0.7538061305932840665075723970069e-2,0.1234183502875539666044793790453e-2,-0.4545276483611986938428066996417e-1,0.1640691915737749726680980654224e-2};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6833,12 +7247,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>24 && Z<=28){
-	long double Zl=Z-26,ress=0,resc=0;
+	long_double Zl=Z-26,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,26),h))
-	long double tabsi[]={0.1887595283929249736721564257313e-26,-0.1139208683110194949664423805669e-23,0.1279293933254064768731875653817e-24,0.5994732455107313947881755894338e-21,-0.6938324133833276535897299455340e-21,-0.2609102593630429565352138793600e-18,0.5435603049161089391681629274496e-18,0.9202351759037677282055983009108e-16,-0.2642554055043397588710384653172e-15,-0.2565196994817985742348447471878e-13,0.8979673506711721488705329079164e-13,0.5477157384399615846158662911243e-11,-0.2160870416302321163457598611639e-10,-0.8604342982500329851062267981807e-9,0.3594354283136494037733432184009e-8,0.9424490157133423171849887794118e-7,-0.3925808731949007274318185773343e-6,-0.6671455253428628462019837043580e-5,0.2584931618742702225630929467268e-4,0.2717002055000108101387898426941e-3,-0.8869394862544894803875105833456e-3,-0.5192726828102161497754294326711e-2,0.1187673367608361403346165544076e-1,0.2932917117229241298137781896944e-1,1.544868862986338557887737260292};
+	long_double tabsi[]={0.1887595283929249736721564257313e-26,-0.1139208683110194949664423805669e-23,0.1279293933254064768731875653817e-24,0.5994732455107313947881755894338e-21,-0.6938324133833276535897299455340e-21,-0.2609102593630429565352138793600e-18,0.5435603049161089391681629274496e-18,0.9202351759037677282055983009108e-16,-0.2642554055043397588710384653172e-15,-0.2565196994817985742348447471878e-13,0.8979673506711721488705329079164e-13,0.5477157384399615846158662911243e-11,-0.2160870416302321163457598611639e-10,-0.8604342982500329851062267981807e-9,0.3594354283136494037733432184009e-8,0.9424490157133423171849887794118e-7,-0.3925808731949007274318185773343e-6,-0.6671455253428628462019837043580e-5,0.2584931618742702225630929467268e-4,0.2717002055000108101387898426941e-3,-0.8869394862544894803875105833456e-3,-0.5192726828102161497754294326711e-2,0.1187673367608361403346165544076e-1,0.2932917117229241298137781896944e-1,1.544868862986338557887737260292};
 	// evalf(symb2poly(subst(d,X,26),h))
-	long double tabci[]={0.4649965583842175529710094230187e-25,0.2092492486523365857112019931102e-25,-0.2673016958726137563529919009844e-22,0.1734025691834661144821904431335e-22,0.1282183044327200389255292828905e-19,-0.2098089236197822391981775009963e-19,-0.5037728169303807883904931875640e-17,0.1257389975122490684981594653098e-16,0.1585106167468127577346565423777e-14,-0.5084215538447167537343863000543e-14,-0.3884144934780823340053700189354e-12,0.1455636906316532474122453840240e-11,0.7154603949717881354941340050201e-10,-0.2926061246791173118887623808558e-9,-0.9458827111752210232753218600667e-8,0.3976537604156996965393015686438e-7,0.8424410070112619898093729646951e-6,-0.3418064228754065522708009442873e-5,-0.4606856152608972144114035752184e-4,0.1664083688146614131038736660077e-3,0.1330470954446840977471854832752e-2,-0.3758634727512557357034117912936e-2,-0.1514307620917034875601537686776e-1,0.2488151239725539779697630391881e-1,0.2829515103175713190842112993963e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={0.4649965583842175529710094230187e-25,0.2092492486523365857112019931102e-25,-0.2673016958726137563529919009844e-22,0.1734025691834661144821904431335e-22,0.1282183044327200389255292828905e-19,-0.2098089236197822391981775009963e-19,-0.5037728169303807883904931875640e-17,0.1257389975122490684981594653098e-16,0.1585106167468127577346565423777e-14,-0.5084215538447167537343863000543e-14,-0.3884144934780823340053700189354e-12,0.1455636906316532474122453840240e-11,0.7154603949717881354941340050201e-10,-0.2926061246791173118887623808558e-9,-0.9458827111752210232753218600667e-8,0.3976537604156996965393015686438e-7,0.8424410070112619898093729646951e-6,-0.3418064228754065522708009442873e-5,-0.4606856152608972144114035752184e-4,0.1664083688146614131038736660077e-3,0.1330470954446840977471854832752e-2,-0.3758634727512557357034117912936e-2,-0.1514307620917034875601537686776e-1,0.2488151239725539779697630391881e-1,0.2829515103175713190842112993963e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6849,12 +7263,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>28 && Z<=32){
-	long double Zl=Z-30,ress=0,resc=0;
+	long_double Zl=Z-30,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,30),h))
-	long double tabsi[]={-0.3146268636172325352644123013773e-25,0.7254967655706034123075144269188e-24,0.1720174348300531678711926627452e-22,-0.3968569600567226603419285560888e-21,-0.7804624742706385979212734054562e-20,0.1797226284123711388607362992709e-18,0.2882267004838688287625265808775e-17,-0.6604428381371346662942676361200e-16,-0.8462601728339625717076212469620e-15,0.1921641824294710456184856743277e-13,0.1918622280824819669976604364077e-12,-0.4293140602943259867747088385429e-11,-0.3236373134197171392533933286615e-10,0.7078744765376845042933221167302e-9,0.3867645142776632643256131482060e-8,-0.8169087758905646352536906937371e-7,-0.3060269540778692505740670587310e-6,0.6120146081774563343983258719578e-5,0.1450591123346014175404634002192e-4,-0.2651270545919250186145646630982e-3,-0.3497315371034554476595429181296e-3,0.5419736490383548422011597468850e-2,0.3119763955955768506415340725399e-2,-0.3293438746976205966625829690981e-1,1.566756540030351110983731309007};
+	long_double tabsi[]={-0.3146268636172325352644123013773e-25,0.7254967655706034123075144269188e-24,0.1720174348300531678711926627452e-22,-0.3968569600567226603419285560888e-21,-0.7804624742706385979212734054562e-20,0.1797226284123711388607362992709e-18,0.2882267004838688287625265808775e-17,-0.6604428381371346662942676361200e-16,-0.8462601728339625717076212469620e-15,0.1921641824294710456184856743277e-13,0.1918622280824819669976604364077e-12,-0.4293140602943259867747088385429e-11,-0.3236373134197171392533933286615e-10,0.7078744765376845042933221167302e-9,0.3867645142776632643256131482060e-8,-0.8169087758905646352536906937371e-7,-0.3060269540778692505740670587310e-6,0.6120146081774563343983258719578e-5,0.1450591123346014175404634002192e-4,-0.2651270545919250186145646630982e-3,-0.3497315371034554476595429181296e-3,0.5419736490383548422011597468850e-2,0.3119763955955768506415340725399e-2,-0.3293438746976205966625829690981e-1,1.566756540030351110983731309007};
 	// evalf(symb2poly(subst(d,X,30),h))
-	long double tabci[]={-0.2905250884383236235247049545527e-25,-0.7522147039999421611567058749977e-24,0.1735426584530328263231524611399e-22,0.3754699661541031707840824496312e-21,-0.8657191669382300006764470296916e-20,-0.1541017153772568372597216447575e-18,0.3541395808613865455763442962592e-17,0.5090911414277503198761655016250e-16,-0.1161952195659956230574302196387e-14,-0.1318846041657448769184055840206e-13,0.2975305748369348193892361410833e-12,0.2592737707940046163669864700563e-11,-0.5742839188863978180610659896436e-10,-0.3707322050098237760097147226680e-9,0.7983406320009368395835407645496e-8,0.3641426564991240108255042664073e-7,-0.7507713655866267126314943513395e-6,-0.2264698987507883174282691040657e-5,0.4355811042213145491501868952153e-4,0.7862739829137060637224202271609e-4,-0.1341741499597397210639678491289e-2,-0.1220985799040877684843355198131e-2,0.1638149848494348313828544726235e-1,0.5141714996252801690622071553807e-2,-0.3303241728207114377922644096301e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={-0.2905250884383236235247049545527e-25,-0.7522147039999421611567058749977e-24,0.1735426584530328263231524611399e-22,0.3754699661541031707840824496312e-21,-0.8657191669382300006764470296916e-20,-0.1541017153772568372597216447575e-18,0.3541395808613865455763442962592e-17,0.5090911414277503198761655016250e-16,-0.1161952195659956230574302196387e-14,-0.1318846041657448769184055840206e-13,0.2975305748369348193892361410833e-12,0.2592737707940046163669864700563e-11,-0.5742839188863978180610659896436e-10,-0.3707322050098237760097147226680e-9,0.7983406320009368395835407645496e-8,0.3641426564991240108255042664073e-7,-0.7507713655866267126314943513395e-6,-0.2264698987507883174282691040657e-5,0.4355811042213145491501868952153e-4,0.7862739829137060637224202271609e-4,-0.1341741499597397210639678491289e-2,-0.1220985799040877684843355198131e-2,0.1638149848494348313828544726235e-1,0.5141714996252801690622071553807e-2,-0.3303241728207114377922644096301e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6865,12 +7279,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>32 && Z<=36){
-	long double Zl=Z-34,ress=0,resc=0;
+	long_double Zl=Z-34,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,34),h))
-	long double tabsi[]={0.3942701136493758442738611783193e-25,0.2833482488121121562882295508384e-25,-0.2240325735608330926855387141189e-22,0.7077167897405254555239797927716e-23,0.1062083455080499454129483304028e-19,-0.1296740970607253649730617065007e-19,-0.4125642950551060755694922602219e-17,0.8186731227770529065956573976157e-17,0.1284716025190091972930389282765e-14,-0.3331328985339278802607691455602e-14,-0.3121425078659463413394477246734e-12,0.9467354869456215167864364128202e-12,0.5717466510263820214761281907592e-10,-0.1880717150280359445242629986190e-9,-0.7546218335244881072513219000215e-8,0.2525355992897561612710992980882e-7,0.6743126364121930403816188890288e-6,-0.2149417013042573939863424458069e-5,-0.3721263582524267372627099974480e-4,0.1039917503622257770319033100678e-3,0.1091628590022319276482516968274e-2,-0.2344369704089296833875653244402e-2,-0.1270781662145181668046346804335e-1,0.1556125547411834767154373923623e-1,1.595256185182468624967114677624};
+	long_double tabsi[]={0.3942701136493758442738611783193e-25,0.2833482488121121562882295508384e-25,-0.2240325735608330926855387141189e-22,0.7077167897405254555239797927716e-23,0.1062083455080499454129483304028e-19,-0.1296740970607253649730617065007e-19,-0.4125642950551060755694922602219e-17,0.8186731227770529065956573976157e-17,0.1284716025190091972930389282765e-14,-0.3331328985339278802607691455602e-14,-0.3121425078659463413394477246734e-12,0.9467354869456215167864364128202e-12,0.5717466510263820214761281907592e-10,-0.1880717150280359445242629986190e-9,-0.7546218335244881072513219000215e-8,0.2525355992897561612710992980882e-7,0.6743126364121930403816188890288e-6,-0.2149417013042573939863424458069e-5,-0.3721263582524267372627099974480e-4,0.1039917503622257770319033100678e-3,0.1091628590022319276482516968274e-2,-0.2344369704089296833875653244402e-2,-0.1270781662145181668046346804335e-1,0.1556125547411834767154373923623e-1,1.595256185182468624967114677624};
 	// evalf(symb2poly(subst(d,X,34),h))
-	long double tabci[]={-0.1989238045881366884396486216401e-26,0.9603929081698055330298655453613e-24,0.1785462486600632168852339199134e-24,-0.4994884203374138675491408864852e-21,0.3922698307156298349251565849186e-21,0.2148764364742271875693500554094e-18,-0.3483461372134677428776900288130e-18,-0.7495914823918311062321675163567e-16,0.1730727343462677961269223481865e-15,0.2069644169058104778527335300702e-13,-0.5867510845332297156886886169438e-13,-0.4387405297943553775874545604808e-11,0.1397446669253207042207953256760e-10,0.6866413079078539001893686720856e-9,-0.2296062969528945671977337418042e-8,-0.7526095978772233458886342141369e-7,0.2479954929300904010747076408018e-6,0.5360278479932581967324034110246e-5,-0.1619607535570418039830425866209e-4,-0.2210046023539758078033314699734e-3,0.5534219043710011378918782268888e-3,0.4305022897404827350706361160583e-2,-0.7413599071494898236031397261835e-2,-0.2495794925837074078235212022679e-1,0.1626491643735576698165635194377e-1};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={-0.1989238045881366884396486216401e-26,0.9603929081698055330298655453613e-24,0.1785462486600632168852339199134e-24,-0.4994884203374138675491408864852e-21,0.3922698307156298349251565849186e-21,0.2148764364742271875693500554094e-18,-0.3483461372134677428776900288130e-18,-0.7495914823918311062321675163567e-16,0.1730727343462677961269223481865e-15,0.2069644169058104778527335300702e-13,-0.5867510845332297156886886169438e-13,-0.4387405297943553775874545604808e-11,0.1397446669253207042207953256760e-10,0.6866413079078539001893686720856e-9,-0.2296062969528945671977337418042e-8,-0.7526095978772233458886342141369e-7,0.2479954929300904010747076408018e-6,0.5360278479932581967324034110246e-5,-0.1619607535570418039830425866209e-4,-0.2210046023539758078033314699734e-3,0.5534219043710011378918782268888e-3,0.4305022897404827350706361160583e-2,-0.7413599071494898236031397261835e-2,-0.2495794925837074078235212022679e-1,0.1626491643735576698165635194377e-1};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -6881,12 +7295,12 @@ namespace giac {
 	ciz = double(resc);
       }
       if (Z>36 && Z<=40){
-	long double Zl=Z-38,ress=0,resc=0;
+	long_double Zl=Z-38,ress=0,resc=0;
 	// evalf(symb2poly(subst(b,X,38),h))
-	long double tabsi[]={-0.2392585617788018962646757828598e-25,-0.6575431727115741067484987610228e-24,0.1413726322474858257725781544417e-22,0.3273737185831529184312733883924e-21,-0.6971366411141976840382089119809e-20,-0.1343722941531172977052740901750e-18,0.2818131926670801219167357117818e-17,0.4456155806753828158414772784641e-16,-0.9138685919934995126194762439509e-15,-0.1164855661769990237307373295310e-13,0.2314363358966319503074680596234e-12,0.2327043421113577898681844454632e-11,-0.4423649753121148492913255999601e-10,-0.3413423247744706973417929454576e-9,0.6100985644119355599936971303758e-8,0.3483915381970249998364550866465e-7,-0.5705724285037609250439734410714e-6,-0.2292102947589923998615699771400e-5,0.3301272634561039972744957647445e-4,0.8640908538565720173919303844142e-4,-0.1017258860929286693108579223376e-2,-0.1518531271099188526195110204881e-2,0.1246413777530741664504711921590e-1,0.7799173123931192562955174996028e-2,1.545492937235698740561891130750};
+	long_double tabsi[]={-0.2392585617788018962646757828598e-25,-0.6575431727115741067484987610228e-24,0.1413726322474858257725781544417e-22,0.3273737185831529184312733883924e-21,-0.6971366411141976840382089119809e-20,-0.1343722941531172977052740901750e-18,0.2818131926670801219167357117818e-17,0.4456155806753828158414772784641e-16,-0.9138685919934995126194762439509e-15,-0.1164855661769990237307373295310e-13,0.2314363358966319503074680596234e-12,0.2327043421113577898681844454632e-11,-0.4423649753121148492913255999601e-10,-0.3413423247744706973417929454576e-9,0.6100985644119355599936971303758e-8,0.3483915381970249998364550866465e-7,-0.5705724285037609250439734410714e-6,-0.2292102947589923998615699771400e-5,0.3301272634561039972744957647445e-4,0.8640908538565720173919303844142e-4,-0.1017258860929286693108579223376e-2,-0.1518531271099188526195110204881e-2,0.1246413777530741664504711921590e-1,0.7799173123931192562955174996028e-2,1.545492937235698740561891130750};
 	// evalf(symb2poly(subst(d,X,38),h))
-	long double tabci[]={0.2755791623901057620946655522961e-25,-0.5942947240530035802859253027110e-24,-0.1501343221496874685931095691537e-22,0.3214487908378114008198384990138e-21,0.6802473399014152745014932500302e-20,-0.1438706210063382233790032141791e-18,-0.2516685599977182931504499600334e-17,0.5224619763598943054009172687575e-16,0.7435302907498417390873416469940e-15,-0.1502856747601093160946258165352e-13,-0.1706516669026401836883958369119e-12,0.3322517447592247618873995073660e-11,0.2938003484322757578999393723335e-10,-0.5429671029677216915133045537076e-9,-0.3623244387376009573032456389105e-8,0.6223561267305907587303733846902e-7,0.3003453535122368377351197880341e-6,-0.4643099720179236845576657726334e-5,-0.1523777445337208725039230269865e-4,0.2008948838914583162973945866431e-3,0.4061768073150514090668429199326e-3,-0.4114703864552309315370227396080e-2,-0.4230290732342083420531097274815e-2,0.2513351694861302256806674303698e-1,0.7129761801971379713551376511546e-2};
-	unsigned N=sizeof(tabsi)/sizeof(long double);
+	long_double tabci[]={0.2755791623901057620946655522961e-25,-0.5942947240530035802859253027110e-24,-0.1501343221496874685931095691537e-22,0.3214487908378114008198384990138e-21,0.6802473399014152745014932500302e-20,-0.1438706210063382233790032141791e-18,-0.2516685599977182931504499600334e-17,0.5224619763598943054009172687575e-16,0.7435302907498417390873416469940e-15,-0.1502856747601093160946258165352e-13,-0.1706516669026401836883958369119e-12,0.3322517447592247618873995073660e-11,0.2938003484322757578999393723335e-10,-0.5429671029677216915133045537076e-9,-0.3623244387376009573032456389105e-8,0.6223561267305907587303733846902e-7,0.3003453535122368377351197880341e-6,-0.4643099720179236845576657726334e-5,-0.1523777445337208725039230269865e-4,0.2008948838914583162973945866431e-3,0.4061768073150514090668429199326e-3,-0.4114703864552309315370227396080e-2,-0.4230290732342083420531097274815e-2,0.2513351694861302256806674303698e-1,0.7129761801971379713551376511546e-2};
+	unsigned N=sizeof(tabsi)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  ress *= Zl;
 	  ress += tabsi[i];
@@ -7333,8 +7747,8 @@ namespace giac {
       return gsl_sf_expint_Ei(z);
 #endif
       if (z>=40 || z<=-40){
-	long double ei=1,pi=1,Z=z;
-	for (long double n=1;;++n){
+	long_double ei=1,pi=1,Z=z;
+	for (long_double n=1;;++n){
 	  if (pi<1e-16 && pi>-1e-16)
 	    break;
 	  pi = (n*pi)/Z;
@@ -7352,8 +7766,8 @@ namespace giac {
 	__float80 ei=0.0w,pi=1.0w;
 #endif // __SSE4_2__
 	*/
-	long double ei=0.0,pi=1.0,Z=z;
-	for (long double n=1;;n++){
+	long_double ei=0.0,pi=1.0,Z=z;
+	for (long_double n=1;;n++){
 	  pi = pi*Z/n;
 	  if (pi<1e-16 && pi>-1e-16)
 	    break;
@@ -7363,10 +7777,10 @@ namespace giac {
 	return double(ei);
       }
       // continued fraction: http://people.math.sfu.ca/~cbm/aands/page_229.htm
-      long double x=-z;
-      long double result(1);
-      long double un(1);
-      for (long double n=40;n>=1;--n){
+      long_double x=-z;
+      long_double result(1);
+      long_double un(1);
+      for (long_double n=40;n>=1;--n){
 	result = un+n/result;
 	result = x+n/result; 
       }
@@ -7376,9 +7790,9 @@ namespace giac {
       // a:=convert(series(Ei(x)*exp(-x)*x,x=X,24),polynom):; b:=subst(a,x=X+h):; 
       if (z>=-6.8 && z<=-4.8){
 	// X:=-5.8; evalf(symb2poly(b,h),30)
-	long double Z=z+5.8,res=0;
-	long double tabei[]={-0.3151760388807517547897224622361e-20,-0.1956623502102099783599191666531e-19,-0.1217520387814662777242246174541e-18,-0.7595047623259136899131074978509e-18,-0.4750592523487122640844934717658e-17,-0.2979985874126626857226335496504e-16,-0.1875104560810577497563994966761e-15,-0.1183827325179695999391747354358e-14,-0.7501052898029529880772284438566e-14,-0.4771568760084635063692127230846e-13,-0.3048290706102002977129135629199e-12,-0.1956495512880190361879173037779e-11,-0.1262184835369108393063770847820e-10,-0.8188615023197271684637356284403e-10,-0.5345588144426140308176155460920e-9,-0.3513748178583494436182263562858e-8,-0.2327416524478792602782072181673e-7,-0.1554886566283128983353292920891e-6,-0.1048823536032497188023815631115e-5,-0.7151898287935501422833421755707e-5,-0.4937247597221480470432894324202e-4,-0.3456479830723309944342902721052e-3,-0.2458903778230241247990734517862e-2,-0.1781701304096371729351217642124e-1,0.8681380405349396412209368563589};
-	unsigned N=sizeof(tabei)/sizeof(long double);
+	long_double Z=z+5.8,res=0;
+	long_double tabei[]={-0.3151760388807517547897224622361e-20,-0.1956623502102099783599191666531e-19,-0.1217520387814662777242246174541e-18,-0.7595047623259136899131074978509e-18,-0.4750592523487122640844934717658e-17,-0.2979985874126626857226335496504e-16,-0.1875104560810577497563994966761e-15,-0.1183827325179695999391747354358e-14,-0.7501052898029529880772284438566e-14,-0.4771568760084635063692127230846e-13,-0.3048290706102002977129135629199e-12,-0.1956495512880190361879173037779e-11,-0.1262184835369108393063770847820e-10,-0.8188615023197271684637356284403e-10,-0.5345588144426140308176155460920e-9,-0.3513748178583494436182263562858e-8,-0.2327416524478792602782072181673e-7,-0.1554886566283128983353292920891e-6,-0.1048823536032497188023815631115e-5,-0.7151898287935501422833421755707e-5,-0.4937247597221480470432894324202e-4,-0.3456479830723309944342902721052e-3,-0.2458903778230241247990734517862e-2,-0.1781701304096371729351217642124e-1,0.8681380405349396412209368563589};
+	unsigned N=sizeof(tabei)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Z;
 	  res += tabei[i];
@@ -7387,9 +7801,9 @@ namespace giac {
       }
       if (z>=-10.4 && z<=-6.8){
 	// X:=-8.6; evalf(symb2poly(b,h),30)
-	long double Z=z+8.6,res=0;
-	long double tabei[]={-0.3038274728374471199550377e-24,-0.2779136645187427028874693e-23,-0.3038274728374471199535898278331e-24,-0.2779136645187427028908730164655e-23,-0.2546955934813756337104395625899e-22,-0.2338906925011672805172017690719e-21,-0.2152486734154319991905416359525e-20,-0.1985479703050588294559030935503e-19,-0.1835926261877877389191827053171e-18,-0.1702095774807244266388321827485e-17,-0.1582462980029593441341590109962e-16,-0.1475687715549251315001108783383e-15,-0.1380597694124124865185429282546e-14,-0.1296174167643919255669841368436e-13,-0.1221540406726513790755510762310e-12,-0.1155953021811538418057560238246e-11,-0.1098796276688146853531628645304e-10,-0.1049579707566189469341186813219e-9,-0.1007939580405777662197671844560e-8,-0.9736450265211550752217060575644e-8,-0.9466101382146753511496418259404e-7,-0.9269139557230184816973381023220e-6,-0.9148312509513609827739907179727e-5,-0.9108785014936600974832901874747e-4,-0.9158817613130838424132243282306e-3,-0.9310767919833080253847393582574e-2,0.9041742295948504677274049567506};
-	unsigned N=sizeof(tabei)/sizeof(long double);
+	long_double Z=z+8.6,res=0;
+	long_double tabei[]={-0.3038274728374471199550377e-24,-0.2779136645187427028874693e-23,-0.3038274728374471199535898278331e-24,-0.2779136645187427028908730164655e-23,-0.2546955934813756337104395625899e-22,-0.2338906925011672805172017690719e-21,-0.2152486734154319991905416359525e-20,-0.1985479703050588294559030935503e-19,-0.1835926261877877389191827053171e-18,-0.1702095774807244266388321827485e-17,-0.1582462980029593441341590109962e-16,-0.1475687715549251315001108783383e-15,-0.1380597694124124865185429282546e-14,-0.1296174167643919255669841368436e-13,-0.1221540406726513790755510762310e-12,-0.1155953021811538418057560238246e-11,-0.1098796276688146853531628645304e-10,-0.1049579707566189469341186813219e-9,-0.1007939580405777662197671844560e-8,-0.9736450265211550752217060575644e-8,-0.9466101382146753511496418259404e-7,-0.9269139557230184816973381023220e-6,-0.9148312509513609827739907179727e-5,-0.9108785014936600974832901874747e-4,-0.9158817613130838424132243282306e-3,-0.9310767919833080253847393582574e-2,0.9041742295948504677274049567506};
+	unsigned N=sizeof(tabei)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Z;
 	  res += tabei[i];
@@ -7398,9 +7812,9 @@ namespace giac {
       }
       if (z>=-18 && z<=-10.4){
 	// X:=-14.2; evalf(symb2poly(b,h),30)
-	long double Z=z+14.2,res=0;
-	long double tabei[]={-0.2146565037696152744587246594658e-29,-0.3211304301798548507083223372513e-28,-0.4810676293065620718028423299344e-27,-0.7216859970389437335874447555454e-26,-0.1084277395671112546831370934086e-24,-0.1631614493247996191078695765867e-23,-0.2459334296271721080391164633531e-22,-0.3713482299827011821020880718604e-21,-0.5617631647301656953696071542646e-20,-0.8514935739998273979648471651860e-19,-0.1293355781746933007839041344760e-17,-0.1968884006429264318605910506869e-16,-0.3004345775527340969677228988332e-15,-0.4595950524037171042443121664043e-14,-0.7049704421594200850156215866786e-13,-0.1084472101777504561037738433261e-11,-0.1673430730968429348565586095542e-10,-0.2590825472368919959973457219967e-9,-0.4025494197722650107148738975481e-8,-0.6278735181439544538790456358391e-7,-0.9834030941528033320856991985477e-6,-0.1547201663333347394190105495487e-4,-0.2446158986745476113536605827777e-3,-0.3888037771084034459793304640141e-2,0.9378427721282495585084911135452};
-	unsigned N=sizeof(tabei)/sizeof(long double);
+	long_double Z=z+14.2,res=0;
+	long_double tabei[]={-0.2146565037696152744587246594658e-29,-0.3211304301798548507083223372513e-28,-0.4810676293065620718028423299344e-27,-0.7216859970389437335874447555454e-26,-0.1084277395671112546831370934086e-24,-0.1631614493247996191078695765867e-23,-0.2459334296271721080391164633531e-22,-0.3713482299827011821020880718604e-21,-0.5617631647301656953696071542646e-20,-0.8514935739998273979648471651860e-19,-0.1293355781746933007839041344760e-17,-0.1968884006429264318605910506869e-16,-0.3004345775527340969677228988332e-15,-0.4595950524037171042443121664043e-14,-0.7049704421594200850156215866786e-13,-0.1084472101777504561037738433261e-11,-0.1673430730968429348565586095542e-10,-0.2590825472368919959973457219967e-9,-0.4025494197722650107148738975481e-8,-0.6278735181439544538790456358391e-7,-0.9834030941528033320856991985477e-6,-0.1547201663333347394190105495487e-4,-0.2446158986745476113536605827777e-3,-0.3888037771084034459793304640141e-2,0.9378427721282495585084911135452};
+	unsigned N=sizeof(tabei)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Z;
 	  res += tabei[i];
@@ -7409,9 +7823,9 @@ namespace giac {
       }
       if (z>=-28 && z<=-18){
 	// X:=-23; evalf(symb2poly(b,h),30)
-	long double Z=z+23,res=0;
-	long double tabei[]={-0.2146168427075858494404136614850e-34,-0.5148499454995822704300301651629e-33,-0.1236169966295832115713010472045e-31,-0.2970790204951956634218583491140e-30,-0.7146257090942497496926778641796e-29,-0.1720741952629494954062600276217e-27,-0.4147649238148296325602078162016e-26,-0.1000823187587987074490282090878e-24,-0.2417703015904985630926544707734e-23,-0.5847381076193017965725594038649e-22,-0.1415979006710406329134293651920e-20,-0.3433325477996997527365162488189e-19,-0.8336110427404205659872823554255e-18,-0.2026897569209606939865219036707e-16,-0.4935733317936049783947792956182e-15,-0.1203807749521077525537452325013e-13,-0.2940930287406907738614747539418e-12,-0.7197370501359682859646891271814e-11,-0.1764684158114017110045008515596e-9,-0.4335208135324139738484130923065e-8,-0.1067215959531320911498195408991e-6,-0.2632980854624917892922066469020e-5,-0.6511098477481142813714679454527e-4,-0.1614117344014970753628852067852e-2,0.9598801957880143469722276499000};
-	unsigned N=sizeof(tabei)/sizeof(long double);
+	long_double Z=z+23,res=0;
+	long_double tabei[]={-0.2146168427075858494404136614850e-34,-0.5148499454995822704300301651629e-33,-0.1236169966295832115713010472045e-31,-0.2970790204951956634218583491140e-30,-0.7146257090942497496926778641796e-29,-0.1720741952629494954062600276217e-27,-0.4147649238148296325602078162016e-26,-0.1000823187587987074490282090878e-24,-0.2417703015904985630926544707734e-23,-0.5847381076193017965725594038649e-22,-0.1415979006710406329134293651920e-20,-0.3433325477996997527365162488189e-19,-0.8336110427404205659872823554255e-18,-0.2026897569209606939865219036707e-16,-0.4935733317936049783947792956182e-15,-0.1203807749521077525537452325013e-13,-0.2940930287406907738614747539418e-12,-0.7197370501359682859646891271814e-11,-0.1764684158114017110045008515596e-9,-0.4335208135324139738484130923065e-8,-0.1067215959531320911498195408991e-6,-0.2632980854624917892922066469020e-5,-0.6511098477481142813714679454527e-4,-0.1614117344014970753628852067852e-2,0.9598801957880143469722276499000};
+	unsigned N=sizeof(tabei)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Z;
 	  res += tabei[i];
@@ -7420,9 +7834,9 @@ namespace giac {
       }
       if (z>=-40 && z<=-28){
 	// X:=-34; evalf(symb2poly(b,h),30)
-	long double Z=z+34,res=0;
-	long double tabei[]={-0.1553338170441157171980055301967e-38,-0.6629618584891807480484960239352e-37,-0.2063078177267001621688370383419e-35,-0.7866363363832491801531045634862e-34,-0.2644473347532265615154979481412e-32,-0.9583293463074797094792612009694e-31,-0.3331568830413908327708929748672e-29,-0.1185447458884996131099536033526e-27,-0.4172725550206304813111805693360e-26,-0.1478006485774725675043732714563e-24,-0.5225975670861681162526724856274e-23,-0.1851238198626063152547466792341e-21,-0.6560288456307499178019660543116e-20,-0.2327113628743444723634985600950e-18,-0.8261670399157726998435042888476e-17,-0.2935758096939480075974014556136e-15,-0.1044193898775627537692001439649e-13,-0.3717665504357675255012806230568e-12,-0.1324967081687119761655731034082e-10,-0.4727208926929774019493746342695e-9,-0.1688455962743104637225875947715e-7,-0.6037839002081685958714139659847e-6,-0.2161738491599201737451243010035e-4,-0.7749596600489697701377944551020e-3,0.9721813893840475706338481431853};
-	unsigned N=sizeof(tabei)/sizeof(long double);
+	long_double Z=z+34,res=0;
+	long_double tabei[]={-0.1553338170441157171980055301967e-38,-0.6629618584891807480484960239352e-37,-0.2063078177267001621688370383419e-35,-0.7866363363832491801531045634862e-34,-0.2644473347532265615154979481412e-32,-0.9583293463074797094792612009694e-31,-0.3331568830413908327708929748672e-29,-0.1185447458884996131099536033526e-27,-0.4172725550206304813111805693360e-26,-0.1478006485774725675043732714563e-24,-0.5225975670861681162526724856274e-23,-0.1851238198626063152547466792341e-21,-0.6560288456307499178019660543116e-20,-0.2327113628743444723634985600950e-18,-0.8261670399157726998435042888476e-17,-0.2935758096939480075974014556136e-15,-0.1044193898775627537692001439649e-13,-0.3717665504357675255012806230568e-12,-0.1324967081687119761655731034082e-10,-0.4727208926929774019493746342695e-9,-0.1688455962743104637225875947715e-7,-0.6037839002081685958714139659847e-6,-0.2161738491599201737451243010035e-4,-0.7749596600489697701377944551020e-3,0.9721813893840475706338481431853};
+	unsigned N=sizeof(tabei)/sizeof(long_double);
 	for (unsigned i=0;i<N;i++){
 	  res *= Z;
 	  res += tabei[i];
@@ -7483,8 +7897,8 @@ namespace giac {
       x=-x;
       if (x.real()>0 || std::abs(x.imag()/x.real())>=1){
 	complex_long_double result(1);
-	long double un(1);
-	for (long double n=40;n>=1;--n){
+	long_double un(1);
+	for (long_double n=40;n>=1;--n){
 	  result = un+n/result;
 	  result = x+n/result; 
 	}
@@ -7492,14 +7906,14 @@ namespace giac {
 	return gen(double(result.real()),double(result.imag())+M_PI*(x.imag()>0?-1:1));
       }
     }
-#if 1 // defined(__x86_64__) || defined(__i386__) // if long double available use this
+#if 1 // defined(__x86_64__) || defined(__i386__) // if long_double available use this
     gen tmp=evalf_double(args,1,contextptr);
     if (tmp.type==_CPLX && prec<=13){
       complex_long_double Z(tmp._CPLXptr->_DOUBLE_val,(tmp._CPLXptr+1)->_DOUBLE_val);
       if (z._DOUBLE_val>30){ 
 	// expansion at infinity, order 30, error 1e-13
 	complex_long_double ei=1.0,pi=1.0;
-	for (long double n=1;n<=30;n++){
+	for (long_double n=1;n<=30;n++){
 	  pi = (n*pi)/Z;
 	  ei += pi;
 	}
@@ -7519,7 +7933,7 @@ namespace giac {
 	// use expansion at 0, 
 	// cancellation for negative re(Z) but already computed with cont frac
 	complex_long_double ei=0,pi=1;
-	for (long double n=1;n<=70;++n){
+	for (long_double n=1;n<=70;++n){
 	  pi = pi*Z/n;
 	  ei += pi/n;
 	}
@@ -7805,8 +8219,8 @@ namespace giac {
   gen minus_sin_pi_12(_FRAC2_SYMB(
 			    symbolic(at_plus,gen(makevecteur(plus_sqrt2,minus_sqrt6),_SEQ__VECT)),
 			    4));
-  gen tan_pi_12(symbolic(at_plus,makevecteur(2,minus_sqrt3)));
-  gen tan_5pi_12(symbolic(at_plus,makevecteur(2,plus_sqrt3)));
+  gen tan_pi_12(symbolic(at_plus,gen(makevecteur(2,minus_sqrt3),_SEQ__VECT)));
+  gen tan_5pi_12(symbolic(at_plus,gen(makevecteur(2,plus_sqrt3),_SEQ__VECT)));
   gen minus_tan_pi_12(symbolic(at_neg,tan_pi_12));
   gen minus_tan_5pi_12(symbolic(at_neg,tan_5pi_12));
   gen rad2deg_e(_FRAC2_SYMB(180,_IDNT_pi()));
@@ -7837,8 +8251,8 @@ namespace giac {
   const define_tab2_alias_gen(alias_cst_two_pi_tab,_INT_,0,2,_IDNT,0,&ref_pi);
   const define_alias_ref_vecteur2(cst_two_pi_refv,alias_cst_two_pi_tab);
 
-  // static const define_alias_gen(cst_two_pi_V,_VECT,0,&cst_two_pi_refv);
-  const define_alias_ref_symbolic( cst_two_pi_symb ,alias_at_prod,_VECT,0,&cst_two_pi_refv);
+  // static const define_alias_gen(cst_two_pi_V,_VECT,_SEQ__VECT,&cst_two_pi_refv);
+  const define_alias_ref_symbolic( cst_two_pi_symb ,alias_at_prod,_VECT,_SEQ__VECT,&cst_two_pi_refv);
   const define_alias_gen(alias_cst_two_pi,_SYMB,0,&cst_two_pi_symb);
   const gen & cst_two_pi = *(const gen *)&alias_cst_two_pi;
 
@@ -7857,7 +8271,7 @@ namespace giac {
   const define_tab2_alias_gen(alias_cst_pi_over_2_tab,_IDNT,0,&ref_pi,_SYMB,0,&inv_2_symb);
   const define_alias_ref_vecteur2(cst_pi_over_2_refv,alias_cst_pi_over_2_tab);
 
-  const define_alias_ref_symbolic( cst_pi_over_2_symb ,alias_at_prod,_VECT,0,&cst_pi_over_2_refv);
+  const define_alias_ref_symbolic( cst_pi_over_2_symb ,alias_at_prod,_VECT,_SEQ__VECT,&cst_pi_over_2_refv);
   const define_alias_gen(alias_cst_pi_over_2,_SYMB,0,&cst_pi_over_2_symb);
   const gen & cst_pi_over_2 = *(const gen *)&alias_cst_pi_over_2;
 
@@ -7908,65 +8322,65 @@ namespace giac {
 
   const define_tab2_alias_gen(alias_minus_sqrt3_2_tab,_SYMB,0,&minus_sqrt3_symb,_SYMB,0,&inv_2_symb);
   const define_alias_ref_vecteur2(minus_sqrt3_2_refv,alias_minus_sqrt3_2_tab);
-  const define_alias_ref_symbolic( minus_sqrt3_2_symb ,alias_at_prod,_VECT,0,&minus_sqrt3_2_refv);
+  const define_alias_ref_symbolic( minus_sqrt3_2_symb ,alias_at_prod,_VECT,_SEQ__VECT,&minus_sqrt3_2_refv);
   const define_alias_gen(alias_minus_sqrt3_2,_SYMB,0,&minus_sqrt3_2_symb);
   const gen & minus_sqrt3_2 = *(const gen *)&alias_minus_sqrt3_2;
 
   const define_tab2_alias_gen(alias_minus_sqrt2_2_tab,_SYMB,0,&minus_sqrt2_symb,_SYMB,0,&inv_2_symb);
   const define_alias_ref_vecteur2(minus_sqrt2_2_refv,alias_minus_sqrt2_2_tab);
-  const define_alias_ref_symbolic( minus_sqrt2_2_symb ,alias_at_prod,_VECT,0,&minus_sqrt2_2_refv);
+  const define_alias_ref_symbolic( minus_sqrt2_2_symb ,alias_at_prod,_VECT,_SEQ__VECT,&minus_sqrt2_2_refv);
   const define_alias_gen(alias_minus_sqrt2_2,_SYMB,0,&minus_sqrt2_2_symb);
   const gen & minus_sqrt2_2 = *(const gen *)&alias_minus_sqrt2_2;
 
   const define_tab2_alias_gen(alias_minus_sqrt3_3_tab,_SYMB,0,&minus_sqrt3_symb,_SYMB,0,&inv_3_symb);
   const define_alias_ref_vecteur2(minus_sqrt3_3_refv,alias_minus_sqrt3_3_tab);
-  const define_alias_ref_symbolic( minus_sqrt3_3_symb ,alias_at_prod,_VECT,0,&minus_sqrt3_3_refv);
+  const define_alias_ref_symbolic( minus_sqrt3_3_symb ,alias_at_prod,_VECT,_SEQ__VECT,&minus_sqrt3_3_refv);
   const define_alias_gen(alias_minus_sqrt3_3,_SYMB,0,&minus_sqrt3_3_symb);
   const gen & minus_sqrt3_3 = *(const gen *)&alias_minus_sqrt3_3;
 
   const define_tab2_alias_gen(alias_plus_sqrt3_2_tab,_SYMB,0,&plus_sqrt3_symb,_SYMB,0,&inv_2_symb);
   const define_alias_ref_vecteur2(plus_sqrt3_2_refv,alias_plus_sqrt3_2_tab);
-  const define_alias_ref_symbolic( plus_sqrt3_2_symb ,alias_at_prod,_VECT,0,&plus_sqrt3_2_refv);
+  const define_alias_ref_symbolic( plus_sqrt3_2_symb ,alias_at_prod,_VECT,_SEQ__VECT,&plus_sqrt3_2_refv);
   const define_alias_gen(alias_plus_sqrt3_2,_SYMB,0,&plus_sqrt3_2_symb);
   const gen & plus_sqrt3_2 = *(const gen *)&alias_plus_sqrt3_2;
 
   const define_tab2_alias_gen(alias_plus_sqrt2_2_tab,_SYMB,0,&plus_sqrt2_symb,_SYMB,0,&inv_2_symb);
   const define_alias_ref_vecteur2(plus_sqrt2_2_refv,alias_plus_sqrt2_2_tab);
-  const define_alias_ref_symbolic( plus_sqrt2_2_symb ,alias_at_prod,_VECT,0,&plus_sqrt2_2_refv);
+  const define_alias_ref_symbolic( plus_sqrt2_2_symb ,alias_at_prod,_VECT,_SEQ__VECT,&plus_sqrt2_2_refv);
   const define_alias_gen(alias_plus_sqrt2_2,_SYMB,0,&plus_sqrt2_2_symb);
   const gen & plus_sqrt2_2 = *(const gen *)&alias_plus_sqrt2_2;
 
   const define_tab2_alias_gen(alias_plus_sqrt3_3_tab,_SYMB,0,&plus_sqrt3_symb,_SYMB,0,&inv_3_symb);
   const define_alias_ref_vecteur2(plus_sqrt3_3_refv,alias_plus_sqrt3_3_tab);
-  const define_alias_ref_symbolic( plus_sqrt3_3_symb ,alias_at_prod,_VECT,0,&plus_sqrt3_3_refv);
+  const define_alias_ref_symbolic( plus_sqrt3_3_symb ,alias_at_prod,_VECT,_SEQ__VECT,&plus_sqrt3_3_refv);
   const define_alias_gen(alias_plus_sqrt3_3,_SYMB,0,&plus_sqrt3_3_symb);
   const gen & plus_sqrt3_3 = *(const gen *)&alias_plus_sqrt3_3;
 
   const define_tab2_alias_gen(alias_cos_pi_12_4_tab,_SYMB,0,&plus_sqrt6_symb,_SYMB,0,&plus_sqrt2_symb);
   const define_alias_ref_vecteur2(cos_pi_12_4_refv,alias_cos_pi_12_4_tab);
-  const define_alias_ref_symbolic( cos_pi_12_4_symb ,alias_at_plus,_VECT,0,&cos_pi_12_4_refv);
+  const define_alias_ref_symbolic( cos_pi_12_4_symb ,alias_at_plus,_VECT,_SEQ__VECT,&cos_pi_12_4_refv);
 
   const define_tab2_alias_gen(alias_cos_pi_12_tab,_SYMB,0,&cos_pi_12_4_symb,_SYMB,0,&inv_4_symb);
   const define_alias_ref_vecteur2(cos_pi_12_refv,alias_cos_pi_12_tab);
-  const define_alias_ref_symbolic( cos_pi_12_symb ,alias_at_prod,_VECT,0,&cos_pi_12_refv);
+  const define_alias_ref_symbolic( cos_pi_12_symb ,alias_at_prod,_VECT,_SEQ__VECT,&cos_pi_12_refv);
   const define_alias_gen(alias_cos_pi_12,_SYMB,0,&cos_pi_12_symb);
   const gen & cos_pi_12 = *(const gen *)&alias_cos_pi_12;
 
   const define_tab2_alias_gen(alias_minus_cos_pi_12_4_tab,_SYMB,0,&minus_sqrt6_symb,_SYMB,0,&minus_sqrt2_symb);
   const define_alias_ref_vecteur2(minus_cos_pi_12_4_refv,alias_minus_cos_pi_12_4_tab);
-  const define_alias_ref_symbolic( minus_cos_pi_12_4_symb ,alias_at_plus,_VECT,0,&minus_cos_pi_12_4_refv);
+  const define_alias_ref_symbolic( minus_cos_pi_12_4_symb ,alias_at_plus,_VECT,_SEQ__VECT,&minus_cos_pi_12_4_refv);
   const define_tab2_alias_gen(alias_minus_cos_pi_12_tab,_SYMB,0,&minus_cos_pi_12_4_symb,_SYMB,0,&inv_4_symb);
   const define_alias_ref_vecteur2(minus_cos_pi_12_refv,alias_minus_cos_pi_12_tab);
-  const define_alias_ref_symbolic( minus_cos_pi_12_symb ,alias_at_prod,_VECT,0,&minus_cos_pi_12_refv);
+  const define_alias_ref_symbolic( minus_cos_pi_12_symb ,alias_at_prod,_VECT,_SEQ__VECT,&minus_cos_pi_12_refv);
   const define_alias_gen(alias_minus_cos_pi_12,_SYMB,0,&minus_cos_pi_12_symb);
   const gen & minus_cos_pi_12 = *(const gen *)&alias_minus_cos_pi_12;
 
   const define_tab2_alias_gen(alias_sin_pi_12_4_tab,_SYMB,0,&plus_sqrt6_symb,_SYMB,0,&minus_sqrt2_symb);
   const define_alias_ref_vecteur2(sin_pi_12_4_refv,alias_sin_pi_12_4_tab);
-  const define_alias_ref_symbolic( sin_pi_12_4_symb ,alias_at_plus,_VECT,0,&sin_pi_12_4_refv);
+  const define_alias_ref_symbolic( sin_pi_12_4_symb ,alias_at_plus,_VECT,_SEQ__VECT,&sin_pi_12_4_refv);
   const define_tab2_alias_gen(alias_sin_pi_12_tab,_SYMB,0,&sin_pi_12_4_symb,_SYMB,0,&inv_4_symb);
   const define_alias_ref_vecteur2(sin_pi_12_refv,alias_sin_pi_12_tab);
-  const define_alias_ref_symbolic( sin_pi_12_symb ,alias_at_prod,_VECT,0,&sin_pi_12_refv);
+  const define_alias_ref_symbolic( sin_pi_12_symb ,alias_at_prod,_VECT,_SEQ__VECT,&sin_pi_12_refv);
   const define_alias_gen(alias_sin_pi_12,_SYMB,0,&sin_pi_12_symb);
   const gen & sin_pi_12 = *(const gen *)&alias_sin_pi_12;
 
@@ -7975,19 +8389,19 @@ namespace giac {
   const define_alias_ref_symbolic( minus_sin_pi_12_4_symb ,alias_at_plus,_VECT,_SEQ__VECT,&minus_sin_pi_12_4_refv);
   const define_tab2_alias_gen(alias_minus_sin_pi_12_tab,_SYMB,0,&minus_sin_pi_12_4_symb,_SYMB,0,&inv_4_symb);
   const define_alias_ref_vecteur2(minus_sin_pi_12_refv,alias_minus_sin_pi_12_tab);
-  const define_alias_ref_symbolic( minus_sin_pi_12_symb ,alias_at_prod,_VECT,0,&minus_sin_pi_12_refv);
+  const define_alias_ref_symbolic( minus_sin_pi_12_symb ,alias_at_prod,_VECT,_SEQ__VECT,&minus_sin_pi_12_refv);
   const define_alias_gen(alias_minus_sin_pi_12,_SYMB,0,&minus_sin_pi_12_symb);
   const gen & minus_sin_pi_12 = *(const gen *)&alias_minus_sin_pi_12;
 
   const define_tab2_alias_gen(alias_tan_pi_12_tab,_INT_,0,2,_SYMB,0,&minus_sqrt3_symb);
   const define_alias_ref_vecteur2(tan_pi_12_refv,alias_tan_pi_12_tab);
-  const define_alias_ref_symbolic( tan_pi_12_symb ,alias_at_plus,_VECT,0,&tan_pi_12_refv);
+  const define_alias_ref_symbolic( tan_pi_12_symb ,alias_at_plus,_VECT,_SEQ__VECT,&tan_pi_12_refv);
   const define_alias_gen(alias_tan_pi_12,_SYMB,0,&tan_pi_12_symb);
   const gen & tan_pi_12 = *(const gen *)&alias_tan_pi_12;
 
   const define_tab2_alias_gen(alias_tan_5pi_12_tab,_INT_,0,2,_SYMB,0,&plus_sqrt3_symb);
   const define_alias_ref_vecteur2(tan_5pi_12_refv,alias_tan_5pi_12_tab);
-  const define_alias_ref_symbolic( tan_5pi_12_symb ,alias_at_plus,_VECT,0,&tan_5pi_12_refv);
+  const define_alias_ref_symbolic( tan_5pi_12_symb ,alias_at_plus,_VECT,_SEQ__VECT,&tan_5pi_12_refv);
   const define_alias_gen(alias_tan_5pi_12,_SYMB,0,&tan_5pi_12_symb);
   const gen & tan_5pi_12 = *(const gen *)&alias_tan_5pi_12;
 
@@ -8009,13 +8423,13 @@ namespace giac {
 
   const define_tab2_alias_gen(alias_rad2deg_e_tab,_INT_,0,180,_SYMB,0,&inv_pi_symb);
   const define_alias_ref_vecteur2(rad2deg_e_refv,alias_rad2deg_e_tab);
-  const define_alias_ref_symbolic( rad2deg_e_symb ,(unsigned long)&_prod,_VECT,0,&rad2deg_e_refv);
+  const define_alias_ref_symbolic( rad2deg_e_symb ,(unsigned long)&_prod,_VECT,_SEQ__VECT,&rad2deg_e_refv);
   const define_alias_gen(alias_rad2deg_e,_SYMB,0,&rad2deg_e_symb);
   const gen & rad2deg_e = *(const gen *)&alias_rad2deg_e;
 
   const define_tab2_alias_gen(alias_deg2rad_e_tab,_IDNT,0,&ref_pi,_SYMB,0,&inv_180_symb);
   const define_alias_ref_vecteur2(deg2rad_e_refv,alias_deg2rad_e_tab);
-  const define_alias_ref_symbolic( deg2rad_e_symb ,(unsigned long)&__prod,_VECT,0,&deg2rad_e_refv);
+  const define_alias_ref_symbolic( deg2rad_e_symb ,(unsigned long)&__prod,_VECT,_SEQ__VECT,&deg2rad_e_refv);
   const define_alias_gen(alias_deg2rad_e,_SYMB,0,&deg2rad_e_symb);
   const gen & deg2rad_e = *(const gen *)&alias_deg2rad_e;
 
@@ -8038,54 +8452,54 @@ namespace giac {
 
 #endif // GIAC_GENERIC_CONSTANTS
 
-  const unsigned long reim_op_alias[]={(long)&__inv,(long)&__exp,(long)&__cos,(long)&__sin,(long)&__tan,(long)&__cosh,(long)&__sinh,(long)&__tanh,(long)&__atan,(long)&__lnGamma_minus,(long)&__Gamma,(long)&__Psi_minus_ln,(long)&__Psi,(long)&__Zeta,(long)&__Eta,(long)&__sign,(long)&__erf,0};
+  const alias_type reim_op_alias[]={(alias_type)&__inv,(alias_type)&__exp,(alias_type)&__cos,(alias_type)&__sin,(alias_type)&__tan,(alias_type)&__cosh,(alias_type)&__sinh,(alias_type)&__tanh,(alias_type)&__atan,(alias_type)&__lnGamma_minus,(alias_type)&__Gamma,(alias_type)&__Psi_minus_ln,(alias_type)&__Psi,(alias_type)&__Zeta,(alias_type)&__Eta,(alias_type)&__sign,(alias_type)&__erf,0};
   const unary_function_ptr * const reim_op=(const unary_function_ptr * const)reim_op_alias;
   // for subst.cc
-  const unsigned long sincostan_tab_alias[]={(long)&__sin,(long)&__cos,(long)&__tan,0};
+  const alias_type sincostan_tab_alias[]={(alias_type)&__sin,(alias_type)&__cos,(alias_type)&__tan,0};
   const unary_function_ptr * const sincostan_tab=(const unary_function_ptr * const) sincostan_tab_alias;
 
-  const unsigned long asinacosatan_tab_alias[] = {(long)&__asin,(long)&__acos,(long)&__atan,0};
+  const alias_type asinacosatan_tab_alias[] = {(alias_type)&__asin,(alias_type)&__acos,(alias_type)&__atan,0};
   const unary_function_ptr * const asinacosatan_tab=(const unary_function_ptr * const) asinacosatan_tab_alias;
 
-  const unsigned long sinhcoshtanh_tab_alias[]={alias_at_sinh,alias_at_cosh,alias_at_tanh,0};
+  const alias_type sinhcoshtanh_tab_alias[]={alias_at_sinh,alias_at_cosh,alias_at_tanh,0};
   const unary_function_ptr * const sinhcoshtanh_tab=(const unary_function_ptr * const)sinhcoshtanh_tab_alias;
 
-  const unsigned long sinhcoshtanhinv_tab_alias[]={(long)&__sinh,(long)&__cosh,(long)&__tanh,(long)&__inv,0};
+  const alias_type sinhcoshtanhinv_tab_alias[]={(alias_type)&__sinh,(alias_type)&__cosh,(alias_type)&__tanh,(alias_type)&__inv,0};
   const unary_function_ptr * const sinhcoshtanhinv_tab=(const unary_function_ptr * const)sinhcoshtanhinv_tab_alias;
 
-  const unsigned long sincostansinhcoshtanh_tab_alias[]={(long)&__sin,(long)&__cos,(long)&__tan,(long)&__sinh,(long)&__cosh,(long)&__tanh,0};
+  const alias_type sincostansinhcoshtanh_tab_alias[]={(alias_type)&__sin,(alias_type)&__cos,(alias_type)&__tan,(alias_type)&__sinh,(alias_type)&__cosh,(alias_type)&__tanh,0};
   const unary_function_ptr * const sincostansinhcoshtanh_tab=(const unary_function_ptr * const)sincostansinhcoshtanh_tab_alias;
 
   // vector<unary_function_ptr> sincostan_v(sincostan_tab,sincostan_tab+3);
   // vector<unary_function_ptr> asinacosatan_v(asinacosatan_tab,asinacosatan_tab+3);
   // vector<unary_function_ptr> sinhcoshtanh_v(sinhcoshtanh_tab,sinhcoshtanh_tab+3);
   // vector <unary_function_ptr> sincostansinhcoshtanh_v(merge(sincostan_v,sinhcoshtanh_v));
-  const unsigned long sign_floor_ceil_round_tab_alias[]={(long)&__sign,(long)&__floor,(long)&__ceil,(long)&__round,(long)&__sum,0};
+  const alias_type sign_floor_ceil_round_tab_alias[]={(alias_type)&__sign,(alias_type)&__floor,(alias_type)&__ceil,(alias_type)&__round,(alias_type)&__sum,0};
   const unary_function_ptr * const sign_floor_ceil_round_tab=(const unary_function_ptr *const )sign_floor_ceil_round_tab_alias;
 
   // vector<unary_function_ptr> sign_floor_ceil_round_v(sign_floor_ceil_round_tab,sign_floor_ceil_round_tab+5);
-  const unsigned long exp_tab_alias[]={(const unsigned long)&__exp,0};
+  const alias_type exp_tab_alias[]={(const alias_type)&__exp,0};
   const unary_function_ptr * const exp_tab=(const unary_function_ptr * const)exp_tab_alias;
 
-  const unsigned long tan_tab_alias[]={(const unsigned long)&__tan,0};
+  const alias_type tan_tab_alias[]={(const alias_type)&__tan,0};
   const unary_function_ptr * const tan_tab=(const unary_function_ptr * const)tan_tab_alias;
 
-  const unsigned long asin_tab_alias[]={(const unsigned long)&__asin,0};
+  const alias_type asin_tab_alias[]={(const alias_type)&__asin,0};
   const unary_function_ptr * const asin_tab=(const unary_function_ptr * const)asin_tab_alias;
 
-  const unsigned long acos_tab_alias[]={(const unsigned long)&__acos,0};
+  const alias_type acos_tab_alias[]={(const alias_type)&__acos,0};
   const unary_function_ptr * const acos_tab=(const unary_function_ptr * const)acos_tab_alias;
 
-  const unsigned long atan_tab_alias[]={(const unsigned long)&__atan,0};
+  const alias_type atan_tab_alias[]={(const alias_type)&__atan,0};
   const unary_function_ptr * const atan_tab=(const unary_function_ptr * const)atan_tab_alias;
 
-  const unsigned long pow_tab_alias[]={(const unsigned long)&__pow,0};
+  const alias_type pow_tab_alias[]={(const alias_type)&__pow,0};
   const unary_function_ptr * const pow_tab=(const unary_function_ptr * const)pow_tab_alias;
 
-  const unsigned long Heaviside_tab_alias[]={alias_at_Heaviside,0};
+  const alias_type Heaviside_tab_alias[]={alias_at_Heaviside,0};
   const unary_function_ptr * const Heaviside_tab=(const unary_function_ptr * const)Heaviside_tab_alias;
 
-  const unsigned long invpowtan_tab_alias[]={alias_at_inv,alias_at_pow,alias_at_tan,0};
+  const alias_type invpowtan_tab_alias[]={alias_at_inv,alias_at_pow,alias_at_tan,0};
   const unary_function_ptr * const invpowtan_tab=(const unary_function_ptr * const) invpowtan_tab_alias;
 
   const gen_op_context halftan_tab[]={sin2tan2,cos2tan2,tan2tan2,0};
@@ -8113,31 +8527,31 @@ namespace giac {
   const gen_op_context trigtan_tab[]={trigtanpow,0};
   const gen_op_context powexpand_tab[]={powtopowexpand,0};
   const gen_op_context exp2power_tab[]={exptopower,0};
-  const unsigned long gamma_tab_alias[]={alias_at_Gamma,0};
+  const alias_type gamma_tab_alias[]={alias_at_Gamma,0};
   const unary_function_ptr * const gamma_tab=(const unary_function_ptr * const)gamma_tab_alias;
 
   const gen_op_context gamma2factorial_tab[]={gammatofactorial,0};
-  const unsigned long factorial_tab_alias[]={alias_at_factorial,0};
+  const alias_type factorial_tab_alias[]={alias_at_factorial,0};
   const unary_function_ptr * const factorial_tab=(const unary_function_ptr * const)factorial_tab_alias;
 
   const gen_op_context factorial2gamma_tab[]={factorialtogamma,0};
 
   // for integration
-  const unsigned long  primitive_tab_op_alias[]={ (const unsigned long)&__sin, (const unsigned long)&__cos, (const unsigned long)&__tan, (const unsigned long)&__exp, (const unsigned long)&__sinh, (const unsigned long)&__cosh, (const unsigned long)&__tanh, (const unsigned long)&__asin, (const unsigned long)&__acos, (const unsigned long)&__atan, (const unsigned long)&__ln,0};
+  const alias_type  primitive_tab_op_alias[]={ (const alias_type)&__sin, (const alias_type)&__cos, (const alias_type)&__tan, (const alias_type)&__exp, (const alias_type)&__sinh, (const alias_type)&__cosh, (const alias_type)&__tanh, (const alias_type)&__asin, (const alias_type)&__acos, (const alias_type)&__atan, (const alias_type)&__ln,0};
   const unary_function_ptr * const primitive_tab_op=(const unary_function_ptr * const)primitive_tab_op_alias;
-  const unsigned long inverse_tab_op_alias[]={ (const unsigned long)&__asin, (const unsigned long)&__acos, (const unsigned long)&__atan, (const unsigned long)&__ln, (const unsigned long)&__asinh, (const unsigned long)&__acos, (const unsigned long)&__atanh, (const unsigned long)&__erf, (const unsigned long)&__erfc, (const unsigned long)&__Ei, (const unsigned long)&__Si, (const unsigned long)&__Ci,0};
+  const alias_type inverse_tab_op_alias[]={ (const alias_type)&__asin, (const alias_type)&__acos, (const alias_type)&__atan, (const alias_type)&__ln, (const alias_type)&__asinh, (const alias_type)&__acos, (const alias_type)&__atanh, (const alias_type)&__erf, (const alias_type)&__erfc, (const alias_type)&__Ei, (const alias_type)&__Si, (const alias_type)&__Ci,0};
   const unary_function_ptr * const inverse_tab_op=(const unary_function_ptr * const)inverse_tab_op_alias;
 
-  const unsigned long  analytic_sommets_alias[]={ (const unsigned long)&__plus, (const unsigned long)&__prod, (const unsigned long)&__neg, (const unsigned long)&__inv, (const unsigned long)&__pow, (const unsigned long)&__sin, (const unsigned long)&__cos, (const unsigned long)&__tan, (const unsigned long)&__exp, (const unsigned long)&__sinh, (const unsigned long)&__cosh, (const unsigned long)&__tanh, (const unsigned long)&__asin, (const unsigned long)&__acos, (const unsigned long)&__atan, (const unsigned long)&__asinh, (const unsigned long)&__atanh, (const unsigned long)&__acosh, (const unsigned long)&__ln, (const unsigned long)&__sqrt,0};  
+  const alias_type  analytic_sommets_alias[]={ (const alias_type)&__plus, (const alias_type)&__prod, (const alias_type)&__neg, (const alias_type)&__inv, (const alias_type)&__pow, (const alias_type)&__sin, (const alias_type)&__cos, (const alias_type)&__tan, (const alias_type)&__exp, (const alias_type)&__sinh, (const alias_type)&__cosh, (const alias_type)&__tanh, (const alias_type)&__asin, (const alias_type)&__acos, (const alias_type)&__atan, (const alias_type)&__asinh, (const alias_type)&__atanh, (const alias_type)&__acosh, (const alias_type)&__ln, (const alias_type)&__sqrt,0};  
   const unary_function_ptr * const analytic_sommets=(const unary_function_ptr * const)analytic_sommets_alias;
   // test if g is < > <= >=, 
-  const unsigned long  inequality_tab_alias[]={ (const unsigned long)&__equal, (const unsigned long)&__inferieur_strict, (const unsigned long)&__inferieur_egal, (const unsigned long)&__different, (const unsigned long)&__superieur_strict, (const unsigned long)&__superieur_egal,0};
+  const alias_type  inequality_tab_alias[]={ (const alias_type)&__equal, (const alias_type)&__inferieur_strict, (const alias_type)&__inferieur_egal, (const alias_type)&__different, (const alias_type)&__superieur_strict, (const alias_type)&__superieur_egal,0};
   const unary_function_ptr * const inequality_tab=(const unary_function_ptr * const)inequality_tab_alias;
   // if you add functions to solve_fcns, modify the second argument of solve_fcns_v to reflect the number of functions in the array
-  const unsigned long  solve_fcns_tab_alias[]={  (const unsigned long)&__exp, (const unsigned long)&__ln, (const unsigned long)&__sin, (const unsigned long)&__cos, (const unsigned long)&__tan, (const unsigned long)&__asin, (const unsigned long)&__acos, (const unsigned long)&__atan, (const unsigned long)&__sinh, (const unsigned long)&__cosh, (const unsigned long)&__tanh, (const unsigned long)&__asinh, (const unsigned long)&__acosh, (const unsigned long)&__atanh,0};
+  const alias_type  solve_fcns_tab_alias[]={  (const alias_type)&__exp, (const alias_type)&__ln, (const alias_type)&__sin, (const alias_type)&__cos, (const alias_type)&__tan, (const alias_type)&__asin, (const alias_type)&__acos, (const alias_type)&__atan, (const alias_type)&__sinh, (const alias_type)&__cosh, (const alias_type)&__tanh, (const alias_type)&__asinh, (const alias_type)&__acosh, (const alias_type)&__atanh,0};
   const unary_function_ptr * const solve_fcns_tab = (const unary_function_ptr * const)solve_fcns_tab_alias;
 
-  const unsigned long limit_tab_alias[]={(const unsigned long)&__Gamma,(const unsigned long)&__Psi,(const unsigned long)&__erf,(const unsigned long)&__Si,(const unsigned long)&__Ci,(const unsigned long)&__Ei,0};
+  const alias_type limit_tab_alias[]={(const alias_type)&__Gamma,(const alias_type)&__Psi,(const alias_type)&__erf,(const alias_type)&__Si,(const alias_type)&__Ci,(const alias_type)&__Ei,0};
   const unary_function_ptr * const limit_tab = (const unary_function_ptr * const) limit_tab_alias;
   const gen_op_context limit_replace [] = {Gamma_replace,Psi_replace,erf_replace,Si_replace,Ci_replace,Ei_replace,0};
 

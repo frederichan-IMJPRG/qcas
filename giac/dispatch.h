@@ -214,7 +214,8 @@ namespace giac {
     _POLYEDRE__VECT=21,
     _RGBA__VECT=22,
     _LIST__VECT=23,
-    _LOGO__VECT=24
+    _LOGO__VECT=24,
+    _GGB__VECT=25,
   } ;
 
   enum symb_subtypes {
@@ -330,7 +331,10 @@ namespace giac {
     _GL_ROTATION_AXIS=100,
     _GL_X_AXIS_COLOR=101,
     _GL_Y_AXIS_COLOR=102,
-    _GL_Z_AXIS_COLOR=103
+    _GL_Z_AXIS_COLOR=103,
+    _GL_LOGX=104,
+    _GL_LOGY=105,
+    _GL_LOGZ=106,
   };
 
   enum solver_methods {

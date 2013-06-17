@@ -39,7 +39,7 @@ namespace std {
   };
 
   // define IMMEDIATE_VECTOR to an integer>=1 for non-dynamical small vectors
-#ifdef IMMEDIATE_VECTOR
+#if defined(IMMEDIATE_VECTOR) 
 
 #define _begin_immediate_vect _ptr[0]
 #define _endalloc_immediate_vect _ptr[1]
@@ -422,6 +422,9 @@ namespace std {
     void swap(imvector<_Tp>& __x,imvector<_Tp>& __y){
     __x.swap(__y);
   }
+#else // IMMEDIATE_VECTOR
+
+#define imvector vector
 
 #endif // IMMEDIATE_VECTOR
 } // namespace std

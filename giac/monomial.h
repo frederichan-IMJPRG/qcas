@@ -290,17 +290,17 @@ namespace giac {
 
   // ordering monomials using index ordering
   template <class T>
-  bool m_total_lex_is_greater(const monomial<T> & m1, const monomial<T> & m2){
-    return(i_total_lex_is_greater(m1.index,m2.index));
+  bool m_total_lex_is_strictly_greater(const monomial<T> & m1, const monomial<T> & m2){
+    return(i_total_lex_is_strictly_greater(m1.index,m2.index));
   }
   template <class T>
-  bool m_lex_is_greater(const monomial<T> & m1, const monomial<T> & m2){
-    return(i_lex_is_greater(m1.index,m2.index));
+  bool m_lex_is_strictly_greater(const monomial<T> & m1, const monomial<T> & m2){
+    return(i_lex_is_strictly_greater(m1.index,m2.index));
   }
 
   template <class T>
-  bool m_total_revlex_is_greater(const monomial<T> & m1, const monomial<T> & m2){
-    return(i_total_revlex_is_greater(m1.index,m2.index));
+  bool m_total_revlex_is_strictly_greater(const monomial<T> & m1, const monomial<T> & m2){
+    return(i_total_revlex_is_strictly_greater(m1.index,m2.index));
   }
 
   template <class T>
@@ -477,7 +477,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Add(a,a_end,b,b_end,res,i_lex_is_greater);
+    Add(a,a_end,b,b_end,res,i_lex_is_strictly_greater);
     return res ;
   }
 
@@ -543,7 +543,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Sub(a,a_end,b,b_end,res,i_lex_is_greater);
+    Sub(a,a_end,b,b_end,res,i_lex_is_strictly_greater);
     return res ;
   }
 
@@ -581,7 +581,7 @@ namespace giac {
 	     typename std::vector< monomial<T> >::const_iterator & itb_end,
 	     std::vector< monomial<T> > & new_coord,
 	     bool (* is_strictly_greater)( const index_m &, const index_m &),
-	     const std::pointer_to_binary_function < const monomial<T> &, const monomial<T> &, bool> m_is_greater
+	     const std::pointer_to_binary_function < const monomial<T> &, const monomial<T> &, bool> m_is_strictly_greater
 	     ) {
     if (ita==ita_end || itb==itb_end){
       new_coord.clear();
@@ -620,7 +620,7 @@ namespace giac {
       if (!is_zero(prod_it_->second))
 	new_coord.push_back(monomial<T>(prod_it_->second,prod_it_->first));
     // cerr << new_coord <<endl;
-    sort(new_coord.begin(),new_coord.end(),m_is_greater);
+    sort(new_coord.begin(),new_coord.end(),m_is_strictly_greater);
     return ;
 #endif
 
@@ -657,7 +657,7 @@ namespace giac {
       if (!is_zero(prod_it->second))
 	new_coord.push_back(monomial<T>(prod_it->second,prod_it->first));
     // cerr << new_coord <<endl;
-    // sort(new_coord.begin(),new_coord.end(),m_is_greater);
+    // sort(new_coord.begin(),new_coord.end(),m_is_strictly_greater);
   
     /* old algorithm
        std::vector< monomial<T> > multcoord;
@@ -708,7 +708,7 @@ namespace giac {
        if (!is_zero(res))
        multcoord.push_back( monomial<T>(res ,old_pow ));
        // sort by asc. power
-       sort( multcoord.begin(),multcoord.end(),m_is_greater);
+       sort( multcoord.begin(),multcoord.end(),m_is_strictly_greater);
        typename std::vector< monomial<T> >::const_iterator it=multcoord.begin();
        typename std::vector< monomial<T> >::const_iterator itend=multcoord.end();
        // adjust result size 
@@ -740,7 +740,7 @@ namespace giac {
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
     std::vector< monomial<T> > res;
-    Mul(a,a_end,b,b_end,res,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,res,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_strictly_greater<T>)));
     return res ;
   }
 
@@ -748,7 +748,7 @@ namespace giac {
   std::vector< monomial<T> > & operator *= (std::vector< monomial<T> > & v,const std::vector< monomial<T> > & w){
     typename std::vector< monomial<T> >::const_iterator a=v.begin(), a_end=v.end();
     typename std::vector< monomial<T> >::const_iterator b=w.begin(), b_end=w.end();
-    Mul(a,a_end,b,b_end,v,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_greater<T>)));
+    Mul(a,a_end,b,b_end,v,i_lex_is_strictly_greater,std::ptr_fun< const monomial<T> &, const monomial<T> &, bool >((m_lex_is_strictly_greater<T>)));
     return v;
   }
 

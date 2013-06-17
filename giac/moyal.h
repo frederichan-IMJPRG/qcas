@@ -24,6 +24,10 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
   class gen;
+  gen incomplete_beta(double a,double b,double p,bool regularize=true);
+  gen lower_incomplete_gamma(double s,double z,bool regularize=true); // lower incomplete
+
+
   gen moyal(const gen & a,const gen & b,const gen & vars,const gen & order);
   gen _moyal(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_moyal ;
@@ -36,12 +40,30 @@ namespace giac {
   gen _Airy_Bi(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_Airy_Bi ;
 
-  gen randNorm();
+  double randNorm(GIAC_CONTEXT);
   gen _randNorm(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_randNorm ;
+  extern const unary_function_ptr * const  at_randnormald ;
 
   gen _randexp(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_randexp ;
+  gen randpoisson(double lambda,GIAC_CONTEXT);
+  gen randbinomial(int n,double P,GIAC_CONTEXT);
+  double randchisquare(int k,GIAC_CONTEXT);
+  double randstudent(int k,GIAC_CONTEXT);
+  double randfisher(int k1,int k2,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_randchisquare ;
+  extern const unary_function_ptr * const  at_randchisquared ;
+  extern const unary_function_ptr * const  at_randstudent ;
+  extern const unary_function_ptr * const  at_randstudentd ;
+  extern const unary_function_ptr * const  at_randfisherd ;
+  extern const unary_function_ptr * const  at_fisher ;
+  extern const unary_function_ptr * const  at_fisherd ;
+  extern const unary_function_ptr * const  at_randfisher ;
+  extern const unary_function_ptr * const  at_cauchyd ;
+  extern const unary_function_ptr * const  at_cauchy ;
+  extern const unary_function_ptr * const  at_cauchy_cdf ;
+  extern const unary_function_ptr * const  at_cauchy_icdf ;
 
   gen _UTPN(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_UTPN ;
@@ -61,6 +83,9 @@ namespace giac {
   gen binomial(const gen & n,const gen & k,const gen & p,GIAC_CONTEXT);
   gen _binomial(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_binomial ;
+  extern const unary_function_ptr * const  at_BINOMIAL ;
+  gen _negbinomial(const gen & g,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_negbinomial ;
 
   gen binomial_cdf(const gen & n,const gen &p,const gen & x0,const gen & x,GIAC_CONTEXT);
   gen _binomial_cdf(const gen & args,GIAC_CONTEXT);
@@ -73,7 +98,9 @@ namespace giac {
   gen poisson(const gen & m,const gen & k,GIAC_CONTEXT);
   gen _poisson(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_poisson ;
+  extern const unary_function_ptr * const  at_POISSON ;
 
+  double poisson_cdf(double lambda,double x);
   gen poisson_cdf(const gen & n,const gen & x,GIAC_CONTEXT);
   gen _poisson_cdf(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_poisson_cdf ;
@@ -83,6 +110,8 @@ namespace giac {
   extern const unary_function_ptr * const  at_poisson_icdf ;
 
   gen _normald(const gen & g,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_normald ;
+  extern const unary_function_ptr * const  at_NORMALD ;
   gen _normal_cdf(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_normal_cdf ;
 
@@ -92,6 +121,7 @@ namespace giac {
   gen student(const gen & n,const gen & x,GIAC_CONTEXT);
   gen _student(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_student ;
+  extern const unary_function_ptr * const  at_studentd ;
 
   gen student_cdf(const gen & dof,const gen & x1,const gen & x2,GIAC_CONTEXT);
   gen _student_cdf(const gen & args,GIAC_CONTEXT);
@@ -101,9 +131,35 @@ namespace giac {
   gen _student_icdf(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_student_icdf ;
 
+  gen geometric(const gen & p,const gen & k,GIAC_CONTEXT);
+  gen _geometric(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_geometric ;
+  gen geometric_cdf(const gen & p,const gen & k,GIAC_CONTEXT);
+  gen _geometric_cdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_geometric_cdf ;
+  gen geometric_icdf(const gen & p,const gen & k,GIAC_CONTEXT);
+  gen _geometric_icdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_geometric_icdf ;
+  gen _randgeometric(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_randgeometric ;
+  extern const unary_function_ptr * const  at_uniformd ;
+  extern const unary_function_ptr * const  at_uniform ;
+  extern const unary_function_ptr * const  at_uniform_cdf ;
+  extern const unary_function_ptr * const  at_uniform_icdf ;
+  extern const unary_function_ptr * const  at_uniformd_cdf ;
+  extern const unary_function_ptr * const  at_uniformd_icdf ;
+
+  extern const unary_function_ptr * const  at_exponentiald ;
+  extern const unary_function_ptr * const  at_exponential ;
+  extern const unary_function_ptr * const  at_exponential_cdf ;
+  extern const unary_function_ptr * const  at_exponential_icdf ;
+  extern const unary_function_ptr * const  at_exponentiald_cdf ;
+  extern const unary_function_ptr * const  at_exponentiald_icdf ;
+
   gen chisquare(const gen & n,const gen & x,GIAC_CONTEXT);
   gen _chisquare(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_chisquare ;
+  extern const unary_function_ptr * const  at_chisquared ;
 
   gen chisquare_cdf(const gen & dof,const gen & x1,const gen & x2,GIAC_CONTEXT);
   gen _chisquare_cdf(const gen & args,GIAC_CONTEXT);
@@ -125,9 +181,61 @@ namespace giac {
   gen _snedecor_icdf(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_snedecor_icdf ;
 
+  extern const unary_function_ptr * const  at_weibulld ;
+
   gen Beta(const gen & a,const gen& b,GIAC_CONTEXT);
   gen _Beta(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_Beta ;
+
+  gen _betad(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_betad ;
+
+  gen _betad_cdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_betad_cdf ;
+
+  gen _betad_icdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_betad_icdf ;
+
+  gen _gammad(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_gammad ;
+
+  gen _gammad_cdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_gammad_cdf ;
+
+  gen _gammad_icdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_gammad_icdf ;
+
+  gen _kolmogorovd(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_kolmogorovd ;
+
+  gen _kolmogorovt(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_kolmogorovt ;
+
+  gen _negbinomial_icdf(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_negbinomial_icdf ;
+
+  // return 0 if not distrib
+  // 1 normal, 2 binomial, 3 negbinomial, 4 poisson, 5 student, 
+  // 6 fisher, 7 cauchy, 8 weibull, 9 betad, 10 gammad, 11 chisquare
+  int is_distribution(const gen & args);
+  int distrib_nargs(int nd); // number of args for the distribution
+  bool distrib_support(int nd,gen & a,gen &b,bool truncate);
+  // icdf and cdf function corresponding to the codes above
+  gen icdf(int n);
+  gen cdf(int n);
+  int giacmax(const std::vector<int> & X);
+  int giacmin(const std::vector<int> & X);
+  void effectif(const std::vector<int> & x,std::vector<int> & eff,int m);
+  void somme(const std::vector<int> & x,const std::vector<int> &y,std::vector<int> & z);
+
+  gen _lower_incomplete_gamma(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_lower_incomplete_gamma ;
+  double upper_incomplete_gammad(double s,double z,bool regularize);
+  gen _upper_incomplete_gamma(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_upper_incomplete_gamma ;
+
+  gen _polygamma(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_polygamma ;
 
   // kind=0: BesselI, =1 BesselJ, =2 BesselK, =3 BesselY
   gen Bessel(const gen & g,int kind,GIAC_CONTEXT);
@@ -143,6 +251,9 @@ namespace giac {
 
   gen _BesselY(const gen & args,GIAC_CONTEXT);
   extern const unary_function_ptr * const  at_BesselY ;
+
+  gen _harmonic(const gen & args,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_harmonic ;
 
   gen _constants_catalog(const gen & g,GIAC_CONTEXT);
 

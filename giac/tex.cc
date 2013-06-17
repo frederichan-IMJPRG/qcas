@@ -467,11 +467,11 @@ namespace giac {
     // then the std::string is returned
 #else
     if (d<=-1e30 || d>=1e30)
-      sprintf(s,"%13g",d);
+      sprintfdouble(s,"%13g",d);
     else
-      sprintf(s,"%13.6f",d);
+      sprintfdouble(s,"%13.6f",d);
 #endif
-	return s;
+    return s;
   }
 
   // convert UTF-8 string to wchar_t *, return adjusted length
@@ -741,7 +741,7 @@ namespace giac {
       vecteur v=*point._SYMBptr->feuille._VECTptr;
       gen diametre=remove_at_pnt(v[0]);
       gen e1=diametre._VECTptr->front().evalf(1,contextptr),e2=diametre._VECTptr->back().evalf(1,contextptr);
-      gen centre=rdiv(e1+e2,2.0),rayon=abs(rdiv(e2-e1,2.0),contextptr);
+      gen centre=rdiv(e1+e2,gen(2.0),contextptr),rayon=abs(rdiv(e2-e1,gen(2.0),contextptr),contextptr);
       x=evalf_double(re(centre,contextptr),1,contextptr);
       y=evalf_double(im(centre,contextptr),1,contextptr);
       if ( (x.type==_DOUBLE_) && (y.type==_DOUBLE_) && (rayon.type==_DOUBLE_) ){
@@ -975,11 +975,17 @@ namespace giac {
     if (g.is_symb_of_sommet(at_cercle)){
       gen c,r;
       centre_rayon(g,c,r,false,contextptr);
+      if (is_zero(r)) r=1;
       vecteur v;
       if (g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()>=3){
 	v=*g._SYMBptr->feuille._VECTptr;
 	gen delta=v[2]-v[1];
 	v=makevecteur(c-r*exp(cst_i*(v[1]-0.1*delta),contextptr),
+		      c-r*exp(cst_i*v[1],contextptr),
+		      c-r*exp(cst_i*(3*v[1]+v[2])/gen(4),contextptr),
+		      c-r*exp(cst_i*(v[1]+v[2])/gen(2),contextptr),
+		      c-r*exp(cst_i*(v[1]+3*v[2])/gen(4),contextptr),
+		      c-r*exp(cst_i*v[2],contextptr),
 		      c-r*exp(cst_i*(v[2]+0.1*delta),contextptr)); 
 	// FIXME? centre_rayon returns (a-b)/2 for rayon instead of (b-a)/2...
       }
@@ -1084,7 +1090,7 @@ namespace giac {
 	  return opstring+gen2tex(feu,contextptr) ;
 	return opstring+string("\\left(") + gen2tex(feu,contextptr) +string("\\right)");
       }
-      if (mys.sommet==at_inv && (feu.is_symb_of_sommet(at_prod) || is_integer(feu)) ){
+      if (mys.sommet==at_inv && (feu.is_symb_of_sommet(at_prod) || feu.type<=_IDNT) ){
 	return string("\\frac{1}{") + gen2tex(feu,contextptr) +string("}");
       }
       return opstring + "\\left(" + gen2tex(feu,contextptr) +"\\right)" ;

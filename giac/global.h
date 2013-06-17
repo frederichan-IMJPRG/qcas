@@ -26,7 +26,7 @@
 #define GIAC_CONTEXT const context * contextptr
 #define GIAC_CONTEXT0 const context * contextptr=0
 
-#if !defined(HAVE_NO_SYS_TIMES_H) && !defined(BESTA_OS)
+#if !defined(HAVE_NO_SYS_TIMES_H) && !defined(BESTA_OS) && !defined(__MINGW_H)
 #include <sys/times.h>
 #else
 #if defined VISUALC || defined BESTA_OS 
@@ -34,6 +34,9 @@ typedef long pid_t;
 #else // VISUALC
 #if !defined(__MINGW_H) && !defined(BESTA_OS)
 #include "wince_replacements.h"
+#endif
+#ifdef __MINGW_H
+#include <sys/types.h>
 #endif
 #endif // VISUALC
 #endif // HAVE_NO_SYS_TIMES_H
@@ -108,7 +111,7 @@ namespace giac {
   // convert position n in utf8-encoded line into the corresponding position
   // in the same string encoded with unicode
   unsigned int utf8pos2unicodepos(const char * line,unsigned int n,bool skip_added_spaces = true);
-  unsigned int wstrlen(const char * line);
+  unsigned int wstrlen(const char * line, unsigned int n = ~0u);
   unsigned int wstrlen(const wchar_t * wline);
   unsigned int utf8length(const wchar_t * wline);
 
@@ -180,14 +183,25 @@ namespace giac {
   extern int FFTMUL_SIZE; // Currently adapted to (x+1)^n
   // Should be lower for larger coeff
   extern int MAX_ALG_EXT_ORDER_SIZE; // x^1/d extension not algebraic if d>
+  extern int MAX_COMMON_ALG_EXT_ORDER_SIZE;
   extern int TRY_FU_UPRIME;
   extern int SOLVER_MAX_ITERATE;
   extern int MAX_PRINTABLE_ZINT;
   extern int MAX_RECURSION_LEVEL;
-  extern bool ctrl_c,interrupted;
+  extern volatile bool ctrl_c,interrupted;
   void ctrl_c_signal_handler(int signum);
+#ifdef TIMEOUT
+  extern time_t caseval_begin,caseval_current;
+  extern double caseval_maxtime;
+  extern int caseval_n,caseval_mod,caseval_unitialized;
+#endif
   extern const double powlog2float;
   extern const int MPZ_MAXLOG2;
+
+#ifdef WITH_MYOSTREAM
+  // replacement for std::cerr
+  extern my_ostream my_cerr;
+#endif
 
   // void control_c();
   // note that ctrl_c=false was removed, should be done before calling eval
@@ -196,7 +210,11 @@ namespace giac {
 #elif BESTA_OS
 #define control_c()
 #else
-  #define control_c() if (ctrl_c) { interrupted = true; std::cerr << "Throwing exception for user interruption." << std::endl; throw(std::runtime_error("Stopped by user interruption.")); }
+#ifdef TIMEOUT
+  void control_c();
+#else
+#define control_c() if (ctrl_c) { interrupted = true; std::cerr << "Throwing exception for user interruption." << std::endl; throw(std::runtime_error("Stopped by user interruption.")); }
+#endif
 #endif
   typedef void ( * void_function )();
   // set to non-0 if you want to hook a function call inside control_c()
@@ -395,6 +413,7 @@ namespace giac {
     u32 _bcd_decpoint_;
     u32 _bcd_mantissa_;
     u32 _bcd_flags_;
+    bool _bcd_printdouble_;
 #endif
     bool _expand_re_im_;
     bool _do_lnabs_;
@@ -425,7 +444,11 @@ namespace giac {
     int _show_axes_;
     int _spread_Row_,_spread_Col_;
     int _printcell_current_row_,_printcell_current_col_;
+#ifdef WITH_MYOSTREAM
+    my_ostream * _logptr_;
+#else
     std::ostream * _logptr_;
+#endif
     debug_struct * _debug_ptr;
     gen * _parsed_genptr_;
     parser_lexer _pl;
@@ -533,6 +556,7 @@ namespace giac {
   u32 & bcd_decpoint(GIAC_CONTEXT);
   u32 & bcd_mantissa(GIAC_CONTEXT);
   u32 & bcd_flags(GIAC_CONTEXT);
+  bool & bcd_printdouble(GIAC_CONTEXT);
 #endif
   bool & expand_re_im(GIAC_CONTEXT);
   void expand_re_im(bool b,GIAC_CONTEXT);
@@ -631,8 +655,8 @@ namespace giac {
   void epsilon(double c,GIAC_CONTEXT);
   double & proba_epsilon(GIAC_CONTEXT);
 
-  std::ostream * logptr(GIAC_CONTEXT);
-  void logptr(std::ostream *,GIAC_CONTEXT);
+  my_ostream * logptr(GIAC_CONTEXT);
+  void logptr(my_ostream *,GIAC_CONTEXT);
 
   int & eval_level(GIAC_CONTEXT);
   // void eval_level(int b,GIAC_CONTEXT);
@@ -809,6 +833,9 @@ namespace giac {
   // restore a gen from an opened file
   gen archive_restore(void * f,size_t readfunc(void * p, size_t nbBytes,size_t NbElements, void *file),GIAC_CONTEXT);
   gen archive_restore(FILE * f,GIAC_CONTEXT);
+  void init_geogebra(bool on,GIAC_CONTEXT);
+  vecteur giac_current_status(bool save_history,GIAC_CONTEXT);
+  bool unarchive_session(const gen & g,int level,const gen & replace,GIAC_CONTEXT,bool with_history=true);
 
 #ifndef NO_NAMESPACE_GIAC
 } // namespace giac

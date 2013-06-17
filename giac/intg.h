@@ -35,6 +35,7 @@ namespace giac {
   bool is_quadratic_wrt(const gen & e,const gen &x,gen & a,gen & b,gen & c,GIAC_CONTEXT);
   gen linear_apply(const gen & e,const gen & x,gen & remains, GIAC_CONTEXT, gen (* f)(const gen &,const gen &,gen &,const context *));
   gen lnabs(const gen & x,GIAC_CONTEXT);
+  extern const unary_function_ptr * const  at_surd ;
   gen surd(const gen & c,int n,GIAC_CONTEXT);
   gen _surd(const gen & args,GIAC_CONTEXT);
   gen invexptoexpneg(const gen& g,GIAC_CONTEXT);
@@ -67,6 +68,7 @@ namespace giac {
   gen romberg(const gen & f0,const gen & x0,const gen & a,const gen &b,const gen & eps,int nmax,GIAC_CONTEXT);
   gen symb_romberg(const gen & a,const gen & b);
   gen _romberg(const gen & args,GIAC_CONTEXT);
+  gen ggb_var(const gen & f); // return vx_var or the first var in f if vx_var not there
   extern const unary_function_ptr * const  at_romberg;
 
   // remove quote inside a maple-like sum/product argument vector

@@ -27,6 +27,9 @@ using namespace std;
 #include <signal.h>
 #endif
 #include <math.h>
+#ifndef WINDOWS
+#include <stdint.h>   // for uintptr_t
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -83,14 +86,58 @@ using namespace std;
 #include <Windows.h>
 #else
 #include <bestafir.h>
-#include <stdio.h>
 #include <stdlib.h>
 #endif // besta_win32_target
 #endif // besta_os
 
+#include <stdio.h>
+#include <stdarg.h>
+
+#if defined(FIR)
+extern "C" int firvsprintf(char*,const char*, va_list);
+#endif
+
+int my_sprintf(char * s, const char * format, ...){
+    int z;
+    va_list ap;
+    va_start(ap,format);
+#if defined(FIR)
+    z = firvsprintf(s, format, ap);
+#else
+    z = vsprintf(s, format, ap);
+#endif
+    va_end(ap);
+    return z;
+}
+
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
+
+#ifdef TIMEOUT
+  time_t caseval_begin,caseval_current;
+  double caseval_maxtime=15; // max 15 seconds
+  int caseval_n=0,caseval_mod=0,caseval_unitialized=-123454321;
+  void control_c(){
+    if (caseval_unitialized!=-123454321){
+      caseval_unitialized=-123454321;
+      caseval_mod=0;
+      caseval_n=0;
+      caseval_maxtime=15;
+    }
+    if (caseval_mod>0){ 
+      ++caseval_n; 
+      if (caseval_n >=caseval_mod){
+	caseval_n=0; 
+	caseval_current=time(0); 
+	if (difftime(caseval_current,caseval_begin)>caseval_maxtime){ 
+	  cerr << "Timeout" << endl; ctrl_c=true; interrupted=true; 
+	} 
+      } 
+    }
+  }
+#endif
+
 
 #if defined VISUALC || defined BESTA_OS
   int R_OK=4;
@@ -339,6 +386,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   static int _decimal_digits_=12; 
+
   int & decimal_digits(GIAC_CONTEXT){
     if (contextptr && contextptr->globalptr )
       return contextptr->globalptr->_decimal_digits_;
@@ -410,6 +458,14 @@ extern "C" void Sleep(unsigned int miliSecond);
       return contextptr->globalptr->_bcd_flags_;
     else
       return _bcd_flags_;
+  }
+
+  static bool _bcd_printdouble_=false;
+  bool & bcd_printdouble(GIAC_CONTEXT){
+    if (contextptr && contextptr->globalptr )
+      return contextptr->globalptr->_bcd_printdouble_;
+    else
+      return _bcd_printdouble_;
   }
 
 #endif
@@ -774,6 +830,19 @@ extern "C" void Sleep(unsigned int miliSecond);
       _withsqrt_=b;
   }
 
+#ifdef WITH_MYOSTREAM
+  my_ostream my_cerr (&std::cerr);
+  static my_ostream * _logptr_= &my_cerr;
+
+  my_ostream * logptr(GIAC_CONTEXT){
+    my_ostream * res;
+    if (contextptr && contextptr->globalptr )
+      res=contextptr->globalptr->_logptr_;
+    else
+      res= _logptr_;
+    return res?res:&my_cerr;
+  }
+#else
   static ostream * _logptr_=&std::cerr;
   ostream * logptr(GIAC_CONTEXT){
     ostream * res;
@@ -784,7 +853,9 @@ extern "C" void Sleep(unsigned int miliSecond);
     return res?res:&std::cerr;
   }
 
-  void logptr(ostream * b,GIAC_CONTEXT){
+#endif
+
+  void logptr(my_ostream * b,GIAC_CONTEXT){
     if (contextptr && contextptr->globalptr )
       contextptr->globalptr->_logptr_=b;
     else
@@ -792,10 +863,11 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   thread_param::thread_param(): _kill_thread(false), thread_eval_status(-1), v(6)
-#ifdef HAVE_LIBPTRHEAD
-			      ,eval_thread(0)
+#ifdef HAVE_LIBPTHREAD
+			      ,eval_thread(0),stackaddr(0)
 #endif
- {}
+  { 
+  }
 
   thread_param * & context0_thread_param_ptr(){
     static thread_param * ans=new thread_param();
@@ -1305,7 +1377,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #if defined RTOS_THREADX || defined BESTA_OS
   int LIST_SIZE_LIMIT = 1000 ;
   int FACTORIAL_SIZE_LIMIT = 254 ;
-  int NEWTON_DEFAULT_ITERATION=20;
+  int NEWTON_DEFAULT_ITERATION=40;
   int TEST_PROBAB_PRIME=25;
   int GCDHEU_MAXTRY=5;
   int GCDHEU_DEGREE=100;
@@ -1317,6 +1389,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   int INT_KARAMUL_SIZE=300;
   int FFTMUL_SIZE=1500; 
   int MAX_ALG_EXT_ORDER_SIZE = 4;
+  int MAX_COMMON_ALG_EXT_ORDER_SIZE = 16;
   int TRY_FU_UPRIME=5;
   int SOLVER_MAX_ITERATE=25;
   int MAX_PRINTABLE_ZINT=10000;
@@ -1330,7 +1403,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 #else
   int FACTORIAL_SIZE_LIMIT = 10000000 ;
 #endif
-  int NEWTON_DEFAULT_ITERATION=20;
+  int NEWTON_DEFAULT_ITERATION=60;
   int TEST_PROBAB_PRIME=25;
   int GCDHEU_MAXTRY=5;
   int GCDHEU_DEGREE=100;
@@ -1342,13 +1415,18 @@ extern "C" void Sleep(unsigned int miliSecond);
   int INT_KARAMUL_SIZE=300;
   int FFTMUL_SIZE=1500; 
   int MAX_ALG_EXT_ORDER_SIZE = 6;
+#ifdef EMCC
+  int MAX_COMMON_ALG_EXT_ORDER_SIZE = 16;
+#else
+  int MAX_COMMON_ALG_EXT_ORDER_SIZE = 64;
+#endif
   int TRY_FU_UPRIME=5;
   int SOLVER_MAX_ITERATE=25;
   int MAX_PRINTABLE_ZINT=1000000;
   int MAX_RECURSION_LEVEL=100;
   const int BUFFER_SIZE=16384;
 #endif
-  bool ctrl_c=false,interrupted=false;
+  volatile bool ctrl_c=false,interrupted=false;
 #ifdef GIAC_HAS_STO_38
   const double powlog2float=1e4;
   const int MPZ_MAXLOG2=8000; // max 2^8000 about 1K
@@ -1387,7 +1465,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       kill(child_id,SIGINT);
 #endif
 #endif
-#ifndef HAVE_NO_SIGNAL_H
+#ifdef HAVE_SIGNAL_H
     cerr << "Ctrl-C pressed (pid " << getpid() << ")" << endl;
 #endif
   }
@@ -1438,7 +1516,6 @@ extern "C" void Sleep(unsigned int miliSecond);
   volatile bool signal_plot_child=false; // true if child can continue
   volatile bool signal_plot_parent=false; 
   volatile bool child_busy=false,data_ready=false;
-
   // child sends a SIGUSR1
   void data_signal_handler(int signum){
           // cerr << "Parent called" << endl;
@@ -2130,11 +2207,13 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   void read_config(const string & name,GIAC_CONTEXT,bool verbose){
+#ifndef __MINGW_H
     if (access(name.c_str(),R_OK)) {
       if (verbose)
 	cerr << "// Unable to find config file " << name << endl;
       return;
     }
+#endif
     ifstream inf(name.c_str());
     if (!inf)
       return;
@@ -2199,6 +2278,9 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   string giac_aide_dir(){
+#ifdef __MINGW_H
+    return "";
+#else
     if (!access((xcasroot()+"aide_cas").c_str(),R_OK)){
       return xcasroot();
     }
@@ -2223,6 +2305,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       return s;
     }
     return "";
+#endif // __MINGW_H
   }
 
   std::string absolute_path(const std::string & orig_file){
@@ -2296,8 +2379,10 @@ extern "C" void Sleep(unsigned int miliSecond);
   bool is_file_available(const char * ch){
     if (!ch)
       return false;
+#ifndef __MINGW_H
     if (access(ch,R_OK))
       return false;
+#endif
     return true;
   }
 
@@ -2339,6 +2424,9 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
   static string browser_command(const string & orig_file){
+#ifdef __MINGW_H
+    return "";
+#else
     string file=orig_file;
     string s;
     bool url=false;
@@ -2466,6 +2554,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (debug_infolevel)
       cerr << "// Running command:"+ s<<endl;
     return s;
+#endif // __MINGW_H
   }
 
   bool system_browser_command(const string & file){
@@ -2733,7 +2822,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     if (s=="zh")
       return 8;
     if (s=="de")
-      return 8;
+      return 9;
     return 0;
   }
 
@@ -3029,7 +3118,11 @@ extern "C" void Sleep(unsigned int miliSecond);
 
   void init_context(context * ptr){
      ptr->globalptr->_xcas_mode_=_xcas_mode_;
+#ifdef GIAC_HAS_STO_38
+     ptr->globalptr->_calc_mode_=-38;
+#else
      ptr->globalptr->_calc_mode_=_calc_mode_;
+#endif
      ptr->globalptr->_decimal_digits_=_decimal_digits_;
      ptr->globalptr->_scientific_format_=_scientific_format_;
      ptr->globalptr->_integer_format_=_integer_format_;
@@ -3039,6 +3132,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      ptr->globalptr->_bcd_decpoint_=_bcd_decpoint_;
      ptr->globalptr->_bcd_mantissa_=_bcd_mantissa_;
      ptr->globalptr->_bcd_flags_=_bcd_flags_;
+     ptr->globalptr->_bcd_printdouble_=_bcd_printdouble_;
 #endif
      ptr->globalptr->_expand_re_im_=_expand_re_im_;
      ptr->globalptr->_do_lnabs_=_do_lnabs_;
@@ -3158,7 +3252,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     context * contextptr=(context *) (*v)[2]._POINTER_val;
     thread_param * ptr =thread_param_ptr(contextptr);
     pthread_attr_getstacksize(&ptr->attr,&ptr->stacksize);
-    ptr->stackaddr=(void *) ((unsigned long) &ptr-ptr->stacksize);
+    ptr->stackaddr=(void *) ((uintptr_t) &ptr-ptr->stacksize);
 #ifndef __MINGW_H
     struct tms tmp1,tmp2;
     times(&tmp1);
@@ -3180,6 +3274,7 @@ extern "C" void Sleep(unsigned int miliSecond);
       (*v)[5]=g;
     } catch (std::runtime_error & e){
     }
+    ptr->stackaddr=0;
     thread_eval_status(0,contextptr);
     pthread_exit(0);
   }
@@ -3367,7 +3462,7 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 #endif // HAVE_LIBPTHREAD
 
-  debug_struct::debug_struct():indent_spaces(0),debug_mode(false),sst_mode(false),sst_in_mode(false),debug_allowed(true),debug_refresh(false){
+  debug_struct::debug_struct():indent_spaces(0),debug_mode(false),sst_mode(false),sst_in_mode(false),debug_allowed(true),debug_refresh(false),current_instruction(-1){
     debug_info_ptr=new gen;
     fast_debug_info_ptr=new gen;
     debug_prog_name=new gen;
@@ -3435,11 +3530,22 @@ extern "C" void Sleep(unsigned int miliSecond);
   }
 
 
-  global::global() : _xcas_mode_(0), _calc_mode_(0),_decimal_digits_(12), _scientific_format_(0), _integer_format_(0), _latex_format_(0), 
+  global::global() : _xcas_mode_(0), 
+		     _calc_mode_(0),_decimal_digits_(12),
+		     _scientific_format_(0), _integer_format_(0), _latex_format_(0), 
 #ifdef BCD
-		     _bcd_decpoint_('.'|('E'<<16)|(' '<<24)),_bcd_mantissa_(12+(15<<8)), _bcd_flags_(0),
+		     _bcd_decpoint_('.'|('E'<<16)|(' '<<24)),_bcd_mantissa_(12+(15<<8)), _bcd_flags_(0),_bcd_printdouble_(false),
 #endif
-		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_integer_mode_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), _withsqrt_(true), _show_point_(true),  _io_graph_(true),_all_trig_sol_(false), _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_specialtexprint_double_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) { 
+		     _expand_re_im_(true), _do_lnabs_(true), _eval_abs_(true),_integer_mode_(true),_complex_mode_(false), _complex_variables_(false), _increasing_power_(false), _approx_mode_(false), _variables_are_files_(false), _local_eval_(true), 
+		     _withsqrt_(true), 
+		     _show_point_(true),  _io_graph_(true),
+		     _all_trig_sol_(false),
+#ifdef WITH_MYOSTREAM
+		     _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_specialtexprint_double_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1),_logptr_(&my_cerr),_prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0)
+#else
+		     _ntl_on_(true),_lexer_close_parenthesis_(true),_rpn_mode_(false),_try_parse_i_(true),_specialtexprint_double_(true),_angle_mode_(0), _bounded_function_no_(0), _series_flags_(0x3),_default_color_(FL_BLACK), _epsilon_(1e-12), _proba_epsilon_(1e-15),  _show_axes_(1),_spread_Row_ (-1), _spread_Col_ (-1), _logptr_(&std::cerr), _prog_eval_level_val(1), _eval_level(DEFAULT_EVAL_LEVEL), _rand_seed(123457),_max_sum_sqrt_(3),_max_sum_add_(100000),_total_time_(0),_evaled_table_(0) 
+#endif
+  { 
     _pl._i_sqrt_minus1_=1;
     _turtle_stack_.push_back(_turtle_);
     _debug_ptr=new debug_struct;
@@ -3471,6 +3577,7 @@ extern "C" void Sleep(unsigned int miliSecond);
      _bcd_decpoint_=g._bcd_decpoint_;
      _bcd_mantissa_=g._bcd_mantissa_;
      _bcd_flags_=g._bcd_flags_;
+     _bcd_printdouble_=g._bcd_printdouble_;
 #endif
      _expand_re_im_=g._expand_re_im_;
      _do_lnabs_=g._do_lnabs_;
@@ -3588,66 +3695,378 @@ extern "C" void Sleep(unsigned int miliSecond);
       return k+1;
   }
 
-  /* a pathetic quick & dirty UTF-8 parser 
-   *
-   * adapted from Markus Kuhn -- Public Domain --
-   * (Get uniset from <http://www.cl.cam.ac.uk/~mgk25/download/uniset.tar.gz>.)
-   */
-  // convert UTF-8 string to wchar_t *, return adjusted length
-  unsigned int utf82unicode(const char * line,wchar_t * wline,unsigned int n){
+
+/* ---------------------------------------------------------------------
+    The following 4 definitions are compiler-specific.
+    The C standard does not guarantee that wchar_t has at least
+    16 bits, so wchar_t is no less portable than unsigned short!
+    All should be unsigned values to avoid sign extension during
+    bit mask & shift operations.
+------------------------------------------------------------------------ */
+
+typedef unsigned long UTF32; /* at least 32 bits */
+typedef unsigned short UTF16; /* at least 16 bits */
+typedef unsigned char UTF8; /* typically 8 bits */
+typedef unsigned char Boolean; /* 0 or 1 */
+
+/* Some fundamental constants */
+#define UNI_REPLACEMENT_CHAR (UTF32)0x0000FFFD
+#define UNI_MAX_BMP (UTF32)0x0000FFFF
+#define UNI_MAX_UTF16 (UTF32)0x0010FFFF
+#define UNI_MAX_UTF32 (UTF32)0x7FFFFFFF
+#define UNI_MAX_LEGAL_UTF32 (UTF32)0x0010FFFF
+
+typedef enum {
+    conversionOK = 0,   /* conversion successful */
+    sourceExhausted = -1, /* partial character in source, but hit end */
+    targetExhausted = -2, /* insuff. room in target for conversion */
+    sourceIllegal = -3 /* source sequence is illegal/malformed */
+} ConversionResult;
+
+typedef enum {
+    strictConversion = 0,
+    lenientConversion
+} ConversionFlags;
+
+/* This is for C++ and does no harm in C */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+unsigned int ConvertUTF8toUTF16 (
+        const UTF8* sourceStart, const UTF8* sourceEnd, 
+        UTF16* targetStart, UTF16* targetEnd, ConversionFlags flags);
+
+unsigned int ConvertUTF16toUTF8 (
+        const UTF16* sourceStart, const UTF16* sourceEnd, 
+        UTF8* targetStart, UTF8* targetEnd, ConversionFlags flags);
+
+Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd);
+
+#ifdef __cplusplus
+}
+#endif
+
+/* --------------------------------------------------------------------- */
+/*
+ * Copyright 2001-2004 Unicode, Inc.
+ * 
+ * Disclaimer
+ * 
+ * This source code is provided as is by Unicode, Inc. No claims are
+ * made as to fitness for any particular purpose. No warranties of any
+ * kind are expressed or implied. The recipient agrees to determine
+ * applicability of information provided. If this file has been
+ * purchased on magnetic or optical media from Unicode, Inc., the
+ * sole remedy for any claim will be exchange of defective media
+ * within 90 days of receipt.
+ * 
+ * Limitations on Rights to Redistribute This Code
+ * 
+ * Unicode, Inc. hereby grants the right to freely use the information
+ * supplied in this file in the creation of products supporting the
+ * Unicode Standard, and to make copies of this file in any form
+ * for internal or external distribution as long as this notice
+ * remains attached.
+ */
+
+/* ---------------------------------------------------------------------
+
+    Conversions between UTF-16 and UTF-8. Source code file.
+    Author: Mark E. Davis, 1994.
+    Rev History: Rick McGowan, fixes & updates May 2001.
+    Sept 2001: fixed const & error conditions per
+    mods suggested by S. Parent & A. Lillich.
+    June 2002: Tim Dodd added detection and handling of incomplete
+    source sequences, enhanced error detection, added casts
+    to eliminate compiler warnings.
+    July 2003: slight mods to back out aggressive FFFE detection.
+    Jan 2004: updated switches in from-UTF8 conversions.
+    Oct 2004: updated to use UNI_MAX_LEGAL_UTF32 in UTF-32 conversions.
+    Jan 2013: Jean-Yves Avenard adapted to only calculate size if 
+    destination pointer are null
+
+------------------------------------------------------------------------ */
+
+
+static const int halfShift  = 10; /* used for shifting by 10 bits */
+
+static const UTF32 halfBase = 0x0010000UL;
+static const UTF32 halfMask = 0x3FFUL;
+
+#define UNI_SUR_HIGH_START  (UTF32)0xD800
+#define UNI_SUR_HIGH_END    (UTF32)0xDBFF
+#define UNI_SUR_LOW_START   (UTF32)0xDC00
+#define UNI_SUR_LOW_END     (UTF32)0xDFFF
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Index into the table below with the first byte of a UTF-8 sequence to
+ * get the number of trailing bytes that are supposed to follow it.
+ * Note that *legal* UTF-8 values can't have 4 or 5-bytes. The table is
+ * left as-is for anyone who may want to do such conversion, which was
+ * allowed in earlier algorithms.
+ */
+static const char trailingBytesForUTF8[256] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
+};
+
+/*
+ * Magic values subtracted from a buffer value during UTF8 conversion.
+ * This table contains as many values as there might be trailing bytes
+ * in a UTF-8 sequence.
+ */
+static const UTF32 offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 
+             0x03C82080UL, 0xFA082080UL, 0x82082080UL };
+
+/*
+ * Once the bits are split out into bytes of UTF-8, this is a mask OR-ed
+ * into the first byte, depending on how many bytes follow.  There are
+ * as many entries in this table as there are UTF-8 sequence types.
+ * (I.e., one byte sequence, two byte... etc.). Remember that sequencs
+ * for *legal* UTF-8 will be 4 or fewer bytes total.
+ */
+static const UTF8 firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
+
+/* --------------------------------------------------------------------- */
+
+/* The interface converts a whole buffer to avoid function-call overhead.
+ * Constants have been gathered. Loops & conditionals have been removed as
+ * much as possible for efficiency, in favor of drop-through switches.
+ * (See "Note A" at the bottom of the file for equivalent code.)
+ * If your compiler supports it, the "isLegalUTF8" call can be turned
+ * into an inline function.
+ */
+
+/* --------------------------------------------------------------------- */
+
+unsigned int ConvertUTF16toUTF8 (
+    const UTF16* sourceStart, const UTF16* sourceEnd, 
+    UTF8* targetStart, UTF8* targetEnd, ConversionFlags flags) {
+    ConversionResult result = conversionOK;
+    const UTF16* source = sourceStart;
+    UTF8* target = targetStart;
+    UTF32 ch;
+    while ((source < sourceEnd) && (ch = *source)) {
+    unsigned short bytesToWrite = 0;
+    const UTF32 byteMask = 0xBF;
+    const UTF32 byteMark = 0x80; 
+    const UTF16* oldSource = source; /* In case we have to back up because of target overflow. */
+    source++;
+    /* If we have a surrogate pair, convert to UTF32 first. */
+    if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_HIGH_END) {
+        /* If the 16 bits following the high surrogate are in the source buffer... */
+        UTF32 ch2;
+        if ((source < sourceEnd) && (ch2 = *source)) {
+        /* If it's a low surrogate, convert to UTF32. */
+        if (ch2 >= UNI_SUR_LOW_START && ch2 <= UNI_SUR_LOW_END) {
+            ch = ((ch - UNI_SUR_HIGH_START) << halfShift)
+            + (ch2 - UNI_SUR_LOW_START) + halfBase;
+            ++source;
+        } else if (flags == strictConversion) { /* it's an unpaired high surrogate */
+            --source; /* return to the illegal value itself */
+            result = sourceIllegal;
+            break;
+        }
+        } else { /* We don't have the 16 bits following the high surrogate. */
+        --source; /* return to the high surrogate */
+        result = sourceExhausted;
+        break;
+        }
+    } else if (flags == strictConversion) {
+        /* UTF-16 surrogate values are illegal in UTF-32 */
+        if (ch >= UNI_SUR_LOW_START && ch <= UNI_SUR_LOW_END) {
+        --source; /* return to the illegal value itself */
+        result = sourceIllegal;
+        break;
+        }
+    }
+    /* Figure out how many bytes the result will require */
+    if (ch < (UTF32)0x80) {      bytesToWrite = 1;
+    } else if (ch < (UTF32)0x800) {     bytesToWrite = 2;
+    } else if (ch < (UTF32)0x10000) {   bytesToWrite = 3;
+    } else if (ch < (UTF32)0x110000) {  bytesToWrite = 4;
+    } else {       bytesToWrite = 3;
+                        ch = UNI_REPLACEMENT_CHAR;
+    }
+
+    target += bytesToWrite;
+    if ((uintptr_t)target > (uintptr_t)targetEnd) {
+        source = oldSource; /* Back up source pointer! */
+        target -= bytesToWrite; result = targetExhausted; break;
+    }
+    switch (bytesToWrite) { /* note: everything falls through. */
+        case 4: target--; if (targetStart) { *target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6; }
+        case 3: target--; if (targetStart) { *target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6; }
+        case 2: target--; if (targetStart) { *target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6; }
+        case 1: target--; if (targetStart) { *target =  (UTF8)(ch | firstByteMark[bytesToWrite]); }
+    }
+    target += bytesToWrite;
+    }
+
+    unsigned int length = target - targetStart;
+    return length;
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Utility routine to tell whether a sequence of bytes is legal UTF-8.
+ * This must be called with the length pre-determined by the first byte.
+ * If not calling this from ConvertUTF8to*, then the length can be set by:
+ *  length = trailingBytesForUTF8[*source]+1;
+ * and the sequence is illegal right away if there aren't that many bytes
+ * available.
+ * If presented with a length > 4, this returns false.  The Unicode
+ * definition of UTF-8 goes up to 4-byte sequences.
+ */
+
+static Boolean isLegalUTF8(const UTF8 *source, int length) {
+    UTF8 a;
+    const UTF8 *srcptr = source+length;
+    switch (length) {
+    default: return false;
+    /* Everything else falls through when "true"... */
+    case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+    case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+    case 2: if ((a = (*--srcptr)) > 0xBF) return false;
+
+    switch (*source) {
+        /* no fall-through in this inner switch */
+        case 0xE0: if (a < 0xA0) return false; break;
+        case 0xED: if (a > 0x9F) return false; break;
+        case 0xF0: if (a < 0x90) return false; break;
+        case 0xF4: if (a > 0x8F) return false; break;
+        default:   if (a < 0x80) return false;
+    }
+
+    case 1: if (*source >= 0x80 && *source < 0xC2) return false;
+    }
+    if (*source > 0xF4) return false;
+    return true;
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Exported function to return whether a UTF-8 sequence is legal or not.
+ * This is not used here; it's just exported.
+ */
+Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
+    int length = trailingBytesForUTF8[*source]+1;
+    if (source+length > sourceEnd) {
+    return false;
+    }
+    return isLegalUTF8(source, length);
+}
+
+/* --------------------------------------------------------------------- */
+
+unsigned int ConvertUTF8toUTF16 (
+    const UTF8* sourceStart, const UTF8* sourceEnd, 
+    UTF16* targetStart, UTF16* targetEnd, ConversionFlags flags) {
+    ConversionResult result = conversionOK;
+    const UTF8* source = sourceStart;
+    UTF16* target = targetStart;
+    while (source < sourceEnd && *source) {
+    UTF32 ch = 0;
+    unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
+    if (source + extraBytesToRead >= sourceEnd) {
+        result = sourceExhausted; break;
+    }
+    /* Do this check whether lenient or strict */
+    if (! isLegalUTF8(source, extraBytesToRead+1)) {
+        result = sourceIllegal;
+        break;
+    }
+    /*
+     * The cases all fall through. See "Note A" below.
+     */
+    switch (extraBytesToRead) {
+        case 5: ch += *source++; ch <<= 6; /* remember, illegal UTF-8 */
+        case 4: ch += *source++; ch <<= 6; /* remember, illegal UTF-8 */
+        case 3: ch += *source++; ch <<= 6;
+        case 2: ch += *source++; ch <<= 6;
+        case 1: ch += *source++; ch <<= 6;
+        case 0: ch += *source++;
+    }
+    ch -= offsetsFromUTF8[extraBytesToRead];
+
+    if ((uintptr_t)target >= (uintptr_t)targetEnd) {
+        source -= (extraBytesToRead+1); /* Back up source pointer! */
+        result = targetExhausted; break;
+    }
+    if (ch <= UNI_MAX_BMP) { /* Target is a character <= 0xFFFF */
+        /* UTF-16 surrogate values are illegal in UTF-32 */
+        if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_LOW_END) {
+        if (flags == strictConversion) {
+            source -= (extraBytesToRead+1); /* return to the illegal value itself */
+            result = sourceIllegal;
+            break;
+        } else {
+          if (targetStart)
+            *target = UNI_REPLACEMENT_CHAR;
+          target++;
+        }
+        } else {
+          if (targetStart)
+            *target = (UTF16)ch; /* normal case */
+          target++;
+        }
+    } else if (ch > UNI_MAX_UTF16) {
+        if (flags == strictConversion) {
+        result = sourceIllegal;
+        source -= (extraBytesToRead+1); /* return to the start */
+        break; /* Bail out; shouldn't continue */
+        } else {
+        *target++ = UNI_REPLACEMENT_CHAR;
+        }
+    } else {
+        /* target is a character in range 0xFFFF - 0x10FFFF. */
+        if ((uintptr_t)target + 1 >= (uintptr_t)targetEnd) {
+        source -= (extraBytesToRead+1); /* Back up source pointer! */
+        result = targetExhausted; break;
+        }
+        ch -= halfBase;
+        if (targetStart)
+        {
+          *target++ = (UTF16)((ch >> halfShift) + UNI_SUR_HIGH_START);
+          *target++ = (UTF16)((ch & halfMask) + UNI_SUR_LOW_START);
+        }
+        else
+          target += 2;
+    }
+    }
+
+    unsigned int length = target - targetStart;
+    return length;
+}
+
+  unsigned int utf82unicode(const char * line, wchar_t * wline, unsigned int n){
     if (!line){
       if (wline) wline[0]=0;
       return 0;
     }
-    unsigned int i=0,j=0,c;
-    for (;i<n;i++){
-      c=line[i];
-      if (!c)
-	break; // CB fix was not putting the \0 at the end of the destination string!
-      if ( (c & 0xc0) == 0x80)
-	continue;
-      if (c < 128){ // 0/xxxxxxx/
-	wline[j]=c;
-	j++;
-	continue;
-      }
-      if ( (c & 0xe0) == 0xc0) { // 2 char code 110/xxxxx/ 10/xxxxxx/
-	i++;
-	c = (c & 0x1f) << 6 | (line[i] & 0x3f);
-	wline[j]=c;
-	j++;
-	continue;
-      } 
-      if ( (c & 0xf0) == 0xe0) { // 3 char 1110/xxxx/ 10/xxxxxx/ 10/xxxxxx/
-	i++;
-	c = (c & 0x0f) << 6 | (line[i] & 0x3f);
-	i++;
-	c = c << 6 | (line[i] & 0x3f);
-	wline[j]=c;
-	j++;
-	continue;
-      } 
-      if ( (c & 0xf8) == 0xf0) { // 4 char 11110/xxx/ 10/xxxxxx/ 10/xxxxxx/ 10/xxxxxx/
-	i++;
-	c = (c & 0x07) << 6 | (line[i] & 0x3f);
-	i++;
-	c = c << 6 | (line[i] & 0x3f);
-	i++;
-	c = c << 6 | (line[i] & 0x3f);
-	wline[j]=c;
-	j++;
-	continue;
-      } 
-      // FIXME complete for 5 and 6 char
-      c = 0xfffd;
-      wline[j]=c;
-      j++;
-    }
-    wline[j]=0;
+
+    unsigned int j = ConvertUTF8toUTF16 (
+      (const UTF8*) line,((line + n) < line) ? (const UTF8*)~0u : (const UTF8*)(line + n),
+      (UTF16*)wline, (UTF16*)~0u,
+      lenientConversion);
+
+    if (wline) wline[j] = 0;
+
     return j;
   }
 
-  // convert position n in utf8-encoded line into the corresponding position 
+    // convert position n in utf8-encoded line into the corresponding position 
   // in the same string encoded with unicode 
   unsigned int utf8pos2unicodepos(const char * line,unsigned int n,bool skip_added_spaces){
     if (!line) return 0;
@@ -3698,8 +4117,9 @@ extern "C" void Sleep(unsigned int miliSecond);
     return j;
   }
 
-  unsigned int wstrlen(const char * line){
-    return utf8pos2unicodepos(line,~0u,false);
+  unsigned int wstrlen(const char * line, unsigned int n){
+    if (!line) return 0;
+    return utf82unicode(line, NULL, n);
   }
 
   unsigned int wstrlen(const wchar_t * wline){
@@ -3720,71 +4140,14 @@ extern "C" void Sleep(unsigned int miliSecond);
       if (line) line[0]=0;
       return 0;
     }
-    int j=0,k=0;
-    char tmp[6];
-    for (unsigned int i=0;i<n;++i){
-      const wchar_t & ch = wline[i];
-      if (ch<=0x7f){
-	if (line) line[j]=char(ch);
-	++j;
-	continue;
-      }
-      if (ch==8594){ // → replaced by X
-	if (line) line[j]='X';
-	++j;
-	continue;	
-      }
-      wchar_t masked= ch & 0xff00;
-      bool addspace = (masked >= 0x2000) && (masked < 0x2c00);
-      if (ch==0x00b0 || ch==0x2032 || ch==0x2033) //  || ch==8722)
-	addspace=false;
-      k=0;
-      if (i<n-1 && addspace && wline[i+1]!='L'){
-	tmp[k]=' ';
-	++k;
-      }
-      tmp[k]=(ch & 0x3f)|0x80;
-      ++k;
-      if (ch<=0x7ff)
-	tmp[k]=(ch>>6)|0xc0;
-      else {
-	tmp[k]=((ch>>6) & 0x3f)|0x80;
-	++k;
-	if (ch<0xffff)
-	  tmp[k]=(ch>>12)|0xe0;
-	else {
-	  tmp[k]=((ch>>12) & 0x3f)|0x80;
-	  ++k;
-	  /* should not happen with wchar_t 
-	  if (ch<0x1FFFFF)
-	    tmp[k]=(ch>>18)|0xf0;
-	  else {
-	    tmp[k]=((ch>>18) & 0x3f)|0x80;
-	    ++k;
-	    if (ch<0x3FFFFFF)
-	      tmp[k]=(ch>>24)|0xf8;
-	    else {
-	      tmp[k]=((ch>>24) & 0x3f)|0x80;
-	      ++k;
-	      tmp[k]=(ch>>30)|0xfc;
-	    }
-	  }
-	  */
-	}
-      }
-      if (addspace){
-	++k;
-	tmp[k]=' ';
-      }
-      if (line){
-	for (;k>=0;--k,++j){
-	  line[j]=tmp[k];
-	}
-      }
-      else
-	j += k+1;
-    }
+
+    unsigned int j = ConvertUTF16toUTF8(
+      (UTF16*)wline, ((wline + n) < wline) ? (const UTF16*)~0u : (const UTF16*)(wline + n),
+      (UTF8*)line, (UTF8*)~0u,
+      lenientConversion);
+
     if (line) line[j]=0;
+
     return j;
   }
 
@@ -3951,12 +4314,12 @@ extern "C" void Sleep(unsigned int miliSecond);
       char * ch=new char[size+1];
       ch[size]=0;
       if (readfunc(ch,1,size,f)!=size){
-	delete ch;
+	delete [] ch;
 	return undef;
       }
       gen res=identificateur(string(ch));
       syms()[ch] = res;
-      delete ch;
+      delete [] ch;
       return res;
     }
     if (t==_SYMB){
@@ -3980,14 +4343,14 @@ extern "C" void Sleep(unsigned int miliSecond);
 	  ch[size+1]='\'';
 	  ch[size+2]=0;
 	  if (readfunc(ch+1,1,size,f)!=size){
-	    delete ch;
+	    delete [] ch;
 	    return undef;
 	  }
 	}
 	else {
 	  ch[size]=0;
 	  if (readfunc(ch,1,size,f)!=size){
-	    delete ch;
+	    delete [] ch;
 	    return undef;
 	  }
 	  if (builtin_lexer_functions_){
@@ -4002,7 +4365,7 @@ extern "C" void Sleep(unsigned int miliSecond);
 	}
 	if (is_zero(res))
 	  res=gen(ch,contextptr);
-	delete ch;
+	delete [] ch;
 	if (res.type!=_FUNC){
 	  return undef;
 	}
@@ -4022,11 +4385,11 @@ extern "C" void Sleep(unsigned int miliSecond);
 	char * ch=new char[size+1];
 	ch[size]=0;
 	if (readfunc(ch,1,size,f)!=size){
-	  delete ch;
+	  delete [] ch;
 	  return undef;
 	}
 	g = gen(ch,contextptr);
-	delete ch;
+	delete [] ch;
 	if (g.type!=_FUNC)
 	  return undef;
       }
@@ -4036,7 +4399,7 @@ extern "C" void Sleep(unsigned int miliSecond);
     char * ch=new char[size+1];
     ch[size]=0;
     if (readfunc(ch,1,size,f)!=size){
-      delete ch;
+      delete [] ch;
       return undef;
     }
     gen res;
@@ -4044,12 +4407,113 @@ extern "C" void Sleep(unsigned int miliSecond);
       res=string2gen(ch,true);
     else
       res=gen(ch,contextptr);
-    delete ch;
+    delete [] ch;
     return res;
   }
 
   gen archive_restore(FILE * f,GIAC_CONTEXT){
     return archive_restore(f,(size_t (*)(void * p, size_t nbBytes,size_t NbElements, void *file))fread,contextptr);
+  }
+
+  void init_geogebra(bool on,GIAC_CONTEXT){
+    _decimal_digits_=on?13:12;
+    _all_trig_sol_=on;
+    _withsqrt_=!on;
+    _calc_mode_=on?1:0;
+    decimal_digits(on?13:12,contextptr);
+    all_trig_sol(on,contextptr);
+    withsqrt(!on,contextptr);
+    calc_mode(on?1:0,contextptr);
+#ifdef TIMEOUT
+    caseval_maxtime=5;
+    caseval_n=0;
+    caseval_mod=1;
+#endif
+  }
+
+  vecteur giac_current_status(bool save_history,GIAC_CONTEXT){
+    // cas and geo config
+    vecteur res;
+    if (abs_calc_mode(contextptr)==38)
+      res.push_back(cas_setup(contextptr));
+    else
+      res.push_back(symbolic(at_cas_setup,cas_setup(contextptr)));
+    res.push_back(xyztrange(gnuplot_xmin,gnuplot_xmax,gnuplot_ymin,gnuplot_ymax,gnuplot_zmin,gnuplot_zmax,gnuplot_tmin,gnuplot_tmax,global_window_xmin,global_window_xmax,global_window_ymin,global_window_ymax,show_axes(contextptr),class_minimum,class_size,
+#ifdef WITH_GNUPLOT
+			    gnuplot_hidden3d,gnuplot_pm3d
+#else
+			    1,1
+#endif
+			    ));
+    if (abs_calc_mode(contextptr)==38)
+      res.back()=res.back()._SYMBptr->feuille;
+    // session
+    res.push_back(save_history?history_in(contextptr):vecteur(0));
+    res.push_back(save_history?history_out(contextptr):vecteur(0));
+    // user variables
+    if (contextptr && contextptr->tabptr){
+      sym_tab::const_iterator jt=contextptr->tabptr->begin(),jtend=contextptr->tabptr->end();
+      for (;jt!=jtend;++jt){
+	gen a=jt->second;
+	gen b=identificateur(jt->first);
+	res.push_back(symb_sto(a,b));
+      }
+    }
+    else {
+      sym_tab::const_iterator it=syms().begin(),itend=syms().end();
+      for (;it!=itend;++it){
+	gen id=it->second;
+	if (id.type==_IDNT && id._IDNTptr->value)
+	  res.push_back(symb_sto(*id._IDNTptr->value,id));
+      }
+    }
+    if (abs_calc_mode(contextptr)==38)
+      res.push_back(xcas_mode(contextptr));
+    else
+      res.push_back(symbolic(at_xcas_mode,xcas_mode(contextptr)));
+    return res;
+  }
+
+  bool unarchive_session(const gen & g,int level,const gen & replace,GIAC_CONTEXT,bool with_history){
+    int l;
+    if (g.type!=_VECT || (l=g._VECTptr->size())<4)
+      return false;
+    vecteur & v=*g._VECTptr;
+    if (v[2].type!=_VECT || v[3].type!=_VECT || v[2]._VECTptr->size()!=v[3]._VECTptr->size())
+      return false;
+#ifndef DONT_UNARCHIVE_HISTORY
+    history_in(contextptr)=*v[2]._VECTptr;
+    history_out(contextptr)=*v[3]._VECTptr;
+#ifndef GNUWINCE
+    if (v[0].type==_VECT)
+      _cas_setup(v[0],contextptr);
+    else
+      protecteval(v[0],eval_level(contextptr),contextptr); 
+    if (v[1].type==_VECT)
+      _xyztrange(v[1],contextptr);
+    else
+      protecteval(v[1],eval_level(contextptr),contextptr); 
+#endif
+#endif
+    // restore variables
+    for (int i=4;i<l;++i)
+      protecteval(v[i],eval_level(contextptr),contextptr); 
+    // restore xcas_mode
+    if (v.back().type==_INT_)
+      xcas_mode(v.back().val,contextptr);
+    if (!with_history)
+      return true;
+    // eval replace if level>=0
+    if (level<0 || level>=l){
+      history_in(contextptr).push_back(replace);
+      history_out(contextptr).push_back(protecteval(replace,eval_level(contextptr),contextptr)); 
+    }
+    else {
+      history_in(contextptr)[level]=replace;
+      for (int i=level;i<l;++i)
+	history_out(contextptr)[i]=protecteval(history_in(contextptr)[i],eval_level(contextptr),contextptr); 
+    }
+    return true;
   }
 
 

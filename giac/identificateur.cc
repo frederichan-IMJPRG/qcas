@@ -136,6 +136,7 @@ namespace giac {
 #endif // GIAC_GENERIC_CONSTANTS
 
 #ifdef GIAC_HAS_STO_38
+#if 0
   static const alias_identificateur alias_identificateur_a38={0,0,"A",0,0};
   const identificateur & a__IDNT=* (const identificateur *) &alias_identificateur_a38;
   const alias_ref_identificateur ref_a38={-1,0,0,"A",0,0};
@@ -298,6 +299,170 @@ namespace giac {
   const define_alias_gen(alias_z38,_IDNT,0,&ref_z38);
 //  const gen & z__IDNT_e = * (gen *) & alias_z38;
 
+#else
+  static const alias_identificateur alias_identificateur_a38={0,0,"a",0,0};
+  const identificateur & a__IDNT=* (const identificateur *) &alias_identificateur_a38;
+  const alias_ref_identificateur ref_a38={-1,0,0,"a",0,0};
+  const define_alias_gen(alias_a38,_IDNT,0,&ref_a38);
+//  const gen & a__IDNT_e = * (gen *) & alias_a38;
+
+  static const alias_identificateur alias_identificateur_b38={0,0,"b",0,0};
+  const identificateur & b__IDNT=* (const identificateur *) &alias_identificateur_b38;
+  const alias_ref_identificateur ref_b38={-1,0,0,"b",0,0};
+  const define_alias_gen(alias_b38,_IDNT,0,&ref_b38);
+//  const gen & b__IDNT_e = * (gen *) & alias_b38;
+
+  static const alias_identificateur alias_identificateur_c38={0,0,"c",0,0};
+  const identificateur & c__IDNT=* (const identificateur *) &alias_identificateur_c38;
+  const alias_ref_identificateur ref_c38={-1,0,0,"c",0,0};
+  const define_alias_gen(alias_c38,_IDNT,0,&ref_c38);
+//  const gen & c__IDNT_e = * (gen *) & alias_c38;
+
+  static const alias_identificateur alias_identificateur_d38={0,0,"d",0,0};
+  const identificateur & d__IDNT=* (const identificateur *) &alias_identificateur_d38;
+  const alias_ref_identificateur ref_d38={-1,0,0,"d",0,0};
+  const define_alias_gen(alias_d38,_IDNT,0,&ref_d38);
+//  const gen & d__IDNT_e = * (gen *) & alias_d38;
+
+  static const alias_identificateur alias_identificateur_e38={0,0,"e",0,0};
+  const identificateur & e__IDNT=* (const identificateur *) &alias_identificateur_e38;
+  const alias_ref_identificateur ref_e38={-1,0,0,"e",0,0};
+  const define_alias_gen(alias_e38,_IDNT,0,&ref_e38);
+//  const gen & e__IDNT_e = * (gen *) & alias_e38;
+
+  static const alias_identificateur alias_identificateur_f38={0,0,"f",0,0};
+  const identificateur & f__IDNT=* (const identificateur *) &alias_identificateur_f38;
+  const alias_ref_identificateur ref_f38={-1,0,0,"f",0,0};
+  const define_alias_gen(alias_f38,_IDNT,0,&ref_f38);
+//  const gen & f__IDNT_e = * (gen *) & alias_f38;
+
+  static const alias_identificateur alias_identificateur_g38={0,0,"g",0,0};
+  const identificateur & g__IDNT=* (const identificateur *) &alias_identificateur_g38;
+  const alias_ref_identificateur ref_g38={-1,0,0,"g",0,0};
+  const define_alias_gen(alias_g38,_IDNT,0,&ref_g38);
+//  const gen & g__IDNT_e = * (gen *) & alias_g38;
+
+  static const alias_identificateur alias_identificateur_h38={0,0,"h",0,0};
+  const identificateur & h__IDNT=* (const identificateur *) &alias_identificateur_h38;
+  const alias_ref_identificateur ref_h38={-1,0,0,"h",0,0};
+  const define_alias_gen(alias_h38,_IDNT,0,&ref_h38);
+//  const gen & h__IDNT_e = * (gen *) & alias_h38;
+
+  static const alias_identificateur alias_identificateur_i38={0,0,"i",0,0};
+  const identificateur & i__IDNT=* (const identificateur *) &alias_identificateur_i38;
+  const alias_ref_identificateur ref_i38={-1,0,0,"i",0,0};
+  const define_alias_gen(alias_i38,_IDNT,0,&ref_i38);
+//  const gen & i__IDNT_e = * (gen *) & alias_i38;
+
+  static const alias_identificateur alias_identificateur_j38={0,0,"j",0,0};
+  const identificateur & j__IDNT=* (const identificateur *) &alias_identificateur_j38;
+  const alias_ref_identificateur ref_j38={-1,0,0,"j",0,0};
+  const define_alias_gen(alias_j38,_IDNT,0,&ref_j38);
+//  const gen & j__IDNT_e = * (gen *) & alias_j38;
+
+  static const alias_identificateur alias_identificateur_k38={0,0,"k",0,0};
+  const identificateur & k__IDNT=* (const identificateur *) &alias_identificateur_k38;
+  const alias_ref_identificateur ref_k38={-1,0,0,"k",0,0};
+  const define_alias_gen(alias_k38,_IDNT,0,&ref_k38);
+// const gen & k__IDNT_e = * (gen *) & alias_k38;
+
+  static const alias_identificateur alias_identificateur_l38={0,0,"l",0,0};
+  const identificateur & l__IDNT=* (const identificateur *) &alias_identificateur_l38;
+  const alias_ref_identificateur ref_l38={-1,0,0,"l",0,0};
+  const define_alias_gen(alias_l38,_IDNT,0,&ref_l38);
+//  const gen & l__IDNT_e = * (gen *) & alias_l38;
+
+  static const alias_identificateur alias_identificateur_m38={0,0,"m",0,0};
+  const identificateur & m__IDNT=* (const identificateur *) &alias_identificateur_m38;
+  const alias_ref_identificateur ref_m38={-1,0,0,"m",0,0};
+  const define_alias_gen(alias_m38,_IDNT,0,&ref_m38);
+//  const gen & m__IDNT_e = * (gen *) & alias_m38;
+
+  static const alias_identificateur alias_identificateur_n38={0,0,"n",0,0};
+  const identificateur & n__IDNT=* (const identificateur *) &alias_identificateur_n38;
+  const alias_ref_identificateur ref_n38={-1,0,0,"n",0,0};
+  const define_alias_gen(alias_n38,_IDNT,0,&ref_n38);
+//  const gen & n__IDNT_e = * (gen *) & alias_n38;
+
+  static const alias_identificateur alias_identificateur_o38={0,0,"o",0,0};
+  const identificateur & o__IDNT=* (const identificateur *) &alias_identificateur_o38;
+  const alias_ref_identificateur ref_o38={-1,0,0,"o",0,0};
+  const define_alias_gen(alias_o38,_IDNT,0,&ref_o38);
+//  const gen & o__IDNT_e = * (gen *) & alias_o38;
+
+  static const alias_identificateur alias_identificateur_p38={0,0,"p",0,0};
+  const identificateur & p__IDNT=* (const identificateur *) &alias_identificateur_p38;
+  const alias_ref_identificateur ref_p38={-1,0,0,"p",0,0};
+  const define_alias_gen(alias_p38,_IDNT,0,&ref_p38);
+//  const gen & p__IDNT_e = * (gen *) & alias_p38;
+
+  static const alias_identificateur alias_identificateur_q38={0,0,"q",0,0};
+  const identificateur & q__IDNT=* (const identificateur *) &alias_identificateur_q38;
+  const alias_ref_identificateur ref_q38={-1,0,0,"q",0,0};
+  const define_alias_gen(alias_q38,_IDNT,0,&ref_q38);
+//  const gen & q__IDNT_e = * (gen *) & alias_q38;
+
+  static const alias_identificateur alias_identificateur_r38={0,0,"r",0,0};
+  const identificateur & r__IDNT=* (const identificateur *) &alias_identificateur_r38;
+  const alias_ref_identificateur ref_r38={-1,0,0,"r",0,0};
+  const define_alias_gen(alias_r38,_IDNT,0,&ref_r38);
+//  const gen & r__IDNT_e = * (gen *) & alias_r38;
+
+  static const alias_identificateur alias_identificateur_s38={0,0,"s",0,0};
+  const identificateur & s__IDNT=* (const identificateur *) &alias_identificateur_s38;
+  const alias_ref_identificateur ref_s38={-1,0,0,"s",0,0};
+  const define_alias_gen(alias_s38,_IDNT,0,&ref_s38);
+//  const gen & s__IDNT_e = * (gen *) & alias_s38;
+
+  static const alias_identificateur alias_identificateur_t38={0,0,"t",0,0};
+  const identificateur & t__IDNT=* (const identificateur *) &alias_identificateur_t38;
+  const alias_ref_identificateur ref_t38={-1,0,0,"t",0,0};
+  const define_alias_gen(alias_t38,_IDNT,0,&ref_t38);
+//  const gen & t__IDNT_e = * (gen *) & alias_t38;
+
+  static const alias_identificateur alias_identificateur_u38={0,0,"u",0,0};
+  const identificateur & u__IDNT=* (const identificateur *) &alias_identificateur_u38;
+  const alias_ref_identificateur ref_u38={-1,0,0,"u",0,0};
+  const define_alias_gen(alias_u38,_IDNT,0,&ref_u38);
+//  const gen & u__IDNT_e = * (gen *) & alias_u38;
+
+  static const alias_identificateur alias_identificateur_v38={0,0,"v",0,0};
+  const identificateur & v__IDNT=* (const identificateur *) &alias_identificateur_v38;
+  const alias_ref_identificateur ref_v38={-1,0,0,"v",0,0};
+  const define_alias_gen(alias_v38,_IDNT,0,&ref_v38);
+//  const gen & v__IDNT_e = * (gen *) & alias_v38;
+
+  static const alias_identificateur alias_identificateur_w38={0,0,"w",0,0};
+  const identificateur & w__IDNT=* (const identificateur *) &alias_identificateur_w38;
+  const alias_ref_identificateur ref_w38={-1,0,0,"w",0,0};
+  const define_alias_gen(alias_w38,_IDNT,0,&ref_w38);
+//  const gen & w__IDNT_e = * (gen *) & alias_w38;
+
+  static const alias_identificateur alias_identificateur_x38={0,0,"x",0,0};
+  const identificateur & x__IDNT=* (const identificateur *) &alias_identificateur_x38;
+  const alias_ref_identificateur ref_x38={-1,0,0,"x",0,0};
+  const define_alias_gen(alias_x38,_IDNT,0,&ref_x38);
+//  const gen & x__IDNT_e = * (gen *) & alias_x38;
+
+  static const alias_identificateur alias_identificateur_xx38={0,0,"x",0,0};
+  const identificateur & xx__IDNT=* (const identificateur *) &alias_identificateur_xx38;
+  const alias_ref_identificateur ref_xx38={-1,0,0,"x",0,0};
+  const define_alias_gen(alias_xx38,_IDNT,0,&ref_xx38);
+//  const gen & x__IDNT_e = * (gen *) & alias_xx38;
+
+  static const alias_identificateur alias_identificateur_y38={0,0,"y",0,0};
+  const identificateur & y__IDNT=* (const identificateur *) &alias_identificateur_y38;
+  const alias_ref_identificateur ref_y38={-1,0,0,"y",0,0};
+  const define_alias_gen(alias_y38,_IDNT,0,&ref_y38);
+//  const gen & y__IDNT_e = * (gen *) & alias_y38;
+
+  static const alias_identificateur alias_identificateur_z38={0,0,"z",0,0};
+  const identificateur & z__IDNT=* (const identificateur *) &alias_identificateur_z38;
+  const alias_ref_identificateur ref_z38={-1,0,0,"z",0,0};
+  const define_alias_gen(alias_z38,_IDNT,0,&ref_z38);
+//  const gen & z__IDNT_e = * (gen *) & alias_z38;
+#endif
+
   static const alias_identificateur alias_identificateur_laplace_var={0,0," s",0,0};
   const identificateur & laplace_var=* (const identificateur *) &alias_identificateur_laplace_var;
   const alias_ref_identificateur ref_laplace_var={-1,0,0," s",0,0};
@@ -327,7 +492,8 @@ namespace giac {
 #else
   define_alias_gen(alias_vx38,_IDNT,0,&ref_xx38);
 #endif
-  gen & vx_var = * (gen *) & alias_vx38;
+  // gen & vx_var = * (gen *) & alias_vx38;
+  gen vx_var(identificateur("x"));
 
   /* model
   static const alias_identificateur alias_identificateur_zzz38={0,0,"ZZZ",0,0};
@@ -408,7 +574,11 @@ namespace giac {
     ptr->i=1;
     ptr->b=0;
     ptr->s_dynalloc=true;
+#ifdef GIAC_HAS_STO_38
+    string tmp=string("_"+print_INT_(rand()));
+#else
     string tmp=string(" "+print_INT_(rand()));
+#endif
     int l=tmp.size();
     char * c = new char[l+1];
     strcpy(c,tmp.c_str());
@@ -421,13 +591,19 @@ namespace giac {
   }
 
   identificateur::identificateur(const string & s){
-    bool b=strchr(s.c_str(),' ');
+    bool b=strchr(s.c_str(),' ')?true:false;
     int_string_shortint_bool * ptr = new int_string_shortint_bool;
     ptr->i=1;
     ptr->b=0;
     ptr->s_dynalloc=true;
     char * c = new char[s.size()+(b?3:1)];
     ptr->s=strcpy(c,b?('`'+s+'`').c_str():s.c_str());
+#ifdef GIAC_HAS_STO_38
+    for (;*c;++c){
+      if (*c==' ')
+	*c='_';
+    }
+#endif
     ref_count = &ptr->i ;
     value = NULL;
     quoted = &ptr->b ;
@@ -436,7 +612,7 @@ namespace giac {
   }
 
   identificateur::identificateur(const string & s,const gen & e){
-    bool b=strchr(s.c_str(),' ');
+    bool b=strchr(s.c_str(),' ')?true:false;
     int_string_shortint_bool * ptr = new int_string_shortint_bool;
     ptr->i=1;
     ptr->b=0;
@@ -453,7 +629,15 @@ namespace giac {
   identificateur::identificateur(const char * s){
     if (strchr(s,' ')){
       ref_count=0;
-      *this=identificateur(string(s));
+      string S(s);
+#ifdef GIAC_HAS_STO_38
+      for (unsigned i=0;i<S.size();++i){
+	if (S[i]==' '){
+	  S[i]='_';
+	}
+      }
+#endif
+      *this=identificateur(S);
       return;
     }
     int_string_shortint_bool * ptr = new int_string_shortint_bool;
@@ -616,6 +800,7 @@ namespace giac {
     if (rcl_38 && rcl_38(res,0,s,undef,false,contextptr)){
       return true;
     }
+    return false;
     size_t ss=strlen(s);
 #ifdef ASPEN_GEOMETRY
     if (
@@ -833,14 +1018,10 @@ namespace giac {
       // check for quoted
       if (cur->quoted_global_vars && !cur->quoted_global_vars->empty() && equalposcomp(*cur->quoted_global_vars,orig)) 
 	return false;
-      if (!No38Lookup && sto_38){ //  && abs_calc_mode(contextptr)==38)
-	if (eval_38(level,orig,evaled,id_name,contextptr))
-	  return true;
-      }
       sym_tab::const_iterator it=cur->tabptr->find(id_name);
       if (it==cur->tabptr->end()){
         if (No38Lookup) return false;
-	if (!sto_38 && abs_calc_mode(contextptr)==38)
+	if (sto_38 && abs_calc_mode(contextptr)==38)
 	  return eval_38(level,orig,evaled,id_name,contextptr);
 	return false;
       }
@@ -848,6 +1029,10 @@ namespace giac {
 	if (!it->second.in_eval(level,evaled,contextptr->globalcontextptr))
 	  evaled=it->second;
 	return true;
+      }
+      if (!No38Lookup && sto_38){ //  && abs_calc_mode(contextptr)==38)
+	if (eval_38(level,orig,evaled,id_name,contextptr))
+	  return true;
       }
     }
     if (local_eval(contextptr) && localvalue && !localvalue->empty()){
@@ -865,7 +1050,11 @@ namespace giac {
       return true;
     }
     // look in current directory for a value
-    if ( secure_run || (!variables_are_files(contextptr)) || (access((name()+string(cas_suffixe)).c_str(),R_OK))){
+    if ( secure_run || (!variables_are_files(contextptr)) 
+#ifndef __MINGW_H
+	 || (access((name()+string(cas_suffixe)).c_str(),R_OK))
+#endif
+	 ){
       evaled=orig;
       if (!local_eval(contextptr))
 	evaled.subtype=_GLOBAL__EVAL;
@@ -901,6 +1090,11 @@ namespace giac {
 	return string_pi;
       }
     }
+    if (
+	//calc_mode(contextptr)!=1 &&
+	abs_calc_mode(contextptr)==38 && 
+	!strcmp(id_name,string_infinity))
+      return "±∞";
     // index != sqrt(-1) wich has different notations
     if (xcas_mode(contextptr)==0){
       if (strcmp(id_name,"i")==0)

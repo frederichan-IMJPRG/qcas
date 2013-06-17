@@ -138,7 +138,7 @@ namespace giac {
 	  return pnt_attrib(symbolic(at_hyperplan,gen(makevecteur(n,M),_SEQ__VECT)),attributs,contextptr);
 	return gensizeerr(contextptr);
       }
-      if (v[1].type==_VECT && v[1]._VECTptr->size()>=2){
+      if (v[1].type==_VECT && v[1]._VECTptr->size()==2){
 	s++;
 	v.push_back(v[1]._VECTptr->back());
 	v[1]=v[1]._VECTptr->front();
@@ -906,9 +906,9 @@ namespace giac {
 	return gensizeerr(contextptr);
       const_iterateur jt=it->_VECTptr->begin(),jtend=it->_VECTptr->end();
       for (;jt+1!=jtend;++jt){
-	res.push_back(_segment(makevecteur(*jt,*(jt+1)),contextptr));
+	res.push_back(_segment(makesequence(*jt,*(jt+1)),contextptr));
       }
-      res.push_back(_segment(makevecteur(*jt,it->_VECTptr->front()),contextptr));
+      res.push_back(_segment(makesequence(*jt,it->_VECTptr->front()),contextptr));
     }
     show_point(tmp,contextptr);
     return res;
@@ -952,7 +952,7 @@ namespace giac {
       gen c,r;
       centre_rayon(b,c,r,false,contextptr);
       c=A+M*(c-A);
-      return _sphere(makevecteur(c,r),contextptr);
+      return _sphere(makesequence(c,r),contextptr);
     }
     if (b.is_symb_of_sommet(at_hyperplan)){
       vecteur n,P;
@@ -960,7 +960,7 @@ namespace giac {
 	return gensizeerr(contextptr);
       gen Pr=A+M*(P-A);
       gen nr=M*n;
-      return _plan(makevecteur(nr,Pr),contextptr);
+      return _plan(makesequence(nr,Pr),contextptr);
     }
     return curve_surface_apply(elem,b,rotation3d,contextptr);
   }
@@ -975,7 +975,7 @@ namespace giac {
     vecteur vsub(1,u);
     vsub.push_back(v);
     gen ff=subst(f,vars,vsub,false,contextptr);
-    gen r=symbolic(at_plotparam,makevecteur(f,vars));
+    gen r=symbolic(at_plotparam,makesequence(f,vars));
     if (is_zero(derive(ff,v,contextptr))){
       vecteur res;
       double x=function_umin;
@@ -1161,13 +1161,13 @@ namespace giac {
 	    vecteur lv(*vars._VECTptr);
 	    lvar(f,lv);
 	    if (lv==vars){ // resultant -> eq
-	      gen tmp1=_resultant(makevecteur(f[0]-xyz[0],f[1]-xyz[1],vars[0]),contextptr);
+	      gen tmp1=_resultant(makesequence(f[0]-xyz[0],f[1]-xyz[1],vars[0]),contextptr);
 	      if (is_undef(tmp1))
 		return tmp1;
-	      gen tmp2=_resultant(makevecteur(f[0]-xyz[0],f[2]-xyz[2],vars[0]),contextptr);
+	      gen tmp2=_resultant(makesequence(f[0]-xyz[0],f[2]-xyz[2],vars[0]),contextptr);
 	      if (is_undef(tmp2))
 		return tmp2;
-	      gen res=_resultant(makevecteur(tmp1,tmp2,vars[1]),contextptr);
+	      gen res=_resultant(makesequence(tmp1,tmp2,vars[1]),contextptr);
 	      return res;
 	    }
 	  }
@@ -1306,12 +1306,12 @@ namespace giac {
 	bool swapped=is_zero(derive(curveeq,t,contextptr));
 	if (swapped)
 	  std::swap(s,t);
-	gen sol=inter_solve(gen(makevecteur(symbolic(at_equal,makevecteur(curveeq,0)),t),_SEQ__VECT),contextptr);
+	gen sol=inter_solve(gen(makevecteur(symbolic(at_equal,makesequence(curveeq,0)),t),_SEQ__VECT),contextptr);
 	if (sol.type!=_VECT)
 	  return vecteur(1,gensizeerr(contextptr));
 	if (!swapped && sol._VECTptr->empty()){
 	  std::swap(s,t);
-	  sol=inter_solve(gen(makevecteur(symbolic(at_equal,makevecteur(curveeq,0)),t),_SEQ__VECT),contextptr);
+	  sol=inter_solve(gen(makevecteur(symbolic(at_equal,makesequence(curveeq,0)),t),_SEQ__VECT),contextptr);
 	  if (sol.type!=_VECT)
 	    return vecteur(1,gensizeerr(contextptr));
 	}
@@ -1507,7 +1507,7 @@ namespace giac {
       if (AB.type!=_VECT || AB._VECTptr->size()!=3 || AC.type!=_VECT || AC._VECTptr->size()!=3)
 	continue;
       vecteur n=cross(*AB._VECTptr,*AC._VECTptr,contextptr);
-      gen tmp=symbolic(at_hyperplan,makevecteur(n,v[0]));
+      gen tmp=symbolic(at_hyperplan,makesequence(n,v[0]));
       bool b=show_point(contextptr);
       show_point(false,contextptr);
       vecteur w(inter(tmp,bb,contextptr));
@@ -1560,16 +1560,16 @@ namespace giac {
 	  // plan
 	  if (!fx0){
 	    gen tmp=makevecteur(ratnormal(-c/fx),0,0);
-	    g=symbolic(at_hyperplan,makevecteur(n,tmp));
+	    g=symbolic(at_hyperplan,makesequence(n,tmp));
 	  }
 	  else {
 	    if (!fy0){
 	      gen tmp=makevecteur(0,ratnormal(-c/fy),0);
-	      g=symbolic(at_hyperplan,makevecteur(n,tmp));
+	      g=symbolic(at_hyperplan,makesequence(n,tmp));
 	    }
 	    else {
 	      gen tmp=makevecteur(0,0,ratnormal(-c/fz));
-	      g=symbolic(at_hyperplan,makevecteur(n,tmp));
+	      g=symbolic(at_hyperplan,makesequence(n,tmp));
 	    }
 	  }
 	  return true;
@@ -1612,7 +1612,7 @@ namespace giac {
     return false;
   }
 
-#ifndef RTOS_THREADX
+#if !defined(RTOS_THREADX) && !defined(EMCC)
   // 3-d implicit surface using the marching cube algorithm
     /* Adapted from http://astronomy.swin.edu.au/~pbourke/modelling/ 
        by Paul Bourke
@@ -2260,7 +2260,7 @@ namespace giac {
     }
     return 1;
   }
-  static const char _est_cospherique_s []="is_cospheric";
+  static const char _est_cospherique_s []="is_cospherical";
   static define_unary_function_eval (__est_cospherique,&giac::_est_cospherique,_est_cospherique_s);
   define_unary_function_ptr5( at_est_cospherique ,alias_at_est_cospherique,&__est_cospherique,0,true);
 

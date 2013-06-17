@@ -80,7 +80,7 @@ namespace giac {
   gen plotparam3d(const gen & f,const vecteur & vars,double function_xmin,double function_xmax, double function_ymin, double function_ymax,double function_zmin,double function_zmax,double function_umin,double function_umax,double function_vmin,double function_vmax,bool clrplot,bool f_autoscale,const vecteur & attributs,double ustep,double vstep,const gen & eq,const vecteur & eqvars,GIAC_CONTEXT);
 
   gen _plot3d(const gen & args,GIAC_CONTEXT);
-  extern const unsigned long alias_at_plot3d;
+  extern const alias_type alias_at_plot3d;
   extern const unary_function_ptr * const  at_plot3d ;
 
   extern const unary_function_ptr * const  at_hypersurface;

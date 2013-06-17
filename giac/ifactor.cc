@@ -1,16 +1,10 @@
 // -*- mode:C++ ; compile-command: "g++-3.4 -I.. -g -c ifactor.cc -DHAVE_CONFIG_H -DIN_GIAC" -*-
 #include "giacPCH.h"
 #define GIAC_MPQS // define if you want to use giac for sieving (currently only 1 poly, maybe more later)
-#ifdef RTOS_THREADX
-#define OLD_AFACT
-#define GIAC_ADDITIONAL_PRIMES 16// if defined, additional primes are used in sieve
-#else
-#define GIAC_ADDITIONAL_PRIMES 32// if defined, additional primes are used in sieve
-#endif
 
 // Thanks to Jason Papadopoulos, author of msieve
 #ifdef BESTA_OS
-	#define PREFETCH(addr) /* nothing */
+#define PREFETCH(addr) /* nothing */
 #elif defined(__GNUC__) && __GNUC__ >= 3
 	#define PREFETCH(addr) __builtin_prefetch(addr) 
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
@@ -18,6 +12,7 @@
 #else
 	#define PREFETCH(addr) /* nothing */
 #endif
+
 
 #include "path.h"
 /*
@@ -56,6 +51,18 @@ using namespace std;
 #include "misc.h"
 #include "giacintl.h"
 #endif
+
+#ifdef GIAC_HAS_STO_38
+#define BESTA_OS
+#endif
+// Trying to make ifactor(2^128+1) work on ARM
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
+//#define OLD_AFACT
+#define GIAC_ADDITIONAL_PRIMES 16// if defined, additional primes are used in sieve
+#else
+#define GIAC_ADDITIONAL_PRIMES 32// if defined, additional primes are used in sieve
+#endif
+
 
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
@@ -435,8 +442,7 @@ namespace giac {
 #endif
 #endif
 
-#ifndef RTOS_THREADX 
-#ifndef BESTA_OS
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS)
   // #define WITH_INVA
 #if defined(__APPLE__) || defined(__x86_64__)
 #define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
@@ -446,8 +452,7 @@ namespace giac {
 #else
 #define LP_TAB_SIZE 15 // slice size will be 2^LP_TAB_SIZE
 #endif // APPLE or 64 bits
-#endif
-#endif
+#endif // !defined RTOS_THREADX and BESTA_OS
 
 #ifdef LP_TAB_SIZE
 #define LP_MASK ((1<<LP_TAB_SIZE)-1)
@@ -587,11 +592,9 @@ namespace giac {
 #else
       if (p>next){
 	++nbits;
-#ifndef BESTA_OS
-#ifndef RTOS_THREADX
+#if !defined(BESTA_OS) && !defined(RTOS_THREADX)
 	if (nbits==LP_BIT_LIMIT+1)
 	  break;
-#endif
 #endif
 	next *=2;
       }
@@ -615,8 +618,7 @@ namespace giac {
 	bit->root2 = pos2-SLICEEND;
       }
     }
-#ifndef RTOS_THREADX
-#ifndef BESTA_OS
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS)
 #ifndef LP_TAB_SIZE
     for (;bit!=bitend;++bit){
       // same as above but we are sieving with primes >2^15, no need to check for nbits increase
@@ -633,7 +635,6 @@ namespace giac {
       }
       bit->root2 = pos-ss;
     }
-#endif
 #endif
 #endif
     return bit;
@@ -1048,7 +1049,7 @@ namespace giac {
 	    } else {
 	      // add a prime in additional_primes if <=QS_B_BOUND
 	      if (int(additional_primes.size())>=4*bs 
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
 		  || bs+additional_primes.size()>700
 #endif
 		  )
@@ -1829,12 +1830,14 @@ namespace giac {
     double Nd=evalf_double(N,1,contextptr)._DOUBLE_val;
 #ifdef RTOS_THREADX
     if (Nd>1e40) return false;
-#else
+#endif
+#ifdef BESTA_OS
+    if (Nd>1e40) return false;
+#endif
 #ifdef PRIMES32
     if (Nd>1e76) return false;
 #else
     if (Nd>1e63) return false;
-#endif
 #endif
     int Ndl=int(std::log10(Nd)-std::log10(double(multiplier))+.5); // +2*delta);
 #ifdef LP_TAB_SIZE
@@ -1847,7 +1850,7 @@ namespace giac {
     int pos1=70,pos0=23,afact=2,afixed=0; // pos position in the basis, afact number of factors
     // FIXME Will always include the 3 first primes of the basis
     // set a larger Mtarget gives less polynomials but also use less memory
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(RTOS_THREADX)
     double Mtarget=0.95e5;
     if (Nd>1e36)
       Mtarget=1.2e5;
@@ -1903,7 +1906,7 @@ namespace giac {
     mpz_init(zx); mpz_init(zy); mpz_init(zq); mpz_init(zr);
     // fastsmod_prepare(N,zx,zy,zr,N256);
     for (i=1;i<int(sizeof(giac_primes)/sizeof(short));++i){
-      if (ctrl_c)
+      if (ctrl_c || interrupted)
 	break;
       ushort_t j=giac_primes[i];
       if (debug_infolevel>6 && (i%500==99))
@@ -1952,7 +1955,7 @@ namespace giac {
     }
     unsigned lp_basis_pos=0; // position of first prime > 2^16 in the basis
     for (;basis.size()<B;++i){
-      if (ctrl_c)
+      if (ctrl_c || interrupted)
 	break; 
 #ifndef PRIMES32
       if (jp>65535){ 
@@ -1995,7 +1998,7 @@ namespace giac {
 #ifdef LP_SMALL_PRIMES
     vector<small_basis_t> small_basis(lp_basis_pos); // will be filled by primes<2^16
 #endif
-    if (ctrl_c){
+    if (ctrl_c || interrupted){
       mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
       return false;
     }
@@ -2004,7 +2007,7 @@ namespace giac {
       Mtarget=basis.back().p*dtarget; // (int(basis.back().p*1.1)/slicesize)*slicesize;
     }
     unsigned ps=sizeinbase2(basis.back().p);
-#ifndef RTOS_THREADX // def USE_MORE_PRIMES
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS) // def USE_MORE_PRIMES
     unsigned maxadditional=(2+(basis.back().p>>16))*basis.back().p*ps;
 #else
     unsigned maxadditional=3*basis.back().p*ps;
@@ -2125,7 +2128,7 @@ namespace giac {
       isqrtNmodp[i]=smod(isqrtN,basis[i].p).val;
 #endif
     }
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
     unsigned puissancestablength=10000;
 #else
 #if 1 // def USE_MORE_PRIMES
@@ -2159,7 +2162,7 @@ namespace giac {
     additional_map_t additional_primes_map(8*bs);
     axbmodn.reserve(bs);
 #else 
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
     additional_primes.reserve(bs);
     additional_primes_twice.reserve(bs);
     axbmodn.reserve(2*bs);
@@ -2293,7 +2296,7 @@ namespace giac {
 	}
       }
       // finished?
-      if (ctrl_c)
+      if (ctrl_c || interrupted)
 	break;
 #ifdef ADDITIONAL_PRIMES_HASHMAP
       todo_rel=bs+marge;
@@ -2377,7 +2380,7 @@ namespace giac {
       // fastsmod_prepare(a,zx,zy,zr,a256);
       gen b;
       for (int i=0;i< (1<<(afact-1));++i){
-	if (ctrl_c)
+	if (ctrl_c || interrupted)
 	  break;
 #ifdef ADDITIONAL_PRIMES_HASHMAP
 	todo_rel=bs+marge;
@@ -2565,7 +2568,7 @@ namespace giac {
 #ifdef LP_TAB_SIZE
 #endif
 	for (int l=0;l<nslices;l++){
-	  if (ctrl_c)
+	  if (ctrl_c || interrupted)
 	    break;
 #ifdef ADDITIONAL_PRIMES_HASHMAP
 	  todo_rel=bs+marge;
@@ -2614,14 +2617,14 @@ namespace giac {
 	else
 	  nrelationsa += nrelationsb;
       }
-#ifdef RTOS_THREADX
+#if defined( RTOS_THREADX) || defined(BESTA_OS)
       if (debug_infolevel)
 	*logptr(contextptr) << axbmodn.size() << " of " << todo_rel << " (" << 100-100*(todo_rel-axbmodn.size())/double(bs+marge) << "%)" << endl;
 #endif
       if (nrelationsa==0){
 	sqrtavals.pop_back();
       }
-#ifndef RTOS_THREADX
+#if !defined(RTOS_THREADX) && !defined(BESTA_OS)
       if (debug_infolevel>1)
 	*logptr(contextptr) << clock()<< gettext(" sieved : ") << axbmodn.size() << " of " << todo_rel << " (" << 100-100*(todo_rel-axbmodn.size())/double(bs+marge) << "%), M=" << M << endl;
 #endif
@@ -2629,7 +2632,7 @@ namespace giac {
     if (debug_infolevel)
       *logptr(contextptr) << gettext("Polynomials a,b in use: #a ") << sqrtavals.size() << " and #b " << bvals.size() << endl;
     delete [] slice;
-    if (ctrl_c || puissancesptr==puissancesend){
+    if (ctrl_c || interrupted || puissancesptr==puissancesend){
       mpz_clear(zx); mpz_clear(zy); mpz_clear(zq);  mpz_clear(zr);
       mpz_clear(alloc1); mpz_clear(alloc2); mpz_clear(alloc3); mpz_clear(alloc4); mpz_clear(alloc5);
       delete [] puissancestab;
@@ -2884,13 +2887,13 @@ namespace giac {
   // Pollard-rho algorithm
   const int POLLARD_GCD=64;
 #ifdef GIAC_MPQS 
-#ifdef USE_GMP_REPLACEMENTS
+#if defined(RTOS_THREADX) // !defined(BESTA_OS)
   const int POLLARD_MAXITER=3000;
 #else
-  const int POLLARD_MAXITER=100000;
+  const int POLLARD_MAXITER=10000;
 #endif
 #else
-  const int POLLARD_MAXITER=100000;
+  const int POLLARD_MAXITER=10000;
 #endif  
 
   static gen pollard(gen n, gen k,GIAC_CONTEXT){
@@ -2898,7 +2901,7 @@ namespace giac {
     n.uncoerce();
     int maxiter=POLLARD_MAXITER;
     double nd=evalf_double(n,1,contextptr)._DOUBLE_val;
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
     int nd1=int(2000*(std::log10(nd)-34));
 #else
     int nd1=int(1500*std::pow(16.,(std::log10(nd)-40)/10));
@@ -2925,9 +2928,9 @@ namespace giac {
     mpz_init(alloc3);
     mpz_init(alloc4);
     mpz_init(alloc5);
-    while (!ctrl_c && mpz_cmp_si(g,1)==0) {
+    while (!ctrl_c && !interrupted && mpz_cmp_si(g,1)==0) {
       a=2*a+1;//a=2^(e+1)-1=2*l(m)-1 
-      while (!ctrl_c && mpz_cmp_si(g,1)==0 && a>m) { // ok
+      while (!ctrl_c && !interrupted && mpz_cmp_si(g,1)==0 && a>m) { // ok
 	// x=f(x,k,n,q);
 #ifdef USE_GMP_REPLACEMENTS
 	mp_sqr(&x,&x2);
@@ -2951,7 +2954,7 @@ namespace giac {
 #endif
 	m += 1;
 	if (debug_infolevel && ((m % 
-#ifdef RTOS_THREADX
+#if defined(RTOS_THREADX) || defined(BESTA_OS)
 				 (1<<10)
 #else
 				 (1<<18)
@@ -2986,7 +2989,7 @@ namespace giac {
 	if (c==POLLARD_GCD) {
 	  // g=gcd(abs(p,context0),n); 
 	  mpz_abs(q,p);
-	  mpz_gcd(g,q,*n._ZINTptr);
+	  my_mpz_gcd(g,q,*n._ZINTptr);
 	  if (mpz_cmp_si(g,1)==0) {
 	    mpz_set(y,x); // y=x;
 	    mpz_set(y1,x1); // y1=x1;
@@ -3032,9 +3035,9 @@ namespace giac {
     mpz_set_si(g,1); // g=1;
     a=(a1-1)/2; // a=iquo(a1-1,2);
     m=m1;
-    while (!ctrl_c && mpz_cmp_si(g,1)==0) {
+    while (!ctrl_c && !interrupted && mpz_cmp_si(g,1)==0) {
       a=2*a+1;
-      while (!ctrl_c && mpz_cmp_si(g,1)==0 && a>m) { // ok
+      while (!ctrl_c && !interrupted && mpz_cmp_si(g,1)==0 && a>m) { // ok
 	// x=f(x,k,n,q);
 	mpz_mul(x2,x,x);
 	mpz_add(x2k,x2,*k._ZINTptr);
@@ -3075,7 +3078,7 @@ namespace giac {
 #endif
 	// g=gcd(abs(p,context0),n);  // ok
 	mpz_abs(q,p);
-	mpz_gcd(g,q,*n._ZINTptr);
+	my_mpz_gcd(g,q,*n._ZINTptr);
       }
       if (mpz_cmp_si(g,1)==0) {
 	mpz_set(x1,x); // x1=x;
@@ -3103,7 +3106,7 @@ namespace giac {
     mpz_clear(y1);
     mpz_clear(p);
     mpz_clear(q);
-    if (ctrl_c){
+    if (ctrl_c || interrupted){
       mpz_clear(g);
       return 0;
     }
@@ -3137,17 +3140,20 @@ namespace giac {
   static symbolic symb_ithprime(const gen & args){
     return symbolic(at_ithprime,args);
   }
-  static gen ithprime(const gen & g,GIAC_CONTEXT){
+  static gen ithprime(const gen & g_,GIAC_CONTEXT){
+    gen g(g_);
+    if (!is_integral(g))
+      return gentypeerr(contextptr);
     if (g.type!=_INT_)
-      return symb_ithprime(g);
+      return gensizeerr(contextptr); // symb_ithprime(g);
     int i=g.val;
     if (i<0)
-      return gendimerr(contextptr);
+      return gensizeerr(contextptr);
     if (i==0)
       return 1;
     if (i<=int(sizeof(giac_primes)/sizeof(short int)))
       return giac_primes[i-1];
-    return symb_ithprime(g);
+    return gensizeerr(contextptr);
   }
   gen _ithprime(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
@@ -3272,23 +3278,25 @@ namespace giac {
   static gen inpollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
     gen b=do_pollard?pollard(a,k,contextptr):-1;
 #ifdef GIAC_MPQS
-    if (b==-1 && !ctrl_c){ 
+    if (b==-1 && !ctrl_c && !interrupted){ 
       do_pollard=false;
       if (msieve(a,b,contextptr)) return b; else return -1; }
 #endif
     return b;
   }
   static gen pollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
-#ifdef GIAC_HAS_STO_38
+#if defined( GIAC_HAS_STO_38) || defined(EMCC)
     int debug_infolevel_=debug_infolevel;
     debug_infolevel=2;
     if (do_pollard)
       *logptr(contextptr) << gettext("Pollard-rho on ") << a << endl; 
 #endif
     gen res=inpollardsieve(a,k,do_pollard,contextptr);
-#ifdef GIAC_HAS_STO_38
+#if defined( GIAC_HAS_STO_38) || defined(EMCC)
     debug_infolevel=debug_infolevel_;
+#ifdef GIAC_HAS_STO_38
     Calc->Terminal.MakeUnvisible();
+#endif
 #endif
     return res;
   }
@@ -3296,7 +3304,7 @@ namespace giac {
   static gen pollardsieve(const gen &a,gen k,bool & do_pollard,GIAC_CONTEXT){
     gen b=do_pollard?pollard(a,k,contextptr):-1;
 #ifdef GIAC_MPQS
-    if (b==-1 && !ctrl_c){ 
+    if (b==-1 && !ctrl_c && !interrupted){ 
       do_pollard=false;
       if (msieve(a,b,contextptr)) return b; else return -1; }
 #endif
@@ -3335,7 +3343,7 @@ namespace giac {
       }
     }
     gen a=pollardsieve(n,1,do_pollard,contextptr);
-    if (ctrl_c)
+    if (ctrl_c || interrupted)
       return gensizeerr("Interrupted");
     gen ba=n/a;
     a=ifactor2(a,v,do_pollard,contextptr);
@@ -3584,6 +3592,20 @@ namespace giac {
     gen g(args);
     if (!is_integral(g))
       return gensizeerr(contextptr);
+    if (calc_mode(contextptr)==1){ // ggb returns factors repeted instead of multiplicites
+      vecteur res;
+      gen in=ifactors(g,0,contextptr);
+      if (in.type==_VECT){
+	for (unsigned i=0;i<in._VECTptr->size();i+=2){
+	  gen f=in[i],m=in[i+1];
+	  if (m.type==_INT_){
+	    for (int j=0;j<m.val;++j)
+	      res.push_back(f);
+	  }
+	}
+	return res;
+      }
+    }
     return ifactors(g,0,contextptr);
   }
   static const char _ifactors_s []="ifactors";
@@ -3664,7 +3686,7 @@ namespace giac {
   static define_unary_function_eval (__factors,&giac::_factors,_factors_s);
   define_unary_function_ptr5( at_factors ,alias_at_factors,&__factors,0,true);
 
-  gen ifactors2ifactor(const vecteur & l){
+  static gen ifactors2ifactor(const vecteur & l,bool quote){
     int s;
     s=l.size();
     gen r;
@@ -3679,26 +3701,30 @@ namespace giac {
 #if defined(GIAC_HAS_STO_38) && defined(CAS38_DISABLED)
       return symb_quote(v.front());
 #else
+      if (quote)
+	return symb_quote(v.front());
       return v.front();
 #endif
     }
-    r=symbolic(at_prod,v);
+    r=symbolic(at_prod,gen(v,_SEQ__VECT));
 #if defined(GIAC_HAS_STO_38) && defined(CAS38_DISABLED)
     r=symb_quote(r);
 #endif
-    return(r);
+    if (quote)
+      return symb_quote(r);
+    return r;
   }
   gen ifactor(const gen & n,GIAC_CONTEXT){
     vecteur l;
     l=ifactors(n,contextptr);
     if (!l.empty() && is_undef(l.front())) return l.front();
-    return ifactors2ifactor(l);
+    return ifactors2ifactor(l,calc_mode(contextptr)==1);
   }
   gen _ifactor(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG && args.subtype==-1) return  args;
     if (args.type==_CPLX && is_integer(*args._CPLXptr) && is_integer(*(args._CPLXptr+1))){
       const vecteur & v=ifactors(*args._CPLXptr,*(args._CPLXptr+1),args,contextptr);
-      return ifactors2ifactor(v);
+      return ifactors2ifactor(v,calc_mode(contextptr)==1);
     }
     gen n=args;
     if (n.type==_VECT && n._VECTptr->size()==1 && is_integer(n._VECTptr->front()))
@@ -3757,8 +3783,8 @@ namespace giac {
     if (args.type==_VECT)
       return apply(args,_idivis,contextptr);
     gen n=args;
-    if (!is_integral(n) && !is_integer(n)) 
-      return gensizeerr(contextptr);
+    if (is_zero(n) || (!is_integral(n) && !is_integer(n)) || n.type==_CPLX) 
+      return gentypeerr(contextptr);
     return idivis(abs(n,contextptr),contextptr);
   }
   static const char _idivis_s []="idivis";
@@ -3840,7 +3866,7 @@ namespace giac {
   define_unary_function_ptr5( at_euler ,alias_at_euler,&__euler,0,true);
 
   gen pa2b2(const gen & p,GIAC_CONTEXT){
-    if ((p%4)!=1) return gensizeerr(gettext("pa2b2"));// car p!=1 mod 4
+    if (!is_integer(p) || (p%4)!=1 || is_greater(1,p,contextptr)) return gensizeerr(contextptr);// car p!=1 mod 4
     gen q=(p-1)/4;
     gen a=2;
     gen ra;
@@ -3850,7 +3876,7 @@ namespace giac {
       a=a+1;
       ra=powmod(a,q,p);
     }
-    if ((ra==1)||(ra==p-1))  return gensizeerr(gettext("pa2b2"));//car p n'est pas premier
+    if ((ra==1)||(ra==p-1))  return gensizeerr(contextptr);//car p n'est pas premier
     gen ux=1,uy=ra,vx=0,vy=p,wx,wy; 
     gen m=1;
     while(m!=0){
@@ -3874,7 +3900,7 @@ namespace giac {
     v[0]=abs(vx,contextptr); // ok
     v[1]=abs(vy,contextptr); // ok
     if (vx*vx+vy*vy!=p)
-      return gensizeerr(gettext("pa2b2"));
+      return gensizeerr(contextptr);
     return v;
   }
   gen _pa2b2(const gen & args,GIAC_CONTEXT){
@@ -3888,16 +3914,22 @@ namespace giac {
   static define_unary_function_eval (__pa2b2,&_pa2b2,_pa2b2_s);
   define_unary_function_ptr5( at_pa2b2 ,alias_at_pa2b2,&__pa2b2,0,true);
 
-  static gen ipropfrac(const gen & a,const gen & b){
+  static gen ipropfrac(const gen & a,const gen & b,GIAC_CONTEXT){
+    if (!is_integer(a) || !is_integer(b))
+      return gensizeerr(contextptr);
     gen r=a%b;
     gen q=(a-r)/b;
     gen d=gcd(r,b);
     r=r/d;
     gen b1=b/d;
+    if (r==0)
+      return q;
     gen v;
-    v=symbolic(at_division,makevecteur(r,b1));
+    v=symbolic(at_division,gen(makevecteur(r,b1),_SEQ__VECT));
     gen w;
-    w=symbolic(at_plus,makevecteur(q,v));    
+    w=symbolic(at_plus,gen(makevecteur(q,v),_SEQ__VECT));
+    if (calc_mode(contextptr)==1)
+      return symbolic(at_quote,w);
     return w;
   }
   gen _propfrac(const gen & arg,GIAC_CONTEXT){
@@ -3915,13 +3947,13 @@ namespace giac {
     gen a,b;
     fxnd(g,a,b);
     if (v.empty())
-      return ipropfrac(a,b);
+      return ipropfrac(a,b,contextptr);
     else {
       gen d=r2e(b,v,contextptr);
-      g=_quorem(makevecteur(r2e(a,v,contextptr),d,v.front()),contextptr);
+      g=_quorem(makesequence(r2e(a,v,contextptr),d,v.front()),contextptr);
       if (is_undef(g)) return g;
       vecteur &v=*g._VECTptr;
-      return v[0]+rdiv(v[1],d);
+      return v[0]+rdiv(v[1],d,contextptr);
     }
   }
   static const char _propfrac_s []="propfrac";
@@ -3930,7 +3962,7 @@ namespace giac {
 
   gen iabcuv(const gen & a,const gen & b,const gen & c){
     gen d=gcd(a,b);
-    if (c%d!=0)  return gensizeerr(gettext("iabcuv"));
+    if (c%d!=0)  return gensizeerr(gettext("No solution in ring"));
     gen a1=a/d,b1=b/d,c1=c/d;
     gen u,v,w;
     egcd(a1,b1,u,v,w);
@@ -3951,18 +3983,18 @@ namespace giac {
   define_unary_function_ptr5( at_iabcuv ,alias_at_iabcuv,&__iabcuv,0,true);
 
   gen abcuv(const gen & a,const gen & b,const gen & c,const gen & x,GIAC_CONTEXT){
-    gen g=_egcd(makevecteur(a,b,x),contextptr);
+    gen g=_egcd(makesequence(a,b,x),contextptr);
     if (is_undef(g)) return g;
     vecteur & v=*g._VECTptr;
-    gen h=_quorem(makevecteur(c,v[2],x),contextptr);
+    gen h=_quorem(makesequence(c,v[2],x),contextptr);
     if (is_undef(h)) return h;
     vecteur & w=*h._VECTptr;
     if (!is_zero(w[1]))
       return gensizeerr(gettext("No solution in ring"));
     gen U=v[0]*w[0],V=v[1]*w[0];
-    if (_degree(makevecteur(c,x),contextptr).val<_degree(makevecteur(a,x),contextptr).val+_degree(makevecteur(b,x),contextptr).val ){
-      U=_rem(makevecteur(U,b,x),contextptr);
-      V=_rem(makevecteur(V,a,x),contextptr);
+    if (_degree(makesequence(c,x),contextptr).val<_degree(makesequence(a,x),contextptr).val+_degree(makesequence(b,x),contextptr).val ){
+      U=_rem(makesequence(U,b,x),contextptr);
+      V=_rem(makesequence(V,a,x),contextptr);
     }
     return makevecteur(U,V);
   }
