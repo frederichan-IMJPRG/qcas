@@ -2080,7 +2080,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
           gen diametre=remove_at_pnt(v[0]);
           gen e1=diametre._VECTptr->front().evalf_double(1,context);
           gen e2=diametre._VECTptr->back().evalf_double(1,context);
-          gen centre=rdiv(e1+e2,2.0);
+          gen centre=rdiv(e1+e2,2.0,context);//rdiv changed in giac 1.1
           gen e12=e2-e1;
           double ex=evalf_double(re(e12,context),1,context)._DOUBLE_val,ey=evalf_double(im(e12,context),1,context)._DOUBLE_val;
           gen diam=std::sqrt(ex*ex+ey*ey);
