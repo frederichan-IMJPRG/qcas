@@ -1945,8 +1945,8 @@ void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
        QString var=QString::fromStdString(f[0]._IDNTptr->name());
        min=evalf_double(f[1],1,context)._DOUBLE_val;
        max=evalf_double(f[2],1,context)._DOUBLE_val;
-       if(fs>3){step=evalf_double(f[3],1,context)._DOUBLE_val;};
-       if(fs>4){val=evalf_double(f[3],1,context)._DOUBLE_val;};
+       if(fs>3){val=evalf_double(f[3],1,context)._DOUBLE_val;};
+       if(fs>4){step=evalf_double(f[4],1,context)._DOUBLE_val;};
        cursor=new CursorItem(true,this);
        cursor->setLegend(var);
        cursor->setLevel(evaluationLevel);
@@ -6748,29 +6748,38 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 }
 
 void Canvas2D::sendText(const QString &s){
-  //TODO les invisibles avec :  securiser les syntaxes d'elements
+    //TODO les :;    invisibles avec 
   QStringList ls=s.split(QRegExp(":*\\s*;"),QString::SkipEmptyParts);
   if(ls.size()>1){
     for( int i =0; i<ls.size();++i){
       sendText(ls.at(i));
     }
+    setActionTool(SELECT);
     return;
   }
-    Command newCommand;
-    newCommand.command=ls.at(0);
+  if(ls.size()==0){
+    return;
+  }
+  Command newCommand;
+    newCommand.command=ls.at(0).remove(QRegExp("\\s+"));
+    varPt="A";
+    findFreeVar(varPt);
+    varLine="a";
+    /*if(!newCommand.command.contains(":=")){
+      newCommand.command=newCommand.command.prepend(varPt.append(":="));
+      }*/
     newCommand.attributes=0;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
     ListItem * list=0;
-    gen g(newCommand.command.toStdString(),context);
+    //gen g(newCommand.command.toStdString(),context);
+    gen g(newCommand.command.toStdString(),getContext());
     QList<MyItem*> v;
-    gen geva=protecteval(g,1,context);
+    gen geva=protecteval(g,1,getContext());
     addToVector(geva,v);
     if (v.isEmpty()) {
-       std::cout<<print(g,context)<<std::endl;//test fred 
+       std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred 
        //std::cout<<print(geva,context)<<std::endl;//test fred 
-       //std::cout<<print(gen(varPt.toStdString(),context),context)<<std::endl;//test fred pour element
-       //giac::_purge(gen(varPt.toStdString(),context),context);
        return;
     }
     // Case of a list. We want to consider a list as a single geometric object
@@ -6786,14 +6795,20 @@ void Canvas2D::sendText(const QString &s){
        list->deleteChild(list);
        newCommand.item=list;
        commands.append(newCommand);
-       list->setVar(v.at(0)->getLegend());
+       if(!(v.at(0)->getLegend()).isEmpty()){
+	 list->setVar(v.at(0)->getLegend());
+	  }
+	  else{
+	    findFreeVar(varLine);
+	    list->setVar(varLine);
+	  }
        list->updateScreenCoords(true);
        lineItems.append(newCommand.item);
        undoStack->push(new AddObjectCommand(this));
-       focusOwner=list;
+       //focusOwner=list;
        list->setVisible(false);
        parent->addToTree(list);
-       parent->selectInTree(focusOwner);
+       //parent->selectInTree(focusOwner);
        parent->updateAllCategories();
        list->setVisible(true);
        updatePixmap(false);
@@ -6801,36 +6816,49 @@ void Canvas2D::sendText(const QString &s){
        return;
     }//end of list case
     //
-    v.at(0)->setVar(v.at(0)->getLegend());
+    if(!(v.at(0)->getLegend()).isEmpty()){
+      v.at(0)->setVar(v.at(0)->getLegend());
+	  }
+	  else{
+	    findFreeVar(varLine);
+	    v.at(0)->setVar(varLine);
+	  }
     newCommand.item=v.at(0);
     if(v.at(0)->isCursorItem()){
-      //      qDebug()<<"cursor found";
+      qDebug()<<"cursor found";
+      findIDNT(g,newCommand.item); //find parents	
       commands.append(newCommand);
+      parent->addToTree(newCommand.item);
       cursorItems.append(newCommand.item);
       undoStack->push(new AddObjectCommand(this));
       return;
+      
     }
     //non cursor item
     else{
       if(v.at(0)->isPoint()){
-	//pointItems.append(newCommand.item);
+	//
 	if(newCommand.command.contains("element(")){
 	  qDebug()<<"point element found";
 	  //std::cout<<print(g,context)<<std::endl;//test fred 
 	  //std::cout<<print(geva,context)<<std::endl;//test fred 
 	  PointElement* p=0;
 	  Point* origin=dynamic_cast<Point*>(v.at(0));
+	  
 	  if (origin !=0){
             p=new PointElement(origin,this);
 	  }
 	  delete origin;
-	  if (p==0){return;}
-
+	  if (p==0) {
+	    return;
+	  }
+	  
 	  newCommand.item=p;//v.at(0);
+	  //commands.append(newCommand);
 	  newCommand.attributes=0;
 	  newCommand.isCustom=false;
 	  QString ns(newCommand.command);
-	  ns.append("+(0+0*i)");
+	  ns.append("+(0.0+0.0*i)");// nb: element may be in exact mode, so it's  safe to force floats
 	  evaluationLevel=commands.size();
 	  g=giac::gen(ns.toStdString(),context);
 	  v.clear();
@@ -6851,30 +6879,33 @@ void Canvas2D::sendText(const QString &s){
 	  p->setMovable(true);
 	  newCommand.item=p;//v.at(0);
 	}
+      else{
+	  newCommand.item=v.at(0);
+	}
 	pointItems.append(newCommand.item);
 	newCommand.item->setVisible(true);
       }
       else{  //non point, non cursor item
 	lineItems.append(v.at(0));
-	newCommand.item->setMovable(true);
-      }
+	newCommand.item->setMovable(false);
+	  }
     } 
     findIDNT(g,newCommand.item); //find parents	
     commands.append(newCommand);
     parent->addToTree(newCommand.item);
     undoStack->push(new AddObjectCommand(this));
-    focusOwner=newCommand.item;
+    //focusOwner=newCommand.item;
     parent->updateAllCategories();
-    parent->selectInTree(focusOwner);
-    selectedItems.append(focusOwner);
+    //parent->selectInTree(focusOwner);
+    //selectedItems.append(focusOwner);
     updatePixmap(false);
     //    qDebug()<<"var"<<newCommand.item->getVar()<<" "<<(newCommand.item)->getParents().size();
     if(!newCommand.item->hasParents()){
        newCommand.item->setMovable(true);
     }
     repaint();
-
 }
+
 
 void SourceDialog::updateCanvas(){
     int id=listWidget->currentRow();
