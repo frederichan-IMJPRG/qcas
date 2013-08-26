@@ -470,9 +470,11 @@
 #define UNORDERED_MAP 1
 
 /* Replace GMP by tommath */
+/*
 #ifndef USE_GMP_REPLACEMENTS 
 #define USE_GMP_REPLACEMENTS 
 #endif
+*/
 
 /* Version number of package */
 #define VERSION "0.9.4"
