@@ -3696,6 +3696,8 @@ bool Canvas2D::checkForValidAction(MyItem * item){
  */
 bool Canvas2D::checkForCompleteAction(){
     switch(currentActionTool){
+        case ZOOM_IN:
+        case ZOOM_OUT:
         case SEGMENT:
         case LINE:
         case HALFLINE:
@@ -4732,6 +4734,10 @@ void Canvas2D::executeMyAction(bool onlyForPreview=false){
     switch(currentActionTool){
         case SELECT: parent->selectInTree(focusOwner);
         break;
+        case ZOOM_IN: zoom_In();
+        break;
+        case ZOOM_OUT: zoom_Out();
+        break;
         case INTER: addInter("inter");
         break;
         case PERPEN_BISECTOR: addPerpenBisector(onlyForPreview);
@@ -4934,6 +4940,8 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
         else {
             if (parent->isInteractive()){
                 // No focusOwner
+	      if ((currentActionTool==ZOOM_IN)||(currentActionTool==ZOOM_OUT)) executeMyAction();
+	      else{
                 // First, Does the selected action tool allow us to add a new point?
                 // If not:
                 if (!checkForPointWaiting()) parent->clearSelection();
@@ -4943,6 +4951,7 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                     if (checkForCompleteAction()) executeMyAction();
                     if (currentActionTool==PLOT_BEZIER) addNewBezierControlPoint();
                 }
+	      }
             }
             else  parent->clearSelection();
         }
