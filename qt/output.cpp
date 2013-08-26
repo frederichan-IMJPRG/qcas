@@ -175,7 +175,12 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
         m.append("<mtext> Done </mtext></math>");
     }
     else {
-        m.append(QString::fromStdString(giac::gen2mathml(formula,context)));
+        try{
+          m.append(QString::fromStdString(giac::gen2mathml(formula,context)));
+	}
+        catch(std::exception& e) {
+          qDebug() << "Exception thrown:" << e.what();
+	}
         m.append("\n</math>");
     }
 //    qDebug()<<m;
