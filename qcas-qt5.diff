@@ -1,0 +1,201 @@
+diff --git a/qcas.pro b/qcas.pro
+index 5bdf5cd..693da89 100644
+--- a/qcas.pro
++++ b/qcas.pro
+@@ -3,6 +3,7 @@
+ # #####################################################################
+ QT += core \
+      gui \
++     widgets\
+      xml
+ TARGET = qcas
+ TEMPLATE = app
+diff --git a/qt/CasManager.cpp b/qt/CasManager.cpp
+index 48a2a7a..d5f71e4 100644
+--- a/qt/CasManager.cpp
++++ b/qt/CasManager.cpp
+@@ -24,7 +24,7 @@
+ #include "global.h"
+ //#include "EvaluationThread.h"
+ #include "gui/FormalLineWidgets.h"
+-#include "gui/src/qtmmlwidget.h"
++#include "gui/qtmmlwidget.h"
+ #include "output.h"
+ #include "config.h"
+ #include "CasManager.h"
+diff --git a/qt/gui/FormalLine.cpp b/qt/gui/FormalLine.cpp
+index 609f880..3aa7eb9 100644
+--- a/qt/gui/FormalLine.cpp
++++ b/qt/gui/FormalLine.cpp
+@@ -26,7 +26,7 @@
+ #include "FormalLineWidgets.h"
+ #include "FormalSheet.h"
+ #include "FormalLine.h"
+-#include "src/qtmmlwidget.h"
++#include "qtmmlwidget.h"
+ #include "../output.h"
+ 
+ 
+diff --git a/qt/gui/FormalLineWidgets.cpp b/qt/gui/FormalLineWidgets.cpp
+index 4561517..67e5fcc 100644
+--- a/qt/gui/FormalLineWidgets.cpp
++++ b/qt/gui/FormalLineWidgets.cpp
+@@ -26,7 +26,7 @@
+ #include "FormalLineWidgets.h"
+ #include "FormalLine.h"
+ #include "../MainWindow.h"
+-#include "src/qtmmlwidget.h"
++#include "qtmmlwidget.h"
+ TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
+     line=parent;
+     // +1 devrait sufire en théorie mais problème sous KDE plasma sur mon netbook
+diff --git a/qt/gui/qtmmlwidget.cpp b/qt/gui/qtmmlwidget.cpp
+index 2ae6a04..7335a2c 100644
+--- a/qt/gui/qtmmlwidget.cpp
++++ b/qt/gui/qtmmlwidget.cpp
+@@ -44,12 +44,12 @@
+ ** 
+ ****************************************************************************/
+ 
+-#include <QtGui/QApplication>
++#include <QApplication>
+ #include <QtCore/QString>
+ #include <QtCore/QMap>
+-#include <QtGui/QDesktopWidget>
+-#include <QtGui/QPainter>
+-#include <QtGui/QPaintEvent>
++#include <QDesktopWidget>
++#include <QPainter>
++#include <QPaintEvent>
+ #include <QtXml/QtXml>
+ 
+ #include "qtmmlwidget.h"
+@@ -5451,7 +5451,7 @@ void QtMmlWidget::paintEvent(QPaintEvent *e)
+     QFrame::paintEvent(e);
+     QPainter p(this);
+     if (e->rect().intersects(contentsRect()))
+-        p.setClipRegion(e->region().intersect(contentsRect()));
++        p.setClipRegion(e->region().intersected(contentsRect()));
+ 
+     QSize s = m_doc->size();
+     int x = (width() - s.width())/2;
+diff --git a/qt/gui/qtmmlwidget.h b/qt/gui/qtmmlwidget.h
+index 2c9b1c6..0bff799 100644
+--- a/qt/gui/qtmmlwidget.h
++++ b/qt/gui/qtmmlwidget.h
+@@ -47,7 +47,8 @@
+ #ifndef QTMMLWIDGET_H
+ #define QTMMLWIDGET_H
+ 
+-#include <QtGui/QFrame>
++//#include <QtGui/QFrame>
++#include <QFrame>
+ #include <QtXml/QtXml>
+ 
+ class MmlDocument;
+diff --git a/qt/main.cpp b/qt/main.cpp
+index 2a6854b..60d8d8e 100644
+--- a/qt/main.cpp
++++ b/qt/main.cpp
+@@ -25,7 +25,7 @@ int main(int argc, char * argv []){
+     QApplication app(argc, argv);
+     setlocale(LC_NUMERIC,"POSIX");
+ 
+-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
++    //QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+     MainWindow win;
+     if(argc>1){
+       if(win.loadFile(argv[1])){win.show();}
+diff --git a/qt/output.cpp b/qt/output.cpp
+index b183035..543ee23 100644
+--- a/qt/output.cpp
++++ b/qt/output.cpp
+@@ -51,13 +51,13 @@
+ using namespace giac;
+ 
+ 
+-IconSize::IconSize(QWindowsStyle *parent) : QWindowsStyle()
++IconSize::IconSize(QProxyStyle *parent) : QProxyStyle()
+    {
+    Q_UNUSED (parent);
+    }
+ 
+ int IconSize::pixelMetric(PixelMetric metric, const QStyleOption * option, const QWidget * widget)const{
+-   int s = QWindowsStyle::pixelMetric(metric, option, widget);
++   int s = QProxyStyle::pixelMetric(metric, option, widget);
+    if (metric == QStyle::PM_SmallIconSize) {
+        s = 32;
+    }
+@@ -3353,7 +3353,7 @@ void Canvas2D::incrementVariable(QString & var){
+     else if (c=='h'&&var.length()==1) var="j";
+     // letter e can't label a variable, it stands for function exp
+     else if  (c=='d'&&var.length()==1) {var="f";}
+-    else var[idec]=QChar(c.toAscii()+1);
++    else var[idec]=QChar(c.toLatin1()+1);
+ }
+ 
+ bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
+@@ -4920,7 +4920,7 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
+                     if (currentActionTool==PLOT_BEZIER){
+                         addNewBezierControlPoint();
+                     }
+-                    else if (currentActionTool==SINGLEPT) addNewPointElement(e->posF());
++                    else if (currentActionTool==SINGLEPT) addNewPointElement(e->windowPos());
+                 }
+ 
+ 
+@@ -4929,7 +4929,7 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
+                 }
+                 if (isMoving) {
+                     isMoving=false;
+-                    undoStack->push(new MoveObjectCommand(focusOwner->getLevel(),startSel,e->posF(),this));
++                    undoStack->push(new MoveObjectCommand(focusOwner->getLevel(),startSel,e->windowPos(),this));
+                 }
+ 
+ 
+@@ -5014,7 +5014,7 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
+     }
+     selectionRight=false;
+ 
+-    QPointF mousePos(e->posF());
++    QPointF mousePos(e->windowPos());
+     // try to move and object
+     if (parent->isInteractive()&&focusOwner!=0&& selectionLeft&&(currentActionTool==SELECT)){
+ 
+@@ -6775,7 +6775,8 @@ void Canvas2D::sendText(const QString &s){
+     return;
+   }
+   Command newCommand;
+-    newCommand.command=ls.at(0).remove(QRegExp("\\s+"));
++    newCommand.command=ls.at(0);
++    newCommand.command=newCommand.command.remove(QRegExp("\\s+"));
+     varPt="A";
+     findFreeVar(varPt);
+     varLine="a";
+diff --git a/qt/output.h b/qt/output.h
+index 881681e..dfcb1bc 100644
+--- a/qt/output.h
++++ b/qt/output.h
+@@ -28,7 +28,7 @@
+ #include <QScrollArea>
+ #include <QHash>
+ #include <QGroupBox>
+-#include <QWindowsStyle>
++#include <QProxyStyle>
+ #include <QTabWidget>
+ #include <QList>
+ #include <QPoint>
+@@ -68,11 +68,11 @@ class AlphaFillPanel;
+ class CursorPanel;
+ 
+ 
+-class IconSize : public QWindowsStyle
++class IconSize : public QProxyStyle
+  {
+    Q_OBJECT
+ public:
+-    explicit IconSize(QWindowsStyle *parent = 0);
++    explicit IconSize(QProxyStyle *parent = 0);
+     int pixelMetric(PixelMetric metric, const QStyleOption * option = 0, const QWidget * widget = 0 ) const;
+ signals:
+ public slots:
