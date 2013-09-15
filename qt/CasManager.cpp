@@ -24,7 +24,7 @@
 #include "global.h"
 //#include "EvaluationThread.h"
 #include "gui/FormalLineWidgets.h"
-#include "gui/src/qtmmlwidget.h"
+#include "gui/qtmmlwidget.h"
 #include "output.h"
 #include "config.h"
 #include "CasManager.h"

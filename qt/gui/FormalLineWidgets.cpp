@@ -26,7 +26,7 @@
 #include "FormalLineWidgets.h"
 #include "FormalLine.h"
 #include "../MainWindow.h"
-#include "src/qtmmlwidget.h"
+#include "qtmmlwidget.h"
 TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     line=parent;
     // +1 devrait sufire en théorie mais problème sous KDE plasma sur mon netbook

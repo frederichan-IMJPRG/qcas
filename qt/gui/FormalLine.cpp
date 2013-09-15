@@ -26,7 +26,7 @@
 #include "FormalLineWidgets.h"
 #include "FormalSheet.h"
 #include "FormalLine.h"
-#include "src/qtmmlwidget.h"
+#include "qtmmlwidget.h"
 #include "../output.h"
 
 
