@@ -180,6 +180,9 @@ OTHER_FILES += \
     qt/images/general.png \
     qt/images/french.png \
     qt/images/english.png \
+    qt/images/spain.png \
+    qt/images/greece.png \
+    qt/images/china.png \
     qt/images/pointxy.png \
     qt/images/zoom-out.png \
     qt/images/zoom-in.png \
@@ -255,4 +258,6 @@ OTHER_FILES += \
     android/res/values-fr/strings.xml \
     android/res/values-es/strings.xml
 RESOURCES += qt/qcas.qrc
+TRANSLATIONS = qcas_en.ts qcas_es.ts qcas_el.ts
+FORMS=MainWindow.ui
 

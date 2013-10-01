@@ -27,6 +27,20 @@
 #include "CentralTabWidget.h"
 #include "output.h"
 
+void MainTabWidget::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void MainTabWidget::retranslate(){
+    formalAction->setText(tr("Calcul formel"));
+    spreadsheetAction->setText(tr("Tableur"));
+    programmingAction->setText(tr("Editeur de programmes"));
+    g2dAction->setText(tr("Géométrie 2D"));
+
+}
 MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     mainWindow=main;
 
@@ -65,6 +79,9 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
     connect(this,SIGNAL(currentChanged(int)),this,SLOT(changeTab(int)));
 //    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
+    retranslate();
+
 }
 void MainTabWidget::changeTab(int id){
     MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));

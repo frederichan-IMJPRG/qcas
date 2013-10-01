@@ -37,13 +37,25 @@ WizardEquation::WizardEquation(MainWindow *parent)
     mainWindow=parent;
     createGui();
 }
+void WizardEquation::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void WizardEquation::retranslate(){
+    list->setItemText(0,tr("Equation/inéquation"));
+    list->setItemText(1,tr("Equation différentielle"));
+    list->setItemText(2,tr("Système d'équations"));
 
+}
 void WizardEquation::createGui(){
     pages=new QStackedWidget;
     list=new QComboBox;
-    list->addItem(tr("Equation/inéquation"));
-    list->addItem(tr("Equation différentielle"));
-    list->addItem(tr("Système d'équations"));
+    list->addItem("");
+    list->addItem("");
+    list->addItem("");
 
     EqPanel *eqPanel=new EqPanel(this);
     DiffPanel *diffPanel=new DiffPanel(this);
@@ -60,6 +72,7 @@ void WizardEquation::createGui(){
     this->setLayout(layout);
     connect(list,SIGNAL(activated(int)),pages,SLOT(setCurrentIndex(int)));
 
+    retranslate();
 }
 void WizardEquation::sendEquation(const QString &s){
 //    QString s=qobject_cast<TabChild*>(pages->currentWidget())->sendEquation();
@@ -69,19 +82,32 @@ void WizardEquation::sendEquation(const QString &s){
 
 TabChild::TabChild(QWidget *parent):QWidget(parent){
 }
+void EqPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void EqPanel::retranslate(){
+    eq->setToolTip(tr("Saisir l'équation à résoudre <br> <b>Exemple: </b> x^2+2*x=x^3"));
+    numeric->setText(tr("Résolution numérique"));
+    inC->setText(tr("Solutions complexes"));
+
+}
 EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         eqPanel=parent;
         QLabel *labelEq=new QLabel(tr("&Equation:"));
         eq=new QLineEdit;
         labelEq->setBuddy(eq);
 
-        eq->setToolTip(tr("Saisir l'équation à résoudre <br> <b>Exemple: </b> x^2+2*x=x^3"));
+
         QLabel *labelVar=new QLabel(tr("&Variable:"));
         var=new QLineEdit("x");
         labelVar->setBuddy(var);
 
-        numeric=new QCheckBox(tr("Résolution numérique"));
-        inC=new QCheckBox(tr("Solutions complexes"));
+        numeric=new QCheckBox("");
+        inC=new QCheckBox("");
 
         QPushButton *button=new QPushButton;
         button->setIcon(QIcon(":/images/right.png"));
@@ -99,7 +125,9 @@ EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         connect(button,SIGNAL(clicked()),this,SLOT(sendEquation()));
         connect(numeric,SIGNAL(stateChanged(int)),this,SLOT(numericCheck(int)));
         connect(inC,SIGNAL(stateChanged(int)),this,SLOT(inC_Check(int)));
-    }
+	
+	retranslate();
+   }
 void EqPanel::inC_Check(int a){
     if (a==Qt::Checked){
         if (numeric->isChecked()) {

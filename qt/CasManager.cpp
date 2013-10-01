@@ -406,7 +406,7 @@ OutputWidget* CasManager::createDisplay(){
   }
   else if(answer.is_symb_of_sommet(at_pnt)){
         if (is3d(answer)){
-
+            qDebug("3D is not implemented in qcas");
         }
         else {
             return new GraphWidget(answer,context,false,mainWindow);

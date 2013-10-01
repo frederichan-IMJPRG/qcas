@@ -24,10 +24,14 @@ Config::Config(){}
 int Config::graph_width=400;
 bool Config::gridAttraction=true;
 int Config::mml_fontsize=16;//default mml size
+
 /* We add a prefix  to automatic names of geometric objects for storing in giac to avoid unexpected 
    non free variables names in formal calculus.
 */
 QString Config::GeoVarPrefix="autoG2D\_";
- 
+
+QString Config::QcasVersion="0.3";
 
 Config::LANGUAGES Config::language=Config::FRENCH;
+int Config::giaclanguage=1;
+

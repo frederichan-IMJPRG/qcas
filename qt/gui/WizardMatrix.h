@@ -28,10 +28,16 @@ public:
     WizardMatrix(MainWindow *parent=0);
 private:
     void createGui();
+    void retranslate();
+    void changeEvent(QEvent *);
     QSpinBox *rowSpin;
     QSpinBox *columnSpin;
     QTableWidget *table;
     MainWindow *mainWindow;
+    QGroupBox *box;
+    QLabel *rowLabel;
+    QLabel *columnLabel;
+
 private slots:
     void modifyRow(int);
     void modifyColumn(int);

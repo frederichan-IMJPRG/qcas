@@ -34,31 +34,46 @@ WizardCatalog::WizardCatalog(MainWindow *parent):QWidget(parent){
     history=new QStringList;
     createGui();
 }
-void WizardCatalog::createGui(){
-    lineEdit=new QLineEdit;
-    zone=new QTextBrowser;
-
+void WizardCatalog::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void WizardCatalog::retranslate(){
     zone->setText(tr("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
 "<center><h3><font color=\"#40A497\">Recherche par mot-clé</font></h3></center>"
                   "<hr> <center>Cet outil vous permet de naviguer aisément parmi les différents commandes ainsi que leurs descriptions.</center>"));
 
-    zone->setOpenLinks(false);
-
-    QAction *findAction=new QAction(tr("Rechercher"),this);
+    findAction->setText(tr("Rechercher"));
     findAction->setShortcut(tr("Entrée"));
-    findAction->setStatusTip(tr("Rechercher"));
     findAction->setStatusTip(tr("Recherche la présence du mot-clé dans la description des différentes commandes"));
-    findAction->setIcon(QIcon(":/images/edit-find.png"));
-
-    previousAction=new QAction(tr("&Précédent"),this);
+   
+    previousAction->setText(tr("&Précédent"));
     previousAction->setShortcut(tr("Alt+Gauche"));
     previousAction->setStatusTip(tr("Page précédente"));
+
+    nextAction->setText(tr("&Suivant"));
+    nextAction->setShortcut(tr("Alt+Droite"));
+    nextAction->setStatusTip(tr("Page suivante"));
+
+}
+void WizardCatalog::createGui(){
+    lineEdit=new QLineEdit;
+    zone=new QTextBrowser;
+
+ 
+    zone->setOpenLinks(false);
+
+    findAction=new QAction("",this);
+    findAction->setIcon(QIcon(":/images/edit-find.png"));
+
+    previousAction=new QAction("",this);
     previousAction->setIcon(QIcon(":/images/previous.png"));
 
 
-    nextAction=new QAction(tr("&Suivant"),this);
-    nextAction->setShortcut(tr("Alt+Droite"));
-    nextAction->setStatusTip(tr("Page suivante"));
+    nextAction=new QAction("",this);
     nextAction->setIcon(QIcon(":/images/next.png"));
 
     connect(nextAction,SIGNAL(triggered()),this,SLOT(goNext()));
@@ -83,6 +98,8 @@ void WizardCatalog::createGui(){
     setLayout(vlayout);
     connect(lineEdit,SIGNAL(returnPressed()),this,SLOT(find()));
     connect(zone,SIGNAL(anchorClicked(QUrl)),this,SLOT(displayPage(QUrl)));
+
+    retranslate();
 }
 void WizardCatalog::find(){
     QString keyWord(lineEdit->text());

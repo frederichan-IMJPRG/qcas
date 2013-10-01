@@ -30,6 +30,8 @@ class WizardCatalog :public QWidget{
 public:
     WizardCatalog(MainWindow *parent=0);
 private:
+    void changeEvent(QEvent *);
+    void retranslate();
     void createGui();
     void addHistory(const QString &st);
     void updateButtons();
@@ -40,6 +42,8 @@ private:
     QTextBrowser *zone;
     QAction* previousAction;
     QAction* nextAction;
+    QAction *findAction;
+
 public slots:
    void displayPage(QUrl);
 

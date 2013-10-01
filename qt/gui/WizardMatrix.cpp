@@ -33,13 +33,23 @@ WizardMatrix::WizardMatrix(MainWindow *parent)
     mainWindow=parent;
     createGui();
 }
-void WizardMatrix::createGui(){
-    QGroupBox *box=new QGroupBox;
+void WizardMatrix::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void WizardMatrix::retranslate(){
     box->setTitle(tr("Dimensions:"));
-    QLabel *rowLabel=new QLabel(box);
     rowLabel->setText(tr("Lignes:"));
-    QLabel *columnLabel=new QLabel(box);
     columnLabel->setText(tr("Colonnes:"));
+}
+void WizardMatrix::createGui(){
+    box=new QGroupBox;
+    rowLabel=new QLabel(box);
+    columnLabel=new QLabel(box);
+
 
     rowSpin=new QSpinBox(this);
     rowSpin->setMaximum(10);
@@ -81,9 +91,11 @@ void WizardMatrix::createGui(){
 
     this->setLayout(vLayout);
 
-   connect(rowSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyRow(int)));
-   connect(columnSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyColumn(int)));
+    connect(rowSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyRow(int)));
+    connect(columnSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyColumn(int)));
     connect(button,SIGNAL(clicked()),this,SLOT(writeMatrix()));
+
+    retranslate();
 
     show();
 }

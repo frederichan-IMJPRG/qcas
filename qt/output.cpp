@@ -5643,7 +5643,7 @@ void PanelProperties::initGui(){
     tree=new QTreeWidget;
     tree->setColumnCount(1);
     tree->headerItem()->setTextAlignment(0,Qt::AlignCenter);
-    tree->headerItem()->setText(0,tr("Objects"));
+    tree->headerItem()->setText(0,tr("Objets"));
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->clearSelection();
 

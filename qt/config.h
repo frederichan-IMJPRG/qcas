@@ -45,18 +45,23 @@ public:
     if (s=="zh")
       return 8;
     if (s=="de")
-      return 8;
+      return 9;
     return 0;
   }
 */
     enum LANGUAGES{
        FRENCH=0,
-       ENGLISH=1
+       ENGLISH=1,
+       SPANISH=2,
+       GREEK=3,
+       CHINESE=4
     };
     static LANGUAGES language;
+    static int giaclanguage;
     static bool gridAttraction;
     static int mml_fontsize;
     static QString GeoVarPrefix;
+    static QString QcasVersion;
 };
 
 #endif // CONFIG_H

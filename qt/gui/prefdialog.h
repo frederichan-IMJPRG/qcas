@@ -18,6 +18,10 @@
 #ifndef PREFDIALOG_H
 #define PREFDIALOG_H
 #include <QDialog>
+#include <QLabel>
+#include <QGroupBox>
+#include <QListWidgetItem>
+
 class MainWindow;
 class QStackedWidget;
 class QListWidget;
@@ -64,10 +68,23 @@ private:
     QSpinBox* spinNewton;
     QLineEdit* editDebugInfo;
 
-
     QPushButton* backButton;
 
+    QLabel * labelProg;
+    QLabel * labelFloat;
+    QLabel * labelBasis;
+    QLabel * labelDigits;
+    QLabel* labelProbaEpsilon;
+    QLabel* labelEpsilon;
+    QLabel* labelProgRecurs;
+    QLabel* labelEvalRecurs;
+    QLabel* labelEvalInProg;
+    QLabel* labelDebugInfo;
+    QLabel* labelNewton;
 
+
+    void changeEvent(QEvent *);
+    void retranslate();
     void initGui();
 
 private slots:
@@ -75,11 +92,13 @@ private slots:
 };
 
 class GeneralPanel:public QWidget{
+Q_OBJECT
 public:
     GeneralPanel();
     void initValue();
     void apply();
 private:
+    MainWindow* mainWindow;
     QLineEdit* editWidth;
     QCheckBox* checkGridAttraction;
     QComboBox* comboLanguage;
@@ -93,20 +112,33 @@ private:
     QLineEdit* editTMax;
     QSpinBox* editMMLSize;
     QCheckBox* checkAutoScale;
+    QGroupBox * graphicGroup;
+    QGroupBox * policeGroup;
+    QLabel * labelWidth;
+    QLabel* labelLanguage;
+    QLabel* labelMMLSize;
 
+    void changeEvent(QEvent *);
+    void retranslate();
     void initGui();
 
 
 };
 //class Interactive
 class Interactive2dPanel:public QWidget{
+Q_OBJECT
 public:
     Interactive2dPanel();
     void initValue();
     void apply();
 private:
     QLineEdit* editGeoVarPrefix;
+    QGroupBox* autovar2dGroup;
+    QLabel* labelGeoVarPrefix;
+
     void initGui();
+    void retranslate();
+    void changeEvent(QEvent *);
 
 };
 
@@ -128,7 +160,13 @@ private:
     Interactive2dPanel* interactive2dPanel;
     QPushButton* okButton;
     QPushButton* cancelButton;
+    QListWidgetItem* generalItem;
+    QListWidgetItem* interactive2dItem;
+    QListWidgetItem* spreadItem;
+
     void initGui();
+    void retranslate();
+    void changeEvent(QEvent *);
 private slots:
     void apply();
 };

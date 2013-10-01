@@ -36,6 +36,8 @@ public:
   void sendEquation(const QString &);
 private:
     MainWindow* mainWindow;
+    void changeEvent(QEvent *);
+    void retranslate();
     void createGui();
     QStackedWidget* pages;
     QComboBox *list;
@@ -68,6 +70,8 @@ private:
     QCheckBox *numeric;
     QCheckBox *inC;
 
+    void retranslate();
+    void changeEvent(QEvent *);
 };
 
 class DiffPanel:public TabChild{

@@ -42,7 +42,7 @@ void PlotFunctionDialog::initGui(){
 
     cartesianPanel=new QWidget;
     QHBoxLayout* boxCartesian=new QHBoxLayout;
-    QLabel* labelF=new QLabel(tr("f(x)="));
+    QLabel* labelF=new QLabel("f(x)=");
     editF=new QLineEdit;
     boxCartesian->addWidget(labelF);
     boxCartesian->addWidget(editF);
@@ -58,7 +58,7 @@ void PlotFunctionDialog::initGui(){
 
     implicitPanel=new QWidget;
     QHBoxLayout* boxImplicit=new QHBoxLayout;
-    QLabel* labelE=new QLabel(tr("f(x,y)="));
+    QLabel* labelE=new QLabel("f(x,y)=");
     editE=new QLineEdit;
     boxImplicit->addWidget(labelE);
     boxImplicit->addWidget(editE);

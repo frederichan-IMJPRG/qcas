@@ -44,6 +44,10 @@ private:
     QAction* g2dAction;
 
     MainWindow *mainWindow;
+
+    void changeEvent(QEvent *);
+    void retranslate();
+
 public slots:
     void addFormalSheet();
     void addSpreadSheet();

@@ -46,6 +46,9 @@
 #include "gui/FormalLineWidgets.h"
 #include <QToolButton>
 #include <QTime>
+#include <QTranslator>
+#include <QLocale>
+
 //#include "gui/FormalSheet.h"
 //#include <Qsci/qsciscintilla.h>
 //#include <Qsci/qscilexerjava.h>
@@ -55,7 +58,7 @@
 # include <QDomDocument>
 # include <QDomText>
 #include "output.h"
-
+#include "config.h"
 
 #include "CasManager.h"
 #include <QCompleter>
@@ -75,6 +78,44 @@ MainWindow::MainWindow(){
 
     commandInfo=new CommandInfo;
     taskProperties.firstPrintMessage=true;
+
+    QString lang = QLocale::system().name().section('_', 0, 0);
+    lang=lang.toLower();
+    if (lang=="c" || lang ==""){
+      lang="en";
+    }
+
+    //   qDebug()<<lang;
+    translator =new QTranslator(0);
+ 
+   
+    if (lang == "en") {
+        translator->load(QString("qcas_")+lang);
+        qApp->installTranslator(translator);
+        Config::language=Config::ENGLISH;
+	Config::giaclanguage=2;
+    }
+    if ((lang == "es")||(lang == "sp")) {
+        translator->load(QString("qcas_")+lang);
+        qApp->installTranslator(translator);
+        Config::language=Config::SPANISH;
+	Config::giaclanguage=3;
+    }
+    if (lang == "el") {
+        translator->load(QString("qcas_")+lang);
+        qApp->installTranslator(translator);
+        Config::language=Config::GREEK;
+	Config::giaclanguage=4;
+    }
+    if (lang == "zh") {
+        translator->load(QString("qcas_")+lang);
+        qApp->installTranslator(translator);
+        Config::language=Config::CHINESE;
+	Config::giaclanguage=8;
+    }
+
+
+    ui.setupUi(this);    
     createAction();
     createMenus();
     createContextMenu();
@@ -85,33 +126,79 @@ MainWindow::MainWindow(){
     setWindowIcon(QIcon(":/images/icon.png"));
 
     setCurrentFile("");
+
+
     createGui();
     wizardList->setCurrentRow(2);
     (qobject_cast<FormalWorkSheet*>(tabPages->currentWidget()))->setFocus(Qt::OtherFocusReason);
 }
 
+void MainWindow::changeEvent(QEvent *event, QString *language){
+    if(event->type() == QEvent::LanguageChange)
+        {
+	  ui.retranslateUi(this);
+           // retranslate();
+        }
+    QMainWindow::changeEvent(event);
+}
+
+void MainWindow::retranslateInterface(int configlanguage){
+    //QString lang = language->remove(2, language->length());
+    QString lang="en";
+    switch(configlanguage){
+    case 1: {
+      lang="en";
+      Config::giaclanguage=2;
+      break;
+    }
+    case 2: {
+      lang="es";
+      Config::giaclanguage=3;
+      break;
+    }
+    case 3: {
+      lang="el";
+      Config::giaclanguage=4;
+      break;
+    }
+    case 4: {
+      lang="zh";
+      Config::giaclanguage=8;
+      break;
+    }
+    default:
+      Config::giaclanguage=1;
+    }
+
+    //lang = lang.toLower();
+    lang = "qcas_" + lang + ".qm";
+    if ( translator )
+    qApp->removeTranslator( translator );
+    if(configlanguage !=0){
+        translator->load( lang);
+        qApp->installTranslator( translator );
+     }
+        //
+        retranslateMenus();
+        retranslateAction();
+        retranslateGui();
+
+}
+
 void MainWindow::createAction(){
-    newAction=new QAction(tr("&Nouveau"),this);
-    newAction->setShortcut(tr("Ctrl+N"));
-    newAction->setStatusTip(tr("Créer un nouvel espace de travail"));
+    newAction=new QAction("",this);
     newAction->setIcon(QIcon(":/images/document-new.png"));
     connect(newAction,SIGNAL(triggered()),this,SLOT(newFile()));
 
-    openAction=new QAction(tr("&Ouvrir..."),this);
-    openAction->setShortcut(tr("Ctrl+O"));
-    openAction->setStatusTip(tr("Ouvrir un nouveau fichier"));
+    openAction=new QAction("",this);
     openAction->setIcon(QIcon(":/images/open.png"));
     connect(openAction,SIGNAL(triggered()),this,SLOT(open()));
 
-    saveAction=new QAction(tr("&Enregistrer"),this);
-    saveAction->setShortcut(tr("Ctrl+S"));
-    saveAction->setStatusTip(tr("Enregistrer le fichier courant"));
+    saveAction=new QAction("",this);
     saveAction->setIcon(QIcon(":/images/document-save.png"));
     connect(saveAction,SIGNAL(triggered()),this,SLOT(save()));
 
-    saveAsAction=new QAction(tr("&Enregistrer sous..."),this);
-    //saveAsAction->setShortcut(tr("Ctrl+Maj+S"));//Gives a conflict with Ctrl+S
-    saveAsAction->setStatusTip(tr("Enregistrer sous un nouveau nom de fichier"));
+    saveAsAction=new QAction("",this);
     saveAsAction->setIcon(QIcon(":/images/document-saveas.png"));
     connect(saveAsAction,SIGNAL(triggered()),this,SLOT(saveAs()));
 
@@ -121,81 +208,125 @@ void MainWindow::createAction(){
         connect(recentFileActions[i],SIGNAL(triggered()),this,SLOT(openRecentFile()));
     }
 
-    exitAction=new QAction(tr("&Quitter"),this);
-    exitAction->setShortcut(tr("Ctrl+Q"));
-    exitAction->setStatusTip(tr("Quitter"));
+    exitAction=new QAction("",this);
     exitAction->setIcon(QIcon(":/images/exit.png"));
     connect(exitAction,SIGNAL(triggered()),this,SLOT(close()));
 
-    copyAction=new QAction(tr("&Copier"),this);
-    copyAction->setShortcut(tr("Ctrl+C"));
-    copyAction->setStatusTip(tr("Copier"));
+    copyAction=new QAction("",this);
     copyAction->setIcon(QIcon(":/images/edit-copy.png"));
     connect(copyAction,SIGNAL(triggered()),this,SLOT(copy()));
 
-    cutAction=new QAction(tr("Co&uper"),this);
-    cutAction->setShortcut(tr("Ctrl+X"));
-    cutAction->setStatusTip(tr("Couper"));
+    cutAction=new QAction("",this);
     cutAction->setIcon(QIcon(":/images/edit-cut.png"));
     connect(cutAction,SIGNAL(triggered()),this,SLOT(cut()));
 
-    pasteAction=new QAction(tr("C&oller"),this);
-    pasteAction->setShortcut(tr("Ctrl+V"));
-    pasteAction->setStatusTip(tr("Coller"));
+    pasteAction=new QAction("",this);
     pasteAction->setIcon(QIcon(":/images/edit-paste.png"));
     connect(pasteAction,SIGNAL(triggered()),this,SLOT(paste()));
 
-    undoAction=new QAction(tr("A&nnuler"),this);
-    undoAction->setShortcut(tr("Ctrl+Z"));
-    undoAction->setStatusTip(tr("Annuler"));
+    undoAction=new QAction("",this);
     undoAction->setIcon(QIcon(":/images/edit-undo.png"));
     connect(undoAction,SIGNAL(triggered()),this,SLOT(undo()));
 
-    redoAction=new QAction(tr("&Rétablir"),this);
-    redoAction->setShortcut(tr("Shift+Ctrl+Z"));
-    redoAction->setStatusTip(tr("Rétablir"));
+    redoAction=new QAction("",this);
     redoAction->setIcon(QIcon(":/images/edit-redo.png"));
     connect(redoAction,SIGNAL(triggered()),this,SLOT(redo()));
 
-    insertlineAction=new QAction(tr("&Nouvelle Entrée"),this);
-    insertlineAction->setShortcut(tr("Ctrl+I"));
-    insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
+    insertlineAction=new QAction("",this);
     insertlineAction->setIcon(QIcon(":/images/add.png"));
     connect(insertlineAction,SIGNAL(triggered()),this,SLOT(insertline()));
 
-    deleteLevelAction=new QAction(tr("&Effacer les lignes sélectionnées"),this);
-    deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
+    deleteLevelAction=new QAction("",this);
     deleteLevelAction->setIcon(QIcon(":/images/delete.png"));
     connect(deleteLevelAction,SIGNAL(triggered()),this,SLOT(deleteSelectedLevels()));
 
-
-    evaluateAction=new QAction(tr("&Evaluer"),this);
-    evaluateAction->setShortcut(tr("Shift+Entrée"));
-    evaluateAction->setStatusTip(tr("Evaluer"));
+    evaluateAction=new QAction("",this);
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
     connect(evaluateAction,SIGNAL(triggered()),this,SLOT(evaluate()));
 
-    htmlhelpAction=new QAction(tr("&Aide Html"),this);
-    htmlhelpAction->setStatusTip(tr("Aide html de Giac/Qcas"));
+    htmlhelpAction=new QAction("",this);
     connect(htmlhelpAction,SIGNAL(triggered()),this,SLOT(htmlhelp()));
 
-    aboutAction=new QAction(tr("&A propos"),this);
-    aboutAction->setStatusTip(tr("Principales informations concernant QCAS"));
+    aboutAction=new QAction("",this);
     connect(aboutAction,SIGNAL(triggered()),this,SLOT(about()));
-
 
     stopButton=new QToolButton;
     connect(stopButton,SIGNAL(clicked()),this,SLOT(killThread()));
     stopButton->setIcon(QIcon(":/images/stop.png"));
+
+    prefAction=new QAction("",this);
+    prefAction->setIcon(QIcon(":/images/configure.png"));
+    connect(prefAction,SIGNAL(triggered()),this,SLOT(pref()));
+
+    retranslateAction();
+}
+
+void MainWindow::retranslateAction(){
+    newAction->setText(tr("&Nouveau"));
+    newAction->setShortcut(tr("Ctrl+N"));
+    newAction->setStatusTip(tr("Créer un nouvel espace de travail"));
+
+    openAction->setText(tr("&Ouvrir..."));
+    openAction->setShortcut(tr("Ctrl+O"));
+    openAction->setStatusTip(tr("Ouvrir un nouveau fichier"));
+
+    saveAction->setText(tr("Enregistrer"));
+    saveAction->setShortcut(tr("Ctrl+S"));
+    saveAction->setStatusTip(tr("Enregistrer le fichier courant"));
+
+    saveAsAction->setText(tr("&Enregistrer sous..."));
+    //saveAsAction->setShortcut(tr("Ctrl+Maj+S"));//Gives a conflict with Ctrl+S
+    saveAsAction->setStatusTip(tr("Enregistrer sous un nouveau nom de fichier"));
+
+    exitAction->setText(tr("&Quitter"));
+    exitAction->setShortcut(tr("Ctrl+Q"));
+    exitAction->setStatusTip(tr("Quitter"));
+
+    copyAction->setText(tr("&Copier"));
+    copyAction->setShortcut(tr("Ctrl+C"));
+    copyAction->setStatusTip(tr("Copier"));
+
+    cutAction->setText(tr("Co&uper"));
+    cutAction->setShortcut(tr("Ctrl+X"));
+    cutAction->setStatusTip(tr("Couper"));
+
+    pasteAction->setText(tr("C&oller"));
+    pasteAction->setShortcut(tr("Ctrl+V"));
+    pasteAction->setStatusTip(tr("Coller"));
+
+    undoAction->setText(tr("&Annuler"));
+    undoAction->setShortcut(tr("Ctrl+Z"));
+    undoAction->setStatusTip(tr("Annuler"));
+
+    redoAction->setText(tr("&Rétablir"));
+    redoAction->setShortcut(tr("Shift+Ctrl+Z"));
+    redoAction->setStatusTip(tr("Rétablir"));
+
+    insertlineAction->setText(tr("&Nouvelle Entrée"));
+    insertlineAction->setShortcut(tr("Ctrl+I"));
+    insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
+
+    deleteLevelAction->setText(tr("&Effacer les lignes sélectionnées"));
+    deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
+
+
+    evaluateAction->setText(tr("&Evaluer"));
+    evaluateAction->setShortcut(tr("Shift+Entrée"));
+    evaluateAction->setStatusTip(tr("Evaluer"));
+
+    htmlhelpAction->setText(tr("&Aide Html"));
+    htmlhelpAction->setStatusTip(tr("Aide html de Giac/Qcas"));
+
+    aboutAction->setText(tr("&A propos"));
+    aboutAction->setStatusTip(tr("Principales informations concernant QCAS"));
+
+
     stopButton->setToolTip(tr("Interrompre le calcul en cours"));
     stopButton->setStatusTip(tr("Interrompre le calcul en cours"));
 
 
-
-    prefAction=new QAction(tr("&Préférences..."),this);
-    prefAction->setIcon(QIcon(":/images/configure.png"));
+    prefAction->setText(tr("&Préférences..."));
     prefAction->setStatusTip(tr("Afficher la fenêtre des préférences"));
-    connect(prefAction,SIGNAL(triggered()),this,SLOT(pref()));
 }
 void MainWindow::createToolBars(){
     toolBar=new QToolBar;
@@ -210,7 +341,7 @@ void MainWindow::createToolBars(){
 
 }
 void MainWindow::createMenus(){
-    fileMenu=menuBar()->addMenu(tr("&Fichier"));
+    fileMenu=menuBar()->addMenu("");
     fileMenu->addAction(newAction);
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
@@ -222,7 +353,7 @@ void MainWindow::createMenus(){
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
 
-    editMenu=menuBar()->addMenu(tr("Edition"));
+    editMenu=menuBar()->addMenu("");
     editMenu->addAction(cutAction);
     editMenu->addAction(copyAction);
     editMenu->addAction(pasteAction);
@@ -231,13 +362,21 @@ void MainWindow::createMenus(){
     editMenu->addAction(insertlineAction);
     editMenu->addAction(deleteLevelAction);
 
-    optionsMenu=menuBar()->addMenu(tr("&Options"));
+    optionsMenu=menuBar()->addMenu("");
     optionsMenu->addAction(prefAction);
 
-    helpMenu=menuBar()->addMenu(tr("&Aide"));
+    helpMenu=menuBar()->addMenu("");
     helpMenu->addAction(htmlhelpAction);
     helpMenu->addAction(aboutAction);
+    retranslateMenus();
 }
+void MainWindow::retranslateMenus(){
+    fileMenu->setTitle(tr("&Fichier"));
+    editMenu->setTitle(tr("&Edition"));
+    optionsMenu->setTitle(tr("&Options"));
+    helpMenu->setTitle(tr("&Aide"));
+}
+
 void MainWindow::createContextMenu(){
 
 
@@ -679,9 +818,9 @@ bool MainWindow::saveAs(){
         if(fileName.endsWith(".qcas"))
 	   return saveFile(fileName);
         else{
-	  if (rep.selectedNameFilter() == "XCAS files (*.xws)")
+	  if (rep.selectedNameFilter() == tr("fichiers XCAS (*.xws)"))
 	    return saveToGiacFile(fileName.append(".xws"));
-	  if (rep.selectedNameFilter() == "GIAC files (*.cas)")
+	  if (rep.selectedNameFilter() == tr("fichiers GIAC (*.cas)"))
 	    return saveToGiacFile(fileName.append(".cas"));
 	  else
 	    return saveFile(fileName.append(".qcas"));
@@ -693,7 +832,7 @@ bool MainWindow::saveAs(){
 }
 
 bool MainWindow::saveAsgiacxcas(){
-    QString fileName=QFileDialog::getSaveFileName(this,tr("Exporter vers..."),".xws",tr("XCAS files (*.xws);;GIAC files (*.cas)"));
+    QString fileName=QFileDialog::getSaveFileName(this,tr("Exporter vers..."),".xws",tr("fichiers XCAS  (*.xws);;fichiers GIAC  (*.cas)"));
     if (fileName.isEmpty()){
         return false;
     }
@@ -703,7 +842,7 @@ bool MainWindow::saveAsgiacxcas(){
 void MainWindow::setCurrentFile(const QString &fileName){
     curFile=fileName;
     setWindowModified(false);
-    QString shownName="Sans titre";
+    QString shownName=tr("Sans titre");
 
     if (!curFile.isEmpty()){
         shownName=strippedName(curFile);
@@ -768,9 +907,9 @@ void MainWindow::createGui(){
     p.setColor(QPalette::Base,QColor::fromRgb(251,251,113,128));
     giacMessages->setPalette(p);
     giacMessages->setMaximumBlockCount(1000);
-    QGroupBox *giacPanel=new QGroupBox;
+    
+    giacPanel=new QGroupBox;
 
-    giacPanel->setTitle(tr("Messages Giac"));
     QVBoxLayout *giacLayout=new QVBoxLayout;
     giacLayout->addWidget(giacMessages);
     giacPanel->setLayout(giacLayout);
@@ -818,7 +957,7 @@ void MainWindow::createGui(){
     labelStatus->setAlignment(Qt::AlignRight);
     labelStatus->setIndent(20);
     labelStatus->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
-    displayInStatusBar(tr("Shift+Entrée pour évaluer"),"red");
+
     statusBar()->addWidget(labelStatus,1);
     labelStatus->show();
 
@@ -841,6 +980,18 @@ void MainWindow::createGui(){
     prefDialog=new PrefDialog(this);
     cas=new CasManager(this);
 //    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
+    
+    retranslateGui();
+
+}
+void MainWindow::retranslateGui(){
+    giacPanel->setTitle(tr("Messages Giac"));
+    displayInStatusBar(tr("Shift+Entrée pour évaluer"),"red");
+
+    matrixItem->setText(tr("Matrices"));
+    equationItem->setText(tr("Equations"));
+    catalogItem->setText(tr("Catalogue"));
+    //fred
 }
 void MainWindow::printHeader(){
     if (cas->getGiacDisplay().isEmpty()&&!displayTimeAfterProcess) return;
@@ -925,13 +1076,13 @@ void MainWindow::createWizards(){
     wizardPages->addWidget(new WizardCatalog(this));
 //    wizardPages->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
 
-    QListWidgetItem *matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),tr("Matrices"),wizardList);
+    matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),"",wizardList);
     matrixItem->setTextAlignment(Qt::AlignHCenter);
     matrixItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-    QListWidgetItem *equationItem=new QListWidgetItem(QIcon(":/images/equation.png"),tr("Equations"),wizardList);
+    equationItem=new QListWidgetItem(QIcon(":/images/equation.png"),"",wizardList);
     equationItem->setTextAlignment(Qt::AlignHCenter);
     equationItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-    QListWidgetItem *catalogItem=new QListWidgetItem(QIcon(":/images/book.png"),tr("Catalogue"),wizardList);
+    catalogItem=new QListWidgetItem(QIcon(":/images/book.png"),"",wizardList);
     catalogItem->setTextAlignment(Qt::AlignHCenter);
     catalogItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     connect(wizardList,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),this,SLOT(changeWizard(QListWidgetItem*,QListWidgetItem*)));
@@ -947,15 +1098,16 @@ void MainWindow::about(){
     QMessageBox::about(this,tr("A propos de QCAS"),tr("<center><h1>  QCAS</h1></center>"
                                                       "<hr>"
                                                       "<ul>"
-                                                      "<li><b>Licence:</b> GPL </li>"
-                                                      "<li><b>Version:</b> 0.2 </li>"
+                                                      "<li><b>Licence:</b> GPL v3</li>"
+                                                      "<li><b>Version:</b> %1 </li>"
                                                       "<li><b>Sources de QCAS: </b><center><a href=\"http://git.tuxfamily.org/?p=qcas/qcas.git\">http://git.tuxfamily.org/?p=qcas/qcas.git</a></center><br></li>"
 						      "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
-                                                      "<li><b>Développeur de QCAS: </b>Loïc Le Coq <center><a href=\"mailto:loic@qcas.tuxfamily.org\"> loic@qcas.tuxfamily.org</a></center><br></li>"
+                                                      "<li><b>Auteur de QCAS: </b>Loïc Le Coq  (2012) </li>"
+						      "<li><b>Maintenance de QCAS: </b>Han Frédéric <center><a href=\"mailto:han@math.jussieu.fr\"> han@math.jussieu.fr</a></center></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
                                                       "<li><b> Site Web de XCas:  <center><a href=\"http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html\">http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html</a></center><nr></li>"
                                                       "</ul><hr>"
-                                                      ).append(QDate::currentDate().toString()));
+                                                      ).arg(Config::QcasVersion).append(QDate::currentDate().toString()));
 
 }
 void MainWindow::htmlhelp(){
@@ -1277,7 +1429,8 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
                         command.append("(").append(list.at(1)).append(")");
                     }
                 }
-                else if (line.startsWith("1")){
+		//else if (line.startsWith("1")){
+                else if (line.startsWith(QString::number(Config::giaclanguage))){  //giac lang number
                     description=line.remove(0,2);
                 }
                 else if (line.startsWith("-")){
@@ -1330,7 +1483,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
         while(!stream.atEnd()){
             line=stream.readLine();
             if (line.startsWith("#")) currentCommand=line.remove(0,2);
-            else if (line.startsWith("1")&&
+            else if (line.startsWith(QString::number(Config::giaclanguage))&&  // giac lang
                      (line.contains(keyWord,Qt::CaseInsensitive)||currentCommand.contains(keyWord,Qt::CaseInsensitive))){
                 html.append("<a href=\"");
                 html.append(currentCommand);

@@ -45,77 +45,152 @@ CasPanel::CasPanel(MainWindow *parent):QWidget(parent){
     mainWindow=parent;
     initGui();
 }
-void CasPanel::initGui(){
-
-   // Initialize main Panel //
-
-    QGridLayout* grid=new QGridLayout;
-
-    QLabel* labelProg=new QLabel(tr("Langage utilisé"));
+void CasPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void CasPanel::retranslate(){
+    labelProg->setText(tr("Langage utilisé"));
     labelProg->setToolTip(tr("<ul>"
                              "<li><b>XCAS:</b><br> <tt> maple_mode(0)</tt></li>"
                              "<li><b>Maple:</b><br> <tt> maple_mode(1)</tt></li>"
                              "<li><b>MuPad:</b><br> <tt> maple_mode(2)</tt></li>"
                              "<li><b>TI 89/92:</b><br> <tt> maple_mode(3)</tt></li>"
                              "</ul>"));
+
+    labelFloat->setText(tr("Format des nombres à virgule"));
+    labelFloat->setToolTip("<p><ul>"
+                           "<li><b>Standard:</b><p>150.12 s'affiche 150.12</p></li>"
+                           "<li><b>Scientifique:</b><p> 150.12 s'affiche 1.5012e+2</p></li>"
+                           "<li><b>Standard:</b><p> 150.12 s'affiche 150.12e+0</p></li>"
+                           "</ul></p>");
+
+    labelBasis->setText(tr("Entiers en base ..."));
+
+    labelDigits->setText(tr("Nombre de décimales"));
+    labelDigits->setToolTip(tr("<p><b>Nombre de chiffres significatifs à l'affichage</b></p>"
+                               "<tt>DIGITS:=3;evalf(pi);<br>3.14 </tt>"));
+
+    checkSymbolic->setText(tr("Calcul symbolique"));
+    checkSymbolic->setToolTip(tr("<p><b>Calcul en mode exact ou approché.</b></p> <p><tt>approx_mode:=1 </tt> (mode approximatif)</p><p><tt>approx_mode:=0 </tt> (mode exact)</p>"));
+
+    checkRadian->setText(tr("Angle en radian"));
+    checkRadian->setToolTip(tr("<p><b>Spécifie l'unité choisie pour les angles.</b></p>"
+                               "<p><tt>angle_radian:=1</tt> (radians)</p>"
+                               "<p><tt>angle_radian:=0</tt> (degrés)</p>"
+                               ));
+
+    checkComplex->setText(tr("Calcul en mode complexe"));
+    checkComplex->setToolTip(tr("<p><b>Spécifie si l'on travaille en mode réel ou complexe.</b></p>"
+                               "<p><tt>complex_mode:=1</tt> (mode complexe)</p>"
+                               "<p><tt>complex_mode:=0</tt> (mode réel)</p>"
+                                "<b>Exemple: </b> <tt>factor(x^4-1)</tt>"));
+    checkComplexVar->setText(tr("Variables à valeur complexe"));
+    checkComplexVar->setToolTip(tr("<p><b>Spécifie si l'on travaille avec des variables réelles ou complexes.</b></p>"
+                               "<p><tt>complex_variables:=1</tt> (mode complexe)</p>"
+                               "<p><tt>complex_variables:=0</tt> (mode réel)</p>"));
+
+    checkPolynomialDecrease->setText(tr("Affichage des polynômes en puissances décroissantes"));
+    checkPolynomialDecrease->setToolTip(tr("<p><center><tt>1+x+x^2+x^3+x^4+x^5</tt><br>au lieu de ... <br><tt>x^5+x^4+x^3+x^2+x+1</tt></center></p>"));
+
+    checkAlltrig->setText(tr("Solutions trigonométriques générales"));
+    checkAlltrig->setToolTip(tr("<p><ul>"
+                                "<li><tt>solve(cos (x)=1)</tt><br><tt><b>Réponse:</b> [0]</tt></li>"
+                                "<li>Sinon,<br><tt>solve(cos (x)=1)</tt><br><b>Réponse:</b> <tt>[2*n*pi]</tt></li>"
+                                "</ul></p>"));
+    checkSqrt->setText(tr("factorisation avec racines carrées"));
+    buttonAdvanced->setText(tr("Avancé..."));
+
+    comboFloat->setItemText(0,tr("Standard"));
+    comboFloat->setItemText(1,tr("Scientifique"));
+    comboFloat->setItemText(2,tr("Ingénieur"));
+
+    labelDigits->setText(tr("Nombre de décimales"));
+    labelDigits->setToolTip(tr("<p><b>Nombre de chiffres significatifs à l'affichage</b></p>"
+                               "<tt>DIGITS:=3;evalf(pi);<br>3.14 </tt>"));
+
+    labelEpsilon->setToolTip(tr("<p>Les nombres dont la valeur absolue est inférieure à cette valeur peuvent être considérés comme nuls. (Par défaut: 1e-10)</p>"));
+
+    labelProbaEpsilon->setToolTip(tr("<p>Si cette valeur est non nulle, Giac peut utiliser des algorithmes "
+                                "non déterministes et renvoyer une réponse qui a alors une probabilité d’être "
+                               "fausse inférieure à la valeur donnée. C’est par exemple le cas pour le calcul"
+                                " du déterminant d’une grande matrice à coefficients entiers. (Par défaut: 1e-15)</p>"));
+    labelEvalRecurs->setText(tr("Nombre maximal de substitutions récursives<br> de variables en mode interactif:"));
+    labelEvalRecurs->setToolTip(tr("<p>Nombre maximum d’évaluations récursives en mode interactif. Par"
+                                   "exemple, si on exécute dans l’ordre <tt> a:=b+1 </tt> et <tt>b:=5</tt> puis on évalue <tt>a</tt>, la"
+                                   "valeur renvoyée sera <tt>b+1</tt> si cette valeur vaut 1 et 6 si cette valeur est plus grande que 1. (Par défaut: 25)</p>"));
+    labelProgRecurs->setText(tr("Nombre maximal d'appels <br> récursifs dans un programme:"));
+    labelProgRecurs->setToolTip(tr("<p>Nombre maximum d’appels récursifs : par défaut c’est 50. Il n’y a pas de limite imposée; "
+                                     "par contre, si on met une borne trop élevée, c’est la pile du programme qui risque "
+                                   "de déborder en provoquant un segmentation fault. Le moment où cela se "
+                                   "produit dépend de la fonction, car la pile est aussi utilisée pour les appels "
+                                   "récursifs des fonctions C++ de giac.</p>"));
+    labelEvalInProg->setText(tr("Nombre maximal de substitutions récursives<br> de variables à l'exécution d'un programme:"));
+    labelEvalInProg->setToolTip(tr("<p>Comme ci-dessus, mais lorsqu’un programme est exécuté. On utilise "
+                                   "en principe le niveau 1 d’évaluation à l’intérieur d’un programme.</p>"));
+
+    labelDebugInfo->setText(tr("Niveau de verbosité de Giac:"));
+    labelDebugInfo->setToolTip(tr("<p>Affiche des informations intermédiaires (en bleu) sur les algorithmes"
+                               "utilisés par giac en fonction du niveau (0 = pas d’info).</p>"));
+
+    labelNewton->setText(tr("Nombre maximal d’itérations pour la méthode de Newton"));
+    labelNewton->setToolTip(tr("Nombre maximal d’itérations pour la méthode de Newton"));
+
+    backButton->setText(tr("Basique..."));
+
+}
+
+void CasPanel::initGui(){
+
+   // Initialize main Panel //
+
+    QGridLayout* grid=new QGridLayout;
+
+    labelProg=new QLabel("");
+
     comboProg=new QComboBox(this);
     comboProg->addItem(tr("XCAS"));
     comboProg->addItem(tr("Maple"));
     comboProg->addItem(tr("MuPad"));
     comboProg->addItem(tr("TI 89/92"));
 
-    QLabel* labelFloat=new QLabel(tr("Format des nombres à virgule"));
-    labelFloat->setToolTip("<p><ul>"
-                           "<li><b>Standard:</b><p>150.12 s'affiche 150.12</p></li>"
-                           "<li><b>Scientifique:</b><p> 150.12 s'affiche 1.5012e+2</p></li>"
-                           "<li><b>Standard:</b><p> 150.12 s'affiche 150.12e+0</p></li>"
-                           "</ul></p>");
+    labelFloat=new QLabel("");
+
     comboFloat=new QComboBox(this);
     comboFloat->addItem(tr("Standard"));
     comboFloat->addItem(tr("Scientifique"));
     comboFloat->addItem(tr("Ingénieur"));
 
 
-    QLabel* labelBasis=new QLabel(tr("Entiers en base ..."));
+    labelBasis=new QLabel("");
     comboBasis=new QComboBox(this);
     comboBasis->addItem(tr("10"));
     comboBasis->addItem(tr("16"));
     comboBasis->addItem(tr("8"));
 
-    QLabel* labelDigits=new QLabel(tr("Nombre de décimales"));
-    labelDigits->setToolTip(tr("<p><b>Nombre de chiffres significatifs à l'affichage</b></p>"
-                               "<tt>DIGITS:=3;evalf(pi);<br>3.14 </tt>"));
+    labelDigits=new QLabel("");
+
     editDigits=new QLineEdit(this);
     QIntValidator* validator=new QIntValidator;
     editDigits->setValidator(validator);
 
-    checkSymbolic=new QCheckBox(tr("Calcul symbolique"));
-    checkSymbolic->setToolTip(tr("<p><b>Calcul en mode exact ou approché.</b></p> <p><tt>approx_mode:=1 </tt> (mode approximatif)</p><p><tt>approx_mode:=0 </tt> (mode exact)</p>"));
-    checkRadian=new QCheckBox(tr("Angle en radian"));
-    checkRadian->setToolTip(tr("<p><b>Spécifie l'unité choisie pour les angles.</b></p>"
-                               "<p><tt>angle_radian:=1</tt> (radians)</p>"
-                               "<p><tt>angle_radian:=0</tt> (degrés)</p>"
-                               ));
-    checkComplex=new QCheckBox(tr("Calcul en mode complexe"));
-    checkComplex->setToolTip(tr("<p><b>Spécifie si l'on travaille en mode réel ou complexe.</b></p>"
-                               "<p><tt>complex_mode:=1</tt> (mode complexe)</p>"
-                               "<p><tt>complex_mode:=0</tt> (mode réel)</p>"
-                                "<b>Exemple: </b> <tt>factor(x^4-1)</tt>"));
-    checkComplexVar=new QCheckBox(tr("Variables à valeur complexe"));
-    checkComplexVar->setToolTip(tr("<p><b>Spécifie si l'on travaille avec des variables réelles ou complexes.</b></p>"
-                               "<p><tt>complex_variables:=1</tt> (mode complexe)</p>"
-                               "<p><tt>complex_variables:=0</tt> (mode réel)</p>"));
+    checkSymbolic=new QCheckBox("");
 
-    checkPolynomialDecrease=new QCheckBox(tr("Affichage des polynômes en puissances décroissantes"));
-    checkPolynomialDecrease->setToolTip(tr("<p><center><tt>1+x+x^2+x^3+x^4+x^5</tt><br>au lieu de ... <br><tt>x^5+x^4+x^3+x^2+x+1</tt></center></p>"));
+    checkRadian=new QCheckBox("");
 
-    checkAlltrig=new QCheckBox(tr("Solutions trigonométriques générales"));
-    checkAlltrig->setToolTip(tr("<p><ul>"
-                                "<li><tt>solve(cos (x)=1)</tt><br><tt><b>Réponse:</b> [0]</tt></li>"
-                                "<li>Sinon,<br><tt>solve(cos (x)=1)</tt><br><b>Réponse:</b> <tt>[2*n*pi]</tt></li>"
-                                "</ul></p>"));
-    checkSqrt=new QCheckBox(tr("factorisation avec racines carrées"));
-    buttonAdvanced=new QPushButton(tr("Avancé..."));
+    checkComplex=new QCheckBox("");
+
+    checkComplexVar=new QCheckBox("");
+
+    checkPolynomialDecrease=new QCheckBox("");
+
+    checkAlltrig=new QCheckBox("");
+
+    checkSqrt=new QCheckBox("");
+    buttonAdvanced=new QPushButton("");
     buttonAdvanced->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     connect(buttonAdvanced,SIGNAL(clicked()),this,SLOT(switchPanel()));
 
@@ -147,54 +222,39 @@ void CasPanel::initGui(){
 
     QGridLayout *grid2=new QGridLayout;
 
-    QLabel* labelEpsilon=new QLabel(tr("epsilon:"));
-    labelEpsilon->setToolTip(tr("<p>Les nombres dont la valeur absolue est inférieure à cette valeur peuvent être considérés comme nuls. (Par défaut: 1e-10)</p>"));
+    labelEpsilon=new QLabel(tr("epsilon:"));
     editEpsilon=new QLineEdit;
     editEpsilon->setValidator(new QDoubleValidator(editEpsilon));
-    QLabel* labelProbaEpsilon=new QLabel(tr("proba_epsilon:"));
-    labelProbaEpsilon->setToolTip(tr("<p>Si cette valeur est non nulle, Giac peut utiliser des algorithmes "
-                                "non déterministes et renvoyer une réponse qui a alors une probabilité d’être "
-                               "fausse inférieure à la valeur donnée. C’est par exemple le cas pour le calcul"
-                                " du déterminant d’une grande matrice à coefficients entiers. (Par défaut: 1e-15)</p>"));
+    labelProbaEpsilon=new QLabel(tr("proba_epsilon:"));
     editProbaEpsilon=new QLineEdit;
     editProbaEpsilon->setValidator(new QDoubleValidator(editProbaEpsilon));
 
-    QLabel* labelProgRecurs=new QLabel(tr("Nombre maximal d'appels <br> récursifs dans un programme:"));
-    labelProgRecurs->setToolTip(tr("<p>Nombre maximum d’appels récursifs : par défaut c’est 50. Il n’y a pas de limite imposée; "
-                                     "par contre, si on met une borne trop élevée, c’est la pile du programme qui risque "
-                                   "de déborder en provoquant un segmentation fault. Le moment où cela se "
-                                   "produit dépend de la fonction, car la pile est aussi utilisée pour les appels "
-                                   "récursifs des fonctions C++ de giac.</p>"));
+    labelProgRecurs=new QLabel("");
+
     spinRecursProg=new QSpinBox;
     spinRecursProg->setMinimum(0);
     spinRecursProg->setMaximum(500);
 
-    QLabel* labelEvalRecurs=new QLabel(tr("Nombre maximal de substitutions récursives<br> de variables en mode interactif:"));
-    labelEvalRecurs->setToolTip(tr("<p>Nombre maximum d’évaluations récursives en mode interactif. Par"
-                                   "exemple, si on exécute dans l’ordre <tt> a:=b+1 </tt> et <tt>b:=5</tt> puis on évalue <tt>a</tt>, la"
-                                   "valeur renvoyée sera <tt>b+1</tt> si cette valeur vaut 1 et 6 si cette valeur est plus grande que 1. (Par défaut: 25)</p>"));
+    labelEvalRecurs=new QLabel("");
+
     spinRecursEval=new QSpinBox;
     spinRecursEval->setMinimum(0);
 
-    QLabel* labelEvalInProg=new QLabel(tr("Nombre maximal de substitutions récursives<br> de variables à l'exécution d'un programme:"));
-    labelEvalInProg->setToolTip(tr("<p>Comme ci-dessus, mais lorsqu’un programme est exécuté. On utilise "
-                                   "en principe le niveau 1 d’évaluation à l’intérieur d’un programme.</p>"));
+    labelEvalInProg=new QLabel("");
+
     spinEvalInProg=new QSpinBox;
     spinEvalInProg->setMinimum(0);
 
-    QLabel* labelDebugInfo=new QLabel(tr("Niveau de verbosité de Giac:"));
-    labelDebugInfo->setToolTip(tr("<p>Affiche des informations intermédiaires (en bleu) sur les algorithmes"
-                               "utilisés par giac en fonction du niveau (0 = pas d’info).</p>"));
+    labelDebugInfo=new QLabel("");
 
     editDebugInfo=new QLineEdit;
     editDebugInfo->setValidator(new QIntValidator(editDebugInfo));
 
-    QLabel* labelNewton=new QLabel(tr("Nombre maximal d’itérations pour la méthode de Newton"));
-    labelNewton->setToolTip(tr("Nombre maximal d’itérations pour la méthode de Newton"));
+    labelNewton=new QLabel("");
     spinNewton=new QSpinBox;
     spinNewton->setMinimum(0);
 
-    backButton=new QPushButton(tr("Basique..."));
+    backButton=new QPushButton("");
     connect(backButton,SIGNAL(clicked()),this,SLOT(switchPanel()));
     grid2->setHorizontalSpacing(20);
     grid2->addWidget(labelEpsilon,0,0);
@@ -223,6 +283,8 @@ void CasPanel::initGui(){
     vbox->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(vbox);
 //    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+
+    retranslate();
 
 }
 void CasPanel::switchPanel(){
@@ -326,16 +388,42 @@ void CasPanel::apply(){
 GeneralPanel::GeneralPanel():QWidget(){
     initGui();
 }
+/*():QWidget(){
+    initGui();
+}
+*/
+void GeneralPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+	  retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void GeneralPanel::retranslate(){
+    graphicGroup->setTitle(tr("Options graphiques"));
+    labelWidth->setText(tr("Largeur (en pixel) des graphiques"));
+    checkGridAttraction->setText(tr("Grille aimantée"));
+    labelLanguage->setText(tr("Langue"));
+    comboLanguage->setItemText(0,tr("Français"));
+    comboLanguage->setItemText(1,tr("Anglais"));
+    comboLanguage->setItemText(2,tr("Espagnol"));
+    comboLanguage->setItemText(3,tr("Grec"));
+    comboLanguage->setItemText(4,tr("Chinois"));
+    policeGroup->setTitle(tr("Options polices"));
+    labelMMLSize->setText(tr("Taille des polices MathML:"));
+
+}
+
 void GeneralPanel::initGui(){
     QVBoxLayout* mainLayout=new QVBoxLayout(this);
 
-    QGroupBox* graphicGroup=new QGroupBox(tr("Options graphiques"),this);
+    graphicGroup=new QGroupBox("");
    /* graphicGroup->setStyleSheet("QGroupBox { "
                                 "border: 2px solid gray; "
                                " border-radius: 3px;} ");*/
     QGridLayout* graphicGrid=new QGridLayout(graphicGroup);
 
-    QLabel* labelWidth=new QLabel(tr("Largeur (en pixel) des graphiques"),this);
+    labelWidth=new QLabel("");
     editWidth=new QLineEdit(this);
     editWidth->setValidator(new QIntValidator(editWidth));
     editWidth->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
@@ -365,7 +453,7 @@ void GeneralPanel::initGui(){
     editTMax=new QLineEdit(this);
     editTMax->setValidator(new QDoubleValidator(editTMax));
     checkAutoScale=new QCheckBox(tr("autoscale"));
-    checkGridAttraction=new QCheckBox(tr("Grille aimantée"));
+    checkGridAttraction=new QCheckBox("");
 
     graphicGrid->addWidget(labelWidth,0,0,1,3);
     graphicGrid->addWidget(editWidth,0,3);
@@ -389,10 +477,13 @@ void GeneralPanel::initGui(){
     graphicGrid->addWidget(checkGridAttraction,3,0,2,1);
     graphicGrid->setSizeConstraint(QLayout::SetFixedSize);
 
-    QLabel* labelLanguage=new QLabel(tr("Langue"),this);
+    labelLanguage=new QLabel("",this);
     comboLanguage=new QComboBox(this);
-    comboLanguage->addItem(QIcon(":/images/french.png"),tr("Français"));
-    comboLanguage->addItem(QIcon(":/images/english.png"),tr("Anglais"));
+    comboLanguage->addItem(QIcon(":/images/french.png"),"");
+    comboLanguage->addItem(QIcon(":/images/english.png"),"");
+    comboLanguage->addItem(QIcon(":/images/spain.png"),"");
+    comboLanguage->addItem(QIcon(":/images/greece.png"),"");
+    comboLanguage->addItem(QIcon(":/images/china.png"),"");
 
     QWidget* langPanel=new QWidget(this);
     QHBoxLayout* hLayout=new QHBoxLayout(langPanel);
@@ -401,10 +492,10 @@ void GeneralPanel::initGui(){
     hLayout->setSizeConstraint(QLayout::SetFixedSize);
     langPanel->setLayout(hLayout);
 
-    QGroupBox* policeGroup=new QGroupBox(tr("Options polices"),this);
+    policeGroup=new QGroupBox("",this);
     QGridLayout* policeGrid=new QGridLayout(policeGroup);
 
-    QLabel* labelMMLSize=new QLabel(tr("Taille des polices MathML:"),this);
+    labelMMLSize=new QLabel(tr("Taille des polices MathML:"),mainWindow);
     
     editMMLSize=new QSpinBox(this);
     editMMLSize->setRange(8,40);
@@ -421,6 +512,7 @@ void GeneralPanel::initGui(){
     mainLayout->addWidget(graphicGroup);
     graphicGroup->setLayout(graphicGrid);
     setLayout(mainLayout);
+    retranslate();
 }
 
 void GeneralPanel::initValue(){
@@ -439,6 +531,7 @@ void GeneralPanel::initValue(){
 
 }
 void GeneralPanel::apply(){
+    Config::language=comboLanguage->currentIndex();
     int w=editWidth->text().toInt();
     if ((w>100) && (w < 1000)) Config::graph_width=w;
     else w=400;
@@ -494,11 +587,22 @@ void GeneralPanel::apply(){
 Interactive2dPanel::Interactive2dPanel():QWidget(){
     initGui();
 }
+void Interactive2dPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void Interactive2dPanel::retranslate(){
+    autovar2dGroup->setTitle(tr("Options variables automatiques"));
+    labelGeoVarPrefix->setText(tr("Prefixe ajouté aux variables nommées automatiquement"));
+}
 void Interactive2dPanel::initGui(){
     QVBoxLayout* mainLayout=new QVBoxLayout(this);
-    QGroupBox* autovar2dGroup=new QGroupBox(tr("Options variables automatiques"),this);
+    autovar2dGroup=new QGroupBox("",this);
     QGridLayout* autovar2dGrid=new QGridLayout(autovar2dGroup);
-    QLabel* labelGeoVarPrefix=new QLabel(tr("Prefixe ajouté aux variables nommées automatiquement"),this);
+    labelGeoVarPrefix=new QLabel("",this);
     editGeoVarPrefix=new QLineEdit(this);
     editGeoVarPrefix->setValidator(new QRegExpValidator(QRegExp("[A-Za-z]+[A-Za-z0-9_\-]*"),editGeoVarPrefix));
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
@@ -507,6 +611,8 @@ void Interactive2dPanel::initGui(){
     editGeoVarPrefix->adjustSize();
     autovar2dGrid->addWidget(labelGeoVarPrefix,0,0);
     //autovar2dGrid->setSizeConstraint(QLayout::SetFixedSize);
+
+    retranslate();
     mainLayout->addWidget(autovar2dGroup);
 
     setLayout(mainLayout);
@@ -531,11 +637,25 @@ PrefDialog::PrefDialog(MainWindow * parent):QDialog(parent){
     setVisible(false);
     initGui();
 }
-
-void PrefDialog::initGui(){
+void PrefDialog::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+void PrefDialog::retranslate(){
     setWindowTitle(tr("Configuration de QCAS"));
+    generalItem->setText(tr("Général"));
+    interactive2dItem->setText(tr("Géométrie 2D"));
+    spreadItem->setText(tr("Tableur"));
+    cancelButton->setText(tr("Annuler"));
 
-    generalPanel=new GeneralPanel;
+}
+void PrefDialog::initGui(){
+
+
+    generalPanel=new GeneralPanel();
     casPanel=new CasPanel(mainWindow);
     spreadSheetPanel=new QWidget(this);
     interactive2dPanel=new Interactive2dPanel;
@@ -553,17 +673,17 @@ void PrefDialog::initGui(){
     listWidget->setFlow(QListView::LeftToRight);
     listWidget->setViewMode(QListView::IconMode);
 //    listWidget->setUniformItemSizes(true);
-    QListWidgetItem* generalItem=new QListWidgetItem(QIcon(":/images/general.png"),tr("Général"));
-  generalItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
-  generalItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    generalItem=new QListWidgetItem(QIcon(":/images/general.png"),"");
+    generalItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
+    generalItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
     QListWidgetItem* casItem=new QListWidgetItem(QIcon(":/images/cas.png"),tr("CAS"));
-  casItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
-  casItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-    QListWidgetItem* spreadItem=new QListWidgetItem(QIcon(":/images/spreadsheet.png"),tr("Tableur"));
+    casItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
+    casItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    spreadItem=new QListWidgetItem(QIcon(":/images/spreadsheet.png"),"");
     spreadItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
     spreadItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-    QListWidgetItem* interactive2dItem=new QListWidgetItem(QIcon(":/images/line.png"),tr("Géométrie 2D"));
+    interactive2dItem=new QListWidgetItem(QIcon(":/images/line.png"),"");
     interactive2dItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignBottom);
     interactive2dItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
@@ -575,7 +695,7 @@ void PrefDialog::initGui(){
     listWidget->setCurrentRow(0);
     okButton=new QPushButton(tr("Ok"));
     okButton->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
-    cancelButton=new QPushButton(tr("Annuler"));
+    cancelButton=new QPushButton("");
     cancelButton->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     QWidget* buttonsPanel=new QWidget;
     QHBoxLayout* hbox=new QHBoxLayout;
@@ -596,15 +716,14 @@ void PrefDialog::initGui(){
     connect(cancelButton,SIGNAL(clicked()),this,SLOT(close()));
     connect(okButton,SIGNAL(clicked()),this,SLOT(apply()));
 
+    retranslate();
 }
 void PrefDialog::apply(){
     generalPanel->apply();
     casPanel->apply();
     interactive2dPanel->apply();
-
-//    giac::
-//    giac::set_language(2,mainWindow->getContext());
-    giac::set_language(Config::language+1,mainWindow->getContext());//french is 1 in giac.
+    mainWindow->retranslateInterface(Config::language);
+    giac::set_language(Config::giaclanguage,mainWindow->getContext());//french is 1 in giac.
     close();
 
 }

@@ -19,6 +19,8 @@
 #define MAINWINDOW_H
 #include "gui/CentralTabWidget.h"
 #include <QMainWindow>
+#include <ui_MainWindow.h>
+#include <QGroupBox>
 #include "global.h"
 class QAction;
 class QListWidget;
@@ -33,6 +35,7 @@ class QLabel;
 class QCompleter;
 class QToolButton;
 class QTime;
+class QTranslator;
 class PrefDialog;
 struct TaskProperties{
     bool firstPrintMessage;
@@ -56,7 +59,9 @@ private:
 class MainWindow :public QMainWindow {
     Q_OBJECT
  public:
-    MainWindow();    
+    MainWindow();
+    void MainWindow::changeEvent(QEvent*, QString*);
+    void MainWindow::retranslateInterface(int);
     void displayHelp(const QString &) const;
     void sendText(const QString &);
     bool isEvaluating();
@@ -78,10 +83,13 @@ protected:
 private:
     void clearWorkspace();
     void createGui();
+    void retranslateGui();
     void createWizards();
     void createAction();
+    void retranslateAction();
     void createToolBars();
     void createMenus();
+    void retranslateMenus();
     void createContextMenu();
     void readSettings();
     void writeSettings();
@@ -96,13 +104,11 @@ private:
     QStringList recentFiles;
     QString strippedName(const QString & fullFileName);
     void displayGiacMessages();
-
     enum{MaxRecentFiles=5};
     QAction* recentFileActions[MaxRecentFiles];
     QAction* separatorAction;
     QLabel* labelStatus;
-
-
+    Ui::MainWindow ui;
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *selectSubMenu;
@@ -127,6 +133,7 @@ private:
     QAction *prefAction;
     QAction *htmlhelpAction;
     QAction *aboutAction;
+    QGroupBox * giacPanel;
 
     QAction *stopAction;
     QToolButton * stopButton;
@@ -139,12 +146,18 @@ private:
     MainTabWidget *tabPages;
     QPlainTextEdit* giacMessages;
     QToolBar* toolBar;
+
+    QListWidgetItem *matrixItem;
+    QListWidgetItem *equationItem;
+    QListWidgetItem *catalogItem;
+
 //    QLabel* warningFirstEvaluation;
 //    QLabel* warningStop;
     CasManager* cas;
     TaskProperties taskProperties;
     CommandInfo* commandInfo;
     QTime* time;
+    QTranslator * translator;
     bool displayTimeAfterProcess;
     void printHeader();
     int decimalDigits;
