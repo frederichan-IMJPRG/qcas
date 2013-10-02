@@ -682,7 +682,7 @@ bool MainWindow::saveFile(const QString &fileName){
 
     QDomElement root=doc.createElement("qcas");
     // write cas configuration
-    cas->toXML(root,true);// the true option save also the  giac context
+    cas->toXML(root,false);// the true option save also the  giac context. FIXME: it is often too big.
     for (int i=0;i<tabPages->count()-1;++i){
         MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->widget(i));
         switch(sheet->getType()){
@@ -705,7 +705,7 @@ bool MainWindow::saveFile(const QString &fileName){
 
    }
     doc.appendChild(root);
-//    qDebug()<<root.oString();
+//    qDebug()<<root.toString();
 //    qDebug()<<doc.toString();
 //    qDebug()<<"Nom du fichier"<<fileName;
     QFile file(fileName);
