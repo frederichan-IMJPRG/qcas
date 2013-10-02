@@ -90,25 +90,25 @@ MainWindow::MainWindow(){
  
    
     if (lang == "en") {
-        translator->load(QString("qcas_")+lang);
+        translator->load(QString(":/lang/qcas_")+lang);
         qApp->installTranslator(translator);
         Config::language=Config::ENGLISH;
 	Config::giaclanguage=2;
     }
     if ((lang == "es")||(lang == "sp")) {
-        translator->load(QString("qcas_")+lang);
+        translator->load(QString(":/lang/qcas_")+lang);
         qApp->installTranslator(translator);
         Config::language=Config::SPANISH;
 	Config::giaclanguage=3;
     }
     if (lang == "el") {
-        translator->load(QString("qcas_")+lang);
+        translator->load(QString(":/lang/qcas_")+lang);
         qApp->installTranslator(translator);
         Config::language=Config::GREEK;
 	Config::giaclanguage=4;
     }
     if (lang == "zh") {
-        translator->load(QString("qcas_")+lang);
+        translator->load(QString(":/lang/qcas_")+lang);
         qApp->installTranslator(translator);
         Config::language=Config::CHINESE;
 	Config::giaclanguage=8;
@@ -171,7 +171,7 @@ void MainWindow::retranslateInterface(int configlanguage){
     }
 
     //lang = lang.toLower();
-    lang = "qcas_" + lang + ".qm";
+    lang = ":/lang/qcas_" + lang + ".qm";
     if ( translator )
     qApp->removeTranslator( translator );
     if(configlanguage !=0){

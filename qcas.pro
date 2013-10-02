@@ -33,6 +33,7 @@ unix{
     LIBS += -ldl -lgiac -lgmp
 }
 
+
 # Input
 HEADERS += qt/output.h \
     qt/MainWindow.h \
@@ -258,6 +259,6 @@ OTHER_FILES += \
     android/res/values-fr/strings.xml \
     android/res/values-es/strings.xml
 RESOURCES += qt/qcas.qrc
-TRANSLATIONS = qcas_en.ts qcas_es.ts qcas_el.ts
+TRANSLATIONS = qt/lang/qcas_en.ts qt/lang/qcas_es.ts qt/lang/qcas_el.ts qt/lang/qcas_zh.ts
 FORMS=MainWindow.ui
 

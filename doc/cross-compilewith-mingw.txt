@@ -1,0 +1,30 @@
+To build qcas for windows from linux.
+
+1) cross build and install the giac library with mingw
+2) install with wine the QT version for mingw. For instance in:
+/home/fred/.wine/drive_c/dev
+3) copy this win32-x-g++ in your linux: /usr/share/qt4/mkspecs
+(or copy your win32-g++ in win32-x-g++ and edit the qmake.conf to takr care of mingw and the qt intalled by wine
+4) in linux in qcas repo: 
+qmake -spec win32-x-g++
+
+then make.
+
+5) To distribute, put the following files in the same directory:
+
+from your mingw
+libgcc_s_dw2-1.dll
+libgsl-0.dll
+libgslcblas-0.dll
+mingwm10.dll
+pthreadGC2.dll
+
+from:
+release/qcas.exe
+
+from your wine QT install:
+
+QtCore4.dll
+QtGui4.dll
+QtXml4.dll
+

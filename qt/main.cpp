@@ -26,13 +26,7 @@ int main(int argc, char * argv []){
     QApplication app(argc, argv);
     setlocale(LC_NUMERIC,"POSIX");
 
-//    QString locale = QLocale::system().name().section('_', 0, 0);
-    
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-
-//    QTranslator   translator;
-//      Config::translator->load(QString("qcas_")+locale);
-//      app.installTranslator(Config::translator);
 
     MainWindow win;
 

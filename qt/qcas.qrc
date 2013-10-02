@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
+        <file>lang/qcas_en.qm</file>
+        <file>lang/qcas_es.qm</file>
+        <file>lang/qcas_el.qm</file>
+        <file>lang/qcas_zh.qm</file>
         <file>images/add.png</file>
         <file>images/angle.png</file>
         <file>images/arc3pt.png</file>

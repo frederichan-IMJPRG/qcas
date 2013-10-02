@@ -495,7 +495,7 @@ void GeneralPanel::initGui(){
     policeGroup=new QGroupBox("",this);
     QGridLayout* policeGrid=new QGridLayout(policeGroup);
 
-    labelMMLSize=new QLabel(tr("Taille des polices MathML:"),mainWindow);
+    labelMMLSize=new QLabel(tr("Taille des polices MathML:"),this);
     
     editMMLSize=new QSpinBox(this);
     editMMLSize->setRange(8,40);
