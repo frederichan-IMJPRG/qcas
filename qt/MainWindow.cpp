@@ -240,6 +240,10 @@ void MainWindow::createAction(){
     deleteLevelAction->setIcon(QIcon(":/images/delete.png"));
     connect(deleteLevelAction,SIGNAL(triggered()),this,SLOT(deleteSelectedLevels()));
 
+    sendLeveltointerAction=new QAction("",this);
+    sendLeveltointerAction->setIcon(QIcon(":/images/tangent.png"));
+    connect(sendLeveltointerAction,SIGNAL(triggered()),this,SLOT(sendSelectedLevels()));
+
     evaluateAction=new QAction("",this);
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
     connect(evaluateAction,SIGNAL(triggered()),this,SLOT(evaluate()));
@@ -309,6 +313,8 @@ void MainWindow::retranslateAction(){
     deleteLevelAction->setText(tr("&Effacer les lignes sélectionnées"));
     deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
 
+    //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
+    sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets séparé par des virgules seront considérés comme un seul objet. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
 
     evaluateAction->setText(tr("&Evaluer"));
     evaluateAction->setShortcut(tr("Shift+Entrée"));
@@ -336,6 +342,7 @@ void MainWindow::createToolBars(){
     toolBar->addAction(undoAction);
     toolBar->addAction(redoAction);
     toolBar->addAction(insertlineAction);
+    toolBar->addAction(sendLeveltointerAction);
     toolBar->addAction(evaluateAction);
     toolBar->setOrientation(Qt::Vertical);
 
@@ -576,17 +583,17 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	    }
 	    if(xcasline.contains("N4xcas6FigureE")){
 	      //Open Interactive 2D geometry
-	      fltktag="Geo2D";
-	      tabPages->addG2dSheet();
-	      g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
-	      //g2d interactive not ready, convert to formal.
-	      //tabPages->addFormalSheet();
-	      //f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
-	    }
+          fltktag="Geo2D";
+          /*tabPages->addG2dSheet();
+          g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+          *///g2d interactive not ready, convert to formal.
+          //tabPages->addFormalSheet();
+          //f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+        }
 	    if(xcasline.contains("N4xcas5Geo2dE")){
 	      //quit geo 2d later.
 	      xcasline=dataIn.readLine();//drop the next line
-	      fltktag="newformal";
+          //fltktag="newformal";
 	      //fin 
 	    }
 	    //Fixme: add the spreadsheet and other non formal case before new formal.
@@ -610,7 +617,8 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      if(nbcar>0){
 		xcasline=dataIn.read(nbcar);
 		if(fltktag=="Geo2D"){
-		  g2d->sendText(xcasline);
+          //g2d->sendText(xcasline);
+            f->sendText(xcasline.append("\n"));
 		}
 		else{
 		  if(fltktag=="newformal"){
@@ -643,7 +651,8 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		//if (!(xcasline.contains(QRegExp(";\s*$")))){
 		//    xcasline.append(";");
 		//  }
-	        g2d->sendText(xcasline);
+            //g2d->sendText(xcasline);
+            f->sendText(xcasline);
 	      }
 	    }
 	  }
@@ -1103,7 +1112,7 @@ void MainWindow::about(){
                                                       "<li><b>Sources de QCAS: </b><center><a href=\"http://git.tuxfamily.org/?p=qcas/qcas.git\">http://git.tuxfamily.org/?p=qcas/qcas.git</a></center><br></li>"
 						      "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
                                                       "<li><b>Auteur de QCAS: </b>Loïc Le Coq  (2012) </li>"
-						      "<li><b>Maintenance de QCAS: </b>Han Frédéric <center><a href=\"mailto:han@math.jussieu.fr\"> han@math.jussieu.fr</a></center></li>"
+                              "<li><b>Maintenance et développement de QCAS: </b>Han Frédéric <center><a href=\"mailto:han@math.jussieu.fr\"> han@math.jussieu.fr</a></center></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
                                                       "<li><b> Site Web de XCas:  <center><a href=\"http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html\">http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html</a></center><nr></li>"
                                                       "</ul><hr>"
@@ -1244,6 +1253,23 @@ void MainWindow::deleteSelectedLevels(){
     if (form==0) return;
     form->deleteSelectedLevels();
 
+}
+
+void MainWindow::sendSelectedLevels(){
+     FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+     if (form==0) return;
+     if (form->selectedLevels.size()==0){
+         QMessageBox msgBox;
+         msgBox.setWindowTitle("Remarque");
+         msgBox.setIcon(QMessageBox::Information);
+         msgBox.setText(tr("Vous n'avez coché aucune ligne!<br>Il n'y a donc aucune commande à envoyer en géomérie inéractive."));
+         msgBox.setStandardButtons(QMessageBox::Ok);
+         msgBox.exec();
+         return;
+     }
+     tabPages->addG2dSheet();
+     GraphWidget *g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+     form->sendSelectedLevels(g2d);
 }
 
 void MainWindow::killThread(){

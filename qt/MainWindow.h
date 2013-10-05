@@ -129,6 +129,7 @@ private:
     QAction *redoAction;
     QAction *insertlineAction;
     QAction *deleteLevelAction;
+    QAction *sendLeveltointerAction;
     QAction *evaluateAction;
     QAction *prefAction;
     QAction *htmlhelpAction;
@@ -182,6 +183,7 @@ private slots:
     void redo();
     void insertline();
     void deleteSelectedLevels();
+    void sendSelectedLevels();
     void evaluate();
     void openRecentFile();
     void changeWizard(QListWidgetItem*,QListWidgetItem*);

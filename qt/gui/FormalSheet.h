@@ -24,6 +24,8 @@
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 #include <QDomElement>
+#include "output.h"
+
 class OutputWidget;
 class QCheckBox;
 class QGridLayout;
@@ -106,6 +108,7 @@ public:
     void redo();
     void insertline();
     void deleteSelectedLevels();
+    void sendSelectedLevels(GraphWidget *);
     void sendText(const QString &);
     void displayResult(int line,OutputWidget* );
     void addSelectedLevel(int);
@@ -113,6 +116,9 @@ public:
     void toXML(QDomElement & root);
     void toGIAC(QString &);
     void toXCAS(QString &);
+
+    QVector<int>selectedLevels;
+
 protected:
     void keyPressEvent(QKeyEvent *);
     void keyReleaseEvent(QKeyEvent *);
@@ -122,7 +128,6 @@ private:
     QWidget *mainPanel;
     int current;
     QVector <Line*>*lines;
-    QVector<int>selectedLevels;
     QVBoxLayout* vLayout;
     MainWindow *mainWindow;
 };

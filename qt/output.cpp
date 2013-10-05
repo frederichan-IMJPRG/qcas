@@ -6786,6 +6786,7 @@ void Canvas2D::sendText(const QString &s){
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
     ListItem * list=0;
+    //InterItem * inter=0;
     //gen g(newCommand.command.toStdString(),context);
     gen g(newCommand.command.toStdString(),getContext());
     QList<MyItem*> v;
@@ -6797,7 +6798,7 @@ void Canvas2D::sendText(const QString &s){
        return;
     }
     // Case of a list. We want to consider a list as a single geometric object
-    if (v.size()>1) {
+    if ((v.size()>1)||(newCommand.command.contains("inter("))) {
        list =new ListItem(v,this);
        list->setLevel(evaluationLevel);
        list->setLegend(v.at(0)->getLegend());
@@ -6893,15 +6894,15 @@ void Canvas2D::sendText(const QString &s){
 	  p->setMovable(true);
 	  newCommand.item=p;//v.at(0);
 	}
-      else{
-	  newCommand.item=v.at(0);
-	}
-	pointItems.append(newCommand.item);
+    else{
+        newCommand.item=v.at(0);
+    }
+    pointItems.append(newCommand.item);
 	newCommand.item->setVisible(true);
-      }
-      else{  //non point, non cursor item
-	lineItems.append(v.at(0));
-	newCommand.item->setMovable(false);
+    }
+    else{  //non point, non cursor item
+        lineItems.append(v.at(0));
+        newCommand.item->setMovable(false);
 	  }
     } 
     findIDNT(g,newCommand.item); //find parents	

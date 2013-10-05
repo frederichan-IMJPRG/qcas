@@ -374,6 +374,17 @@ void FormalWorkSheet::deleteSelectedLevels(){
 
 }
 
+void FormalWorkSheet::sendSelectedLevels(GraphWidget * g2d){
+//the selectedLevels is not sorted. It depens of the order of the checks.
+    for(int j=0;j<lines->size();j++){
+     for (int i=0;i<selectedLevels.size();i++){
+         if(j==selectedLevels.at(i)){
+            g2d->sendText(lines->at(selectedLevels.at(i))->getTextInput()->toPlainText());
+         }
+     }
+    }
+}
+
 void FormalWorkSheet::undo(){
     lines->at(current)->getTextInput()->undo();
 
