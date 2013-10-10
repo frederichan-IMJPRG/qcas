@@ -163,6 +163,7 @@ OTHER_FILES += \
     qt/images/f1.png \
     qt/images/exit.png \
     qt/images/evaluate.png \
+    qt/images/evaluate-buisy.png \
     qt/images/equation.png \
     qt/images/edit-undo.png \
     qt/images/edit-redo.png \

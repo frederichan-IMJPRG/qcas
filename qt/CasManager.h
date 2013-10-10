@@ -100,6 +100,8 @@ public:
     void toXML(QDomElement &, const bool &archivecontext=false);
     void loadXML(const QDomElement &, const bool &archivecontext=false);
     void loadGeneralXML(const QDomElement &);
+    QEventLoop * buisyloop; //buisyloop->exec() will wait the end of monitor
+
 private:
     static giac::gen answer;
     MainWindow* mainWindow;

@@ -270,19 +270,33 @@ void FormalWorkSheet::keyReleaseEvent(QKeyEvent *){
 MainWindow* FormalWorkSheet::getApp(){
     return mainWindow;
 }
+
+int FormalWorkSheet::getLinesSize(){
+    return lines->size();
+}
+
+void FormalWorkSheet::gotoFirstLine(){
+    if(lines->size()>0){
+        current=0;
+        lines->first()->getTextInput()->setFocus(Qt::OtherFocusReason);
+    }
+}
+
 void FormalWorkSheet::goToNextLine(){
     if (current<lines->size()-1){
         current++;
         lines->at(current)->getTextInput()->setFocus(Qt::OtherFocusReason);
     }
     else {
-        current++;
-        lines->append(new Line(current,this));
-        vLayout->addWidget(lines->at(current));
-        //        this->setWidget(takeWidget());
+        if(lines->at(current)->getTextInput()->toPlainText()!=""){
+            current++;
+            lines->append(new Line(current,this));
+            vLayout->addWidget(lines->at(current));
+            //        this->setWidget(takeWidget());
 
-        lines->at(current)->getTextInput()->setFocus(Qt::OtherFocusReason);
-        lines->at(current)->show();
+            lines->at(current)->getTextInput()->setFocus(Qt::OtherFocusReason);
+            lines->at(current)->show();
+        }
     }
     QRect r=lines->at(current)->geometry();
     ensureVisible(r.x(),r.y()+r.height());

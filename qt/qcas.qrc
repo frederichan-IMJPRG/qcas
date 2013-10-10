@@ -83,5 +83,6 @@
         <file>images/zoom-in.png</file>
         <file>images/zoom-out.png</file>
         <file>aide_cas</file>
+        <file>images/evaluate-buisy.png</file>
     </qresource>
 </RCC>

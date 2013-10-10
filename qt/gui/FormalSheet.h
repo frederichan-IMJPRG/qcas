@@ -96,10 +96,12 @@ public:
     void goToNextLine();
     void goToNextExistingLine();
     void goToPreviousExistingLine();
+    void gotoFirstLine();
     void setCurrent(const int);
     int getCurrent() const;
     Line* getCurrentLine();
     Line* getLineAt(int);
+    int FormalWorkSheet::getLinesSize();
     void setFocus(Qt::FocusReason);
     void copy();
     void cut();

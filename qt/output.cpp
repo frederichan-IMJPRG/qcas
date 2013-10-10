@@ -1852,28 +1852,30 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
         else {
             id=findItemFromVar(s,&lineItems);
             if (id!=-1){
+                //qDebug()<<"found: "<<s<<"in: "<<lineItems.at(id)->getVar();
                 lineItems.at(id)->addChild(item);
-		item->addParent(lineItems.at(id));
+                item->addParent(lineItems.at(id));
             }
             else {
-                id=findItemFromVar(s,&filledItems);
-                if (id!=-1){
-                    filledItems.at(id)->addChild(item);
-		    item->addParent(filledItems.at(id));
-                }
-                else{
-                    // Look into sliders
-                    id=findItemFromVar(s,&cursorItems);
+
+                    id=findItemFromVar(s,&filledItems);
                     if (id!=-1){
-                        cursorItems.at(id)->addChild(item);
-			item->addParent(cursorItems.at(id));
-
+                        filledItems.at(id)->addChild(item);
+                        item->addParent(filledItems.at(id));
                     }
+                    else{
+                        // Look into sliders
+                        id=findItemFromVar(s,&cursorItems);
+                        if (id!=-1){
+                            cursorItems.at(id)->addChild(item);
+                        item->addParent(cursorItems.at(id));
 
+                        }
+                    }
                 }
             }
         }
-    }
+
 }
 
 
@@ -2726,6 +2728,7 @@ bool lessThan(const MyItem* a, const MyItem*b){
     return a->getLevel()<b->getLevel();
 }
 int Canvas2D::findItemFromVar(const QString& var,QList<MyItem*>* list){
+    //qDebug()<<var;
     for (int i=0;i<list->size();++i){
         if (list->at(i)->getVar()==var) return i;
     }
@@ -3394,6 +3397,7 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
 
 
     for (int i=0;i<v.size();++i){
+        //qDebug()<<"update children of"<<item->getVar()<< "  list:"<<v.at(i)->getVar();//fred
         int level=v.at(i)->getLevel();
         Command c=commands.at(level);
         gen g(c.command.toStdString(),context);
@@ -3459,7 +3463,7 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
             if (vv.isEmpty())
                 v.at(i)->setUndef(true);
             else {
-               if((v.at(i))->isList()){
+                if((v.at(i))->isList()){
                //the case of  listItems
                //qDebug()<<"found list item to update";
                ListItem * L=dynamic_cast<ListItem*>(v.at(i));
@@ -6807,18 +6811,33 @@ void Canvas2D::sendText(const QString &s){
        //list->setMovable(true);
        list->setFromInter(false);
        findIDNT(g,list);
-       list->deleteChild(list);
+       //list->deleteChild(list);
        newCommand.item=list;
        commands.append(newCommand);
        if(!(v.at(0)->getLegend()).isEmpty()){
-	 list->setVar(v.at(0)->getLegend());
+          list->setVar(v.at(0)->getLegend());//PB si le premier element de la liste a deja un nom different
+	  /*  Utile?
+	    for(int i=0;i<v.size();i++){
+              v.at(i)->setVar(v.at(0)->getLegend());
+              list->addChild(v.at(i));
+              v.at(i)->addParent(list);
+	  */
+          }
 	  }
 	  else{
 	    findFreeVar(varLine);
 	    list->setVar(varLine);
+            /* utile?
+	      for(int i=0;i<v.size();i++){
+	      v.at(i)->setVar(varLine);
+	      list->addChild(v.at(i));
+	      v.at(i)->addParent(list);
+	      }
+	    */
 	  }
        list->updateScreenCoords(true);
-       lineItems.append(newCommand.item);
+       //lineItems.append(newCommand.item);
+       lineItems.append(list);
        undoStack->push(new AddObjectCommand(this));
        //focusOwner=list;
        list->setVisible(false);

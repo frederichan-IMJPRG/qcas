@@ -65,6 +65,8 @@ class MainWindow :public QMainWindow {
     void displayHelp(const QString &) const;
     void sendText(const QString &);
     bool isEvaluating();
+    bool isEvaluatingAll();
+    void setEvaluatingAll(bool);
     CommandInfo* getCommandInfo() const;
     void evaluate(const QString & formula);
     QToolButton* getStopButton() const;
@@ -94,6 +96,7 @@ private:
     void readSettings();
     void writeSettings();
     bool okToContinue();
+    bool isevaluatingall;
     bool loadQcasFile(const QString &fileName);
     bool loadGiacFile(const QString &fileName);
     bool saveFile(const QString &fileName);
@@ -131,6 +134,8 @@ private:
     QAction *deleteLevelAction;
     QAction *sendLeveltointerAction;
     QAction *evaluateAction;
+    QAction *evaluateallAction;
+    QAction *stopallAction;
     QAction *prefAction;
     QAction *htmlhelpAction;
     QAction *aboutAction;
@@ -185,6 +190,7 @@ private slots:
     void deleteSelectedLevels();
     void sendSelectedLevels();
     void evaluate();
+    void evaluateall();
     void openRecentFile();
     void changeWizard(QListWidgetItem*,QListWidgetItem*);
     void displayResult();

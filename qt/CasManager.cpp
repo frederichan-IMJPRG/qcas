@@ -140,15 +140,19 @@ CasManager::CasManager(MainWindow* main){
 
     monitor=new MonitorThread(context);
     stopThread=new StopThread(context);
+    buisyloop=new QEventLoop(this);
     connect(stopThread,SIGNAL(startDirtyInterrupt()),mainWindow,SLOT(displayCrashWarning()));
     connect(mainWindow,SIGNAL(hideCrashWarning()),stopThread,SLOT(setContinueTrue()));
     connect(monitor,SIGNAL(finished()),mainWindow,SLOT(removeStopWarning()));
+    connect(monitor, SIGNAL(finished()), buisyloop, SLOT(quit()));
     logptr(new MyStream(this),context);
+
 }
 CasManager::~CasManager(){
     delete context;
     delete monitor;
     delete stopThread;
+    delete buisyloop;
 }
 
 bool CasManager::testExpression(const giac::gen & exp){
@@ -219,6 +223,7 @@ void CasManager::evaluate(){
             qDebug()<<"test..."<<QString::fromStdString(rep.print());
 
 */
+
     if (stopThread->isRunning()){
         stopThread->wait(2000);
     }

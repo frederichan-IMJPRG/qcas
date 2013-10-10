@@ -76,6 +76,8 @@ MainWindow::MainWindow(){
     displayTimeAfterProcess=true;
     time=new QTime;
 
+    isevaluatingall=false;
+
     commandInfo=new CommandInfo;
     taskProperties.firstPrintMessage=true;
 
@@ -87,8 +89,8 @@ MainWindow::MainWindow(){
 
     //   qDebug()<<lang;
     translator =new QTranslator(0);
- 
-   
+
+
     if (lang == "en") {
         translator->load(QString(":/lang/qcas_")+lang);
         qApp->installTranslator(translator);
@@ -115,7 +117,7 @@ MainWindow::MainWindow(){
     }
 
 
-    ui.setupUi(this);    
+    ui.setupUi(this);
     createAction();
     createMenus();
     createContextMenu();
@@ -248,6 +250,16 @@ void MainWindow::createAction(){
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
     connect(evaluateAction,SIGNAL(triggered()),this,SLOT(evaluate()));
 
+    evaluateallAction=new QAction("",this);
+    evaluateallAction->setIcon(QIcon(":/images/evaluate.png"));
+    connect(evaluateallAction,SIGNAL(triggered()),this,SLOT(evaluateall()));
+
+    /*
+    stopallAction=new QAction("",this);
+    stopallAction->setIcon(QIcon(":/images/stop.png"));
+    connect(stopallAction,SIGNAL(triggered()),this,SLOT(killThread()));
+    */
+
     htmlhelpAction=new QAction("",this);
     connect(htmlhelpAction,SIGNAL(triggered()),this,SLOT(htmlhelp()));
 
@@ -316,6 +328,8 @@ void MainWindow::retranslateAction(){
     //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
     sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets séparé par des virgules seront considérés comme un seul objet. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
 
+    evaluateallAction->setText(tr("Evaluer toute la feuille courante depuis le début."));
+
     evaluateAction->setText(tr("&Evaluer"));
     evaluateAction->setShortcut(tr("Shift+Entrée"));
     evaluateAction->setStatusTip(tr("Evaluer"));
@@ -343,7 +357,8 @@ void MainWindow::createToolBars(){
     toolBar->addAction(redoAction);
     toolBar->addAction(insertlineAction);
     toolBar->addAction(sendLeveltointerAction);
-    toolBar->addAction(evaluateAction);
+    toolBar->addAction(evaluateallAction);
+    //toolBar->addAction(stopallAction);
     toolBar->setOrientation(Qt::Vertical);
 
 }
@@ -460,7 +475,7 @@ bool MainWindow::loadFile(const QString &fileName){
  	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
 	    return loadGiacFile(fileName);
  	  }
- 	  else 
+	  else
 	    return loadQcasFile(fileName);
       }
 }
@@ -594,10 +609,10 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      //quit geo 2d later.
 	      xcasline=dataIn.readLine();//drop the next line
           //fltktag="newformal";
-	      //fin 
+	      //fin
 	    }
 	    //Fixme: add the spreadsheet and other non formal case before new formal.
-	    
+
 	    if(xcasline.contains("Comment")){
 	      xcasline=dataIn.readLine();
 	      xcasline.prepend("/* ");
@@ -618,7 +633,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		xcasline=dataIn.read(nbcar);
 		if(fltktag=="Geo2D"){
           //g2d->sendText(xcasline);
-            f->sendText(xcasline.append("\n"));
+            f->sendText(xcasline.append(";\n"));
 		}
 		else{
 		  if(fltktag=="newformal"){
@@ -633,7 +648,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      }
 	    }
 	  }
-	  else{   
+	  else{
 	    if((fltktag=="")||(fltktag=="newformal")){
 	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!="")){
 		if(fltktag=="newformal"){
@@ -642,7 +657,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		  tabPages->addFormalSheet();
 		  f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
 		}
-		f->sendText(xcasline);
+        f->sendText(xcasline);
 		f->goToNextLine();
 	      }
 	    }
@@ -652,7 +667,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		//    xcasline.append(";");
 		//  }
             //g2d->sendText(xcasline);
-            f->sendText(xcasline);
+              f->sendText(xcasline.append(";\n"));
 	      }
 	    }
 	  }
@@ -791,7 +806,7 @@ bool MainWindow::saveToGiacFile(const QString &fileName){
         {GraphWidget *graph=qobject_cast<GraphWidget*>(tabPages->widget(i));
 	      if(fileName.endsWith(".xws"))
 	          graph->toInteractiveXCAS2D(root);
-	    
+
 	}
          break;
 
@@ -819,7 +834,7 @@ bool MainWindow::saveAs(){
   rep.setAcceptMode(QFileDialog::AcceptSave);
 
   if(rep.exec()){
-     
+
      QString fileName = rep.selectedFiles()[0];
      if((fileName.endsWith(".xws"))||(fileName.endsWith(".cas")))
            return saveToGiacFile(fileName);
@@ -916,7 +931,7 @@ void MainWindow::createGui(){
     p.setColor(QPalette::Base,QColor::fromRgb(251,251,113,128));
     giacMessages->setPalette(p);
     giacMessages->setMaximumBlockCount(1000);
-    
+
     giacPanel=new QGroupBox;
 
     QVBoxLayout *giacLayout=new QVBoxLayout;
@@ -989,7 +1004,7 @@ void MainWindow::createGui(){
     prefDialog=new PrefDialog(this);
     cas=new CasManager(this);
 //    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
-    
+
     retranslateGui();
 
 }
@@ -1024,9 +1039,11 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             pasteAction->setVisible(false);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
-            evaluateAction->setVisible(false);
+            evaluateallAction->setVisible(false);
+            //stopallAction->setVisible(false);
             insertlineAction->setVisible(false);
             deleteLevelAction->setVisible(false);
+            sendLeveltointerAction->setVisible(false);
             leftPanel->hide();
         }
         break;
@@ -1040,7 +1057,9 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             undoAction->setVisible(true);
             insertlineAction->setVisible(true);
             deleteLevelAction->setVisible(true);
-            evaluateAction->setVisible(true);
+            evaluateallAction->setVisible(true);
+            //stopallAction->setVisible(false);
+            sendLeveltointerAction->setVisible(true);
             leftPanel->show();
         }
     }
@@ -1275,6 +1294,7 @@ void MainWindow::sendSelectedLevels(){
 void MainWindow::killThread(){
 
     cas->killThread();
+    setEvaluatingAll(false);
 }
 void MainWindow::evaluate(const QString &formula){
 /*    if (warningFirstEvaluation!=NULL) {
@@ -1282,9 +1302,9 @@ void MainWindow::evaluate(const QString &formula){
         delete warningFirstEvaluation;
         warningFirstEvaluation=NULL;
     }*/
+    if(formula == ""){ return;}
     setWindowModified(true);
     displayInStatusBar("","black");
-
     taskProperties.firstPrintMessage=true;
     taskProperties.currentSheet=tabPages->currentIndex();
     taskProperties.currentLine=-1;
@@ -1293,6 +1313,12 @@ void MainWindow::evaluate(const QString &formula){
     case MainSheet::FORMAL_TYPE:
         {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
             form->getCurrentLine()->addStopButton(stopButton);
+
+            if(cas->isRunning()){
+                cas->buisyloop->exec();
+                //qDebug()<<"finished; I can compute:"
+            }
+
             taskProperties.currentLine=form->getCurrentLine()->getId();
             CasManager::warning id=cas->initExpression(&formula);
             if (id==CasManager::Warning){
@@ -1315,6 +1341,58 @@ void MainWindow::evaluate(const QString &formula){
         break;
     }
 }
+void MainWindow::evaluateall(){
+
+    if(isEvaluatingAll()){
+        return;
+     }
+
+    setWindowModified(true);
+    displayInStatusBar("","black");
+    //qDebug()<<"evaluateall";
+    taskProperties.firstPrintMessage=true;
+    taskProperties.currentSheet=tabPages->currentIndex();
+    taskProperties.currentLine=-1;
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+
+        //evaluateallAction->setVisible(false);
+        //stopallAction->setVisible(true);
+        evaluateallAction->setIcon(QIcon(":/images/evaluate-buisy.png"));
+        setEvaluatingAll(true);
+        for(int i=0;i< form->getLinesSize() ;i++){
+
+
+            //be sure that previous computation is finished and displayed before a new output.
+            if(cas->isRunning()){
+                cas->buisyloop->exec();
+                //qDebug()<<"finished; I can compute:"
+            }
+            if(! isEvaluatingAll()){break;} // external stop button
+
+            form->setCurrent(i);
+            taskProperties.currentLine=i;
+            const QString formula=form->getLineAt(i)->getTextInput()->toPlainText();
+            //qDebug()<<formula;
+            form->getLineAt(i)->evaluate(formula);
+
+        }
+        evaluateallAction-> setIcon(QIcon(":/images/evaluate.png"));
+        setEvaluatingAll(false);
+        //evaluateallAction->setVisible(true);
+        }
+        break;
+    case MainSheet::SPREADSHEET_TYPE:
+    case MainSheet::G2D_TYPE:
+    case MainSheet::PROGRAMMING_TYPE:
+        break;
+    }
+
+}
+
+
 void MainWindow::displayResult(){
    displayGiacMessages();
     tabPages->setCurrentIndex(taskProperties.currentSheet);
@@ -1374,6 +1452,15 @@ void MainWindow::sendText(const QString & s){
 bool MainWindow::isEvaluating(){
     return cas->isRunning();
 }
+
+bool MainWindow::isEvaluatingAll(){
+    return isevaluatingall;
+}
+
+void MainWindow::setEvaluatingAll(bool status){
+    isevaluatingall=status;
+}
+
 giac::context* MainWindow::getContext() const{
     return cas->getContext();
 }

@@ -1,0 +1,5 @@
+geo2D inter:
+
+1)suppression des variables definies hors geo2d interact mais affichees dans la feuille?
+2) element(-5..5) ne marche pas pour les ses enfants mains (-5..5,0,0.1) oui. (Probleme de pas a 0?)
+3) les ellipses n'ont pas de bouton rempli

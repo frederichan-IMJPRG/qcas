@@ -212,8 +212,11 @@ void TextInput::keyPressEvent(QKeyEvent *e){
         // else adjust the size of the text zone
         case Qt::Key_Return:
         case Qt::Key_Enter:
-            if (e->modifiers()&Qt::ShiftModifier) {                
-                line->evaluate(toPlainText());
+            if (e->modifiers()&Qt::ShiftModifier) {
+                //prevent crash when enter is pressed during evaluation
+                if(! line->getWorkSheet()->getApp()->isEvaluating()  ){
+                    line->evaluate(toPlainText());
+                }
             }
             else {
                 QPlainTextEdit::keyPressEvent(e);
