@@ -6778,6 +6778,7 @@ void Canvas2D::sendText(const QString &s){
   if(ls.size()==0){
     return;
   }
+  //qDebug()<<"text recu: "<<s;
   Command newCommand;
     newCommand.command=ls.at(0).remove(QRegExp("\\s+"));
     varPt="A";
@@ -6793,6 +6794,7 @@ void Canvas2D::sendText(const QString &s){
     //InterItem * inter=0;
     //gen g(newCommand.command.toStdString(),context);
     gen g(newCommand.command.toStdString(),getContext());
+    //std::cout<<"gen g: "<<print(g,context)<<std::endl;//test fred
     QList<MyItem*> v;
     gen geva=protecteval(g,1,getContext());
     addToVector(geva,v);
@@ -6821,8 +6823,8 @@ void Canvas2D::sendText(const QString &s){
               v.at(i)->setVar(v.at(0)->getLegend());
               list->addChild(v.at(i));
               v.at(i)->addParent(list);
-	  */
-          }
+
+          }*/
 	  }
 	  else{
 	    findFreeVar(varLine);
