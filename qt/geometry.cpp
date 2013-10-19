@@ -161,7 +161,9 @@ bool MyItem::isCurve() const{
 bool MyItem::isMultiCurve() const{
     return false;
 }
-
+bool MyItem::isGroupedItem() const{
+    return false;
+}
 bool MyItem::isCursorItem() const{
     return false;
 }
@@ -1646,6 +1648,22 @@ void ListItem::updateValueFrom(const QList<MyItem*> & v){
     list=v;
     updateScreenCoords(true);
 }
+GroupedItem::GroupedItem(const QList<MyItem *> & l, Canvas2D * c):ListItem(l,c){
+}
+bool GroupedItem::isGroupedItem() const{
+    return true;
+}
+bool GroupedItem::isList() const{
+    return true;
+}
+/*
+void GroupedItem::toXML(QDomElement & top){
+    for (int i=0;i<list.size();++i){
+        list.at(i)->toXML(top);
+    }
+
+}
+*/
 UndefItem::UndefItem(Canvas2D* p):MyItem(p){
     value=giac::undef;
 }

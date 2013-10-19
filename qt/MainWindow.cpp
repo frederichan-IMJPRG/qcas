@@ -274,6 +274,10 @@ void MainWindow::createAction(){
     prefAction->setIcon(QIcon(":/images/configure.png"));
     connect(prefAction,SIGNAL(triggered()),this,SLOT(pref()));
 
+    hintAction=new QAction("",this);
+    hintAction->setIcon(QIcon(":/images/ampoule.png"));
+
+
     retranslateAction();
 }
 
@@ -330,6 +334,8 @@ void MainWindow::retranslateAction(){
 
     evaluateallAction->setText(tr("Evaluer toute la feuille courante depuis le début."));
 
+    hintAction->setText(tr("Astuces:<br><center>CTRL Espace</center>donne les complétions possibles du mot tapé<br><center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche"));
+
     evaluateAction->setText(tr("&Evaluer"));
     evaluateAction->setShortcut(tr("Shift+Entrée"));
     evaluateAction->setStatusTip(tr("Evaluer"));
@@ -350,6 +356,7 @@ void MainWindow::retranslateAction(){
 }
 void MainWindow::createToolBars(){
     toolBar=new QToolBar;
+    toolBar->addAction(hintAction);
     toolBar->addAction(copyAction);
     toolBar->addAction(cutAction);
     toolBar->addAction(pasteAction);
@@ -633,7 +640,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		xcasline=dataIn.read(nbcar);
 		if(fltktag=="Geo2D"){
           //g2d->sendText(xcasline);
-            f->sendText(xcasline.append(";\n"));
+            f->sendText(xcasline.append(";\n").replace(';;',';'));
 		}
 		else{
 		  if(fltktag=="newformal"){
@@ -667,7 +674,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		//    xcasline.append(";");
 		//  }
             //g2d->sendText(xcasline);
-              f->sendText(xcasline.append(";\n"));
+              f->sendText(xcasline.append(';\n').replace(';;',';'));
 	      }
 	    }
 	  }
@@ -1034,6 +1041,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
     switch(type){
         case MainSheet::G2D_TYPE:    {
             giac::decimal_digits(3,getContext());
+            hintAction->setVisible(false);
             copyAction->setVisible(false);
             cutAction->setVisible(false);
             pasteAction->setVisible(false);
@@ -1050,6 +1058,7 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
         case MainSheet::FORMAL_TYPE:
         default:{
             giac::decimal_digits(decimalDigits,getContext());
+            hintAction->setVisible(true);
             copyAction->setVisible(true);
             cutAction->setVisible(true);
             pasteAction->setVisible(true);

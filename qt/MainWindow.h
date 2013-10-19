@@ -130,6 +130,7 @@ private:
     QAction *pasteAction;
     QAction *undoAction;
     QAction *redoAction;
+    QAction * hintAction;
     QAction *insertlineAction;
     QAction *deleteLevelAction;
     QAction *sendLeveltointerAction;

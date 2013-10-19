@@ -42,6 +42,7 @@ public:
   virtual bool isHalfLine() const;
   virtual bool isCurve() const;
   virtual bool isMultiCurve() const;
+  virtual bool isGroupedItem() const;
   virtual bool isCursorItem() const;
   virtual bool isBezierCurve() const;
   virtual bool isInter() const;
@@ -368,6 +369,13 @@ public:
     virtual bool isList() const;
     virtual bool isMultiCurve() const;
     virtual QString getDisplayValue();
+};
+//class GroupedItem:public ListItem{
+class GroupedItem:public ListItem{
+public:
+    GroupedItem(const QList<MyItem*> & , Canvas2D*);
+    virtual bool isList() const;
+    virtual bool isGroupedItem() const;
 };
 class UndefItem:public MyItem{
 public:

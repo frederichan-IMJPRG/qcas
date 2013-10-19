@@ -5356,6 +5356,7 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                  ******** Case Cursor
                  **/
                 else if(element.attribute("isCursor","0").toInt()){
+                    qDebug()<<"Cursor found in loadinteractivexml";
                     commands.append(c);
                     evaluationLevel=commands.size()-1;
 
@@ -5365,9 +5366,11 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     if (isFormal){
                        cursor=new CursorItem(false,this);
                    }
-                   else cursor=new CursorItem(true,this);
+                   else {//cursor=new CursorItem(true,this);
+                     cursor=v.at(0);
+                    }
                     cursor->setVar(element.attribute("var"));
-                   cursor->setLevel(evaluationLevel);
+                    cursor->setLevel(evaluationLevel);
                     commands.last().item=cursor;
                     CursorPanel* cp=new CursorPanel(cursor->getVar(),element.attribute("min","-5").toDouble(), element.attribute("max","5").toDouble(),
                                                     element.attribute("step","0.1").toDouble(),element.attribute("value","0").toDouble(),cursor);
@@ -5379,12 +5382,14 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                         giac::sto(gen(element.attribute("value","0").toStdString(),context),gen(cursor->getVar().toStdString(),context),context);
                     cursor->setCursorPanel(cp);
                     cursorItems.append(cursor);
+                    if(isFormal){
                     parent->addCursorPanel(cp);
                     // Init to first free var
                     varLine="a";
                     findFreeVar(varLine);
                     connect (cp,SIGNAL(valueChanged()),this,SLOT(updateAllChildrenFrom()));
                     connect(cp,SIGNAL(deletePanel()),this,SLOT(deleteCursorPanel()));
+                    }
                 }
                 /***********************************
                  *********      case Multicurve
@@ -5395,6 +5400,33 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     MyItem* item=v.at(0);
                      if (v.size()>1) {
                          item =new MultiCurve(v,this);
+                         item->setLevel(evaluationLevel);
+                         item->setLegend(element.attribute("legend",""));
+                         item->setAttributes(element.attribute("attributes","0").toInt());
+                         item->setValue(v.at(0)->getValue());
+                         findIDNT(entry,item);
+                          id=element.text().indexOf(":=");
+                         if (id!=-1){
+                             item->setVar(element.text().left(id));
+                         }
+                     }
+                     c.item=item;
+                     commands.append(c);
+                     item->updateScreenCoords(true);
+                     lineItems.append(item);
+                     parent->addToTree(item);
+                     parent->updateAllCategories();
+                }
+                /*****************************************
+                 *********     Grouped item
+                 *************
+                 **/
+                else if (element.attribute("isGroupedItem","0").toInt()){
+                    //qDebug()<<"found GroupedItem";
+                    if (v.isEmpty()) continue;
+                    MyItem* item=v.at(0);
+                     if (v.size()>1) {
+                         item =new GroupedItem(v,this);
                          item->setLevel(evaluationLevel);
                          item->setLegend(element.attribute("legend",""));
                          item->setAttributes(element.attribute("attributes","0").toInt());
@@ -5487,7 +5519,9 @@ void Canvas2D::itemToXML(Command c,QDomElement & top , const bool &setLevel){
     }
     else if (item->isMultiCurve()){
         command.setAttribute("isMultiCurve",item->isMultiCurve());
-
+    }
+    else if (item->isGroupedItem()){
+        command.setAttribute("isGroupedItem",item->isGroupedItem());
 
     }
     QDomText text=top.ownerDocument().createTextNode(s);
@@ -6767,7 +6801,7 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 
 void Canvas2D::sendText(const QString &s){
     //TODO les :;    invisibles avec 
-  QStringList ls=s.split(QRegExp(":*\\s*;"),QString::SkipEmptyParts);
+  QStringList ls=s.split(QRegExp(":*\\s*;|\r|\n"),QString::SkipEmptyParts);
   if(ls.size()>1){
     for( int i =0; i<ls.size();++i){
       sendText(ls.at(i));
@@ -6780,6 +6814,7 @@ void Canvas2D::sendText(const QString &s){
   }
   //qDebug()<<"text recu: "<<s;
   Command newCommand;
+  QString OrigName="";
     newCommand.command=ls.at(0).remove(QRegExp("\\s+"));
     varPt="A";
     findFreeVar(varPt);
@@ -6790,22 +6825,55 @@ void Canvas2D::sendText(const QString &s){
     newCommand.attributes=0;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
-    ListItem * list=0;
-    //InterItem * inter=0;
-    //gen g(newCommand.command.toStdString(),context);
+    //ListItem * list=0;
+    //GroupedItem * list=0;
+    GroupedItem * list=0;
     gen g(newCommand.command.toStdString(),getContext());
-    //std::cout<<"gen g: "<<print(g,context)<<std::endl;//test fred
+    // a,b,c,d are considered as independent object while [a,b,c,d] will be a single object
+    if(g.type==giac::_VECT && g.subtype==giac::_SEQ__VECT){
+        giac::vecteur & gvv =*g._VECTptr;
+        const_iterateur it=gvv.begin(),itend=gvv.end();
+        for (;it!=itend;++it){
+            sendText(QString::fromStdString(print(*it,context)));
+        } // end for it
+        return;
+      }
+     //fred
+    //std::cout<<"gen g: "<<print(g,context)<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
+    //if(g.type== giac::_SYMB){std::cout<<"g symbol: "<< print( g.ref_SYMBptr()->feuille[1] ,context)<<std::endl ;}
+    //if(g.type== giac::_IDNT){std::cout<<"g idnt: "<<  g.ref_IDNTptr()->id_name <<std::endl ;}
+    //si IDNT prendre id_name pour nom, si symb de sommet sto prendre  feuille[1] sauf si affectation multiples a,b:=
     QList<MyItem*> v;
     gen geva=protecteval(g,1,getContext());
+    //if(geva.type== giac::_SYMB){std::cout<<"geva symbol: "<< print( geva.ref_SYMBptr()->sommet ,context)<<std::endl ;}
+    //if(geva.type== giac::_IDNT){std::cout<<"geva idnt: "<<  geva.ref_IDNTptr()->id_name <<std::endl ;}
+
     addToVector(geva,v);
     if (v.isEmpty()) {
        std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred 
        //std::cout<<print(geva,context)<<std::endl;//test fred 
        return;
     }
-    // Case of a list. We want to consider a list as a single geometric object
+    //setVar:
+    if(g.type== giac::_IDNT){
+      OrigName=QString::fromStdString(g.ref_IDNTptr()->id_name);
+    }
+    if(g.type==giac::_SYMB){
+        if(g.ref_SYMBptr()->sommet == at_sto){
+            if(g.ref_SYMBptr()->feuille[1].type == giac::_VECT){
+                qDebug()<<"Multiple affectation are not supported in interactive geometry: "<<newCommand.command;
+                return;
+            }
+            else{
+             OrigName=QString::fromStdString(g.ref_SYMBptr()->feuille[1].print());
+             //qDebug()<<"test name"<<OrigName;
+            }
+        }
+    }
+    // Case of a list. We want to consider a list of type [ ] as a single geometric object
     if ((v.size()>1)||(newCommand.command.contains("inter("))) {
-       list =new ListItem(v,this);
+       //list =new ListItem(v,this);
+       list =new GroupedItem(v,this);
        list->setLevel(evaluationLevel);
        list->setLegend(v.at(0)->getLegend());
        list->setAttributes(v.at(0)->getAttributes());
@@ -6816,9 +6884,11 @@ void Canvas2D::sendText(const QString &s){
        //list->deleteChild(list);
        newCommand.item=list;
        commands.append(newCommand);
-       if(!(v.at(0)->getLegend()).isEmpty()){
-          list->setVar(v.at(0)->getLegend());//PB si le premier element de la liste a deja un nom different
-	  /*  Utile?
+       //if(!(v.at(0)->getLegend()).isEmpty()){
+       //   list->setVar(v.at(0)->getLegend());//PB si le premier element de la liste a deja un nom different
+       if(!(OrigName.isEmpty())){
+             list->setVar(OrigName);
+       /*  Utile?
 	    for(int i=0;i<v.size();i++){
               v.at(i)->setVar(v.at(0)->getLegend());
               list->addChild(v.at(i));
@@ -6852,16 +6922,18 @@ void Canvas2D::sendText(const QString &s){
        return;
     }//end of list case
     //
-    if(!(v.at(0)->getLegend()).isEmpty()){
-      v.at(0)->setVar(v.at(0)->getLegend());
-	  }
+    //if(!(v.at(0)->getLegend()).isEmpty()){
+    //  v.at(0)->setVar(v.at(0)->getLegend());
+    if(!(OrigName.isEmpty())){
+      v.at(0)->setVar(OrigName);
+      }
 	  else{
 	    findFreeVar(varLine);
 	    v.at(0)->setVar(varLine);
 	  }
     newCommand.item=v.at(0);
     if(v.at(0)->isCursorItem()){
-      qDebug()<<"cursor found";
+      qDebug()<<"cursor found in sendtext";
       findIDNT(g,newCommand.item); //find parents	
       commands.append(newCommand);
       parent->addToTree(newCommand.item);
@@ -6905,9 +6977,11 @@ void Canvas2D::sendText(const QString &s){
 	  p->setLegend(v.at(0)->getLegend());
 	  delete v.at(0);
 	  p->updateScreenCoords(true);
-	  if(!(p->getLegend()).isEmpty()){
-	    p->setVar(p->getLegend());
-	  }
+      //if(!(p->getLegend()).isEmpty()){
+      //  p->setVar(p->getLegend());
+      if(!(OrigName.isEmpty())){
+        p->setVar(OrigName);
+      }
 	  else{
 	    findFreeVar(varPt);
 	    p->setVar(varPt);
