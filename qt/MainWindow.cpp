@@ -330,7 +330,7 @@ void MainWindow::retranslateAction(){
     deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
 
     //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
-    sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets séparé par des virgules seront considérés comme un seul objet. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
+    sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets entre crochets séparé par des virgules seront considérés comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
 
     evaluateallAction->setText(tr("Evaluer toute la feuille courante depuis le début."));
 

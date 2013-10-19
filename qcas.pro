@@ -179,6 +179,7 @@ OTHER_FILES += \
     qt/images/book.png \
     qt/images/add.png \
     qt/images/cas.png \
+    qt/images/ampoule.png \
     qt/images/general.png \
     qt/images/french.png \
     qt/images/english.png \
