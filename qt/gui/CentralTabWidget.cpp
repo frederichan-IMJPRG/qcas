@@ -91,6 +91,8 @@ void MainTabWidget::changeTab(int id){
 void MainTabWidget::closeTab(int id){
 
   //
+     if (count()-id==1) return;//on macosx the empty tab with the button shows a close button, so we prevent it from closing
+
      int r=QMessageBox::warning(this,tr("Confirmation"),tr("Vous allez supprimer cet objet ainsi \n que toutes ses dépendances. \n Voulez-vous poursuivre?"),QMessageBox::Yes|QMessageBox::Default,QMessageBox::Cancel|QMessageBox::Escape);
      if (r!=QMessageBox::Yes) return;
 
