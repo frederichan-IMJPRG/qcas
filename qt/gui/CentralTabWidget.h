@@ -18,6 +18,8 @@
 #define CENTRALTABWIDGET_H
 
 #include <QTabWidget>
+#include <giac/giac.h>
+
 class QToolButton;
 class QMenu;
 class MainWindow;
@@ -53,6 +55,7 @@ public slots:
     void addSpreadSheet();
     void addProgrammingSheet();
     void addG2dSheet();
+    void addG2dSheet(giac::context *); //cf. giacpy
     void closeTab(int);
     void changeTab(int);
 };

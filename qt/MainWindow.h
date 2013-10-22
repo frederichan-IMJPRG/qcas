@@ -60,8 +60,9 @@ class MainWindow :public QMainWindow {
     Q_OBJECT
  public:
     MainWindow();
-    void MainWindow::changeEvent(QEvent*, QString*);
-    void MainWindow::retranslateInterface(int);
+    MainWindow(int startingtabmode); //Ex: giacpy
+    void changeEvent(QEvent*, QString*);
+    void retranslateInterface(int);
     void displayHelp(const QString &) const;
     void sendText(const QString &);
     bool isEvaluating();
@@ -79,6 +80,8 @@ class MainWindow :public QMainWindow {
     int getDecimalDigit() const;
     void setDecimalDigits(const int & a);
     bool loadFile(const QString &fileName);
+    void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
+    void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
 protected:
     void closeEvent(QCloseEvent *event);
 

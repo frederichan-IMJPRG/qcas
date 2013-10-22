@@ -128,6 +128,14 @@ void MainTabWidget::addG2dSheet(){
     (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
     mainWindow->updateInterface(MainSheet::G2D_TYPE);
 }
+void MainTabWidget::addG2dSheet(giac::context * ct){
+    giac::context * localcontext=new giac::context(*ct);  // a local copy of the context
+    this->insertTab(count()-1,new GraphWidget(localcontext,false,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
+    this->setCurrentIndex(count()-2);
+    (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+    mainWindow->updateInterface(MainSheet::G2D_TYPE);
+}
+
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);

@@ -135,6 +135,28 @@ MainWindow::MainWindow(){
     (qobject_cast<FormalWorkSheet*>(tabPages->currentWidget()))->setFocus(Qt::OtherFocusReason);
 }
 
+//To Start an empty MainWindow.
+MainWindow::MainWindow(int startingtabmode ){
+
+    displayTimeAfterProcess=true;
+    time=new QTime;
+
+    commandInfo=new CommandInfo;
+    taskProperties.firstPrintMessage=true;
+    createAction();
+    createMenus();
+    createContextMenu();
+    createToolBars();
+
+    readSettings();
+
+    setWindowIcon(QIcon(":/images/icon.png"));
+
+    setCurrentFile("");
+    createGui();
+    tabPages->removeTab(0);
+}
+
 void MainWindow::changeEvent(QEvent *event, QString *language){
     if(event->type() == QEvent::LanguageChange)
         {
@@ -699,6 +721,22 @@ bool MainWindow::loadGiacFile(const QString &fileName){
     return true;
 }
 
+
+//for giacpy
+void MainWindow::loadgiacgen(const giac::gen & g, giac::context * ct){
+  tabPages->addG2dSheet(ct);
+  GraphWidget * g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+  g2d->sendgiacgen(g);
+  return;
+}
+//for giacpy
+void MainWindow::loadinteractivegiacgen(const giac::gen & g, giac::context * ct){
+  tabPages->addG2dSheet();
+  GraphWidget * g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+  //g2d->sendgiacgen(g);
+  g2d->sendinteractivegiacgen(g);
+  return;
+}
 
 
 bool MainWindow::save(){

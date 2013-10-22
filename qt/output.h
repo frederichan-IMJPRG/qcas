@@ -275,6 +275,8 @@ class GraphWidget:public OutputWidget,public MainSheet{
     void toInteractiveXML(QDomElement  &);
     void toInteractiveXCAS2D(QString  &);
     void sendText(const QString  &);
+    void sendgiacgen(const giac::gen  &); //cf giacpy
+    void sendinteractivegiacgen(const giac::gen  &); //cf giacpy
     void loadXML(QDomElement &);
     void loadInteractiveXML(QDomElement &);
     void XML2Axis(QDomElement &);
@@ -363,6 +365,8 @@ public:
     void toXY(const double,const double,double& , double&);
     void toInteractiveXCAS2D(QString  &);
     void sendText(const QString  &);
+    void sendgiacgen(const giac::gen  &); //cf. giacpy
+    void sendinteractivegiacgen(const giac::gen  &); //cf. giacpy
     void toInteractiveXML(QDomElement &);
     void loadInteractiveXML(QDomElement &);
     void itemToXML(Command , QDomElement &, const bool &setLevel=false);
