@@ -638,20 +638,26 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      //quit geo 2d later.
 	      xcasline=dataIn.readLine();//drop the next line
           //fltktag="newformal";
+          fltktag="quitgeo2d";
 	      //fin
 	    }
 	    //Fixme: add the spreadsheet and other non formal case before new formal.
 
-	    if(xcasline.contains("Comment")){
-	      xcasline=dataIn.readLine();
+	    if(xcasline.contains("Comment")){  
+          //dataIn.setCodec("ISO 8859-1");
+          dataIn.setCodec("UTF-8");//there is a nasty latin1 symbol for newlines
+          xcasline=dataIn.readLine();
 	      xcasline.prepend("/* ");
 	      xcasline.append(" */");
-	      //xcasline.replace('£',"\n");//FIXME: Problem with the newline symbol
+          //xcasline=xcasline.replace(QChar(0x00A3),"\n");
+          xcasline=xcasline.replace(QChar(65533),"\n");
+          //xcasline=xcasline.to();//pb with greek chineese...
+          //qDebug()<<xcasline;
+          dataIn.setCodec("");
 	      if(fltktag=="newformal"){
-		fltktag="";
-		qDebug()<<xcasline;
-		tabPages->addFormalSheet();
-		f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+            fltktag="";
+            tabPages->addFormalSheet();
+            f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
 	      }
 	      f->sendText(xcasline);
 	      f->goToNextLine();
@@ -662,12 +668,13 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		xcasline=dataIn.read(nbcar);
 		if(fltktag=="Geo2D"){
           //g2d->sendText(xcasline);
-            f->sendText(xcasline.append(";\n").replace(';;',';'));
+            if (! xcasline.contains(QRegExp(";\\s*$"))){ xcasline=xcasline.append(";"); }
+            f->sendText(xcasline.append("\n"));
 		}
 		else{
 		  if(fltktag=="newformal"){
 		    fltktag="";
-		    qDebug()<<xcasline;
+            //qDebug()<<xcasline;
 		    tabPages->addFormalSheet();
 		    f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
 		  }
@@ -691,14 +698,18 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      }
 	    }
 	    if(fltktag=="Geo2D"){
-	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!=(""))){
+          if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!=(""))){
 		//if (!(xcasline.contains(QRegExp(";\s*$")))){
 		//    xcasline.append(";");
 		//  }
             //g2d->sendText(xcasline);
-              f->sendText(xcasline.append(';\n').replace(';;',';'));
-	      }
+              if (! xcasline.contains(QRegExp(";\\s*$"))){ xcasline=xcasline.append(";"); }
+              f->sendText(xcasline.append("\n"));
+          }
 	    }
+        if(fltktag=="quitgeo2d"){
+            fltktag="";f->goToNextLine();
+        }
 	  }
 	  xcasline = dataIn.readLine();
 	}
