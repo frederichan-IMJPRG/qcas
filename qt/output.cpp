@@ -1821,7 +1821,9 @@ void Canvas2D::updateAllChildrenFrom(){
     }
     else{
         int id=s.indexOf(",");
+        if (id==-1){id=s.indexOf(")");s.insert(id,",");}
         int id2=s.indexOf(",",id+1);
+        if (id2==-1){id2=s.indexOf(")");}
         s.replace(id+1,id2-id-1,QString::number(cp->getValue()));
         gen g(s.toStdString(),context);
         protecteval(g,1,context);
@@ -1877,8 +1879,8 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
                         id=findItemFromVar(s,&cursorItems);
                         if (id!=-1){
                             cursorItems.at(id)->addChild(item);
-                        item->addParent(cursorItems.at(id));
-
+                            item->addParent(cursorItems.at(id));
+                            //qDebug()<<"found: "<<s<<"as parent of"<<item->getVar();
                         }
                     }
                 }
@@ -1951,19 +1953,25 @@ void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
     double j0;
     double i0save,j0save,i1,j1;
     int fs=f.size();
-    
-    if ((fs>=3) && (s==at_parameter) && (parent->isInteractive())){
-       qDebug()<<"found parameter";//f:  var,min,max,(step,orig)
+
+    if ((fs==5) && (s==at_parameter) && (parent->isInteractive())){
+       qDebug()<<"found parameter in addToVector"; //f:  var,min,max,orig,step
+
        CursorItem* cursor;
        double min,max;
-       double step=0.1;
-       double val=0;
+       double step;
+       double val;
        QString var=QString::fromStdString(f[0]._IDNTptr->name());
+       bool isFormal=(protecteval(f[0],1,context).type == giac::_IDNT);
+       //std::cout<<print(protecteval(f[0],1,context).type,context)<<std::endl;
+       //qDebug()<<"isFormal="<<isFormal;
        min=evalf_double(f[1],1,context)._DOUBLE_val;
        max=evalf_double(f[2],1,context)._DOUBLE_val;
-       if(fs>3){val=evalf_double(f[3],1,context)._DOUBLE_val;};
-       if(fs>4){step=evalf_double(f[4],1,context)._DOUBLE_val;};
-       cursor=new CursorItem(true,this);
+       val=evalf_double(f[3],1,context)._DOUBLE_val;
+       step=evalf_double(f[4],1,context)._DOUBLE_val;
+       //qDebug()<<"step: "<<step<<" val: "<<val;
+
+       cursor=new CursorItem(!isFormal,this);
        cursor->setLegend(var);
        cursor->setLevel(evaluationLevel);
        CursorPanel* cp=new CursorPanel(var,min,max,step,val,cursor);
@@ -3949,6 +3957,7 @@ void Canvas2D::addNewCircle(const bool & onlyForPreview){
 }
 void Canvas2D::addNewLine(const QString & type, const bool & onlyForPreview){
     findFreeVar(varLine);
+    //qDebug()<<varLine;
     Command c;
     c.attributes=0;
     c.command=QString(varLine);
@@ -6828,9 +6837,7 @@ void Canvas2D::sendText(const QString &s){
     varPt="A";
     findFreeVar(varPt);
     varLine="a";
-    /*if(!newCommand.command.contains(":=")){
-      newCommand.command=newCommand.command.prepend(varPt.append(":="));
-      }*/
+    findFreeVar(varLine);
     newCommand.attributes=0;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
@@ -6847,14 +6854,22 @@ void Canvas2D::sendText(const QString &s){
         } // end for it
         return;
       }
-     //fred
+    //tests:
     //std::cout<<"gen g: "<<print(g,context)<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
     //if(g.type== giac::_SYMB){std::cout<<"g symbol: "<< print( g.ref_SYMBptr()->feuille[1] ,context)<<std::endl ;}
     //if(g.type== giac::_IDNT){std::cout<<"g idnt: "<<  g.ref_IDNTptr()->id_name <<std::endl ;}
     //si IDNT prendre id_name pour nom, si symb de sommet sto prendre  feuille[1] sauf si affectation multiples a,b:=
     QList<MyItem*> v;
     gen geva=protecteval(g,1,getContext());
-    //if(geva.type== giac::_SYMB){std::cout<<"geva symbol: "<< print( geva.ref_SYMBptr()->sommet ,context)<<std::endl ;}
+    //std::cout<<"gen geva: "<<print(geva,context)<<print(geva.type,context)<<" sub "<<print(geva.subtype,context)<<std::endl;//test fred
+    /*
+    if(geva.type== giac::_SYMB){std::cout<<"geva symbol: "<< print( geva.ref_SYMBptr()->sommet ,context)<<std::endl ;
+        if(geva.is_symb_of_sommet(at_parameter)){
+            vecteur ff=*((geva.ref_SYMBptr()->feuille).ref_VECTptr());
+            std::cout<<"parameter name:"<<ff[0].ref_IDNTptr()->id_name<<std::endl;
+        }
+    }
+    */
     //if(geva.type== giac::_IDNT){std::cout<<"geva idnt: "<<  geva.ref_IDNTptr()->id_name <<std::endl ;}
 
     addToVector(geva,v);
@@ -6879,7 +6894,15 @@ void Canvas2D::sendText(const QString &s){
             }
         }
     }
-    // Case of a list. We want to consider a list of type [ ] as a single geometric object
+    if(geva.is_symb_of_sommet(at_parameter)){
+        //to get the names of stuff like this: assume([t2:=[0,-5,5,0.1])
+        vecteur ff=*((geva.ref_SYMBptr()->feuille).ref_VECTptr());
+        OrigName=QString::fromStdString(ff[0].ref_IDNTptr()->id_name);
+    }
+
+
+    //
+    //Case of a list. We want to consider a list of type [ ] as a single geometric object
     if ((v.size()>1)||(newCommand.command.contains("inter("))) {
        //list =new ListItem(v,this);
        list =new GroupedItem(v,this);
@@ -6892,7 +6915,6 @@ void Canvas2D::sendText(const QString &s){
        findIDNT(g,list);
        //list->deleteChild(list);
        newCommand.item=list;
-       commands.append(newCommand);
        //if(!(v.at(0)->getLegend()).isEmpty()){
        //   list->setVar(v.at(0)->getLegend());//PB si le premier element de la liste a deja un nom different
        if(!(OrigName.isEmpty())){
@@ -6904,18 +6926,19 @@ void Canvas2D::sendText(const QString &s){
               v.at(i)->addParent(list);
 
           }*/
-	  }
-	  else{
-	    findFreeVar(varLine);
-	    list->setVar(varLine);
-            /* utile?
-	      for(int i=0;i<v.size();i++){
-	      v.at(i)->setVar(varLine);
-	      list->addChild(v.at(i));
-	      v.at(i)->addParent(list);
-	      }
-	    */
-	  }
+       }
+       else{
+         findFreeVar(varLine);
+         list->setVar(varLine);
+         giac::gen newName(varLine.toStdString(),context);
+         giac::sto(geva,newName,context);
+         QString affectation=varLine;
+         newCommand.command=newCommand.command.prepend(affectation.append(":="));
+         /* utile?
+           for(int i=0;i<v.size();i++){v.at(i)->setVar(varLine);list->addChild(v.at(i));v.at(i)->addParent(list);}
+         */
+       }
+       commands.append(newCommand);
        list->updateScreenCoords(true);
        //lineItems.append(newCommand.item);
        lineItems.append(list);
@@ -6931,83 +6954,101 @@ void Canvas2D::sendText(const QString &s){
        return;
     }//end of list case
     //
-    //if(!(v.at(0)->getLegend()).isEmpty()){
-    //  v.at(0)->setVar(v.at(0)->getLegend());
-    if(!(OrigName.isEmpty())){
-      v.at(0)->setVar(OrigName);
-      }
-	  else{
-	    findFreeVar(varLine);
-	    v.at(0)->setVar(varLine);
-	  }
-    newCommand.item=v.at(0);
-    if(v.at(0)->isCursorItem()){
-      qDebug()<<"cursor found in sendtext";
-      findIDNT(g,newCommand.item); //find parents	
-      commands.append(newCommand);
-      parent->addToTree(newCommand.item);
-      cursorItems.append(newCommand.item);
-      undoStack->push(new AddObjectCommand(this));
-      return;
-      
+    //The cases of single object.
+    //
+    if(v.at(0)->isPoint()){
+         //
+          if(!(OrigName.isEmpty())){
+              v.at(0)->setVar(OrigName);
+          }
+          else{
+            findFreeVar(varPt);
+            v.at(0)->setVar(varPt);
+            giac::gen newName(varPt.toStdString(),context);
+            giac::sto(geva,newName,context);
+            QString affectation=varPt;//keep varPt unchanged
+            newCommand.command=newCommand.command.prepend(affectation.append(":="));
+            //qDebug()<<varPt;
+          }
+
+          if(newCommand.command.contains("element(")){
+                qDebug()<<"point element found";
+                //std::cout<<print(g,context)<<std::endl;//test fred
+                //std::cout<<print(geva,context)<<std::endl;//test fred
+                PointElement* p=0;
+                Point* origin=dynamic_cast<Point*>(v.at(0));
+	  
+                if (origin !=0){
+                    p=new PointElement(origin,this);
+                }
+                delete origin;
+                if (p==0) {
+                return;
+                }
+	  
+                newCommand.item=p;//v.at(0);
+                //commands.append(newCommand);
+                newCommand.attributes=0;
+                newCommand.isCustom=false;
+                QString ns(newCommand.command);
+                ns.append("+(0.0+0.0*i)");// nb: element may be in exact mode, so it's  safe to force floats
+                evaluationLevel=commands.size();
+                g=giac::gen(ns.toStdString(),context);
+                v.clear();
+                addToVector(protecteval(g,1,context),v);
+                p->setAttributes(0);
+                p->updateValueFrom(v.at(0));
+                p->setLevel(evaluationLevel);
+                p->setLegend(v.at(0)->getLegend());
+                delete v.at(0);
+                p->updateScreenCoords(true);
+                //if(!(p->getLegend()).isEmpty()){
+                //  p->setVar(p->getLegend());
+                if(!(OrigName.isEmpty())){
+                    p->setVar(OrigName);
+                }
+                else{
+                    findFreeVar(varPt);
+                    p->setVar(varPt);//FIXME
+                }
+                p->setMovable(true);
+                newCommand.item=p;//v.at(0);
+                }
+          else{//ordinary point
+                newCommand.item=v.at(0);
+          }
+        pointItems.append(newCommand.item);
+        newCommand.item->setVisible(true);
     }
-    //non cursor item
-    else{
-      if(v.at(0)->isPoint()){
-	//
-	if(newCommand.command.contains("element(")){
-	  qDebug()<<"point element found";
-	  //std::cout<<print(g,context)<<std::endl;//test fred 
-	  //std::cout<<print(geva,context)<<std::endl;//test fred 
-	  PointElement* p=0;
-	  Point* origin=dynamic_cast<Point*>(v.at(0));
-	  
-	  if (origin !=0){
-            p=new PointElement(origin,this);
-	  }
-	  delete origin;
-	  if (p==0) {
-	    return;
-	  }
-	  
-	  newCommand.item=p;//v.at(0);
-	  //commands.append(newCommand);
-	  newCommand.attributes=0;
-	  newCommand.isCustom=false;
-	  QString ns(newCommand.command);
-	  ns.append("+(0.0+0.0*i)");// nb: element may be in exact mode, so it's  safe to force floats
-	  evaluationLevel=commands.size();
-	  g=giac::gen(ns.toStdString(),context);
-	  v.clear();
-	  addToVector(protecteval(g,1,context),v);
-	  p->setAttributes(0);
-	  p->updateValueFrom(v.at(0));
-	  p->setLevel(evaluationLevel);
-	  p->setLegend(v.at(0)->getLegend());
-	  delete v.at(0);
-	  p->updateScreenCoords(true);
-      //if(!(p->getLegend()).isEmpty()){
-      //  p->setVar(p->getLegend());
-      if(!(OrigName.isEmpty())){
-        p->setVar(OrigName);
-      }
-	  else{
-	    findFreeVar(varPt);
-	    p->setVar(varPt);
-	  }
-	  p->setMovable(true);
-	  newCommand.item=p;//v.at(0);
-	}
-    else{
+    else{  //non point
+       if(!(OrigName.isEmpty())){
+            v.at(0)->setVar(OrigName);
+        }
+        else{
+            findFreeVar(varLine);
+            v.at(0)->setVar(varLine);
+            giac::gen newName(varLine.toStdString(),context);
+            giac::sto(geva,newName,context);
+            QString affectation=varLine;//keep varline unchanged
+            newCommand.command=newCommand.command.prepend(affectation.append(":="));
+
+        }
         newCommand.item=v.at(0);
-    }
-    pointItems.append(newCommand.item);
-	newCommand.item->setVisible(true);
-    }
-    else{  //non point, non cursor item
-        lineItems.append(v.at(0));
-        newCommand.item->setMovable(false);
-	  }
+        if(v.at(0)->isCursorItem()){
+            qDebug()<<"cursor found in sendtext";
+            findIDNT(g,newCommand.item); //find parents
+            commands.append(newCommand);
+            parent->addToTree(newCommand.item);
+            cursorItems.append(newCommand.item);
+            undoStack->push(new AddObjectCommand(this));
+            parent->updateAllCategories();
+            return;
+        }
+        //non point and non cursor item
+        else{
+            lineItems.append(v.at(0));
+            newCommand.item->setMovable(false);
+        }
     } 
     findIDNT(g,newCommand.item); //find parents	
     commands.append(newCommand);
