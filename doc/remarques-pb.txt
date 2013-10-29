@@ -1,5 +1,19 @@
 geo2D inter:
 
 1)suppression des variables definies hors geo2d interact mais affichees dans la feuille?
-2) element(-5..5) ne marche pas pour les ses enfants mains (-5..5,0,0.1) oui. (Probleme de pas a 0?)
+DONE  2) element(-5..5) ne marche pas pour les ses enfants mains (-5..5,0,0.1) oui. (Probleme de pas a 0?)
 3) les ellipses n'ont pas de bouton rempli
+4) open new file n'a pas du tout liberer car un quitter fait des 
+ ***   bug in PARI/GP (Segmentation Fault), please report
+  ***   bug in PARI/GP (Segmentation Fault), please report
+  ***   bug in PARI/GP (Segmentation Fault), please report
+  ***   Erreur de segmentation (core dumped)
+5) dans sendtext geo2d un parent du type:
+xt:=1+t
+
+puis
+t:=element(-5..5)
+point(xt) ne marche pas. utiliser plutot:
+xt(t):=1+t
+
+puis point(xt(t))

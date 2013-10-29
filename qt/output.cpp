@@ -1858,7 +1858,7 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
         int id=findItemFromVar(s,&pointItems);
         if (id!=-1){
             pointItems.at(id)->addChild(item);
-	    item->addParent(pointItems.at(id));
+            item->addParent(pointItems.at(id));
         }
         else {
             id=findItemFromVar(s,&lineItems);
@@ -3418,6 +3418,7 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
         int level=v.at(i)->getLevel();
         Command c=commands.at(level);
         gen g(c.command.toStdString(),context);
+        //std::cout<<"command to update"<<print(g,context)<<std::endl;
 
         if (v.at(i)->isAngleItem()){
             gen answer=protecteval(g,1,context);
@@ -5175,6 +5176,7 @@ void Canvas2D::resizeEvent(QResizeEvent * ev){
 void Canvas2D::loadInteractiveXML(QDomElement & sheet){
     bool isOrtho=sheet.attribute("ortho","0").toInt();
     QDomNode first=sheet.firstChild();
+
     while(!first.isNull()){
         QDomElement element=first.toElement();
         if (!element.isNull()) {
@@ -5205,6 +5207,28 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 QList<MyItem*> v;
                 addToVector(answer,v);
 
+                /*****************************************************
+                  **** Case of undef items
+                  */
+                if (v.isEmpty()) {
+                    //std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
+                    //qDebug()<<OrigName;
+                    UndefItem * undef=new UndefItem(this);
+                    findIDNT(entry,undef);
+                    id=element.text().indexOf(":=");
+                    if (id!=-1){
+                        undef->setVar(element.text().left(id));
+                    }
+                    else{
+                        undef->setVar(element.text());
+                    }
+                    c.item=undef;
+                    commands.append(c);
+                    lineItems.append(undef);
+                    parent->addToTree(undef);
+                    parent->updateAllCategories();
+                    return;
+                }
 
                 /*******************************************************
                 *****  Case of intersection points or tangent lines *****
@@ -5668,7 +5692,7 @@ void Canvas2D::getDisplayCommands(QStringList & list){
     for (int i=0;i<commands.size();++i){
         QString s=commands.at(i).command;
         MyItem* item=commands.at(i).item;
-        if (item->isUndef()) continue;
+        //fred if (item->isUndef()) continue;
         if (item->isInter()){
             tmp.clear();
             for (int j=0;j<item->getChildren().size();++j){
@@ -6844,6 +6868,7 @@ void Canvas2D::sendText(const QString &s){
     //ListItem * list=0;
     //GroupedItem * list=0;
     GroupedItem * list=0;
+    UndefItem * undef=0;
     gen g(newCommand.command.toStdString(),getContext());
     // a,b,c,d are considered as independent object while [a,b,c,d] will be a single object
     if(g.type==giac::_VECT && g.subtype==giac::_SEQ__VECT){
@@ -6855,7 +6880,7 @@ void Canvas2D::sendText(const QString &s){
         return;
       }
     //tests:
-    //std::cout<<"gen g: "<<print(g,context)<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
+    //std::cout<<"gen g: "<<print(g,context)<<" type "<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
     //if(g.type== giac::_SYMB){std::cout<<"g symbol: "<< print( g.ref_SYMBptr()->feuille[1] ,context)<<std::endl ;}
     //if(g.type== giac::_IDNT){std::cout<<"g idnt: "<<  g.ref_IDNTptr()->id_name <<std::endl ;}
     //si IDNT prendre id_name pour nom, si symb de sommet sto prendre  feuille[1] sauf si affectation multiples a,b:=
@@ -6873,13 +6898,9 @@ void Canvas2D::sendText(const QString &s){
     //if(geva.type== giac::_IDNT){std::cout<<"geva idnt: "<<  geva.ref_IDNTptr()->id_name <<std::endl ;}
 
     addToVector(geva,v);
-    if (v.isEmpty()) {
-       std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred 
-       //std::cout<<print(geva,context)<<std::endl;//test fred 
-       return;
-    }
+
     //setVar:
-    if(g.type== giac::_IDNT){
+    if(g.type== giac::_IDNT){// NB undef is also like this
       OrigName=QString::fromStdString(g.ref_IDNTptr()->id_name);
     }
     if(g.type==giac::_SYMB){
@@ -6900,6 +6921,24 @@ void Canvas2D::sendText(const QString &s){
         OrigName=QString::fromStdString(ff[0].ref_IDNTptr()->id_name);
     }
 
+    if (v.isEmpty()) {
+       std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
+       //qDebug()<<OrigName;
+       if ((OrigName != "") && (OrigName != "undef")){
+            undef=new UndefItem(this);
+            undef->setVar(OrigName);
+            //qDebug()<<"var d'undef:"<<undef->getVar();
+            undef->setLevel(evaluationLevel);
+            newCommand.item=undef;
+            commands.append(newCommand);//keep the entry
+            findIDNT(g,newCommand.item); //find parents
+            lineItems.append(newCommand.item);
+            undoStack->push(new AddObjectCommand(this));
+            parent->addToTree(newCommand.item);
+            parent->updateAllCategories();
+       }
+       return;
+    }
 
     //
     //Case of a list. We want to consider a list of type [ ] as a single geometric object

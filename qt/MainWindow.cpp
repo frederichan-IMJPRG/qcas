@@ -608,6 +608,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
     if (!file.open(QIODevice::ReadOnly))
         return false;
     QTextStream dataIn(&file);
+    dataIn.setCodec("UTF-8");//NB: there is a nasty latin1 symbol for newlines
     if (fileName.endsWith(".xws")){
     //xcas .xws file
 	QString xcasline = dataIn.readLine();
@@ -645,7 +646,6 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 
 	    if(xcasline.contains("Comment")){  
           //dataIn.setCodec("ISO 8859-1");
-          dataIn.setCodec("UTF-8");//there is a nasty latin1 symbol for newlines
           xcasline=dataIn.readLine();
 	      xcasline.prepend("/* ");
 	      xcasline.append(" */");
@@ -689,10 +689,11 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!="")){
 		if(fltktag=="newformal"){
 		  fltktag="";
-		  qDebug()<<xcasline;
+          //qDebug()<<xcasline;
 		  tabPages->addFormalSheet();
 		  f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
 		}
+        xcasline=xcasline.replace(QChar(65533),"\n");
         f->sendText(xcasline);
 		f->goToNextLine();
 	      }
