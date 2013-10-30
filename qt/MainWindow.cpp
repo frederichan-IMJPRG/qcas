@@ -348,9 +348,9 @@ void MainWindow::retranslateAction(){
     insertlineAction->setShortcut(tr("Ctrl+I"));
     insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
 
-    deleteLevelAction->setText(tr("&Effacer les lignes sélectionnées"));
-    deleteLevelAction->setShortcut(tr("Ctrl+Backspace"));
-    deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
+    deleteLevelAction->setText(tr("&Supprimer les lignes cochées"));
+    deleteLevelAction->setShortcut(tr("Ctrl+BackSpace"));
+    deleteLevelAction->setStatusTip(tr("Détruit les niveaux sélectionnés"));
 
     //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
     sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets entre crochets séparé par des virgules seront considérés comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
