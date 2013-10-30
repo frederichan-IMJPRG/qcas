@@ -1821,10 +1821,11 @@ void Canvas2D::updateAllChildrenFrom(){
     }
     else{
         int id=s.indexOf(",");
-        if (id==-1){id=s.indexOf(")");s.insert(id,",");}
+        if (id==-1){id=s.lastIndexOf(")");s.insert(id,",");} //Ex: element((-5.5)..(-2))  ;
         int id2=s.indexOf(",",id+1);
-        if (id2==-1){id2=s.indexOf(")");}
+        if (id2==-1){id2=s.lastIndexOf(")");}
         s.replace(id+1,id2-id-1,QString::number(cp->getValue()));
+        //qDebug()<<"modified cursor command"<<s;
         gen g(s.toStdString(),context);
         protecteval(g,1,context);
     }
@@ -6858,9 +6859,29 @@ void Canvas2D::sendText(const QString &s){
     return;
   }
   //qDebug()<<"text recu: "<<s;
-  Command newCommand;
-  QString OrigName="";
-    newCommand.command=ls.at(0).remove(QRegExp("\\s+"));
+
+    QString command=ls.at(0).remove(QRegExp("\\s+"));
+
+    gen g(command.toStdString(),getContext());
+    sendinteractivegiacgen(g);
+    return;
+}
+
+void Canvas2D::sendgiacgen(const giac::gen &g){
+    Config::graph_width=550;
+    createScene(g );
+    parent->updateAllCategories();
+    return;
+}
+
+
+void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
+    //qDebug()<<"WARNING, sending a gen to interactive qcas is not stable.";
+    giac::gen g=gg;
+    Command newCommand;
+    newCommand.isCustom=false;
+    evaluationLevel=commands.size();
+    QString OrigName="";
     varPt="A";
     findFreeVar(varPt);
     varLine="a";
@@ -6868,20 +6889,24 @@ void Canvas2D::sendText(const QString &s){
     newCommand.attributes=0;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
-    //ListItem * list=0;
-    //GroupedItem * list=0;
     GroupedItem * list=0;
     UndefItem * undef=0;
-    gen g(newCommand.command.toStdString(),getContext());
+
     // a,b,c,d are considered as independent object while [a,b,c,d] will be a single object
+    
     if(g.type==giac::_VECT && g.subtype==giac::_SEQ__VECT){
         giac::vecteur & gvv =*g._VECTptr;
         const_iterateur it=gvv.begin(),itend=gvv.end();
         for (;it!=itend;++it){
-            sendText(QString::fromStdString(print(*it,context)));
+            sendinteractivegiacgen(*it);
         } // end for it
         return;
       }
+
+    newCommand.command=QString::fromStdString(print(g,context));
+    qDebug()<<"command: "<<newCommand.command;
+
+    //
     //tests:
     //std::cout<<"gen g: "<<print(g,context)<<" type "<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
     //if(g.type== giac::_SYMB){std::cout<<"g symbol: "<< print( g.ref_SYMBptr()->feuille[1] ,context)<<std::endl ;}
@@ -6911,7 +6936,8 @@ void Canvas2D::sendText(const QString &s){
             if(g.ref_SYMBptr()->feuille[1].type == giac::_VECT){
                 qDebug()<<"Multiple affectation are not supported in interactive geometry: "<<newCommand.command;
                 return;
-            }
+
+	    }
             else{
              OrigName=QString::fromStdString(g.ref_SYMBptr()->feuille[1].print());
              //qDebug()<<"test name"<<OrigName;
@@ -6924,7 +6950,8 @@ void Canvas2D::sendText(const QString &s){
         OrigName=QString::fromStdString(ff[0].ref_IDNTptr()->id_name);
     }
 
-    if (v.isEmpty()) {
+    if ((v.isEmpty())||(g==giac::undef)) {
+       //remove the comments, but keep affectations that don't produce an item directly. Ex: a:=affix(A)
        std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
        //qDebug()<<OrigName;
        if ((OrigName != "") && (OrigName != "undef")){
@@ -7106,224 +7133,10 @@ void Canvas2D::sendText(const QString &s){
        newCommand.item->setMovable(true);
     }
     repaint();
-    return;
-}
-
-void Canvas2D::sendgiacgen(const giac::gen &g){
-    Config::graph_width=550;
-    createScene(g );
-    parent->updateAllCategories();
-    return;
-}
-
-
-void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
-    qDebug()<<"WARNING, sending a gen to interactive qcas is not stable.";
-    giac::gen g=gg;
-    Command newCommand;
-    newCommand.isCustom=false;
-    evaluationLevel=commands.size();
-    QString OrigName="";
-    varPt="A";
-    findFreeVar(varPt);
-    varLine="a";
-    /*if(!newCommand.command.contains(":=")){
-      newCommand.command=newCommand.command.prepend(varPt.append(":="));
-      }*/
-    newCommand.attributes=0;
-    newCommand.isCustom=false;
-    evaluationLevel=commands.size();
-    //ListItem * list=0;
-    //GroupedItem * list=0;
-    GroupedItem * list=0;
-    // a,b,c,d are considered as independent object while [a,b,c,d] will be a single object
     
-    if(g.type==giac::_VECT && g.subtype==giac::_SEQ__VECT){
-        giac::vecteur & gvv =*g._VECTptr;
-        const_iterateur it=gvv.begin(),itend=gvv.end();
-        for (;it!=itend;++it){
-            sendText(QString::fromStdString(print(*it,context)));
-        } // end for it
-        return;
-      }
 
-     //fred
-    //std::cout<<"gen g: "<<print(g,context)<<print(g.type,context)<<" sub "<<print(g.subtype,context)<<std::endl;//test fred
-    //if(g.type== giac::_SYMB){std::cout<<"g symbol: "<< print( g.ref_SYMBptr()->feuille[1] ,context)<<std::endl ;}
-    //if(g.type== giac::_IDNT){std::cout<<"g idnt: "<<  g.ref_IDNTptr()->id_name <<std::endl ;}
-    //si IDNT prendre id_name pour nom, si symb de sommet sto prendre  feuille[1] sauf si affectation multiples a,b:=
-    QList<MyItem*> v;
-    gen geva=protecteval(g,1,getContext());
-    //if(geva.type== giac::_SYMB){std::cout<<"geva symbol: "<< print( geva.ref_SYMBptr()->sommet ,context)<<std::endl ;}
-    //if(geva.type== giac::_IDNT){std::cout<<"geva idnt: "<<  geva.ref_IDNTptr()->id_name <<std::endl ;}
+return;
 
-    addToVector(geva,v);
-    if (v.isEmpty()) {
-       std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred 
-       //std::cout<<print(geva,context)<<std::endl;//test fred 
-       return;
-    }
-    //setVar:
-    if(g.type== giac::_IDNT){
-      OrigName=QString::fromStdString(g.ref_IDNTptr()->id_name);
-    }
-    if(g.type==giac::_SYMB){
-        if(g.ref_SYMBptr()->sommet == at_sto){
-            if(g.ref_SYMBptr()->feuille[1].type == giac::_VECT){
-                qDebug()<<"Multiple affectation are not supported in interactive geometry: "<<newCommand.command;
-                return;
-            }
-            else{
-             OrigName=QString::fromStdString(g.ref_SYMBptr()->feuille[1].print());
-             //qDebug()<<"test name"<<OrigName;
-            }
-        }
-    }
-    // Case of a list. We want to consider a list of type [ ] as a single geometric object
-    if ((v.size()>1)||(newCommand.command.contains("inter("))) {
-       //list =new ListItem(v,this);
-       list =new GroupedItem(v,this);
-       list->setLevel(evaluationLevel);
-       list->setLegend(v.at(0)->getLegend());
-       list->setAttributes(v.at(0)->getAttributes());
-       list->setValue(v.at(0)->getValue());
-       //list->setMovable(true);
-       list->setFromInter(false);
-       findIDNT(g,list);
-       //list->deleteChild(list);
-       newCommand.item=list;
-       commands.append(newCommand);
-       //if(!(v.at(0)->getLegend()).isEmpty()){
-       //   list->setVar(v.at(0)->getLegend());//PB si le premier element de la liste a deja un nom different
-       if(!(OrigName.isEmpty())){
-             list->setVar(OrigName);
-       /*  Utile?
-	    for(int i=0;i<v.size();i++){
-              v.at(i)->setVar(v.at(0)->getLegend());
-              list->addChild(v.at(i));
-              v.at(i)->addParent(list);
-
-          }*/
-	  }
-	  else{
-	    findFreeVar(varLine);
-	    list->setVar(varLine);
-            /* utile?
-	      for(int i=0;i<v.size();i++){
-	      v.at(i)->setVar(varLine);
-	      list->addChild(v.at(i));
-	      v.at(i)->addParent(list);
-	      }
-	    */
-	  }
-       list->updateScreenCoords(true);
-       //lineItems.append(newCommand.item);
-       lineItems.append(list);
-       undoStack->push(new AddObjectCommand(this));
-       //focusOwner=list;
-       list->setVisible(false);
-       parent->addToTree(list);
-       //parent->selectInTree(focusOwner);
-       parent->updateAllCategories();
-       list->setVisible(true);
-       updatePixmap(false);
-       repaint();
-       return;
-    }//end of list case
-    //
-    //if(!(v.at(0)->getLegend()).isEmpty()){
-    //  v.at(0)->setVar(v.at(0)->getLegend());
-    if(!(OrigName.isEmpty())){
-      v.at(0)->setVar(OrigName);
-      }
-	  else{
-	    findFreeVar(varLine);
-	    v.at(0)->setVar(varLine);
-	  }
-    newCommand.item=v.at(0);
-    if(v.at(0)->isCursorItem()){
-      qDebug()<<"cursor found in sendtext";
-      findIDNT(g,newCommand.item); //find parents
-      commands.append(newCommand);
-      parent->addToTree(newCommand.item);
-      cursorItems.append(newCommand.item);
-      undoStack->push(new AddObjectCommand(this));
-      return;
-      
-    }
-    //non cursor item
-    else{
-      if(v.at(0)->isPoint()){
-	//
-	if(newCommand.command.contains("element(")){
-	  qDebug()<<"point element found";
-	  //std::cout<<print(g,context)<<std::endl;//test fred 
-	  //std::cout<<print(geva,context)<<std::endl;//test fred 
-	  PointElement* p=0;
-	  Point* origin=dynamic_cast<Point*>(v.at(0));
-	  
-	  if (origin !=0){
-            p=new PointElement(origin,this);
-	  }
-	  delete origin;
-	  if (p==0) {
-	    return;
-	  }
-	  
-	  newCommand.item=p;//v.at(0);
-	  //commands.append(newCommand);
-	  newCommand.attributes=0;
-	  newCommand.isCustom=false;
-	  QString ns(newCommand.command);
-	  ns.append("+(0.0+0.0*i)");// nb: element may be in exact mode, so it's  safe to force floats
-	  evaluationLevel=commands.size();
-	  g=giac::gen(ns.toStdString(),context);
-	  v.clear();
-	  addToVector(protecteval(g,1,context),v);
-	  p->setAttributes(0);
-	  p->updateValueFrom(v.at(0));
-	  p->setLevel(evaluationLevel);
-	  p->setLegend(v.at(0)->getLegend());
-	  delete v.at(0);
-	  p->updateScreenCoords(true);
-      //if(!(p->getLegend()).isEmpty()){
-      //  p->setVar(p->getLegend());
-      if(!(OrigName.isEmpty())){
-        p->setVar(OrigName);
-      }
-	  else{
-	    findFreeVar(varPt);
-	    p->setVar(varPt);
-	  }
-	  p->setMovable(true);
-	  newCommand.item=p;//v.at(0);
-	}
-    else{
-        newCommand.item=v.at(0);
-    }
-    pointItems.append(newCommand.item);
-	newCommand.item->setVisible(true);
-    }
-    else{  //non point, non cursor item
-        lineItems.append(v.at(0));
-        newCommand.item->setMovable(false);
-	  }
-    } 
-    findIDNT(g,newCommand.item); //find parents	
-    commands.append(newCommand);
-    parent->addToTree(newCommand.item);
-    undoStack->push(new AddObjectCommand(this));
-    //focusOwner=newCommand.item;
-    parent->updateAllCategories();
-    //parent->selectInTree(focusOwner);
-    //selectedItems.append(focusOwner);
-    updatePixmap(false);
-    //    qDebug()<<"var"<<newCommand.item->getVar()<<" "<<(newCommand.item)->getParents().size();
-    if(!newCommand.item->hasParents()){
-       newCommand.item->setMovable(true);
-    }
-    repaint();
-    return;
 }
 
 
