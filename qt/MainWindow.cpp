@@ -349,6 +349,7 @@ void MainWindow::retranslateAction(){
     insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
 
     deleteLevelAction->setText(tr("&Effacer les lignes sélectionnées"));
+    deleteLevelAction->setShortcut(tr("Ctrl+Backspace"));
     deleteLevelAction->setStatusTip(tr("Efface les niveaux sélectionnés"));
 
     //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
@@ -1649,23 +1650,48 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
     QFile file(":/aide_cas");
         file.open(QIODevice::ReadOnly);
         QTextStream stream(&file);
+        stream.setCodec("UTF-8");
         QString currentCommand;
         QString html;
+        QString html1;
+        QString html2;
         QString line;
         while(!stream.atEnd()){
             line=stream.readLine();
             if (line.startsWith("#")) currentCommand=line.remove(0,2);
             else if (line.startsWith(QString::number(Config::giaclanguage))&&  // giac lang
                      (line.contains(keyWord,Qt::CaseInsensitive)||currentCommand.contains(keyWord,Qt::CaseInsensitive))){
-                html.append("<a href=\"");
-                html.append(currentCommand);
-                html.append("\">");
-                html.append(currentCommand);
-                html.append("</a><br>\n");
-                html.append(line.remove(0,2));
-                html.append("<br><br>");
+                if(currentCommand.startsWith(keyWord)){
+                    html.append("<a href=\"");
+                    html.append(currentCommand);
+                    html.append("\">");
+                    html.append(currentCommand);
+                    html.append("</a><br>\n");
+                    html.append(line.remove(0,2));
+                    html.append("<br><br>");
+                }
+                else if(currentCommand.contains(keyWord)){
+                    html1.append("<a href=\"");
+                    html1.append(currentCommand);
+                    html1.append("\">");
+                    html1.append(currentCommand);
+                    html1.append("</a><br>\n");
+                    html1.append(line.remove(0,2));
+                    html1.append("<br><br>");
+                    }
+                    else{
+                    html2.append("<a href=\"");
+                    html2.append(currentCommand);
+                    html2.append("\">");
+                    html2.append(currentCommand);
+                    html2.append("</a><br>\n");
+                    html2.append(line.remove(0,2));
+                    html2.append("<br><br>");
+                }
             }
         }
+        html.append(html1);
+        html.append(html2);
         if (html.isEmpty()) {
             return(QObject::tr("Aucun résultat"));
         }

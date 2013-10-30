@@ -17,3 +17,4 @@ point(xt) ne marche pas. utiliser plutot:
 xt(t):=1+t
 
 puis point(xt(t))
+6) approx(1/10000000,4) donne 0
