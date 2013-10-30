@@ -3416,6 +3416,8 @@ void Canvas2D::updateAllChildrenFrom(MyItem* item){
     for (int i=0;i<v.size();++i){
         //qDebug()<<"update children of"<<item->getVar()<< "  list:"<<v.at(i)->getVar();//fred
         int level=v.at(i)->getLevel();
+        if(level<0){continue;} // add some protection
+
         Command c=commands.at(level);
         gen g(c.command.toStdString(),context);
         //std::cout<<"command to update"<<print(g,context)<<std::endl;
@@ -5176,6 +5178,7 @@ void Canvas2D::resizeEvent(QResizeEvent * ev){
 void Canvas2D::loadInteractiveXML(QDomElement & sheet){
     bool isOrtho=sheet.attribute("ortho","0").toInt();
     QDomNode first=sheet.firstChild();
+    UndefItem * undef=0;
 
     while(!first.isNull()){
         QDomElement element=first.toElement();
@@ -5208,12 +5211,12 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 addToVector(answer,v);
 
                 /*****************************************************
-                  **** Case of undef items
-                  */
+                 **** Case of undef items
+                 */
                 if (v.isEmpty()) {
                     //std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
                     //qDebug()<<OrigName;
-                    UndefItem * undef=new UndefItem(this);
+                    undef=new UndefItem(this);
                     findIDNT(entry,undef);
                     id=element.text().indexOf(":=");
                     if (id!=-1){
@@ -5227,11 +5230,11 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     lineItems.append(undef);
                     parent->addToTree(undef);
                     parent->updateAllCategories();
-                    return;
                 }
+                else{
 
                 /*******************************************************
-                *****  Case of intersection points or tangent lines *****
+                 *****  Case of intersection points or tangent lines *****
                  */
 
                 QString vars=element.attribute("interVariables","");
@@ -5499,7 +5502,7 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 v.at(0)->setMovable(element.attribute("movable","0").toInt());
                 addToScene(v);
                 }
-
+              }
             }
           }
         first=first.nextSibling();
