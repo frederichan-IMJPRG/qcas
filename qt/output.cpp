@@ -5195,7 +5195,7 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 Command c;
                 c.command=element.text();
                 QString s(c.command);
-                qDebug()<<"command in loadinterxml "<<s;
+                //qDebug()<<"command in loadinterxml "<<s;
                 int id=s.lastIndexOf(");");
                 if (id!=-1){
                     s.insert(id,QString(",display=%1").arg(element.attribute("attributes","0")));
