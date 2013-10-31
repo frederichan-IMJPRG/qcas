@@ -59,6 +59,8 @@ public:
   virtual QString getDisplayValue();
   bool isMovable() const;
   void setMovable(const bool &);
+  bool isPurgeable() const;
+  void setPurgeable(const bool &);
   bool isFromInter() const;
   void setFromInter(const bool &);
   bool isTraceActive() const;
@@ -130,6 +132,7 @@ private:
   bool traceActive;
   bool fromInter;
   bool movable;
+  bool purgeable;
   int level;
   QString var;
   QVector<MyItem*> children;

@@ -273,6 +273,7 @@ class GraphWidget:public OutputWidget,public MainSheet{
     void deleteCursorPanel(CursorPanel* );
     virtual void toXML(QDomElement &);
     void toInteractiveXML(QDomElement  &);
+    void evaluate();
     void toInteractiveXCAS2D(QString  &);
     void sendText(const QString  &);
     void sendgiacgen(const giac::gen  &); //cf giacpy

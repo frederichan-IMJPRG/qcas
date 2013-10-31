@@ -123,6 +123,7 @@ void MainTabWidget::closeTab(int id){
 
 }
 void MainTabWidget::addG2dSheet(){
+    //test fred
     this->insertTab(count()-1,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
     (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);

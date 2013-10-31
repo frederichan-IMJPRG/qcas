@@ -30,6 +30,7 @@ MyItem::MyItem(Canvas2D *graph){
     fromInter=false;
     level=-1;
     movable=false;
+    purgeable=true;
     undef=false;
     traceActive=false;
 }
@@ -70,11 +71,16 @@ void MyItem::setUndef(const bool& b){
 bool MyItem::isMovable() const {
     return movable;
 }
-
-
 void MyItem::setMovable(const bool & b){
     movable=b;
 }
+bool MyItem::isPurgeable() const {
+    return purgeable;
+}
+void MyItem::setPurgeable(const bool & b){
+    purgeable=b;
+}
+
 bool MyItem::isFromInter() const {
     return fromInter;
 }

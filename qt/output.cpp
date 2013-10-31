@@ -1450,20 +1450,20 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 }
 Canvas2D::~Canvas2D(){
     for (int i=0;i<pointItems.size();++i){
-        if (!pointItems.at(i)->getVar().isEmpty()) giac::_purge(gen(pointItems.at(i)->getVar().toStdString(),context),context);
+        if ((!pointItems.at(i)->getVar().isEmpty())&&(pointItems.at(i)->isPurgeable())) giac::_purge(gen(pointItems.at(i)->getVar().toStdString(),context),context);
         delete (pointItems.at(i));
 
     }
     for (int i=0;i<lineItems.size();++i){
-        if (!lineItems.at(i)->getVar().isEmpty()) giac::_purge(gen(lineItems.at(i)->getVar().toStdString(),context),context);
+        if ((!lineItems.at(i)->getVar().isEmpty())&&(lineItems.at(i)->isPurgeable())) giac::_purge(gen(lineItems.at(i)->getVar().toStdString(),context),context);
         delete (lineItems.at(i));
     }
     for (int i=0;i<filledItems.size();++i){
-        if (!filledItems.at(i)->getVar().isEmpty()) giac::_purge(gen(filledItems.at(i)->getVar().toStdString(),context),context);
+        if ((!filledItems.at(i)->getVar().isEmpty())&&(filledItems.at(i)->isPurgeable())) giac::_purge(gen(filledItems.at(i)->getVar().toStdString(),context),context);
         delete (filledItems.at(i));
     }
     for (int i=0;i<cursorItems.size();++i){
-        if (!cursorItems.at(i)->getVar().isEmpty()) giac::_purge(gen(cursorItems.at(i)->getVar().toStdString(),context),context);
+        if ((!cursorItems.at(i)->getVar().isEmpty())&&(cursorItems.at(i)->isPurgeable())) giac::_purge(gen(cursorItems.at(i)->getVar().toStdString(),context),context);
         delete (cursorItems.at(i));
     }
 
@@ -5195,6 +5195,7 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                 Command c;
                 c.command=element.text();
                 QString s(c.command);
+                qDebug()<<"command in loadinterxml "<<s;
                 int id=s.lastIndexOf(");");
                 if (id!=-1){
                     s.insert(id,QString(",display=%1").arg(element.attribute("attributes","0")));
@@ -6882,6 +6883,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
     QString OrigName="";
+    bool toPurge=true;
     varPt="A";
     findFreeVar(varPt);
     varLine="a";
@@ -6904,7 +6906,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
       }
 
     newCommand.command=QString::fromStdString(print(g,context));
-    qDebug()<<"command: "<<newCommand.command;
+    //qDebug()<<"command: "<<newCommand.command;
 
     //
     //tests:
@@ -6930,6 +6932,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
     //setVar:
     if(g.type== giac::_IDNT){// NB undef is also like this
       OrigName=QString::fromStdString(g.ref_IDNTptr()->id_name);
+      toPurge=false;//don't purge variables defined elsewhere.
     }
     if(g.type==giac::_SYMB){
         if(g.ref_SYMBptr()->sommet == at_sto){
@@ -6959,6 +6962,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
             undef->setVar(OrigName);
             //qDebug()<<"var d'undef:"<<undef->getVar();
             undef->setLevel(evaluationLevel);
+            undef->setPurgeable(toPurge);
             newCommand.item=undef;
             commands.append(newCommand);//keep the entry
             findIDNT(g,newCommand.item); //find parents
@@ -6981,6 +6985,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
        list->setValue(v.at(0)->getValue());
        //list->setMovable(true);
        list->setFromInter(false);
+       list->setPurgeable(toPurge);
        findIDNT(g,list);
        //list->deleteChild(list);
        newCommand.item=list;
@@ -7086,6 +7091,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
           else{//ordinary point
                 newCommand.item=v.at(0);
           }
+        newCommand.item->setPurgeable(toPurge);
         pointItems.append(newCommand.item);
         newCommand.item->setVisible(true);
     }
@@ -7103,6 +7109,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
 
         }
         newCommand.item=v.at(0);
+        newCommand.item->setPurgeable(toPurge);
         if(v.at(0)->isCursorItem()){
             qDebug()<<"cursor found in sendtext";
             findIDNT(g,newCommand.item); //find parents

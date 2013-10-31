@@ -1482,7 +1482,13 @@ void MainWindow::evaluate(){
             }
         break;
     case MainSheet::SPREADSHEET_TYPE:
-   case MainSheet::G2D_TYPE:
+    case MainSheet::G2D_TYPE:
+        {
+            GraphWidget *g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
+
+           //fred todo
+        }
+
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
