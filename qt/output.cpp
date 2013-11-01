@@ -788,6 +788,9 @@ void GraphWidget::toInteractiveXML(QDomElement  &top){
     top.appendChild(output);
 }
 
+void GraphWidget::getDisplayCommands(QStringList & list){
+    canvas->getDisplayCommands(list);
+}
 
 void GraphWidget::toInteractiveXCAS2D(QString  &top){
     QString output;
@@ -1449,24 +1452,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
  //   setMinimumHeight(100);
 }
 Canvas2D::~Canvas2D(){
-    for (int i=0;i<pointItems.size();++i){
-        if ((!pointItems.at(i)->getVar().isEmpty())&&(pointItems.at(i)->isPurgeable())) giac::_purge(gen(pointItems.at(i)->getVar().toStdString(),context),context);
-        delete (pointItems.at(i));
-
-    }
-    for (int i=0;i<lineItems.size();++i){
-        if ((!lineItems.at(i)->getVar().isEmpty())&&(lineItems.at(i)->isPurgeable())) giac::_purge(gen(lineItems.at(i)->getVar().toStdString(),context),context);
-        delete (lineItems.at(i));
-    }
-    for (int i=0;i<filledItems.size();++i){
-        if ((!filledItems.at(i)->getVar().isEmpty())&&(filledItems.at(i)->isPurgeable())) giac::_purge(gen(filledItems.at(i)->getVar().toStdString(),context),context);
-        delete (filledItems.at(i));
-    }
-    for (int i=0;i<cursorItems.size();++i){
-        if ((!cursorItems.at(i)->getVar().isEmpty())&&(cursorItems.at(i)->isPurgeable())) giac::_purge(gen(cursorItems.at(i)->getVar().toStdString(),context),context);
-        delete (cursorItems.at(i));
-    }
-
+    clearallItems();
 
 }
 void Canvas2D::createMenuAction(){
@@ -3008,8 +2994,9 @@ void Canvas2D::deleteSingleObject(MyItem * deletedObject){
     }
     // delete from giac memory
 
-    giac::_purge(gen(deletedObject->getVar().toStdString(),context),context);
-
+    if( deletedObject->isPurgeable()){
+           giac::_purge(gen(deletedObject->getVar().toStdString(),context),context);
+    }
     // delete pointer
     delete deletedObject;
 }
@@ -5226,6 +5213,7 @@ void Canvas2D::loadInteractiveXML(QDomElement & sheet){
                     }
                     else{
                         undef->setVar(element.text());
+                        undef->setPurgeable(false);
                     }
                     c.item=undef;
                     commands.append(c);
@@ -5714,6 +5702,28 @@ void Canvas2D::getDisplayCommands(QStringList & list){
     }
 
 }
+void Canvas2D::clearallItems(){
+
+    for (int i=0;i<pointItems.size();++i){
+        if ((!pointItems.at(i)->getVar().isEmpty())&&(pointItems.at(i)->isPurgeable())) giac::_purge(gen(pointItems.at(i)->getVar().toStdString(),context),context);
+        delete (pointItems.at(i));
+
+    }
+    for (int i=0;i<lineItems.size();++i){
+        if ((!lineItems.at(i)->getVar().isEmpty())&&(lineItems.at(i)->isPurgeable())) giac::_purge(gen(lineItems.at(i)->getVar().toStdString(),context),context);
+        delete (lineItems.at(i));
+    }
+    for (int i=0;i<filledItems.size();++i){
+        if ((!filledItems.at(i)->getVar().isEmpty())&&(filledItems.at(i)->isPurgeable())) giac::_purge(gen(filledItems.at(i)->getVar().toStdString(),context),context);
+        delete (filledItems.at(i));
+    }
+    for (int i=0;i<cursorItems.size();++i){
+        if ((!cursorItems.at(i)->getVar().isEmpty())&&(cursorItems.at(i)->isPurgeable())) giac::_purge(gen(cursorItems.at(i)->getVar().toStdString(),context),context);
+        delete (cursorItems.at(i));
+    }
+
+}
+
 PanelProperties::PanelProperties(Canvas2D* c){
     parent=c;
     initGui();
@@ -6955,14 +6965,14 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
 
     if ((v.isEmpty())||(g==giac::undef)) {
        //remove the comments, but keep affectations that don't produce an item directly. Ex: a:=affix(A)
-       std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
+       //std::cout<<"warning no geo2d output command: "<<print(g,context)<<std::endl;//test fred
        //qDebug()<<OrigName;
        if ((OrigName != "") && (OrigName != "undef")){
             undef=new UndefItem(this);
             undef->setVar(OrigName);
-            //qDebug()<<"var d'undef:"<<undef->getVar();
             undef->setLevel(evaluationLevel);
             undef->setPurgeable(toPurge);
+            qDebug()<<"var d'undef:"<<undef->getVar()<<"is purgeable?"<<undef->isPurgeable();
             newCommand.item=undef;
             commands.append(newCommand);//keep the entry
             findIDNT(g,newCommand.item); //find parents
@@ -7024,6 +7034,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
        parent->updateAllCategories();
        list->setVisible(true);
        updatePixmap(false);
+       setActionTool(SELECT);
        repaint();
        return;
     }//end of list case
@@ -7134,14 +7145,14 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
     parent->updateAllCategories();
     //parent->selectInTree(focusOwner);
     //selectedItems.append(focusOwner);
-    updatePixmap(false);
+    updatePixmap(true);
     //    qDebug()<<"var"<<newCommand.item->getVar()<<" "<<(newCommand.item)->getParents().size();
     if(!newCommand.item->hasParents()){
        newCommand.item->setMovable(true);
     }
     repaint();
     
-
+setActionTool(SELECT);
 return;
 
 }

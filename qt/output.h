@@ -274,6 +274,7 @@ class GraphWidget:public OutputWidget,public MainSheet{
     virtual void toXML(QDomElement &);
     void toInteractiveXML(QDomElement  &);
     void evaluate();
+    void getDisplayCommands(QStringList &);
     void toInteractiveXCAS2D(QString  &);
     void sendText(const QString  &);
     void sendgiacgen(const giac::gen  &); //cf giacpy
@@ -385,6 +386,7 @@ public:
     bool checkForOnlyLines(const QList<MyItem *> *) const;
     bool checkForOnlyFillables(const QList<MyItem *> *) const;
     void getDisplayCommands(QStringList & );
+    void clearallItems();
     void undo();
     void redo();
     void moveItem(MyItem*, const QPointF & );

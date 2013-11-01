@@ -122,8 +122,16 @@ void MainTabWidget::closeTab(int id){
 
 
 }
+void MainTabWidget::insertG2dSheet(int i){
+    qDebug()<<"i="<<i;
+    if((i<count())&&(i>0)){
+    this->insertTab(i,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(i+1));
+    this->setCurrentIndex(i);
+    (qobject_cast<GraphWidget*>(widget(i)))->setFocus(Qt::OtherFocusReason);
+    mainWindow->updateInterface(MainSheet::G2D_TYPE);
+    }
+}
 void MainTabWidget::addG2dSheet(){
-    //test fred
     this->insertTab(count()-1,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);
     (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);

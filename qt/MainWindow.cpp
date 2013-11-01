@@ -1098,7 +1098,8 @@ void MainWindow::updateInterface(MainSheet::sheetType type){
             pasteAction->setVisible(false);
             redoAction->setVisible(true);
             undoAction->setVisible(true);
-            evaluateallAction->setVisible(false);
+            //evaluateallAction->setVisible(false);
+            evaluateallAction->setVisible(true);
             //stopallAction->setVisible(false);
             insertlineAction->setVisible(false);
             deleteLevelAction->setVisible(false);
@@ -1413,7 +1414,11 @@ void MainWindow::evaluateall(){
     taskProperties.firstPrintMessage=true;
     taskProperties.currentSheet=tabPages->currentIndex();
     taskProperties.currentLine=-1;
-    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    MainSheet* sheet=0;
+  for(int i=0;i<tabPages->count()-1;i++){
+    //MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    tabPages->setCurrentIndex(i);
+    sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
     switch(sheet->getType()){
     case MainSheet::FORMAL_TYPE:
         {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
@@ -1446,10 +1451,28 @@ void MainWindow::evaluateall(){
         break;
     case MainSheet::SPREADSHEET_TYPE:
     case MainSheet::G2D_TYPE:
+        {
+            GraphWidget * g2d =qobject_cast<GraphWidget*>(tabPages->currentWidget());
+            QStringList displaycommands;
+            g2d->getDisplayCommands(displaycommands);
+            //g2d->clearcanvas();
+            int i=tabPages->currentIndex();
+            delete g2d;
+            tabPages->insertG2dSheet(i);
+            g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
+            for(int i=0;i< displaycommands.size();i++){
+                //qDebug()<<"display commands "<<displaycommands.at(i);
+                g2d->sendText(displaycommands.at(i));
+            }
+            g2d->updateAllCategories();
+            g2d->repaint();
+        break;
+        }
+    //evaluateallAction->setVisible(false);
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
-
+ }//fin for tabpages
 }
 
 
@@ -1483,12 +1506,6 @@ void MainWindow::evaluate(){
         break;
     case MainSheet::SPREADSHEET_TYPE:
     case MainSheet::G2D_TYPE:
-        {
-            GraphWidget *g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
-
-           //fred todo
-        }
-
     case MainSheet::PROGRAMMING_TYPE:
         break;
     }
