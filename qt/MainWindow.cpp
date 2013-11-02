@@ -305,7 +305,7 @@ void MainWindow::createAction(){
 
 void MainWindow::retranslateAction(){
     newAction->setText(tr("&Nouveau"));
-    newAction->setShortcut(tr("Ctrl+N"));
+    //newAction->setShortcut(tr("Ctrl+N"));
     newAction->setStatusTip(tr("Créer un nouvel espace de travail"));
 
     openAction->setText(tr("&Ouvrir..."));
@@ -501,6 +501,9 @@ void MainWindow::open(){
 }
 
 bool MainWindow::loadFile(const QString &fileName){
+
+      if(tabPages->count()>0){tabPages->removeTab(0);}
+
       if (!fileName.isEmpty()){
  	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
 	    return loadGiacFile(fileName);
