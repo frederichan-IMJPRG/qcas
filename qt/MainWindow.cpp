@@ -76,6 +76,8 @@ MainWindow::MainWindow(){
     displayTimeAfterProcess=true;
     time=new QTime;
 
+    history=new QStringList();
+
     isevaluatingall=false;
 
     commandInfo=new CommandInfo;
@@ -1393,6 +1395,11 @@ void MainWindow::evaluate(const QString &formula){
                 printHeader();
                 giacMessages->appendHtml(s);
                 form->getCurrentLine()->getTextInput()->setFocus();
+
+            }
+            history->prepend(form->getCurrentLine()->getTextInput()->toPlainText());
+            if(history->size()>30){ //max history is 30 entries.
+                history->removeLast();
             }
             cas->evaluate();
             time->start();

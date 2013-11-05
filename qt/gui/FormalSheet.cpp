@@ -264,7 +264,8 @@ void FormalWorkSheet::keyPressEvent(QKeyEvent *e){
 }
 void FormalWorkSheet::keyReleaseEvent(QKeyEvent *){
     shift=false;
- //   qDebug()<<"release"<<shift;
+
+//    qDebug()<<"release"<<shift;
 
 }
 MainWindow* FormalWorkSheet::getApp(){

@@ -29,6 +29,7 @@
 #include "qtmmlwidget.h"
 TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     line=parent;
+    historylevel=-1;
     // +1 devrait sufire en théorie mais problème sous KDE plasma sur mon netbook
     setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
     highlighter=new Highlighter(document(),line->getWorkSheet()->getApp()->getCommandInfo());
@@ -225,13 +226,45 @@ void TextInput::keyPressEvent(QKeyEvent *e){
          break;
 
         case Qt::Key_Down:
-         if (goDown()){
-             QPlainTextEdit::keyPressEvent(e);
-         }
-        break;
+            if (e->modifiers()&Qt::ControlModifier){
+
+                if(historylevel>0){
+                     this->undo();
+                     historylevel--;
+                     this->textCursor().beginEditBlock();
+                     if(historylevel<line->getWorkSheet()->getApp()->history->size()){
+                        this->textCursor().insertText(line->getWorkSheet()->getApp()->history->at(historylevel));
+
+                     }
+                     this->textCursor().endEditBlock();
+                }
+                else{historylevel=0;}
+
+                }
+            else{
+                if (goDown()){
+                     QPlainTextEdit::keyPressEvent(e);
+                }
+            }
+            break;
+
         case Qt::Key_Up:
-            if (goUp())
-                QPlainTextEdit::keyPressEvent(e);
+            if (e->modifiers()&Qt::ControlModifier){
+
+                if(historylevel<line->getWorkSheet()->getApp()->history->size()-1){
+                    historylevel++;
+                }
+                if(historylevel>0){this->undo();}
+                if(historylevel>=0){
+                    this->textCursor().beginEditBlock();
+                    this->textCursor().insertText(line->getWorkSheet()->getApp()->history->at(historylevel));
+                    this->textCursor().endEditBlock();
+                }
+            }
+            else{
+                if (goUp())
+                    QPlainTextEdit::keyPressEvent(e);
+            }
             break;
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
@@ -277,6 +310,13 @@ void TextInput::updateCompleter(){
                 +completer->popup()->verticalScrollBar()->sizeHint().width());
     completer->complete(cr);
 }
+
+void TextInput::keyReleaseEvent(QKeyEvent *e){
+    if (!( e->modifiers()&Qt::ControlModifier)){
+        historylevel=-1;
+    }
+}
+
 void TextInput::focusInEvent(QFocusEvent *e){
     matchDelimiters();
     installCompleter();

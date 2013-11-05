@@ -82,6 +82,8 @@ class MainWindow :public QMainWindow {
     bool loadFile(const QString &fileName);
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
+    QStringList *history;
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -160,6 +162,7 @@ private:
     QListWidgetItem *matrixItem;
     QListWidgetItem *equationItem;
     QListWidgetItem *catalogItem;
+
 
 //    QLabel* warningFirstEvaluation;
 //    QLabel* warningStop;

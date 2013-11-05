@@ -32,11 +32,14 @@ public:
     TextInput(Line *parent=0);
     ~TextInput();
     //    void setCompleter(QCompleter *c);
+    void ressetHistoryLevel();
 protected:
     void keyPressEvent(QKeyEvent *e);
     bool event(QEvent*e);
     void focusInEvent(QFocusEvent* e);
     void focusOutEvent(QFocusEvent* e);
+    void keyReleaseEvent(QKeyEvent *e);
+
 
 
 private slots:
@@ -56,6 +59,7 @@ private:
     Line* line;
     QCompleter* completer;
     Highlighter* highlighter;
+    int historylevel;
 };
 
 
