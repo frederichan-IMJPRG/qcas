@@ -238,9 +238,8 @@ void TextInput::keyPressEvent(QKeyEvent *e){
                      }
                      this->textCursor().endEditBlock();
                 }
-                else{historylevel=0;}
 
-                }
+            }
             else{
                 if (goDown()){
                      QPlainTextEdit::keyPressEvent(e);
