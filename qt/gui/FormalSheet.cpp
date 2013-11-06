@@ -386,6 +386,9 @@ void FormalWorkSheet::deleteSelectedLevels(){
         lines->at(i)->setId(i);
     }
     current=0;
+    if(lines->size()==0){
+        insertline();
+    }
 
 }
 

@@ -79,6 +79,8 @@ MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
     connect(this,SIGNAL(currentChanged(int)),this,SLOT(changeTab(int)));
 //    setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+//    setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred);
+
 
     retranslate();
 

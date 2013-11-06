@@ -327,7 +327,7 @@ GraphWidget::GraphWidget(const giac::gen & g, giac::context * context,bool b,Mai
 void GraphWidget::initGui(){
     propPanel=new PanelProperties(canvas);
     propPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Minimum);
-//    canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    //canvas->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     QWidget* canvasWidget=new QWidget(this);
     QVBoxLayout* vbox=new QVBoxLayout(canvasWidget);
     if (isInteractiveWidget){
@@ -341,6 +341,7 @@ void GraphWidget::initGui(){
         sliderPanel->setLayout(new QHBoxLayout);
         sliderPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
         vbox->addWidget(sliderPanel);
+
     }
     vbox->setSizeConstraint(QLayout::SetMinimumSize);
     canvasWidget->setLayout(vbox);
@@ -692,7 +693,6 @@ void GraphWidget::createToolBar(){
     hbox->addWidget(buttonTool,Qt::AlignLeft);
     hbox->addWidget(buttonPlot,Qt::AlignLeft);
     hbox->addWidget(buttonCircle,Qt::AlignLeft);
-
     toolPanel->setLayout(hbox);
 
     connect(menuPointer,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
@@ -2517,10 +2517,10 @@ double Canvas2D::find_tick(double dx){
   }
   return res;
 }
-/*QSize Canvas2D::sizeHint() const{
+/*
+QSize Canvas2D::sizeHint() const{
     return QSize(width(),height());
 }*/
-
 QSize Canvas2D::minimumSizeHint() const{
     return QSize(200,100);
 }
@@ -2529,7 +2529,7 @@ QSize Canvas2D::minimumSizeHint() const{
 
 
 void Canvas2D::createScene(const giac::gen & g){
-    setFixedSize(Config::graph_width,Config::graph_width*3/4);
+    setFixedSize(Config::graph_width,Config::graph_width*0.75);
 
     // Find the largest and lowest x/y/z in objects (except lines/plans)
     std::vector<double> vx,vy,vz;
@@ -6053,6 +6053,7 @@ void DisplayProperties::initGui(){
     vLayoutGeneral=new QVBoxLayout;
     valuePanel=new GenValuePanel(parent);
     valuePanel->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred);
+    //valuePanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     displayObjectPanel=new DisplayObjectPanel(this);
     displayObjectPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
     legendPanel=new LegendPanel(this);
@@ -6541,10 +6542,9 @@ void GenValuePanel::setGenValue(const giac::gen  &g){
 }
 void GenValuePanel::setDisplayValue(const QString  s){
 
-      formulaWidget->updateFormula(s);
+    formulaWidget->updateFormula(s);
 
 //      formulaWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-
 }
 
 AxisGridPanel::AxisGridPanel(Canvas2D * p):QTabWidget(p){

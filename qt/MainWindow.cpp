@@ -1337,7 +1337,6 @@ void MainWindow::deleteSelectedLevels(){
     FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
     if (form==0) return;
     form->deleteSelectedLevels();
-
 }
 
 void MainWindow::sendSelectedLevels(){
