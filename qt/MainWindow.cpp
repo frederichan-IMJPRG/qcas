@@ -347,7 +347,7 @@ void MainWindow::retranslateAction(){
     redoAction->setStatusTip(tr("Rétablir"));
 
     insertlineAction->setText(tr("&Nouvelle Entrée"));
-    insertlineAction->setShortcut(tr("Ctrl+I"));
+    insertlineAction->setShortcut(tr("Ctrl+N"));
     insertlineAction->setStatusTip(tr("Nouvelle Entrée"));
 
     deleteLevelAction->setText(tr("&Supprimer les lignes cochées"));
