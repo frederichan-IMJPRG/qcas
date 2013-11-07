@@ -104,6 +104,13 @@ void FormulaWidget::initGui(){
     toLatexAction->setIcon(QIcon(":/images/tex.png"));
     toMathmlAction=new QAction(tr("Copier vers Mathml"),menu);
     toMathmlAction->setIcon(QIcon(":/images/mathml.png"));
+    zoomInAction=new QAction(tr("Zoom In"),menu);
+    zoomInAction->setIcon(QIcon(":/images/zoom-in.png"));
+    zoomOutAction=new QAction(tr("Zoom Out"),menu);
+    zoomOutAction->setIcon(QIcon(":/images/zoom-out.png"));
+
+    menu->addAction(zoomInAction);
+    menu->addAction(zoomOutAction);
     menu->addAction(copyAction);
     menu->addAction(toLatexAction);
     menu->addAction(toMathmlAction);
@@ -113,6 +120,8 @@ void FormulaWidget::initGui(){
     layout->addWidget(mmlWidget);
     setLayout(layout);
     connect(mmlWidget,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(displayMenu(QPoint)));
+    connect(zoomInAction,SIGNAL(triggered()),this,SLOT(zoomInslot()));
+    connect(zoomOutAction,SIGNAL(triggered()),this,SLOT(zoomOutslot()));
     connect(copyAction,SIGNAL(triggered()),this,SLOT(copy()));
     connect(toLatexAction,SIGNAL(triggered()),this,SLOT(copyToLaTeX()));
     connect(toMathmlAction,SIGNAL(triggered()),this,SLOT(copyToMathml()));
@@ -153,6 +162,28 @@ void FormulaWidget::updateFormula(const QString  s){
 }
 QSize FormulaWidget::sizeHint(){
     return mmlWidget->size();
+}
+void FormulaWidget::zoomIn(){
+    qDebug()<<mmlWidget->baseFontPointSize();
+    if(mmlWidget->baseFontPointSize()>5){
+    mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() - 2);
+    }
+}
+void FormulaWidget::zoomInslot(){
+    qDebug()<<mmlWidget->baseFontPointSize();
+    zoomIn();
+    mmlWidget->updateGeometry();
+    resize(mmlWidget->size());
+}
+void FormulaWidget::zoomOut(){
+    if(mmlWidget->baseFontPointSize()<40){
+        mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() + 2);
+    }
+}
+void FormulaWidget::zoomOutslot(){
+    zoomOut();
+    mmlWidget->updateGeometry();
+    resize(mmlWidget->size());
 }
 void FormulaWidget::toXML(QDomElement & top){
 
@@ -6533,6 +6564,7 @@ void GenValuePanel::initGui(){
     layout=new QHBoxLayout(this);
 //    label=new QLabel
     formulaWidget=new FormulaWidget(this);
+    formulaWidget->zoomIn();
     layout->addWidget(formulaWidget,Qt::AlignLeft);
     layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);

@@ -228,6 +228,8 @@ public:
     void updateFormula(const giac::gen &, giac::context *);
     void updateFormula(const QString );
     void setGen(const giac::gen &);
+    void zoomIn();
+    void zoomOut();
     virtual void toXML(QDomElement &);
 protected:
     QSize sizeHint();
@@ -237,6 +239,8 @@ private:
     giac::gen formula;
     QtMmlWidget *mmlWidget;
     QMenu* menu;
+    QAction* zoomInAction;
+    QAction* zoomOutAction;
     QAction* copyAction;
     QAction* toLatexAction;
     QAction* toMathmlAction;
@@ -245,6 +249,8 @@ private slots:
     void copy();
     void copyToLaTeX();
     void copyToMathml();
+    void zoomInslot();
+    void zoomOutslot();
 };
 
 
