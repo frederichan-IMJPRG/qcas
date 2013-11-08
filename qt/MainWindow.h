@@ -186,6 +186,7 @@ private slots:
     bool saveAs();
     bool saveAsgiacxcas();
     void about();
+    void astuces();
     void pref();
     void copy();
     void htmlhelp();

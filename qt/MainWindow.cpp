@@ -301,6 +301,7 @@ void MainWindow::createAction(){
 
     hintAction=new QAction("",this);
     hintAction->setIcon(QIcon(":/images/ampoule.png"));
+    connect(hintAction,SIGNAL(triggered()),this,SLOT(astuces()));
 
 
     retranslateAction();
@@ -355,12 +356,12 @@ void MainWindow::retranslateAction(){
     deleteLevelAction->setShortcut(tr("Ctrl+BackSpace"));
     deleteLevelAction->setStatusTip(tr("Détruit les niveaux sélectionnés"));
 
-    //sendLeveltointerAction->setText(tr("Evaluer les niveaux selectionnés en mode géométrie intéractive"));
-    sendLeveltointerAction->setText(tr("Evalue les lignes cochées en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets entre crochets séparé par des virgules seront considérés comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
+    //sendLeveltointerAction->setText(tr("Evaluer la ligne courante en mode géométrie intéractive"));
+    sendLeveltointerAction->setText(tr("Evalue la ligne courante en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets entre crochets séparé par des virgules seront considérés comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
 
     evaluateallAction->setText(tr("Evaluer toute la feuille courante depuis le début."));
 
-    hintAction->setText(tr("Astuces:<br><center>CTRL Espace</center>donne les complétions possibles du mot tapé<br><center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche"));
+    hintAction->setText(tr("Astuces:<br><center>CTRL Espace</center>donne les complétions possibles de la chaine saisie<br><center>CTRL flèche haut ou bas</center>Insère une commande de l'historique<br><center>CTRL Delete</center><br>Supprime les lignes sélectionnées<center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche"));
 
     evaluateAction->setText(tr("&Evaluer"));
     evaluateAction->setShortcut(tr("Shift+Entrée"));
@@ -1197,7 +1198,7 @@ void MainWindow::about(){
                                                       "<li><b>Licence:</b> GPL v3</li>"
                                                       "<li><b>Version:</b> %1 </li>"
                                                       "<li><b>Sources de QCAS: </b><center><a href=\"http://git.tuxfamily.org/?p=qcas/qcas.git\">http://git.tuxfamily.org/?p=qcas/qcas.git</a></center><br></li>"
-						      "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
+                              "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
                                                       "<li><b>Auteur de QCAS: </b>Loïc Le Coq  (2012) </li>"
                               "<li><b>Maintenance et développement de QCAS: </b>Han Frédéric <center><a href=\"mailto:han@math.jussieu.fr\"> han@math.jussieu.fr</a></center></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
@@ -1206,6 +1207,23 @@ void MainWindow::about(){
                                                       ).arg(Config::QcasVersion).append(QDate::currentDate().toString()));
 
 }
+void MainWindow::astuces(){
+    QMessageBox::about(this,tr("Astuces"),tr("<center><h2>Racourcis</h2></center>"
+                                                      "<hr>"
+                                                      "<ul>"
+                                                      "<li><b>CTRL espace:</b><center>donne les complétions possibles de la chaine saisie</center></li>"
+                                             "<li><b>CTRL flèche haut ou bas</b><center>Insère une commande de l'historique</center></li>"
+                                             "<li><b>CTRL Delete</b><center>Supprime les lignes sélectionnées</center></li>"
+                                             "<li><b>F1</b>(Lorsque l'on laisse le pointeur sur un mot clef)<center>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)</center></li>"
+                                             "</ul>"
+                                             "<center><h2>Astuces</h2></center>"
+                                             "<ul>"
+                                             "<li>En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche</li>"
+                                                      "</ul><hr>"
+                                                      ));
+
+}
+
 void MainWindow::htmlhelp(){
     giac::system_browser_command("doc/index.html");
 }
