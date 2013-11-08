@@ -18,3 +18,13 @@ xt(t):=1+t
 
 puis point(xt(t))
 6) approx(1/10000000,4) donne 0
+
+
+7) Todo: default font size dans formal line widget ou implementer le ctrl wheel de plaintext
+    /*test fred
+    QFont f = document()->defaultFont();
+    
+    f.setPointSize(20);
+    document()->setDefaultFont(f);
+    */
+   

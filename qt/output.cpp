@@ -166,7 +166,7 @@ QSize FormulaWidget::sizeHint(){
 void FormulaWidget::zoomIn(){
     qDebug()<<mmlWidget->baseFontPointSize();
     if(mmlWidget->baseFontPointSize()>5){
-    mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() - 2);
+    mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() - 1);
     }
 }
 void FormulaWidget::zoomInslot(){
@@ -177,7 +177,7 @@ void FormulaWidget::zoomInslot(){
 }
 void FormulaWidget::zoomOut(){
     if(mmlWidget->baseFontPointSize()<40){
-        mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() + 2);
+        mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() + 1);
     }
 }
 void FormulaWidget::zoomOutslot(){
@@ -624,7 +624,7 @@ void GraphWidget::createToolBar(){
     menuCircle->addAction(angle);
     menuCircle->setStyle(new IconSize);
 
-    const QSize size(40,40);
+    const QSize size(30,30);
     buttonPointer->setIconSize(size);
     buttonPointer->setCheckable(true);
     buttonPointer->setPopupMode(QToolButton::MenuButtonPopup);
@@ -716,7 +716,7 @@ void GraphWidget::createToolBar(){
     group->addButton(buttonCircle);
 
     toolPanel=new QWidget(this);
-    toolPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    toolPanel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Maximum);
     QHBoxLayout* hbox=new QHBoxLayout(toolPanel);
     hbox->addWidget(buttonPointer,Qt::AlignLeft);
     hbox->addWidget(buttonPt,Qt::AlignLeft);
@@ -725,6 +725,7 @@ void GraphWidget::createToolBar(){
     hbox->addWidget(buttonPlot,Qt::AlignLeft);
     hbox->addWidget(buttonCircle,Qt::AlignLeft);
     toolPanel->setLayout(hbox);
+    toolPanel->setMaximumWidth(400);
 
     connect(menuPointer,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
     connect(menuPt,SIGNAL(triggered(QAction*)),this,SLOT(selectButtonIcon(QAction*)));
@@ -6092,7 +6093,9 @@ void DisplayProperties::initGui(){
     vLayoutGeneral->addWidget(valuePanel);
     vLayoutGeneral->addWidget(legendPanel);
     vLayoutGeneral->addWidget(displayObjectPanel);
-    generalPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    //generalPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    //formula may be very large
+    generalPanel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Maximum);
     generalPanel->setLayout(vLayoutGeneral);
 
     attributesPanel=new QWidget;
@@ -6115,6 +6118,7 @@ void DisplayProperties::initGui(){
     vLayoutAttributes->addWidget(typePointPanel);
     vLayoutAttributes->addWidget(typeLinePanel);
     vLayoutAttributes->addWidget(alphaFillPanel);
+    //attributesPanel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Maximum);
     attributesPanel->setLayout(vLayoutAttributes);
 
     addTab(generalPanel,tr("Général"));
@@ -6564,7 +6568,7 @@ void GenValuePanel::initGui(){
     layout=new QHBoxLayout(this);
 //    label=new QLabel
     formulaWidget=new FormulaWidget(this);
-    formulaWidget->zoomIn();
+    formulaWidget->zoomIn();formulaWidget->zoomIn();
     layout->addWidget(formulaWidget,Qt::AlignLeft);
     layout->setSizeConstraint(QLayout::SetFixedSize);
     setLayout(layout);

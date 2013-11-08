@@ -24,6 +24,7 @@
 #include <QMessageBox>
 #include "MainWindow.h"
 #include "FormalSheet.h"
+#include "Interactive2d.h"
 #include "CentralTabWidget.h"
 #include "output.h"
 

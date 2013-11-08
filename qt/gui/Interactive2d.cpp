@@ -28,7 +28,7 @@
 #include <QFile>
 #include "MainWindow.h"
 
-Interactive2d::Interactive2d(MainWindow *parent):MainSheet(MainSheet::G2D){
+Interactive2d::Interactive2d(MainWindow *parent):MainSheet(MainSheet::G2D_TYPE){
     mainWindow=parent;
     initGui();
 }
@@ -154,7 +154,7 @@ void Interactive2d::initGui(){
     toolPanel->setLayout(hbox);
 
     QVBoxLayout* vbox=new QVBoxLayout;
-    canvas=new GraphWidget(mainWindow->getContext(),true);
+    canvas=new GraphWidget(mainWindow->getContext(),true,mainWindow);
 
 
     vbox->addWidget(toolPanel,Qt::AlignLeft);
