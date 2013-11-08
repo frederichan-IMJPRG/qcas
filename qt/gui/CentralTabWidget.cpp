@@ -125,10 +125,10 @@ void MainTabWidget::closeTab(int id){
 
 
 }
-void MainTabWidget::insertG2dSheet(int i){
+void MainTabWidget::insertG2dSheet(int i, const QString &titre){
     //qDebug()<<"i="<<i;
     if((i<count())&&(i>=0)){
-    this->insertTab(i,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),tr("Feuille n°")+QString::number(i+1));
+    this->insertTab(i,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),titre);
     this->setCurrentIndex(i);
     (qobject_cast<GraphWidget*>(widget(i)))->setFocus(Qt::OtherFocusReason);
     mainWindow->updateInterface(MainSheet::G2D_TYPE);
@@ -147,7 +147,12 @@ void MainTabWidget::addG2dSheet(giac::context * ct){
     (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
     mainWindow->updateInterface(MainSheet::G2D_TYPE);
 }
-
+void MainTabWidget::addG2dSheetfromLine(const QString  &ligne){
+    this->insertTab(count()-1,new GraphWidget(mainWindow->getContext(),true,mainWindow),QIcon(":/images/g2d.png"),ligne.left(8)+tr(" n°")+QString::number(count()));
+    this->setCurrentIndex(count()-2);
+    (qobject_cast<GraphWidget*>(widget(count()-2)))->setFocus(Qt::OtherFocusReason);
+    mainWindow->updateInterface(MainSheet::G2D_TYPE);
+}
 void MainTabWidget::addFormalSheet(){
     this->insertTab(count()-1,new FormalWorkSheet(mainWindow),QIcon(":/images/formal.png"),tr("Feuille n°")+QString::number(count()));
     this->setCurrentIndex(count()-2);

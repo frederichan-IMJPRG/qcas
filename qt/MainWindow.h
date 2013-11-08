@@ -196,6 +196,7 @@ private slots:
     void insertline();
     void deleteSelectedLevels();
     void sendSelectedLevels();
+    void sendCurrentLine();
     void evaluate();
     void evaluateall();
     void openRecentFile();

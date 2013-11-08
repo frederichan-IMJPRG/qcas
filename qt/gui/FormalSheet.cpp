@@ -403,6 +403,10 @@ void FormalWorkSheet::sendSelectedLevels(GraphWidget * g2d){
     }
 }
 
+void FormalWorkSheet::sendCurrentLine(GraphWidget * g2d){
+            g2d->sendText(getCurrentLine()->getTextInput()->toPlainText());
+}
+
 void FormalWorkSheet::undo(){
     lines->at(current)->getTextInput()->undo();
 

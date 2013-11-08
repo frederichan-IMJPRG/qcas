@@ -111,6 +111,7 @@ public:
     void insertline();
     void deleteSelectedLevels();
     void sendSelectedLevels(GraphWidget *);
+    void sendCurrentLine(GraphWidget *);
     void sendText(const QString &);
     void displayResult(int line,OutputWidget* );
     void addSelectedLevel(int);

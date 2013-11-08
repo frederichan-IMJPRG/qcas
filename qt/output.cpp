@@ -7008,7 +7008,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
             undef->setVar(OrigName);
             undef->setLevel(evaluationLevel);
             undef->setPurgeable(toPurge);
-            qDebug()<<"var d'undef:"<<undef->getVar()<<"is purgeable?"<<undef->isPurgeable();
+            //qDebug()<<"var d'undef:"<<undef->getVar()<<"is purgeable?"<<undef->isPurgeable();
             newCommand.item=undef;
             commands.append(newCommand);//keep the entry
             findIDNT(g,newCommand.item); //find parents

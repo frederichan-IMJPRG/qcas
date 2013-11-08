@@ -268,7 +268,8 @@ void MainWindow::createAction(){
 
     sendLeveltointerAction=new QAction("",this);
     sendLeveltointerAction->setIcon(QIcon(":/images/tangent.png"));
-    connect(sendLeveltointerAction,SIGNAL(triggered()),this,SLOT(sendSelectedLevels()));
+//    connect(sendLeveltointerAction,SIGNAL(triggered()),this,SLOT(sendSelectedLevels()));
+    connect(sendLeveltointerAction,SIGNAL(triggered()),this,SLOT(sendCurrentLine()));
 
     evaluateAction=new QAction("",this);
     evaluateAction->setIcon(QIcon(":/images/evaluate.png"));
@@ -715,6 +716,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
           }
 	    }
         if(fltktag=="quitgeo2d"){
+            sendCurrentLine();
             fltktag="";f->goToNextLine();
         }
 	  }
@@ -1351,11 +1353,27 @@ void MainWindow::sendSelectedLevels(){
          msgBox.exec();
          return;
      }
-     tabPages->addG2dSheet();
+     QString titre="(F";
+     titre.append(QString::number(tabPages->currentIndex()+1));
+     titre.append("L");
+     titre.append(QString::number(form->getCurrent()+1));
+     titre.append(")");
+     tabPages->addG2dSheetfromLine(titre);
      GraphWidget *g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
      form->sendSelectedLevels(g2d);
 }
-
+void MainWindow::sendCurrentLine(){
+     FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+     if (form==0) return;
+     QString titre="(F";
+     titre.append(QString::number(tabPages->currentIndex()+1));
+     titre.append("L");
+     titre.append(QString::number(form->getCurrent()+1));
+     titre.append(")");
+     tabPages->addG2dSheetfromLine(titre);
+     GraphWidget *g2d=qobject_cast<GraphWidget*>(tabPages->widget(tabPages->count()-2));
+     form->sendCurrentLine(g2d);
+}
 void MainWindow::killThread(){
 
     cas->killThread();
@@ -1466,8 +1484,9 @@ void MainWindow::evaluateall(){
             g2d->getDisplayCommands(displaycommands);
             //g2d->clearcanvas();
             int i=tabPages->currentIndex();
+            QString titre=tabPages->tabText(i);
             delete g2d;
-            tabPages->insertG2dSheet(i);
+            tabPages->insertG2dSheet(i,titre);
             g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
             for(int i=0;i< displaycommands.size();i++){
                 //qDebug()<<"display commands "<<displaycommands.at(i);

@@ -55,7 +55,8 @@ public slots:
     void addSpreadSheet();
     void addProgrammingSheet();
     void addG2dSheet();
-    void insertG2dSheet(int);
+    void addG2dSheetfromLine(const QString &);
+    void insertG2dSheet(int,const QString &);
     void addG2dSheet(giac::context *); //cf. giacpy
     void closeTab(int);
     void changeTab(int);
