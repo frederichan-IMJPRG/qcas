@@ -164,13 +164,13 @@ QSize FormulaWidget::sizeHint(){
     return mmlWidget->size();
 }
 void FormulaWidget::zoomIn(){
-    qDebug()<<mmlWidget->baseFontPointSize();
+  //qDebug()<<mmlWidget->baseFontPointSize();
     if(mmlWidget->baseFontPointSize()>5){
     mmlWidget->setBaseFontPointSize(mmlWidget->baseFontPointSize() - 1);
     }
 }
 void FormulaWidget::zoomInslot(){
-    qDebug()<<mmlWidget->baseFontPointSize();
+  //qDebug()<<mmlWidget->baseFontPointSize();
     zoomIn();
     mmlWidget->updateGeometry();
     resize(mmlWidget->size());
