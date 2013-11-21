@@ -132,6 +132,28 @@ CasManager::CasManager(MainWindow* main){
     mainWindow=main;
     giac::child_id=1;
     signal(SIGINT,giac::ctrl_c_signal_handler);
+    //setup xcasroot for langages keywords and html doc
+    QString XCASROOT=QCoreApplication::applicationDirPath();
+    if(!XCASROOT.endsWith("/")){
+        XCASROOT.append("/");
+    }
+    QString tmp=XCASROOT;
+    tmp.append("doc/aide_cas");
+    if(QFile::exists(tmp)){
+        XCASROOT=QCoreApplication::applicationDirPath();
+        qDebug()<<"Setting xcasroot to"<<XCASROOT;
+        giac::xcasroot()=XCASROOT.toStdString();
+    }
+    else{
+        XCASROOT.append("../share/giac/");
+        tmp=XCASROOT;
+        tmp.append("doc/aide_cas");
+        if(QFile::exists(tmp)){
+            XCASROOT=QCoreApplication::applicationDirPath();
+            qDebug()<<"Setting xcasroot to"<<XCASROOT;
+            giac::xcasroot()=XCASROOT.toStdString();
+        }
+    }
 
     context=new giac::context;
     mainWindow->setDecimalDigits(giac::decimal_digits(context));
