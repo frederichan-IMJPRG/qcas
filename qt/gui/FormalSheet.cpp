@@ -464,7 +464,7 @@ void  FormalWorkSheet::toXCAS(QString & root){
 	fltk.append(" 12 0\n[\n// fltk N4xcas16Xcas_Text_EditorE 11 50 1189 ");
         fltk.append(QString::number(nbcr));
 	fltk.append(" 12 0\n");
-	fltk.append(QString::number(xcasinput.size()));
+    fltk.append(QString::number((xcasinput.normalized(QString::NormalizationForm_D)).size()));//NB: dans xcas é compte pour 2 caracteres
 	fltk.append(" ,\n");
 	fltk.append(xcasinput);
 	fltk.append(",\n]\n");
