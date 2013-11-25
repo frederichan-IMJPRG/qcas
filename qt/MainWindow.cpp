@@ -518,8 +518,10 @@ bool MainWindow::loadFile(const QString &fileName){
 }
 bool MainWindow::loadQcasFile(const QString &fileName){
     QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly))
+    if (!file.open(QIODevice::ReadOnly)){
+        qDebug()<<"Failed to open: "<<fileName;
         return false;
+    }
     QDomDocument doc("xml");
 
     QDataStream dataIn(&file);
