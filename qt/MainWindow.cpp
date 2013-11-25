@@ -773,6 +773,10 @@ bool MainWindow::saveFile(const QString &fileName){
     QDomDocument doc;
 
     QDomElement root=doc.createElement("qcas");
+    if(cas->isRunning()){
+        QMessageBox::warning(this,tr("Avertissement"),tr("Vous essayez d'enregistrer pendant un calcul. Recommencez plus tard."));
+        return false;
+    }
     // write cas configuration
     cas->toXML(root,false);// the true option save also the  giac context. FIXME: it is often too big.
     for (int i=0;i<tabPages->count()-1;++i){
