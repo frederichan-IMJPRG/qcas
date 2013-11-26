@@ -359,7 +359,7 @@ void MainWindow::retranslateAction(){
     //sendLeveltointerAction->setText(tr("Evaluer la ligne courante en mode géométrie intéractive"));
     sendLeveltointerAction->setText(tr("Evalue la ligne courante en mode géométrie intéractive<center>(Expérimental et limité)</center>Les objets entre crochets séparé par des virgules seront considérés comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considérées comme des listes et ne seront pas selectionnables à la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d'intersection pour une construction."));
 
-    evaluateallAction->setText(tr("Evaluer toute la feuille courante depuis le début."));
+    evaluateallAction->setText(tr("Evaluer toutes les feuilles depuis le début."));
 
     hintAction->setText(tr("Astuces:<br><center>CTRL Espace</center>donne les complétions possibles de la chaine saisie<br><center>CTRL flèche haut ou bas</center>Insère une commande de l'historique<br><center>CTRL Delete</center><br>Supprime les lignes sélectionnées<center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche"));
 

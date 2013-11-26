@@ -241,8 +241,14 @@ void TextInput::keyPressEvent(QKeyEvent *e){
 
             }
             else{
-                if (goDown()){
+                if (e->modifiers()&Qt::ShiftModifier){
+                    //we stay in this line during selection
+                    QPlainTextEdit::keyPressEvent(e);
+                }
+                else{
+                    if (goDown()){
                      QPlainTextEdit::keyPressEvent(e);
+                    }
                 }
             }
             break;
@@ -261,8 +267,15 @@ void TextInput::keyPressEvent(QKeyEvent *e){
                 }
             }
             else{
-                if (goUp())
+                if (e->modifiers()&Qt::ShiftModifier){
+                    //we stay in this line during selection
                     QPlainTextEdit::keyPressEvent(e);
+                }
+                else{
+                    if (goUp()){
+                        QPlainTextEdit::keyPressEvent(e);
+                    }
+                }
             }
             break;
         case Qt::Key_Delete:
