@@ -149,7 +149,6 @@ CasManager::CasManager(MainWindow* main){
         tmp=XCASROOT;
         tmp.append("doc/aide_cas");
         if(QFile::exists(tmp)){
-            XCASROOT=QCoreApplication::applicationDirPath();
             qDebug()<<"Setting xcasroot to"<<XCASROOT;
             giac::xcasroot()=XCASROOT.toStdString();
         }
@@ -193,10 +192,48 @@ CasManager::warning CasManager::initExpression(const QString *str){
     if (!b){
         return CasManager::Warning;
     }
+    if(expression.is_symb_of_sommet(giac::at_findhelp)){
+        //qDebug()<<"found ?  trying xcas html help";
+        QString rep=CasManager::xcashtmlHelp(expression.ref_SYMBptr()->feuille);
+        if (! rep.isEmpty()){
+            while(rep.contains("/")){
+                rep.remove(QRegExp("^.*/"));
+            }
+            qDebug()<<"found xcas html doc:"<<rep;
+            mainWindow->displayHelp(rep);
+        }
+        else{
+            /* if no html help is found in xcas doc, (not installed or path pb)
+            we display the short documentation from aide_cas
+            */
+            rep=QString::fromStdString(expression.ref_SYMBptr()->feuille.print());
+            rep.remove("'");
+            //qDebug()<<"no help found for"<<rep;
+            mainWindow->displayHelp(rep);
+        }
 
+    }
 
 
     return CasManager::No_warning;
+}
+
+QString CasManager::xcashtmlHelp(const giac::gen & g){
+    giac::gen f(g);
+    std::string s;
+    giac::html_help_init("aide_cas",Config::giaclanguage,true,true);
+    if (f.type==giac::_SYMB)
+          f=f._SYMBptr->sommet;
+        if (f.type==giac::_FUNC)
+            s=f._FUNCptr->ptr()->s;
+        giac::html_vtt=giac::html_help(giac::html_mtt,s);
+        if (!giac::html_vtt.empty()){
+           //giac::system_browser_command(giac::html_vtt.front());
+           return QString::fromStdString(giac::html_vtt.front());
+         }
+         else{
+            return "";
+         }
 }
 
 

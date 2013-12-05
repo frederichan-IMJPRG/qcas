@@ -23,6 +23,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QStringList>
+#include <QFile>
 #include <QAction>
 #include <QDebug>
 #include "WizardCatalog.h"
@@ -42,9 +43,19 @@ void WizardCatalog::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void WizardCatalog::retranslate(){
-    zone->setText(tr("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
+    /*zone->setText(tr("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">"
 "<center><h3><font color=\"#40A497\">Recherche par mot-clé</font></h3></center>"
                   "<hr> <center>Cet outil vous permet de naviguer aisément parmi les différents commandes ainsi que leurs descriptions.</center>"));
+    */
+
+    QString giacdoc=QString::fromStdString(giac::giac_aide_dir());
+    giacdoc.append(tr("doc/fr/cascmd_fr/"));
+    QStringList docpaths;
+    docpaths<<":doc"<< giacdoc;
+
+    zone->setSearchPaths(docpaths);
+    homeAction->setText(tr("Page d'accueil"));
+    home();
 
     findAction->setText(tr("Rechercher"));
     findAction->setShortcut(tr("Entrée"));
@@ -62,12 +73,13 @@ void WizardCatalog::retranslate(){
 void WizardCatalog::createGui(){
     lineEdit=new QLineEdit;
     zone=new QTextBrowser;
-
- 
-    zone->setOpenLinks(false);
+    zone->setOpenLinks(false);//we take care of html links in newPage
 
     findAction=new QAction("",this);
     findAction->setIcon(QIcon(":/images/edit-find.png"));
+
+    homeAction=new QAction("",this);
+    homeAction->setIcon(QIcon(":/images/home.png"));
 
     previousAction=new QAction("",this);
     previousAction->setIcon(QIcon(":/images/previous.png"));
@@ -78,9 +90,11 @@ void WizardCatalog::createGui(){
 
     connect(nextAction,SIGNAL(triggered()),this,SLOT(goNext()));
     connect(findAction,SIGNAL(triggered()),this,SLOT(find()));
+    connect(homeAction,SIGNAL(triggered()),this,SLOT(home()));
     connect(previousAction,SIGNAL(triggered()),this,SLOT(goBack()));
 
     QToolBar *bar=new QToolBar;
+    bar->addAction(homeAction);
     bar->addAction(findAction);
     bar->addAction(previousAction);
     bar->addAction(nextAction);
@@ -97,7 +111,7 @@ void WizardCatalog::createGui(){
 
     setLayout(vlayout);
     connect(lineEdit,SIGNAL(returnPressed()),this,SLOT(find()));
-    connect(zone,SIGNAL(anchorClicked(QUrl)),this,SLOT(displayPage(QUrl)));
+    connect(zone,SIGNAL(anchorClicked(QUrl)),this,SLOT(newPage(QUrl)));//we don't systematically follow url
 
     retranslate();
 }
@@ -107,11 +121,41 @@ void WizardCatalog::find(){
     zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
 }
 
+void WizardCatalog::home(){
+    //zone->setSource(QUrl(tr("index.html")));
+    QString startpage=(tr("menu_fr.html"));
+    addHistory(startpage);
+    zone->setSource(QUrl(startpage));
+}
 
 void WizardCatalog::displayPage(QUrl url){
     QString keyWord=url.path();
+    zone->setSource(url);
+    if(zone->toPlainText().isEmpty()){
+        zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+    }
+    //if the url is not a valid xcas htmldoc nor a valid keyword, we send it to the search engine.
+    if(zone->toPlainText().trimmed().isEmpty()){
+        zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
+    }
+}
+void WizardCatalog::newPage(QUrl url){
+    QString keyWord=url.path();
+
     addHistory(keyWord);
-    zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+    zone->setSource(url);
+
+    /*if(zone->toPlainText().isEmpty()){
+        QFile fichressources(":doc/"+url.path());
+        fichressources.open(QIODevice::ReadOnly);
+            QTextStream stream(& fichressources);
+            stream.setCodec("UTF-8");
+            zone->setText(stream.readAll());
+    }*/
+
+    if(zone->toPlainText().isEmpty()){
+        zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+    }
 }
 void WizardCatalog::updateButtons(){
     previousAction->setEnabled(historyIndex>0);
@@ -132,7 +176,8 @@ void WizardCatalog::goBack(){
     if (url.startsWith("seek ")){
         zone->setText(mainWindow->getCommandInfo()->seekForKeyword(url.remove(0,5)));
     }
-    else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
+    //else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
+    else displayPage(url);
     updateButtons();
 }
 void WizardCatalog::goNext(){
@@ -141,7 +186,8 @@ void WizardCatalog::goNext(){
     if (url.startsWith("seek ")){
         zone->setText(mainWindow->getCommandInfo()->seekForKeyword(url.remove(0,5)));
     }
-    else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
+    //else zone->setText(mainWindow->getCommandInfo()->displayPage(url));
+    else displayPage(url);
     updateButtons();
 
 }

@@ -85,5 +85,8 @@
         <file>aide_cas</file>
         <file>images/evaluate-buisy.png</file>
         <file>images/ampoule.png</file>
+        <file>doc/memento_fr.html</file>
+        <file>doc/menu_fr.html</file>
+        <file>images/home.png</file>
     </qresource>
 </RCC>

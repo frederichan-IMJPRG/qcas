@@ -142,7 +142,9 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/geometry.cpp \
     qt/gui/plotfunctiondialog.cpp
 #
-OTHER_FILES += \ 
+OTHER_FILES += \
+    qt/doc/menu_fr.html \
+    qt/doc/memento_fr.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \
@@ -169,6 +171,7 @@ OTHER_FILES += \
     qt/images/edit-redo.png \
     qt/images/edit-paste.png \
     qt/images/edit-find.png \
+    qt/images/home.png \
     qt/images/edit-cut.png \
     qt/images/edit-copy.png \
     qt/images/document-save-as.png \

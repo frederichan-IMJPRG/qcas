@@ -101,6 +101,7 @@ public:
     void loadXML(const QDomElement &, const bool &archivecontext=false);
     void loadGeneralXML(const QDomElement &);
     QEventLoop * buisyloop; //buisyloop->exec() will wait the end of monitor
+    QString xcashtmlHelp(const giac::gen &);
 
 private:
     static giac::gen answer;

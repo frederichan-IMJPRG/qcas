@@ -29,6 +29,7 @@ class WizardCatalog :public QWidget{
     Q_OBJECT
 public:
     WizardCatalog(MainWindow *parent=0);
+    void displayPage(QUrl);
 private:
     void changeEvent(QEvent *);
     void retranslate();
@@ -43,12 +44,14 @@ private:
     QAction* previousAction;
     QAction* nextAction;
     QAction *findAction;
+    QAction *homeAction;
 
 public slots:
-   void displayPage(QUrl);
+   void newPage(QUrl);
 
 private slots:
     void find();
+    void home();
     void goBack();
     void goNext();
 };

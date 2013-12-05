@@ -990,7 +990,6 @@ void MainWindow::createGui(){
     tabPages=new MainTabWidget(this);
     QSplitter *vertSplit=new QSplitter(Qt::Horizontal);
 
-
     leftPanel=new QWidget;
 
     QHBoxLayout *h=new QHBoxLayout;
@@ -1565,6 +1564,7 @@ void MainWindow::evaluate(){
 }
 void MainWindow::displayHelp(const QString & keyWord) const{
    wizardList->setCurrentRow(2);
+   leftPanel->show();
    (qobject_cast<WizardCatalog*>(wizardPages->currentWidget()))->displayPage(QUrl(keyWord));
 }
 void MainWindow::sendText(const QString & s){
@@ -1731,6 +1731,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
         QString html1;
         QString html2;
         QString line;
+
         while(!stream.atEnd()){
             line=stream.readLine();
             if (line.startsWith("#")) currentCommand=line.remove(0,2);
