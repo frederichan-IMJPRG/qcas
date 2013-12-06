@@ -49,6 +49,7 @@ public:
     QString displayPage(const QString &) const;
     QCompleter* getCompleter() const;
     QStringList getCommands();
+    QString minimaltoHtml(const QString &) const;
     bool isCommand(const QString &) const;
 private:
     QCompleter *completer;

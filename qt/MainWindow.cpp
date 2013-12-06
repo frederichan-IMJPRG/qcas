@@ -1655,7 +1655,13 @@ void CommandInfo::listAllCommands(){
     commandList.sort();
 }
 
-
+QString CommandInfo::minimaltoHtml(const QString & source) const{
+    QString tmp=source;
+    tmp.replace("&","&amp;");
+    tmp.replace("<","&lt;");
+    tmp.replace(">","&gt;");
+    return tmp;
+}
 
 QString CommandInfo::displayPage(const QString& keyWord) const{
     QFile file(":/aide_cas");
@@ -1699,11 +1705,11 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         }
         }
         line.clear();
-        line.append("<h3><font color=\"#40A497\">").append(command).append("</font></h3>");
+        line.append("<h3><font color=\"#40A497\">").append(minimaltoHtml(command)).append("</font></h3>");
         if (!synonym.isEmpty()){
             line.append("<b>").append(QObject::tr("Synonyme(s):")).append("</b>");
             for( int i=0;i<synonym.size();++i){
-                line.append(" ").append(synonym.at(i));
+                line.append(" ").append(minimaltoHtml(synonym.at(i)));
             }
         }
         line.append("<hr>");
@@ -1712,13 +1718,13 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         if (!examples.isEmpty()){
             line.append("<br><b>").append(QObject::tr("Exemples:")).append("</b><br>");
             for( int i=0;i<examples.size();++i){
-                line.append(examples.at(i)).append("<br>");
+                line.append(minimaltoHtml(examples.at(i))).append("<br>");
             }
         }
         if (!seeAlso.isEmpty()){
             line.append(QObject::tr("Voir aussi: ")).append("<ul>");
             for( int i=0;i<seeAlso.size();++i){
-                line.append("<li><a href=\"").append(seeAlso.at(i)).append("\">").append(seeAlso.at(i)).append("</a></li>");
+                line.append("<li><a href=\"").append(seeAlso.at(i)).append("\">").append(minimaltoHtml(seeAlso.at(i))).append("</a></li>");
             }
             line.append("</ul>");
         }
@@ -1745,7 +1751,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
                     html.append("<a href=\"");
                     html.append(currentCommand);
                     html.append("\">");
-                    html.append(currentCommand);
+                    html.append(minimaltoHtml(currentCommand));
                     html.append("</a><br>\n");
                     html.append(line.remove(0,2));
                     html.append("<br><br>");
@@ -1754,7 +1760,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
                     html1.append("<a href=\"");
                     html1.append(currentCommand);
                     html1.append("\">");
-                    html1.append(currentCommand);
+                    html1.append(minimaltoHtml(currentCommand));
                     html1.append("</a><br>\n");
                     html1.append(line.remove(0,2));
                     html1.append("<br><br>");
@@ -1763,7 +1769,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
                     html2.append("<a href=\"");
                     html2.append(currentCommand);
                     html2.append("\">");
-                    html2.append(currentCommand);
+                    html2.append(minimaltoHtml(currentCommand));
                     html2.append("</a><br>\n");
                     html2.append(line.remove(0,2));
                     html2.append("<br><br>");
