@@ -130,7 +130,10 @@ void WizardCatalog::home(){
 
 void WizardCatalog::displayPage(QUrl url){
     QString keyWord=url.path();
-    zone->setSource(url);
+    if(keyWord.contains("html"))
+        zone->setSource(url);
+    else
+        zone->setText("");
     if(zone->toPlainText().isEmpty()){
         zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
     }
@@ -139,6 +142,11 @@ void WizardCatalog::displayPage(QUrl url){
         zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
     }
 }
+
+void WizardCatalog::displayHome(){
+    home();
+}
+
 void WizardCatalog::newPage(QUrl url){
     QString keyWord=url.path();
 

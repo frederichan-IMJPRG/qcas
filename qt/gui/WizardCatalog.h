@@ -30,6 +30,7 @@ class WizardCatalog :public QWidget{
 public:
     WizardCatalog(MainWindow *parent=0);
     void displayPage(QUrl);
+    void displayHome();
 private:
     void changeEvent(QEvent *);
     void retranslate();

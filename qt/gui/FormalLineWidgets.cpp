@@ -164,10 +164,16 @@ bool TextInput::matchRightDelimiter(QChar left,QChar right,QTextBlock currentBlo
 
 
 void TextInput::installCompleter(){
-    completer=line->getWorkSheet()->getApp()->getCommandInfo()->getCompleter();
+    MainWindow * qmw=line->getWorkSheet()->getApp();
+    completer=qmw->getCommandInfo()->getCompleter();
     completer->setWidget(this);
     completer->setCompletionMode(QCompleter::PopupCompletion);
-    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    if(giac::xcas_mode(qmw->getContext())==1)
+         completer->setCaseSensitivity(Qt::CaseInsensitive);//maple_mode
+    else
+        completer->setCaseSensitivity(Qt::CaseSensitive);
+
+    connect(completer,SIGNAL(highlighted(QString)),this,SLOT(helpCompletion(QString)));
     connect(completer,SIGNAL(activated(QString)),this,SLOT(insertCompletion(QString)));
 }
 
@@ -425,6 +431,10 @@ QString TextInput::textUnderCursor() const{
     QTextCursor tc=textCursor();
     tc.select(QTextCursor::WordUnderCursor);
     return tc.selectedText();
+}
+
+void TextInput::helpCompletion(const QString &completion){
+    line->getWorkSheet()->getApp()->displayHelp(completion);
 }
 
 void TextInput::insertCompletion(const QString &completion){

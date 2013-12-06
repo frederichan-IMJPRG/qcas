@@ -1567,6 +1567,10 @@ void MainWindow::displayHelp(const QString & keyWord) const{
    leftPanel->show();
    (qobject_cast<WizardCatalog*>(wizardPages->currentWidget()))->displayPage(QUrl(keyWord));
 }
+void MainWindow::displayHome() const{
+   wizardList->setCurrentRow(2);
+   (qobject_cast<WizardCatalog*>(wizardPages->currentWidget()))->displayHome();
+}
 void MainWindow::sendText(const QString & s){
     MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
     switch(sheet->getType()){

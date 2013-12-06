@@ -45,6 +45,7 @@ protected:
 private slots:
     void addMultiLines(int,int,int);
     void insertCompletion(const QString &completion);
+    void helpCompletion(const QString &completion);
     void matchDelimiters();
 private:
     bool goDown();

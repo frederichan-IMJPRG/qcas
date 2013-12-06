@@ -64,6 +64,7 @@ class MainWindow :public QMainWindow {
     void changeEvent(QEvent*, QString*);
     void retranslateInterface(int);
     void displayHelp(const QString &) const;
+    void displayHome() const;
     void sendText(const QString &);
     bool isEvaluating();
     bool isEvaluatingAll();
