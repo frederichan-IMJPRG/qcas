@@ -26,6 +26,7 @@
 #include "FormalLineWidgets.h"
 #include "FormalLine.h"
 #include "../MainWindow.h"
+#include "../config.h"
 #include "qtmmlwidget.h"
 TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     line=parent;
@@ -209,11 +210,17 @@ void TextInput::keyPressEvent(QKeyEvent *e){
         // User has pressed Space
         // Checking if Ctrl is pressed to enable autocompletion
         case Qt::Key_Space:
-        if (e->modifiers()&Qt::ControlModifier){
-            updateCompleter();
-        }
-        else QPlainTextEdit::keyPressEvent(e);
-        break;
+            if (e->modifiers()&Qt::ControlModifier){
+                updateCompleter();
+            }
+            else QPlainTextEdit::keyPressEvent(e);
+            break;
+        case Qt::Key_Tab:
+            if (Config::useTabCompletions){
+               updateCompleter();
+            }
+            else QPlainTextEdit::keyPressEvent(e);
+            break;
         // User has pressed Return or Enter Key
         // If Shift is pressed, evaluate and go to next line
         // else adjust the size of the text zone

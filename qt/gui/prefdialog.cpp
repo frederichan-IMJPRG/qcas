@@ -411,7 +411,7 @@ void GeneralPanel::retranslate(){
     comboLanguage->setItemText(4,tr("Chinois"));
     policeGroup->setTitle(tr("Options polices"));
     labelMMLSize->setText(tr("Taille des polices MathML:"));
-
+    labelUseTabCompletions->setText(tr("Utiliser Tab pour les complétions:"));
 }
 
 void GeneralPanel::initGui(){
@@ -496,6 +496,7 @@ void GeneralPanel::initGui(){
     QGridLayout* policeGrid=new QGridLayout(policeGroup);
 
     labelMMLSize=new QLabel(tr("Taille des polices MathML:"),this);
+    labelUseTabCompletions=new QLabel("",this);
     
     editMMLSize=new QSpinBox(this);
     editMMLSize->setRange(8,40);
@@ -504,6 +505,9 @@ void GeneralPanel::initGui(){
     editMMLSize->setValue(Config::mml_fontsize);
     policeGrid->addWidget(labelMMLSize,0,0);
     policeGrid->setSizeConstraint(QLayout::SetFixedSize);
+    checkUseTabCompletions=new QCheckBox("");
+    policeGrid->addWidget(labelUseTabCompletions,0,2);
+    policeGrid->addWidget(checkUseTabCompletions,0,3);
 
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
     mainLayout->addWidget(langPanel);
@@ -528,6 +532,7 @@ void GeneralPanel::initValue(){
     editTMax->setText(QString::number(giac::gnuplot_tmax));
     checkAutoScale->setChecked(giac::autoscale);
     checkGridAttraction->setChecked(Config::gridAttraction);
+    checkUseTabCompletions->setChecked(Config::useTabCompletions);
 
 }
 void GeneralPanel::apply(){
@@ -578,6 +583,7 @@ void GeneralPanel::apply(){
     }
     giac::autoscale=checkAutoScale->isChecked();
     Config::gridAttraction=checkGridAttraction->isChecked();
+    Config::useTabCompletions=checkUseTabCompletions->isChecked();
     Config::mml_fontsize=editMMLSize->text().toInt();
 }
 /**

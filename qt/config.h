@@ -59,6 +59,7 @@ public:
     static LANGUAGES language;
     static int giaclanguage;
     static bool gridAttraction;
+    static bool useTabCompletions;
     static int mml_fontsize;
     static QString GeoVarPrefix;
     static QString QcasVersion;

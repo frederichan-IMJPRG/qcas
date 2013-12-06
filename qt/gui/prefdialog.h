@@ -52,6 +52,7 @@ private:
     QComboBox * comboBasis;
     QLineEdit * editDigits;
     QCheckBox * checkSymbolic;
+    QCheckBox * autoSymplify;
     QCheckBox * checkRadian;
     QCheckBox * checkComplex;
     QCheckBox * checkComplexVar;
@@ -102,6 +103,7 @@ private:
     QLineEdit* editWidth;
     QCheckBox* checkGridAttraction;
     QComboBox* comboLanguage;
+    QCheckBox* checkUseTabCompletions;
     QLineEdit* editXMin;
     QLineEdit* editXMax;
     QLineEdit* editYMin;
@@ -117,6 +119,7 @@ private:
     QLabel * labelWidth;
     QLabel* labelLanguage;
     QLabel* labelMMLSize;
+    QLabel* labelUseTabCompletions;
 
     void changeEvent(QEvent *);
     void retranslate();
