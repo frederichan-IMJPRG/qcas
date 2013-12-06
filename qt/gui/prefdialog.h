@@ -52,7 +52,6 @@ private:
     QComboBox * comboBasis;
     QLineEdit * editDigits;
     QCheckBox * checkSymbolic;
-    QCheckBox * autoSymplify;
     QCheckBox * checkRadian;
     QCheckBox * checkComplex;
     QCheckBox * checkComplexVar;
