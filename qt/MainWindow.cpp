@@ -1736,9 +1736,11 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         line.append("<hr>");
         line.append(minimaltoHtml(description));
         //
-        kwdsearch="?"+keyWord.split(QRegExp(" ")).at(0);
-        line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a><br>"));
+        kwdsearch="?"+command.split(QRegExp(" ")).at(0);
+        if(kwdsearch !="?"){
+        line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a>"));
         //
+        }
         line.append("<br>");
         if (!examples.isEmpty()){
             line.append("<br><b>").append(QObject::tr("Exemples:")).append("</b><br>");
