@@ -676,6 +676,11 @@ que toutes ses dÃ©pendances.
         <translation>Chinese</translation>
     </message>
     <message>
+        <location filename="../gui/prefdialog.cpp" line="414"/>
+        <source>Utiliser Tab pour les complÃ©tions:</source>
+        <translation>Use Tab to complete keywords</translation>
+    </message>
+    <message>
         <location filename="../gui/prefdialog.cpp" line="430"/>
         <source>xmin:</source>
         <translation></translation>
@@ -1080,12 +1085,12 @@ que toutes ses dÃ©pendances.
 <context>
     <name>Interactive2dPanel</name>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="598"/>
+        <location filename="../gui/prefdialog.cpp" line="604"/>
         <source>Options variables automatiques</source>
         <translation>Options automatic variables</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="599"/>
+        <location filename="../gui/prefdialog.cpp" line="605"/>
         <source>Prefixe ajoutÃ© aux variables nommÃ©es automatiquement</source>
         <translation>Prefix added to store automaticly named variables</translation>
     </message>
@@ -1640,17 +1645,17 @@ Do you want to do it now?</translation>
         <translation>Warning! &lt;br&gt; To store somthing in a variable, you must use the symbol :=</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1608"/>
+        <location filename="../MainWindow.cpp" line="1612"/>
         <source>Tentative d&apos;interruption...</source>
         <translation>Trying to interrupt</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1620"/>
+        <location filename="../MainWindow.cpp" line="1624"/>
         <source>Avertissement!</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1620"/>
+        <location filename="../MainWindow.cpp" line="1624"/>
         <source>Risque de crash important lors de l&apos;interruption requise.</source>
         <translation>Crash could happen during this interruption.</translation>
     </message>
@@ -1815,37 +1820,37 @@ Do you want to do it now?</translation>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="648"/>
+        <location filename="../gui/prefdialog.cpp" line="654"/>
         <source>Configuration de QCAS</source>
         <translation>QCAS Configuration</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="649"/>
+        <location filename="../gui/prefdialog.cpp" line="655"/>
         <source>GÃ©nÃ©ral</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="680"/>
+        <location filename="../gui/prefdialog.cpp" line="686"/>
         <source>CAS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="651"/>
+        <location filename="../gui/prefdialog.cpp" line="657"/>
         <source>Tableur</source>
         <translation>Spreadsheat</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="650"/>
+        <location filename="../gui/prefdialog.cpp" line="656"/>
         <source>GÃ©omÃ©trie 2D</source>
         <translation>Interactive geometry 2D</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="696"/>
+        <location filename="../gui/prefdialog.cpp" line="702"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="652"/>
+        <location filename="../gui/prefdialog.cpp" line="658"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -1853,22 +1858,22 @@ Do you want to do it now?</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1700"/>
+        <location filename="../MainWindow.cpp" line="1710"/>
         <source>Synonyme(s):</source>
         <translation>Synonyms</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1709"/>
+        <location filename="../MainWindow.cpp" line="1719"/>
         <source>Exemples:</source>
         <translation>Examples:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1715"/>
+        <location filename="../MainWindow.cpp" line="1725"/>
         <source>Voir aussi: </source>
         <translation>See also:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1772"/>
+        <location filename="../MainWindow.cpp" line="1782"/>
         <source>Aucun rÃ©sultat</source>
         <translation>No answer</translation>
     </message>
@@ -2017,7 +2022,7 @@ Do you want to do it now?</translation>
 <context>
     <name>TextInput</name>
     <message>
-        <location filename="../gui/FormalLineWidgets.cpp" line="392"/>
+        <location filename="../gui/FormalLineWidgets.cpp" line="405"/>
         <source>Mot-clÃ©:</source>
         <translation>Keyword</translation>
     </message>
@@ -2130,6 +2135,11 @@ Do you want to do it now?</translation>
         <translation>doc/en/cascmd_en/</translation>
     </message>
     <message>
+        <location filename="../gui/WizardCatalog.cpp" line="54"/>
+        <source>:doc/fr/</source>
+        <translation>:doc/en/</translation>
+    </message>
+    <message>
         <location filename="../gui/WizardCatalog.cpp" line="57"/>
         <source>Page d&apos;accueil</source>
         <translation>Starting Page</translation>
@@ -2180,9 +2190,8 @@ Do you want to do it now?</translation>
         <translation>Next Page</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="126"/>
         <source>menu_fr.html</source>
-        <translation>menu_en.html</translation>
+        <translation type="obsolete">menu_en.html</translation>
     </message>
 </context>
 <context>

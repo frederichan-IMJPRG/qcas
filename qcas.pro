@@ -143,8 +143,12 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/gui/plotfunctiondialog.cpp
 #
 OTHER_FILES += \
-    qt/doc/menu_fr.html \
-    qt/doc/memento_fr.html \
+    qt/doc/fr/menu.html \
+    qt/doc/fr/memento.html \
+    qt/doc/fr/xcasmenu.html \
+    qt/doc/en/menu.html \
+    qt/doc/en/memento.html \
+    qt/doc/en/xcasmenu.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \

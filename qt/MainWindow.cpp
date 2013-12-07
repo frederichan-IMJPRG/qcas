@@ -1562,10 +1562,29 @@ void MainWindow::evaluate(){
     }
 
 }
+
 void MainWindow::displayHelp(const QString & keyWord) const{
    wizardList->setCurrentRow(2);
    leftPanel->show();
    (qobject_cast<WizardCatalog*>(wizardPages->currentWidget()))->displayPage(QUrl(keyWord));
+}
+
+void MainWindow::displayXcasHelp(const QString & keyWord) const{
+   wizardList->setCurrentRow(2);
+   //CasManager::warning id=cas->initExpression(&keyWord);
+
+   giac::gen expression(keyWord.remove("?").toStdString(),giac::context0);
+
+   QString rep=cas->xcashtmlHelp(expression);
+
+   if (! rep.isEmpty()){
+       while(rep.contains("/")){
+           rep.remove(QRegExp("^.*/"));
+       }
+       //qDebug()<<"found xcas html doc:"<<rep;
+       displayHelp(rep);
+   }
+
 }
 void MainWindow::displayHome() const{
    wizardList->setCurrentRow(2);
@@ -1670,6 +1689,8 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
     QString command,description;
     QStringList synonym,seeAlso,examples;
     QString line;
+    QString kwdsearch;
+
     while(!stream.atEnd()){
         line=stream.readLine();
         if (line.startsWith("#")&& (line.contains(" "+keyWord+" ",Qt::CaseSensitive)||line.endsWith(" "+keyWord,Qt::CaseSensitive))) {
@@ -1713,7 +1734,11 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
             }
         }
         line.append("<hr>");
-        line.append(description);
+        line.append(minimaltoHtml(description));
+        //
+        kwdsearch="?"+keyWord.split(QRegExp(" ")).at(0);
+        line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a><br>"));
+        //
         line.append("<br>");
         if (!examples.isEmpty()){
             line.append("<br><b>").append(QObject::tr("Exemples:")).append("</b><br>");
@@ -1753,7 +1778,7 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
                     html.append("\">");
                     html.append(minimaltoHtml(currentCommand));
                     html.append("</a><br>\n");
-                    html.append(line.remove(0,2));
+                    html.append(minimaltoHtml(line.remove(0,2)));
                     html.append("<br><br>");
                 }
                 else if(currentCommand.contains(keyWord)){

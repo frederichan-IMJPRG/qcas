@@ -48,12 +48,13 @@ void WizardCatalog::retranslate(){
                   "<hr> <center>Cet outil vous permet de naviguer aisément parmi les différents commandes ainsi que leurs descriptions.</center>"));
     */
 
-    QString giacdoc=QString::fromStdString(giac::giac_aide_dir());
-    giacdoc.append(tr("doc/fr/cascmd_fr/"));
+    QString giacdoc=QString::fromStdString(giac::giac_aide_dir());//the xcas doc
+    giacdoc.append(tr("doc/fr/cascmd_fr/"));//adapt this path in translations.
     QStringList docpaths;
-    docpaths<<":doc"<< giacdoc;
+    docpaths<<tr(":doc/fr/")<< giacdoc;//ressource doc a traduire
 
     zone->setSearchPaths(docpaths);
+    zone->reload();
     homeAction->setText(tr("Page d'accueil"));
     home();
 
@@ -123,23 +124,29 @@ void WizardCatalog::find(){
 
 void WizardCatalog::home(){
     //zone->setSource(QUrl(tr("index.html")));
-    QString startpage=(tr("menu_fr.html"));
+    QString startpage=("menu.html");
     addHistory(startpage);
     zone->setSource(QUrl(startpage));
 }
 
 void WizardCatalog::displayPage(QUrl url){
     QString keyWord=url.path();
-    if(keyWord.contains("html"))
-        zone->setSource(url);
-    else
-        zone->setText("");
-    if(zone->toPlainText().isEmpty()){
-        zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+
+    if (url.toString().startsWith("?")){
+        mainWindow->displayXcasHelp(url.toString());
     }
-    //if the url is not a valid xcas htmldoc nor a valid keyword, we send it to the search engine.
-    if(zone->toPlainText().trimmed().isEmpty()){
-        zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
+    else{
+        if(keyWord.contains("html"))
+           zone->setSource(url);
+        else
+           zone->setText("");
+        if(zone->toPlainText().isEmpty()){
+           zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+        }
+        //if the url is not a valid xcas htmldoc nor a valid keyword, we send it to the search engine.
+        if(zone->toPlainText().trimmed().isEmpty()){
+           zone->setText(mainWindow->getCommandInfo()->seekForKeyword(keyWord));
+        }
     }
 }
 
@@ -150,6 +157,12 @@ void WizardCatalog::displayHome(){
 void WizardCatalog::newPage(QUrl url){
     QString keyWord=url.path();
 
+    if (url.toString().startsWith("?")){
+        addHistory(url.toString());
+        mainWindow->displayXcasHelp(url.toString());
+
+    }
+    else{
     addHistory(keyWord);
     zone->setSource(url);
 
@@ -163,6 +176,7 @@ void WizardCatalog::newPage(QUrl url){
 
     if(zone->toPlainText().isEmpty()){
         zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+    }
     }
 }
 void WizardCatalog::updateButtons(){

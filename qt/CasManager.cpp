@@ -199,7 +199,7 @@ CasManager::warning CasManager::initExpression(const QString *str){
             while(rep.contains("/")){
                 rep.remove(QRegExp("^.*/"));
             }
-            qDebug()<<"found xcas html doc:"<<rep;
+            //qDebug()<<"found xcas html doc:"<<rep;
             mainWindow->displayHelp(rep);
         }
         else{

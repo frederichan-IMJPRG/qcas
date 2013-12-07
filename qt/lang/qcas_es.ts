@@ -671,6 +671,11 @@ que toutes ses dÃ©pendances.
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../gui/prefdialog.cpp" line="414"/>
+        <source>Utiliser Tab pour les complÃ©tions:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../gui/prefdialog.cpp" line="430"/>
         <source>xmin:</source>
         <translation type="unfinished"></translation>
@@ -1080,12 +1085,12 @@ que toutes ses dÃ©pendances.
 <context>
     <name>Interactive2dPanel</name>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="598"/>
+        <location filename="../gui/prefdialog.cpp" line="604"/>
         <source>Options variables automatiques</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="599"/>
+        <location filename="../gui/prefdialog.cpp" line="605"/>
         <source>Prefixe ajoutÃ© aux variables nommÃ©es automatiquement</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1594,17 +1599,17 @@ que toutes ses dÃ©pendances.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1608"/>
+        <location filename="../MainWindow.cpp" line="1612"/>
         <source>Tentative d&apos;interruption...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1620"/>
+        <location filename="../MainWindow.cpp" line="1624"/>
         <source>Avertissement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1620"/>
+        <location filename="../MainWindow.cpp" line="1624"/>
         <source>Risque de crash important lors de l&apos;interruption requise.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1766,37 +1771,37 @@ que toutes ses dÃ©pendances.
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="648"/>
+        <location filename="../gui/prefdialog.cpp" line="654"/>
         <source>Configuration de QCAS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="649"/>
+        <location filename="../gui/prefdialog.cpp" line="655"/>
         <source>GÃ©nÃ©ral</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="680"/>
+        <location filename="../gui/prefdialog.cpp" line="686"/>
         <source>CAS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="651"/>
+        <location filename="../gui/prefdialog.cpp" line="657"/>
         <source>Tableur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="650"/>
+        <location filename="../gui/prefdialog.cpp" line="656"/>
         <source>GÃ©omÃ©trie 2D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="696"/>
+        <location filename="../gui/prefdialog.cpp" line="702"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="652"/>
+        <location filename="../gui/prefdialog.cpp" line="658"/>
         <source>Annuler</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1804,22 +1809,22 @@ que toutes ses dÃ©pendances.
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1700"/>
+        <location filename="../MainWindow.cpp" line="1710"/>
         <source>Synonyme(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1709"/>
+        <location filename="../MainWindow.cpp" line="1719"/>
         <source>Exemples:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1715"/>
+        <location filename="../MainWindow.cpp" line="1725"/>
         <source>Voir aussi: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1772"/>
+        <location filename="../MainWindow.cpp" line="1782"/>
         <source>Aucun rÃ©sultat</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1968,7 +1973,7 @@ que toutes ses dÃ©pendances.
 <context>
     <name>TextInput</name>
     <message>
-        <location filename="../gui/FormalLineWidgets.cpp" line="392"/>
+        <location filename="../gui/FormalLineWidgets.cpp" line="405"/>
         <source>Mot-clÃ©:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2077,6 +2082,11 @@ que toutes ses dÃ©pendances.
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../gui/WizardCatalog.cpp" line="54"/>
+        <source>:doc/fr/</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../gui/WizardCatalog.cpp" line="57"/>
         <source>Page d&apos;accueil</source>
         <translation type="unfinished"></translation>
@@ -2124,11 +2134,6 @@ que toutes ses dÃ©pendances.
     <message>
         <location filename="../gui/WizardCatalog.cpp" line="70"/>
         <source>Page suivante</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardCatalog.cpp" line="126"/>
-        <source>menu_fr.html</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
