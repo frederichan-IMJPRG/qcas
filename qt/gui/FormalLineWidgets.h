@@ -51,6 +51,7 @@ private:
     bool goDown();
     bool goUp();
     void updateCompleter();
+    void xcasmenuCompleter(QString section);
     void installCompleter();
     bool matchRightDelimiter(QChar,QChar,QTextBlock, int , int);
     bool matchLeftDelimiter(QChar,QChar, QTextBlock, int , int);

@@ -324,6 +324,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
          }
         }
     }
+
 void TextInput::updateCompleter(){
     QString completionPrefix=textUnderCursor();
     if (completionPrefix !=completer->completionPrefix()){

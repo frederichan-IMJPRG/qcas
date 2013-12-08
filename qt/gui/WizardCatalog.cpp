@@ -155,7 +155,9 @@ void WizardCatalog::displayHome(){
 }
 
 void WizardCatalog::newPage(QUrl url){
-    QString keyWord=url.path();
+    //QString keyWord=url.path();
+    QString keyWord=url.toString();//to keep the fragments (#...)
+    qDebug()<<"history:"<<keyWord<<"tostring"<<url.toString();
 
     if (url.toString().startsWith("?")){
         addHistory(url.toString());

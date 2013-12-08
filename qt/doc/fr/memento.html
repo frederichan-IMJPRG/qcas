@@ -26,13 +26,13 @@
       <code>a:=2^10000:;</code></li>
    <li> <code>purge(a,b)</code> <font size="-1">(libère les variables a et b)</font></li>
 </ul>
-<font size="-1"><em>Mise à part l'affectation, la syntaxe par défaut de giac/xcas est celle du C.</em></font>
+<font size="-1" color="#4004A7"><em>Mise à part l'affectation, la syntaxe par défaut de giac/xcas est celle du C.</em></font>
 <!--        ----------------------FONCTIONS-------------------------------                       -->
 <h4>Fonctions</h4>
       <ol>
 	<font size="-1"><em>
 	<li>Dans une fonction les variables non explicitement déclarées <u>locales</u> grâce à l'instruction <a href="local"><code>local</code></a> sont <u>globales</u>.</li>
-	<li>Les variables <u>locales</u> doivent être initialisées. Donc pour utiliser un symbole formel dans une fonction, soit on utilisera une variable globale libre, soit on fera comme dans l'exemple <code>rfact</code> ci dessous.</li>
+	<li>Les variables <u>locales</u> doivent être initialisées. Donc pour utiliser un symbole formel dans une fonction, soit on utilisera une variable globale qui n'a pas été affectée, soit on fera comme dans l'exemple <code>rfact</code> ci dessous.</li>
 	<li>Les blocs d'instructions sont entre des <code>{  }</code>. On peut aller à la ligne dans un même bloc.</li>
 	<li>Le programme retourne la dernière instruction. <code>return</code> est facultatif.</li>
 	<li>N'utilisez pas <code>i</code> comme variable dans une bloucle car il est réservé pour le nombre complexe racine de -1.</li>
@@ -89,8 +89,10 @@
    </li>
 </ul>
 <!--      ---------------------Listes----------------    -->
-<h4>Séquences <code>( , , )</code> et Listes <code>[ , , ]</code></h4><br>
-   <font size="-1">
+<h4>Séquences <code>( , , )</code> et Listes <code>[ , , ]</code></h4>
+<font size="-1"><font color="#4004A7"<em>Les séquences et listes sont numérotées à <u>partir de 0</u> (sauf en mode maple). on accède aux éléments avec des crochets:</em>
+   <center><code>a[0]</code>  est le premier élément de la liste ou séquence <code>a</code></center></font>
+<br>
    <em>Les séquences <code>( , , )</code> sont des objets ordonnés séparés par des virgules. Les parenthèses sont simplifiées. Les opérations +,* ... <u>n'ont rien à voir</u> avec celles des vecteurs</em><br>
    <ul> Ci dessous, <code>a</code>, <code>b</code> et <code>c</code> sont identiques
        <li> <code>a:=0,1,2,3,4,5;</code></li>
@@ -114,10 +116,19 @@
 <h4>Notions avancées</h4>
    <font size="-1">
    <ul><li><em>L'affectation <code>:=</code> est une affectation par valeurs. Elle recopie les données, même avec des listes ou matrices.</em></li>
-   Pour des raisons d'efficacité, on dispose aussi d'une affectation par référence.
-     <li><code>=&lt;</code> est l'<u>affectation par référence</u>:<br>
+   <i>Pour des raisons d'efficacité, on dispose aussi d'une affectation par référence:<i>
+     <li><font color="#4004A7"><code>=&lt;</code></font> est l'<u>affectation par référence</u>:<br>
      Ex: <code>a:=[1,2,3];b=&lt;a;b[1]=&lt;0;</code><br> maintenant <code>a</code> vaut aussi <code>[1,0,3]</code>. En revanche, si l'on avait fait <code>b[1]:=0</code> cela aurait crée une nouvelle liste <code>b</code> par recopie et <code>a</code> n'aurait pas été modifié</li>
-
+     <li> <font color="#4004A7"><code>#</code></font> permet de créer une variable à partir d'une chaine de caractères:<br>
+     Ex1: <code>"a1"</code>est une chaine de caractères et <code>#"a1"</code> est une variable.<br>
+     Ex2: <code>S:=sum(#("a"+j),j=0..9);normal(S^5);</code> développe (a0+a1+...+a9)^5.
+     <li>Les syntaxes de programmation de type maple:<br>
+     <em>Ces syntaxes sont <u>déconseillées</u> si l'on n'est pas en mode maple</em>. Par exemple en mode xcas dans le cas du while, <i>condi</i> n'a pas le droit d'être entre parenthèses.
+        <ul><li><code>if <i>condi</i> then <i>instrutions</i> fi</code></li>
+	   <li><code>for <i>j</i> from <i>1</i> to 5 do <i>instruc</i> od</code></li>
+	   <li><code>while <i>condi</i> do <i>instrutions</i> od</code></li>
+	 </ul>
+     </li>
    </ul>  
 </font>
 
