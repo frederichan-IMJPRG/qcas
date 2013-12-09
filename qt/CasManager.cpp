@@ -140,7 +140,6 @@ CasManager::CasManager(MainWindow* main){
     QString tmp=XCASROOT;
     tmp.append("doc/aide_cas");
     if(QFile::exists(tmp)){
-        XCASROOT=QCoreApplication::applicationDirPath();
         qDebug()<<"Setting xcasroot to"<<XCASROOT;
         giac::xcasroot()=XCASROOT.toStdString();
     }

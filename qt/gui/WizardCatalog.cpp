@@ -49,6 +49,8 @@ void WizardCatalog::retranslate(){
     */
 
     QString giacdoc=QString::fromStdString(giac::giac_aide_dir());//the xcas doc
+    if(! giacdoc.endsWith("/"))
+        giacdoc.append("/");
     giacdoc.append(tr("doc/fr/cascmd_fr/"));//adapt this path in translations.
     QStringList docpaths;
     docpaths<<tr(":doc/fr/")<< giacdoc;//ressource doc a traduire
@@ -157,7 +159,7 @@ void WizardCatalog::displayHome(){
 void WizardCatalog::newPage(QUrl url){
     //QString keyWord=url.path();
     QString keyWord=url.toString();//to keep the fragments (#...)
-    qDebug()<<"history:"<<keyWord<<"tostring"<<url.toString();
+    //qDebug()<<"history:"<<keyWord<<"tostring"<<url.toString();
 
     if (url.toString().startsWith("?")){
         addHistory(url.toString());

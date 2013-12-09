@@ -30,7 +30,7 @@ int Config::mml_fontsize=14;//default mml size
 */
 QString Config::GeoVarPrefix="autoG2D\_";
 
-QString Config::QcasVersion="0.4";
+QString Config::QcasVersion="0.4.2";
 
 Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;

@@ -985,6 +985,8 @@ void MainWindow::openRecentFile(){
 }
 
 void MainWindow::createGui(){
+
+    cas=new CasManager(this);//also setup xcasroot for help so put it before createWizards.
     createWizards();
 
     tabPages=new MainTabWidget(this);
@@ -1073,7 +1075,7 @@ void MainWindow::createGui(){
 */
 
     prefDialog=new PrefDialog(this);
-    cas=new CasManager(this);
+//fred    cas=new CasManager(this);
 //    connect(&ev,SIGNAL(finished()),this,SLOT(displayResult()));
 
     retranslateGui();
@@ -1686,6 +1688,7 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
     QFile file(":/aide_cas");
     file.open(QIODevice::ReadOnly);
     QTextStream stream(&file);
+    stream.setCodec("UTF-8");
     QString command,description;
     QStringList synonym,seeAlso,examples;
     QString line;
