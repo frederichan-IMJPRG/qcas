@@ -189,6 +189,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             case Qt::Key_Return:
             case Qt::Key_Escape:
             case Qt::Key_Tab:
+            case Qt::Key_ParenLeft:
             case Qt::Key_Backtab:
                 e->ignore();
                 return;
@@ -442,7 +443,9 @@ QString TextInput::textUnderCursor() const{
 }
 
 void TextInput::helpCompletion(const QString &completion){
-    line->getWorkSheet()->getApp()->displayHelp(completion);
+    if(!completion.isEmpty()){
+       line->getWorkSheet()->getApp()->displayHelp(completion);
+    }
 }
 
 void TextInput::insertCompletion(const QString &completion){

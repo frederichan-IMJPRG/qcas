@@ -49,7 +49,7 @@ void WizardCatalog::retranslate(){
                   "<hr> <center>Cet outil vous permet de naviguer aisément parmi les différents commandes ainsi que leurs descriptions.</center>"));
     */
     QString giacdoc;
-    if (Config::XcasRoot == ""){
+    if (Config::XcasRoot != ""){
         giacdoc=Config::XcasRoot;
     }
     else{

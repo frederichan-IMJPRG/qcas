@@ -997,6 +997,10 @@ void MainWindow::createGui(){
     QHBoxLayout *h=new QHBoxLayout;
     h->addWidget(wizardList);
     h->addWidget(wizardPages,1);
+    wizardList->setMinimumHeight(450);
+    //wizardList->setMaximumHeight(800);
+
+    wizardList->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Preferred);
 
     giacMessages=new QPlainTextEdit;
     giacMessages->setReadOnly(true);
@@ -1010,7 +1014,7 @@ void MainWindow::createGui(){
     QVBoxLayout *giacLayout=new QVBoxLayout;
     giacLayout->addWidget(giacMessages);
     giacPanel->setLayout(giacLayout);
-
+    giacPanel->setMinimumHeight(100);
     QVBoxLayout *leftLayout=new QVBoxLayout;
     leftLayout->addLayout(h);
     leftLayout->addStretch(1);
@@ -1649,6 +1653,7 @@ void MainWindow::displayCrashWarning(){
 
 CommandInfo::CommandInfo(){
     listAllCommands();
+    commandList.prepend("");
     completer=new QCompleter(commandList);
 
 }
