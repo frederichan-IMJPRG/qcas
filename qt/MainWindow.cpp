@@ -1168,17 +1168,17 @@ void MainWindow::displayGiacMessages(){
 void MainWindow::createWizards(){
     wizardList=new QListWidget;
     wizardList->setViewMode(QListView::IconMode);
-    wizardList->setIconSize(QSize(60,60));
-    wizardList->setSpacing(12);
+    wizardList->setIconSize(QSize(50,50));
+    wizardList->setSpacing(10);
     wizardList->setResizeMode(QListView::Adjust);
     wizardList->setMovement(QListView::Static);
-    wizardList->setFixedWidth(105);
+    wizardList->setFixedWidth(90);
 
     wizardPages=new QStackedWidget;
     wizardPages->addWidget(new WizardMatrix(this));
     wizardPages->addWidget(new WizardEquation(this));
     wizardPages->addWidget(new WizardCatalog(this));
-//    wizardPages->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
+    wizardPages->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),"",wizardList);
     matrixItem->setTextAlignment(Qt::AlignHCenter);

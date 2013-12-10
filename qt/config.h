@@ -63,6 +63,7 @@ public:
     static int mml_fontsize;
     static QString GeoVarPrefix;
     static QString QcasVersion;
+    static QString XcasRoot;//base directory for xcas doc/
 };
 
 #endif // CONFIG_H

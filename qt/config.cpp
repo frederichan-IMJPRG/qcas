@@ -36,3 +36,4 @@ Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;
 
 bool Config::useTabCompletions=true;
+QString Config::XcasRoot="";

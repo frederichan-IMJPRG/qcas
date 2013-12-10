@@ -142,6 +142,7 @@ CasManager::CasManager(MainWindow* main){
     if(QFile::exists(tmp)){
         qDebug()<<"Setting xcasroot to"<<XCASROOT;
         giac::xcasroot()=XCASROOT.toStdString();
+        Config::XcasRoot=XCASROOT;
     }
     else{
         XCASROOT.append("../share/giac/");
@@ -150,6 +151,7 @@ CasManager::CasManager(MainWindow* main){
         if(QFile::exists(tmp)){
             qDebug()<<"Setting xcasroot to"<<XCASROOT;
             giac::xcasroot()=XCASROOT.toStdString();
+            Config::XcasRoot=XCASROOT;
         }
     }
 

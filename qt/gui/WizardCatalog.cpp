@@ -29,6 +29,7 @@
 #include "WizardCatalog.h"
 #include "../MainWindow.h"
 #include "../CasManager.h"
+#include "../config.h"
 WizardCatalog::WizardCatalog(MainWindow *parent):QWidget(parent){
     mainWindow=parent;
     historyIndex=-1;
@@ -47,8 +48,13 @@ void WizardCatalog::retranslate(){
 "<center><h3><font color=\"#40A497\">Recherche par mot-clé</font></h3></center>"
                   "<hr> <center>Cet outil vous permet de naviguer aisément parmi les différents commandes ainsi que leurs descriptions.</center>"));
     */
-
-    QString giacdoc=QString::fromStdString(giac::giac_aide_dir());//the xcas doc
+    QString giacdoc;
+    if (Config::XcasRoot == ""){
+        giacdoc=Config::XcasRoot;
+    }
+    else{
+    giacdoc=QString::fromStdString(giac::giac_aide_dir());//the xcas doc
+    }
     if(! giacdoc.endsWith("/"))
         giacdoc.append("/");
     giacdoc.append(tr("doc/fr/cascmd_fr/"));//adapt this path in translations.
@@ -111,7 +117,6 @@ void WizardCatalog::createGui(){
     QVBoxLayout *vlayout=new QVBoxLayout;
     vlayout->addLayout(hlayout);
     vlayout->addWidget(zone);
-
     setLayout(vlayout);
     connect(lineEdit,SIGNAL(returnPressed()),this,SLOT(find()));
     connect(zone,SIGNAL(anchorClicked(QUrl)),this,SLOT(newPage(QUrl)));//we don't systematically follow url
