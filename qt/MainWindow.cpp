@@ -997,11 +997,9 @@ void MainWindow::createGui(){
     QHBoxLayout *h=new QHBoxLayout;
     h->addWidget(wizardList);
     h->addWidget(wizardPages,1);
-    wizardList->setMinimumHeight(450);
+    wizardList->setMinimumHeight(400);
     //wizardList->setMaximumHeight(800);
-
-    wizardList->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Preferred);
-
+    wizardList->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Expanding);
     giacMessages=new QPlainTextEdit;
     giacMessages->setReadOnly(true);
     QPalette p=giacMessages->palette();
@@ -1015,12 +1013,13 @@ void MainWindow::createGui(){
     giacLayout->addWidget(giacMessages);
     giacPanel->setLayout(giacLayout);
     giacPanel->setMinimumHeight(100);
+    giacPanel->setMaximumHeight(200);
     QVBoxLayout *leftLayout=new QVBoxLayout;
     leftLayout->addLayout(h);
-    leftLayout->addStretch(1);
+    //leftLayout->addStretch(1);
     leftLayout->addWidget(giacPanel);
     leftPanel->setLayout(leftLayout);
-    leftPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Maximum);
+    leftPanel->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Expanding);
 
 
 
