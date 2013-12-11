@@ -220,21 +220,43 @@ CasManager::warning CasManager::initExpression(const QString *str){
 }
 
 QString CasManager::xcashtmlHelp(const giac::gen & g){
+    QStringList buf;
+    QFile file(Config::XcasRoot+tr("doc/fr/html_mtt"));
+    QString line;
     giac::gen f(g);
     std::string s;
-    giac::html_help_init("aide_cas",Config::giaclanguage,true,true);
+    QString rep="";
+    //qDebug()<<file.fileName();
     if (f.type==giac::_SYMB)
           f=f._SYMBptr->sommet;
-        if (f.type==giac::_FUNC)
+        if (f.type==giac::_FUNC){
             s=f._FUNCptr->ptr()->s;
-        giac::html_vtt=giac::html_help(giac::html_mtt,s);
-        if (!giac::html_vtt.empty()){
-           //giac::system_browser_command(giac::html_vtt.front());
-           return QString::fromStdString(giac::html_vtt.front());
-         }
-         else{
-            return "";
-         }
+            if(!file.open(QIODevice::ReadOnly)){
+                 giac::html_help_init("aide_cas",Config::giaclanguage,true,true);
+                 giac::html_vtt=giac::html_help(giac::html_mtt,s);
+                 if (!giac::html_vtt.empty()){
+                     //giac::system_browser_command(giac::html_vtt.front());
+                     return QString::fromStdString(giac::html_vtt.front());
+                }
+                else{
+                    return "";
+                }
+            }
+            else{
+                QTextStream stream(&file);
+                stream.setCodec("UTF-8");
+                while(!stream.atEnd()){
+                    line=stream.readLine();
+                    buf=line.split(QChar(65533));//hack:the non utf8 char is converted to this one.
+                    if((buf[0]==QString::fromStdString(s))&&buf.length()>1)
+                        rep=buf[1];
+                }
+            }
+
+
+    }
+    //qDebug()<<"rep xcashtmlHelp"<<rep;
+  return rep;
 }
 
 
