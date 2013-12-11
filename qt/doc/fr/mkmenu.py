@@ -29,9 +29,9 @@ for FI in FICH:
               if(current == L[0:ikew]):
                    keyword=L[ikew].replace("\n","").replace("__","_")
                    if mots=="":
-                       mots='<a href="'+keyword+'">'+keyword+'</a>'
+                       mots='<a href="'+(keyword.split(":"))[0]+'">'+keyword+'</a>'
                    else:
-                       mots=mots+', <a href="'+keyword+'">'+keyword+'</a>'
+                       mots=mots+', <a href="'+(keyword.split(":"))[0]+'">'+keyword+'</a>'
               else:
                   
                   if(len(current)>1): 

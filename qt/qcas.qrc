@@ -92,5 +92,9 @@
         <file>doc/en/memento.html</file>
         <file>doc/en/menu.html</file>
         <file>doc/en/xcasmenu.html</file>
+        <file>doc/el/memento.html</file>
+        <file>doc/el/menu.html</file>
+        <file>doc/el/xcasmenu</file>
+        <file>doc/el/xcasmenu.html</file>
     </qresource>
 </RCC>
