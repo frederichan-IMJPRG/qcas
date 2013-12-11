@@ -89,6 +89,7 @@ MainWindow::MainWindow(){
       lang="en";
     }
 
+    Config::GiacStrLanguage=lang;
     //   qDebug()<<lang;
     translator =new QTranslator(0);
 
@@ -172,6 +173,11 @@ void MainWindow::retranslateInterface(int configlanguage){
     //QString lang = language->remove(2, language->length());
     QString lang="en";
     switch(configlanguage){
+    case 0: {
+      lang="fr";
+      Config::giaclanguage=1;
+      break;
+    }
     case 1: {
       lang="en";
       Config::giaclanguage=2;
