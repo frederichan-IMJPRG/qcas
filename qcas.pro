@@ -152,6 +152,15 @@ OTHER_FILES += \
     qt/doc/el/menu.html \
     qt/doc/el/memento.html \
     qt/doc/el/xcasmenu.html \
+    qt/doc/es/menu.html \
+    qt/doc/es/memento.html \
+    qt/doc/es/xcasmenu.html \
+    qt/doc/zh/menu.html \
+    qt/doc/zh/memento.html \
+    qt/doc/zh/xcasmenu.html \
+    qt/doc/de/menu.html \
+    qt/doc/de/memento.html \
+    qt/doc/de/xcasmenu.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \

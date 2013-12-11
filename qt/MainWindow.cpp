@@ -196,6 +196,7 @@ void MainWindow::retranslateInterface(int configlanguage){
       Config::giaclanguage=1;
     }
 
+    Config::GiacStrLanguage=lang;
     //lang = lang.toLower();
     lang = ":/lang/qcas_" + lang + ".qm";
     if ( translator )

@@ -221,7 +221,8 @@ CasManager::warning CasManager::initExpression(const QString *str){
 
 QString CasManager::xcashtmlHelp(const giac::gen & g){
     QStringList buf;
-    QFile file(Config::XcasRoot+tr("doc/fr/html_mtt"));
+    QString lg=Config::GiacStrLanguage;
+    QFile file(Config::XcasRoot+"doc/"+lg+"/html_mtt");
     QString line;
     giac::gen f(g);
     std::string s;

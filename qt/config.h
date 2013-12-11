@@ -58,6 +58,7 @@ public:
     };
     static LANGUAGES language;
     static int giaclanguage;
+    static QString GiacStrLanguage;
     static bool gridAttraction;
     static bool useTabCompletions;
     static int mml_fontsize;

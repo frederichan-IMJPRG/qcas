@@ -57,9 +57,10 @@ void WizardCatalog::retranslate(){
     }
     if(! giacdoc.endsWith("/"))
         giacdoc.append("/");
-    giacdoc.append(tr("doc/fr/cascmd_fr/"));//adapt this path in translations.
+    QString lg=Config::GiacStrLanguage;
+    giacdoc.append("doc/"+lg+"/cascmd_"+lg+"");
     QStringList docpaths;
-    docpaths<<tr(":doc/fr/")<< giacdoc;//ressource doc a traduire
+    docpaths<<":doc/"+lg+"/"<< giacdoc;
 
     zone->setSearchPaths(docpaths);
     zone->reload();
