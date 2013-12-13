@@ -632,6 +632,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	QString fltktag="newformal";//with this flag, a formal sheet must be opened before sending a formal line
 	FormalWorkSheet *f=0;//
 	GraphWidget * g2d=0;
+    int currentformalindex=0;
 	while (!xcasline.isNull()&&!xcasline.startsWith("// context")) {
 	  //qDebug()<<xcasline;
 	  if(xcasline.startsWith("// fltk")){
@@ -675,6 +676,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
             fltktag="";
             tabPages->addFormalSheet();
             f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+            currentformalindex=tabPages->currentIndex();
 	      }
 	      f->sendText(xcasline);
 	      f->goToNextLine();
@@ -694,6 +696,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
             //qDebug()<<xcasline;
 		    tabPages->addFormalSheet();
 		    f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+            currentformalindex=tabPages->currentIndex();
 		  }
 		  f->sendText(xcasline);
 		  f->goToNextLine();
@@ -704,30 +707,45 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	  else{
 	    if((fltktag=="")||(fltktag=="newformal")){
 	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!="")){
-		if(fltktag=="newformal"){
+        if(fltktag=="newformal"){
 		  fltktag="";
           //qDebug()<<xcasline;
 		  tabPages->addFormalSheet();
 		  f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+          currentformalindex=tabPages->currentIndex();
 		}
         xcasline=xcasline.replace(QChar(65533),"\n");
-        f->sendText(xcasline);
-		f->goToNextLine();
+        if(xcasline=="// Qcas new Formal sheet TAG. Please dont't modify this line."){
+            fltktag="newformal";
+        }
+        else{
+            f->sendText(xcasline);
+            f->goToNextLine();
+        }
 	      }
 	    }
 	    if(fltktag=="Geo2D"){
+            if(f==0){
+                tabPages->addFormalSheet();
+                f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
+                currentformalindex=tabPages->currentIndex();
+              }
+
           if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!=(""))){
-		//if (!(xcasline.contains(QRegExp(";\s*$")))){
-		//    xcasline.append(";");
-		//  }
-            //g2d->sendText(xcasline);
+              /* if (!(xcasline.contains(QRegExp(";\s*$")))){
+                    xcasline.append(";");
+                 }
+                 g2d->sendText(xcasline);
+              */
               if (! xcasline.contains(QRegExp(";\\s*$"))){ xcasline=xcasline.append(";"); }
               f->sendText(xcasline.append("\n"));
           }
 	    }
         if(fltktag=="quitgeo2d"){
+            tabPages->setCurrentIndex(currentformalindex);
             sendCurrentLine();
-            fltktag="";f->goToNextLine();
+            fltktag="";
+            f->goToNextLine();
         }
 	  }
 	  xcasline = dataIn.readLine();
@@ -873,8 +891,11 @@ bool MainWindow::saveToGiacFile(const QString &fileName){
             {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->widget(i));
             if(fileName.endsWith(".cas"))
 	      form->toGIAC(root);
-	    else
-	      form->toXCAS(root);
+        else{
+            if(i>0)
+                root.append("// Qcas new Formal sheet TAG. Please dont't modify this line.\n");
+            form->toXCAS(root);
+            }
         }
             break;
         case MainSheet::SPREADSHEET_TYPE:
@@ -1398,6 +1419,7 @@ void MainWindow::sendSelectedLevels(){
      form->sendSelectedLevels(g2d);
 }
 void MainWindow::sendCurrentLine(){
+     //send a line from a formal sheet to G2D
      FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
      if (form==0) return;
      QString titre="(F";
