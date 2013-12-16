@@ -1,11 +1,11 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
-
+#define __MINGW_H
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
 /* #undef CRAY_STACKSEG_END */
-#define __MINGW_H
+
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 
@@ -189,10 +189,10 @@
 #define HAVE_LIBMPFR 1
 
 /* Define to 1 if you have the `ntl' library (-lntl). */
-/* #undef HAVE_LIBNTL */
+#define HAVE_LIBNTL 1
 
 /* Define to 1 if you have the `pari' library (-lpari). */
-/* #undef HAVE_LIBPARI */
+#define HAVE_LIBPARI 1
 
 /* Define to 1 if you have the `png' library (-lpng). */
 /* #undef HAVE_LIBPNG */
@@ -279,7 +279,7 @@
 #define HAVE_NO_SYS_TIMES_H 1
 
 /* Define to 1 if you have the <pari/pari.h> header file. */
-/* #undef HAVE_PARI_PARI_H */
+#define HAVE_PARI_PARI_H 1
 
 /* Define to 1 if you have the <png.h> header file. */
 /* #undef HAVE_PNG_H */

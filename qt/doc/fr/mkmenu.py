@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #FICH=['xcasmenu','Cmds','Phys','Scolaire']
 FICH=['xcasmenu']
 for FI in FICH:
@@ -14,6 +16,18 @@ for FI in FICH:
            if(L[0]==FI): 
               L=L[1:]
                
+           if header1!=L[0]:
+                 ikew=-1
+                 if len(L)<2:
+                    ikew=0 
+                 current=L[0:ikew]
+                 mots=""
+                 if len(current)<1:
+                     output=output+' '+mots+"\n</ul>\n"
+                 else:
+                     #print '<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
+                     output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
+                 header1=""
            if header1=="":
                header1=L[0]
                current=L[0:-1]
@@ -25,33 +39,29 @@ for FI in FICH:
               d=len(L)
               ikew=-1
               if len(L)<2:
-                  ikew=0
+                 ikew=0
               if(current == L[0:ikew]):
                    keyword=L[ikew].replace("\n","").replace("__","_")
                    if mots=="":
-                       mots='<a href="'+(keyword.split(":"))[0]+'">'+keyword+'</a>'
+                       mots='<a href="'+((keyword.split(":"))[0]).replace("(","").replace(")","")+'">'+keyword+'</a>'
                    else:
-                       mots=mots+', <a href="'+(keyword.split(":"))[0]+'">'+keyword+'</a>'
+                       mots=mots+', <a href="'+((keyword.split(":"))[0]).replace("(","").replace(")","")+'">'+keyword+'</a>'
               else:
                   
-                  if(len(current)>1): 
+                  if(len(current)>1):
+                     titre=current[1]
+                     if(len(current)>2):
+                        for jj in current[2:]:
+                           titre=titre+"/"+jj
                      #print '<li>'+current[-1]+':<br>\n'+mots+"</li>\n"
-                     output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n" 
+                     #output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n"
+                     output=output+'<li>'+titre+':<br>\n'+mots+"</li>\n"
                   else:
                       #print '<li><font size="-1"'+mots+"</li></font>\n"
                       output=output+'<li><font size="-1"'+mots+"</li></font>\n"
                   current=L[0:ikew]
                   mots=""
-          
-           else:
-                 header1=L[0]
-                 ikew=-1
-                 if len(current)<1:
-                     output=output+' '+mots+"\n</ul>\n"
-                 else:
-                     #print '<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
-                     output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
-                 header1=""
+                
        output=output+"\n</body> </html>"
      fhtml.write(output)
 
