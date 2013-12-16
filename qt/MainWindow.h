@@ -83,6 +83,7 @@ class MainWindow :public QMainWindow {
     int getDecimalDigit() const;
     void setDecimalDigits(const int & a);
     bool loadFile(const QString &fileName);
+    bool autoSave();
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     QStringList *history;
@@ -103,6 +104,7 @@ private:
     void createContextMenu();
     void readSettings();
     void writeSettings();
+    void initAutoSave();
     bool okToContinue();
     bool isevaluatingall;
     bool loadQcasFile(const QString &fileName);
@@ -177,6 +179,8 @@ private:
     bool displayTimeAfterProcess;
     void printHeader();
     int decimalDigits;
+
+    QString autosaveFileName;
 
 public slots:
     void displayCrashWarning();

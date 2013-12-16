@@ -135,6 +135,7 @@ MainWindow::MainWindow(){
 
     createGui();
     wizardList->setCurrentRow(2);
+    initAutoSave();
     (qobject_cast<FormalWorkSheet*>(tabPages->currentWidget()))->setFocus(Qt::OtherFocusReason);
 }
 
@@ -923,11 +924,29 @@ bool MainWindow::saveToGiacFile(const QString &fileName){
     else
     return(false);
 
-    setCurrentFile(fileName);
+    //setCurrentFile(fileName);
     setWindowModified(true);
 
     return true;
 }
+
+void MainWindow::initAutoSave(){
+
+    autosaveFileName="xcas_auto_"+QTime::currentTime().toString()+".xws";
+
+}
+
+bool MainWindow::autoSave(){
+    if(!saveToGiacFile(autosaveFileName)){
+        QString hp=QDir::homePath();
+        if(!hp.endsWith("/")){
+            hp.append("/");
+        }
+        autosaveFileName=hp+autosaveFileName;
+        saveToGiacFile(autosaveFileName);
+    }
+}
+
 bool MainWindow::saveAs(){
 
   QFileDialog rep(this,tr("Enregistrer sous..."),"",tr("QCAS files (*.qcas);;XCAS files (*.xws);;GIAC files (*.cas)"));
@@ -1443,6 +1462,7 @@ void MainWindow::evaluate(const QString &formula){
         warningFirstEvaluation=NULL;
     }*/
     if(formula == ""){ return;}
+    autoSave();
     setWindowModified(true);
     displayInStatusBar("","black");
     taskProperties.firstPrintMessage=true;
