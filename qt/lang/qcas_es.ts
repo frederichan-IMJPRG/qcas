@@ -236,14 +236,6 @@ que toutes ses dÃ©pendances.
     </message>
 </context>
 <context>
-    <name>CasManager</name>
-    <message>
-        <location filename="../CasManager.cpp" line="224"/>
-        <source>doc/fr/html_mtt</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>CasPanel</name>
     <message>
         <location filename="../gui/prefdialog.cpp" line="56"/>
@@ -1206,418 +1198,439 @@ que toutes ses dÃ©pendances.
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../MainWindow.cpp" line="311"/>
+        <location filename="../MainWindow.cpp" line="319"/>
         <source>&amp;Nouveau</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="352"/>
+        <location filename="../MainWindow.cpp" line="360"/>
         <source>Ctrl+N</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="313"/>
+        <location filename="../MainWindow.cpp" line="321"/>
         <source>CrÃ©er un nouvel espace de travail</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="315"/>
+        <location filename="../MainWindow.cpp" line="323"/>
         <source>&amp;Ouvrir...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="316"/>
+        <location filename="../MainWindow.cpp" line="324"/>
         <source>Ctrl+O</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="317"/>
+        <location filename="../MainWindow.cpp" line="325"/>
         <source>Ouvrir un nouveau fichier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="319"/>
+        <location filename="../MainWindow.cpp" line="327"/>
         <source>Enregistrer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="320"/>
+        <location filename="../MainWindow.cpp" line="328"/>
         <source>Ctrl+S</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="321"/>
+        <location filename="../MainWindow.cpp" line="329"/>
         <source>Enregistrer le fichier courant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="323"/>
+        <location filename="../MainWindow.cpp" line="331"/>
         <source>&amp;Enregistrer sous...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="325"/>
+        <location filename="../MainWindow.cpp" line="333"/>
         <source>Enregistrer sous un nouveau nom de fichier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="327"/>
+        <location filename="../MainWindow.cpp" line="335"/>
         <source>&amp;Quitter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="328"/>
+        <location filename="../MainWindow.cpp" line="336"/>
         <source>Ctrl+Q</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="329"/>
+        <location filename="../MainWindow.cpp" line="337"/>
         <source>Quitter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="331"/>
+        <location filename="../MainWindow.cpp" line="339"/>
         <source>&amp;Copier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="332"/>
+        <location filename="../MainWindow.cpp" line="340"/>
         <source>Ctrl+C</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="333"/>
+        <location filename="../MainWindow.cpp" line="341"/>
         <source>Copier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="335"/>
+        <location filename="../MainWindow.cpp" line="343"/>
         <source>Co&amp;uper</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="336"/>
+        <location filename="../MainWindow.cpp" line="344"/>
         <source>Ctrl+X</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="337"/>
+        <location filename="../MainWindow.cpp" line="345"/>
         <source>Couper</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="339"/>
+        <location filename="../MainWindow.cpp" line="347"/>
         <source>C&amp;oller</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="340"/>
+        <location filename="../MainWindow.cpp" line="348"/>
         <source>Ctrl+V</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="341"/>
+        <location filename="../MainWindow.cpp" line="349"/>
         <source>Coller</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="343"/>
+        <location filename="../MainWindow.cpp" line="351"/>
         <source>&amp;Annuler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="344"/>
+        <location filename="../MainWindow.cpp" line="352"/>
         <source>Ctrl+Z</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="345"/>
+        <location filename="../MainWindow.cpp" line="353"/>
         <source>Annuler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="347"/>
+        <location filename="../MainWindow.cpp" line="355"/>
         <source>&amp;RÃ©tablir</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="348"/>
+        <location filename="../MainWindow.cpp" line="356"/>
         <source>Shift+Ctrl+Z</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="349"/>
+        <location filename="../MainWindow.cpp" line="357"/>
         <source>RÃ©tablir</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="351"/>
+        <location filename="../MainWindow.cpp" line="359"/>
         <source>&amp;Nouvelle EntrÃ©e</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="353"/>
+        <location filename="../MainWindow.cpp" line="361"/>
         <source>Nouvelle EntrÃ©e</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="355"/>
+        <location filename="../MainWindow.cpp" line="363"/>
         <source>&amp;Supprimer les lignes cochÃ©es</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="356"/>
+        <location filename="../MainWindow.cpp" line="364"/>
         <source>Ctrl+BackSpace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="357"/>
+        <location filename="../MainWindow.cpp" line="365"/>
         <source>DÃ©truit les niveaux sÃ©lectionnÃ©s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="360"/>
+        <location filename="../MainWindow.cpp" line="368"/>
         <source>Evalue la ligne courante en mode gÃ©omÃ©trie intÃ©ractive&lt;center&gt;(ExpÃ©rimental et limitÃ©)&lt;/center&gt;Les objets entre crochets sÃ©parÃ© par des virgules seront considÃ©rÃ©s comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considÃ©rÃ©es comme des listes et ne seront pas selectionnables Ã  la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d&apos;intersection pour une construction.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="362"/>
+        <location filename="../MainWindow.cpp" line="370"/>
         <source>Evaluer toutes les feuilles depuis le dÃ©but.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="366"/>
+        <location filename="../MainWindow.cpp" line="374"/>
         <source>&amp;Evaluer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="367"/>
+        <location filename="../MainWindow.cpp" line="375"/>
         <source>Shift+EntrÃ©e</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="368"/>
+        <location filename="../MainWindow.cpp" line="376"/>
         <source>Evaluer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="370"/>
+        <location filename="../MainWindow.cpp" line="378"/>
         <source>&amp;Aide Html</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="371"/>
+        <location filename="../MainWindow.cpp" line="379"/>
         <source>Aide html de Giac/Qcas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="373"/>
+        <location filename="../MainWindow.cpp" line="381"/>
         <source>&amp;A propos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="374"/>
+        <location filename="../MainWindow.cpp" line="382"/>
         <source>Principales informations concernant QCAS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="377"/>
-        <location filename="../MainWindow.cpp" line="378"/>
+        <location filename="../MainWindow.cpp" line="385"/>
+        <location filename="../MainWindow.cpp" line="386"/>
         <source>Interrompre le calcul en cours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="381"/>
+        <location filename="../MainWindow.cpp" line="389"/>
         <source>&amp;PrÃ©fÃ©rences...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="382"/>
+        <location filename="../MainWindow.cpp" line="390"/>
         <source>Afficher la fenÃªtre des prÃ©fÃ©rences</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="430"/>
+        <location filename="../MainWindow.cpp" line="438"/>
         <source>&amp;Fichier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="431"/>
+        <location filename="../MainWindow.cpp" line="439"/>
         <source>&amp;Edition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="432"/>
+        <location filename="../MainWindow.cpp" line="440"/>
         <source>&amp;Options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="433"/>
+        <location filename="../MainWindow.cpp" line="441"/>
         <source>&amp;Aide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="482"/>
+        <location filename="../MainWindow.cpp" line="490"/>
         <source>Le document a Ã©tÃ© modifiÃ©.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="483"/>
+        <location filename="../MainWindow.cpp" line="491"/>
         <source>Voulez-vous sauvegarder les modifications?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="500"/>
+        <location filename="../MainWindow.cpp" line="508"/>
         <source>Ouvrir un fichier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="500"/>
+        <location filename="../MainWindow.cpp" line="508"/>
         <source>QCAS or Giac/Xcas files (*.qcas *.cas *.xws)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="777"/>
+        <location filename="../MainWindow.cpp" line="803"/>
         <source>Avertissement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="777"/>
+        <location filename="../MainWindow.cpp" line="803"/>
         <source>Vous essayez d&apos;enregistrer pendant un calcul. Recommencez plus tard.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="905"/>
+        <location filename="../MainWindow.cpp" line="954"/>
+        <source>Des fichiers de sauvegarde automatique d&apos;Xcas ou Qcas ont Ã©tÃ© trouvÃ©s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="955"/>
+        <source>Voulez vous charger le plus rÃ©cent?
+ Ou alors ouvrir la liste des fichiers, ou  dÃ©truire ces archives (Reset).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="968"/>
+        <source>auto_save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="968"/>
+        <source>QCAS or Giac/Xcas files (xcas_auto_*.xws)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="1001"/>
         <source>Enregistrer sous...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="905"/>
+        <location filename="../MainWindow.cpp" line="1001"/>
         <source>QCAS files (*.qcas);;XCAS files (*.xws);;GIAC files (*.cas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="917"/>
+        <location filename="../MainWindow.cpp" line="1013"/>
         <source>fichiers XCAS (*.xws)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="919"/>
+        <location filename="../MainWindow.cpp" line="1015"/>
         <source>fichiers GIAC (*.cas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="931"/>
+        <location filename="../MainWindow.cpp" line="1027"/>
         <source>Exporter vers...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="931"/>
+        <location filename="../MainWindow.cpp" line="1027"/>
         <source>fichiers XCAS  (*.xws);;fichiers GIAC  (*.cas)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="941"/>
+        <location filename="../MainWindow.cpp" line="1037"/>
         <source>Sans titre</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="948"/>
+        <location filename="../MainWindow.cpp" line="1044"/>
         <source>%1[*] - %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="967"/>
+        <location filename="../MainWindow.cpp" line="1063"/>
         <source>&amp;%1 %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1088"/>
+        <location filename="../MainWindow.cpp" line="1184"/>
         <source>Messages Giac</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1089"/>
+        <location filename="../MainWindow.cpp" line="1185"/>
         <source>Shift+EntrÃ©e pour Ã©valuer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1100"/>
+        <location filename="../MainWindow.cpp" line="1196"/>
         <source>Feuille </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1100"/>
+        <location filename="../MainWindow.cpp" line="1196"/>
         <source>, ligne </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1165"/>
+        <location filename="../MainWindow.cpp" line="1261"/>
         <source>&lt;br&gt;&lt;font color=&quot;gray&quot;&gt;Temps mis:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1205"/>
+        <location filename="../MainWindow.cpp" line="1301"/>
         <source>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Licence:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Auteur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintenance et dÃ©veloppement de QCAS: &lt;/b&gt;Han FrÃ©dÃ©ric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1221"/>
+        <location filename="../MainWindow.cpp" line="1317"/>
         <source>Astuces</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1221"/>
+        <location filename="../MainWindow.cpp" line="1317"/>
         <source>&lt;center&gt;&lt;h2&gt;Racourcis&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL espace:&lt;/b&gt;&lt;center&gt;donne les complÃ©tions possibles de la chaine saisie&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL flÃ¨che haut ou bas&lt;/b&gt;&lt;center&gt;InsÃ¨re une commande de l&apos;historique&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Supprime les lignes sÃ©lectionnÃ©es&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(Lorsque l&apos;on laisse le pointeur sur un mot clef)&lt;center&gt;F1 affiche l&apos;aide dÃ©taillÃ©e correspondante dans le widget d&apos;aide (Ã  gauche)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Astuces&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;En poussant la barre du milieu fort Ã  gauche on peut cacher les widegts de gauche&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1379"/>
+        <location filename="../MainWindow.cpp" line="1476"/>
         <source>Vous n&apos;avez cochÃ© aucune ligne!&lt;br&gt;Il n&apos;y a donc aucune commande Ã  envoyer en gÃ©omÃ©rie inÃ©ractive.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1091"/>
+        <location filename="../MainWindow.cpp" line="1187"/>
         <source>Matrices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="364"/>
+        <location filename="../MainWindow.cpp" line="372"/>
         <source>Astuces:&lt;br&gt;&lt;center&gt;CTRL Espace&lt;/center&gt;donne les complÃ©tions possibles de la chaine saisie&lt;br&gt;&lt;center&gt;CTRL flÃ¨che haut ou bas&lt;/center&gt;InsÃ¨re une commande de l&apos;historique&lt;br&gt;&lt;center&gt;CTRL Delete&lt;/center&gt;&lt;br&gt;Supprime les lignes sÃ©lectionnÃ©es&lt;center&gt;F1&lt;/center&gt;Lorsque l&apos;on laisse le pointeur sur un mot clef,&lt;br&gt;F1 affiche l&apos;aide dÃ©taillÃ©e correspondante dans le widget d&apos;aide (Ã  gauche)&lt;br&gt;En poussant la barre du milieu fort Ã  gauche on peut cacher les widgets de gauche</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1092"/>
+        <location filename="../MainWindow.cpp" line="1188"/>
         <source>Equations</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1093"/>
+        <location filename="../MainWindow.cpp" line="1189"/>
         <source>Catalogue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1205"/>
+        <location filename="../MainWindow.cpp" line="1301"/>
         <source>A propos de QCAS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1437"/>
+        <location filename="../MainWindow.cpp" line="1536"/>
         <source>Attention! &lt;br&gt; Pour affecter une valeur Ã  une variable, vous devez utiliser le symbole :=</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1636"/>
+        <location filename="../MainWindow.cpp" line="1735"/>
         <source>Tentative d&apos;interruption...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1648"/>
+        <location filename="../MainWindow.cpp" line="1747"/>
         <source>Avertissement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1648"/>
+        <location filename="../MainWindow.cpp" line="1747"/>
         <source>Risque de crash important lors de l&apos;interruption requise.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1817,27 +1830,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1738"/>
+        <location filename="../MainWindow.cpp" line="1837"/>
         <source>Synonyme(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1748"/>
+        <location filename="../MainWindow.cpp" line="1847"/>
         <source>(Plus de dÃ©tails)&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1753"/>
+        <location filename="../MainWindow.cpp" line="1852"/>
         <source>Exemples:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1759"/>
+        <location filename="../MainWindow.cpp" line="1858"/>
         <source>Voir aussi: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1816"/>
+        <location filename="../MainWindow.cpp" line="1915"/>
         <source>Aucun rÃ©sultat</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2090,62 +2103,52 @@ que toutes ses dÃ©pendances.
 <context>
     <name>WizardCatalog</name>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="60"/>
-        <source>doc/fr/cascmd_fr/</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardCatalog.cpp" line="62"/>
-        <source>:doc/fr/</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardCatalog.cpp" line="66"/>
+        <location filename="../gui/WizardCatalog.cpp" line="67"/>
         <source>Page d&apos;accueil</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="69"/>
+        <location filename="../gui/WizardCatalog.cpp" line="70"/>
         <source>Rechercher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="70"/>
+        <location filename="../gui/WizardCatalog.cpp" line="71"/>
         <source>EntrÃ©e</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="71"/>
+        <location filename="../gui/WizardCatalog.cpp" line="72"/>
         <source>Recherche la prÃ©sence du mot-clÃ© dans la description des diffÃ©rentes commandes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="73"/>
+        <location filename="../gui/WizardCatalog.cpp" line="74"/>
         <source>&amp;PrÃ©cÃ©dent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="74"/>
+        <location filename="../gui/WizardCatalog.cpp" line="75"/>
         <source>Alt+Gauche</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="75"/>
+        <location filename="../gui/WizardCatalog.cpp" line="76"/>
         <source>Page prÃ©cÃ©dente</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="77"/>
+        <location filename="../gui/WizardCatalog.cpp" line="78"/>
         <source>&amp;Suivant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="78"/>
+        <location filename="../gui/WizardCatalog.cpp" line="79"/>
         <source>Alt+Droite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="79"/>
+        <location filename="../gui/WizardCatalog.cpp" line="80"/>
         <source>Page suivante</source>
         <translation type="unfinished"></translation>
     </message>
