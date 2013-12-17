@@ -84,6 +84,7 @@ class MainWindow :public QMainWindow {
     void setDecimalDigits(const int & a);
     bool loadFile(const QString &fileName);
     bool autoSave();
+    void cleanautoSaveFiles();
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     QStringList *history;

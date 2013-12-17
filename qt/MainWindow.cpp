@@ -135,8 +135,8 @@ MainWindow::MainWindow(){
 
     createGui();
     wizardList->setCurrentRow(2);
-    initAutoSave();
     (qobject_cast<FormalWorkSheet*>(tabPages->currentWidget()))->setFocus(Qt::OtherFocusReason);
+    initAutoSave();
 }
 
 //To Start an empty MainWindow.
@@ -932,8 +932,57 @@ bool MainWindow::saveToGiacFile(const QString &fileName){
 
 void MainWindow::initAutoSave(){
 
-    autosaveFileName="xcas_auto_"+QTime::currentTime().toString()+".xws";
+    QString tmp=QDateTime::currentDateTime().toString("yy:MM:dd:hh:mm:ss");
+    tmp.remove(":");
+    if(tmp.isEmpty())
+        tmp="99998877";
+    autosaveFileName="xcas_auto_"+tmp+".xws";
+    QDir curD=QDir::current();
+    QStringList filter;
+    filter<<"xcas_auto*.xws";
+    //curD.setNameFilters(filter);
+    curD.setSorting(QDir::Time);
+    QStringList autofound=curD.entryList(filter);
+    QFile delfile;
+    int i;
 
+    if(! autofound.isEmpty()){
+        qDebug()<<"Found automatic saving file"<<autofound;
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("AutoSave");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Des fichiers de sauvegarde automatique d'Xcas ou Qcas ont été trouvés."));
+        msgBox.setInformativeText(tr("Voulez vous charger le plus récent?\n Ou alors ouvrir la liste des fichiers, ou  détruire ces archives (Reset)."));
+        msgBox.setStandardButtons(QMessageBox::Ignore | QMessageBox::Yes | QMessageBox::Open | QMessageBox::Reset);
+        msgBox.setDefaultButton(QMessageBox::Ignore);
+        int r = msgBox.exec();
+        if (r==QMessageBox::Yes){
+
+             if(loadGiacFile(autofound.at(0))){
+                     autosaveFileName=autofound.at(0);
+                     setWindowModified(true);
+             }
+            return;
+        }
+        else if (r==QMessageBox::Open){
+            QString fileName=QFileDialog::getOpenFileName(this,tr("auto_save"), QDir::currentPath(),tr("QCAS or Giac/Xcas files (xcas_auto_*.xws)"));
+           return;
+        }
+        else if (r== QMessageBox::Reset){
+            for(i=0;i<autofound.size();i++){
+                delfile.setFileName(autofound.at(i));
+                delfile.remove();
+            }
+        }
+        else{
+            return;
+        }
+    }
+}
+void MainWindow::cleanautoSaveFiles(){
+    QFile todel;
+    todel.setFileName(autosaveFileName);
+    todel.remove();
 }
 
 bool MainWindow::autoSave(){
@@ -1287,6 +1336,7 @@ void MainWindow::htmlhelp(){
 void MainWindow::closeEvent(QCloseEvent *event){
     if (okToContinue()){
         writeSettings();
+        cleanautoSaveFiles();
         event->accept();
     }
     else{
@@ -1511,7 +1561,7 @@ void MainWindow::evaluateall(){
     if(isEvaluatingAll()){
         return;
      }
-
+    autoSave();
     setWindowModified(true);
     displayInStatusBar("","black");
     //qDebug()<<"evaluateall";
