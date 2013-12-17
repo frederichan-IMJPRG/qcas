@@ -28,6 +28,7 @@ win32{
     QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
     INCLUDEPATH+=pthread
     win32:LIBS+=-lgiac -lgsl -lgslcblas -lmpfr -lgmp -lpthread
+    RC_FILE=qt/qcas.rc
 }
 unix{
     LIBS += -ldl -lgiac -lgmp
