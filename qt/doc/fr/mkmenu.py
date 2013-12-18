@@ -16,18 +16,11 @@ for FI in FICH:
            if(L[0]==FI): 
               L=L[1:]
                
-           if header1!=L[0]:
-                 ikew=-1
-                 if len(L)<2:
-                    ikew=0 
-                 current=L[0:ikew]
-                 mots=""
-                 if len(current)<1:
-                     output=output+' '+mots+"\n</ul>\n"
-                 else:
-                     #print '<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
-                     output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
+           if header1!=L[0] and header1 !="":
+                 #output=output+"\n</ul>\n"   #manque le dernier 
+                 output=output+'<li>'+current[-1]+':<br>\n'+mots+"</li>\n</ul>\n"
                  header1=""
+
            if header1=="":
                header1=L[0]
                current=L[0:-1]
@@ -35,17 +28,29 @@ for FI in FICH:
                #print "<h3>"+header1+"</h3>\n<ul>"
                if len(L)>2:
                    output=output+'<h3><a name="%s">'%(L[0])+header1+"</a></h3>\n<ul>"
+
            if header1==L[0]:    
               d=len(L)
               ikew=-1
               if len(L)<2:
                  ikew=0
+              keyword=L[ikew].replace("\n","").replace("__","_")
+              keyword=(keyword.replace("<","&lt;")).replace(">","&gt;")
+              if keyword != ":=":
+                 klist=keyword.split(":")
+              else:
+                 klist=[keyword]
+              keyword1='<a href="'+(klist[0]).replace("(","").replace(")","")+'">'+klist[0]+'</a>'
+              keyword2=''
+              if (len(klist)>1):
+                 keyword2=': <font size="-1">'    
+                 for jjj in klist[1:]:
+                   keyword2=keyword2+jjj
+                 keyword2=keyword2+"</font>"
               if(current == L[0:ikew]):
-                   keyword=L[ikew].replace("\n","").replace("__","_")
-                   if mots=="":
-                       mots='<a href="'+((keyword.split(":"))[0]).replace("(","").replace(")","")+'">'+keyword+'</a>'
-                   else:
-                       mots=mots+', <a href="'+((keyword.split(":"))[0]).replace("(","").replace(")","")+'">'+keyword+'</a>'
+                  if mots != "":
+                     mots=mots+", "
+                  mots=mots+keyword1+keyword2
               else:
                   
                   if(len(current)>1):
@@ -60,7 +65,7 @@ for FI in FICH:
                       #print '<li><font size="-1"'+mots+"</li></font>\n"
                       output=output+'<li><font size="-1"'+mots+"</li></font>\n"
                   current=L[0:ikew]
-                  mots=""
+                  mots=keyword1+keyword2
                 
        output=output+"\n</body> </html>"
      fhtml.write(output)

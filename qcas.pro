@@ -27,7 +27,7 @@ win32{
     QMAKE_CXXFLAGS+=-D__MINGW_H
     QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
     INCLUDEPATH+=pthread
-    win32:LIBS+=-lgiac -lgsl -lgslcblas -lmpfr -lgmp -lpthread
+    win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
 }
 unix{
     LIBS += -ldl -lgiac -lgmp
@@ -145,6 +145,7 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
 OTHER_FILES += \
     qt/doc/fr/menu.html \
     qt/doc/fr/memento.html \
+    qt/doc/fr/memento_algo.html \
     qt/doc/fr/xcasmenu.html \
     qt/doc/en/menu.html \
     qt/doc/en/memento.html \

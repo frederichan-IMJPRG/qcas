@@ -13,7 +13,7 @@
 <br>
 <hr>
 -->
-<center><h3><font color="#40A497">Memento: Programmation</font></h3></center>
+<center><h3><font color="#40A497">Memento: Programmation (style Algorithmique)</font></h3></center>
 <h4>Instructions élémentaires</h4>
 
 <br>
@@ -26,34 +26,36 @@
       <code>a:=2^10000:;</code></li>
    <li> <code>purge(a,b)</code> <font size="-1">(libère les variables a et b)</font></li>
 </ul>
-<font size="-1" color="#4004A7"><em>Mise à part l'affectation, la syntaxe par défaut de giac/xcas est celle du C.</em></font>
+
 <!--        ----------------------FONCTIONS-------------------------------                       -->
-<h4 name="Fonctions">Fonctions</h4>
+<h4>Fonctions</h4>
       <ol>
 	<font size="-1"><em>
 	<li>Dans une fonction les variables non explicitement déclarées <u>locales</u> grâce à l'instruction <a href="local"><code>local</code></a> sont <u>globales</u>.</li>
 	<li>Les variables <u>locales</u> doivent être initialisées. Donc pour utiliser un symbole formel dans une fonction, soit on utilisera une variable globale qui n'a pas été affectée, soit on fera comme dans l'exemple <code>rfact</code> ci dessous.</li>
-	<li>Les blocs d'instructions sont entre des <code>{  }</code>. On peut aller à la ligne dans un même bloc.</li>
-	<li>Le programme retourne la dernière instruction. <code>return</code> est facultatif.</li>
+	<li>Les blocs d'instructions sont délimités avec des mots clefs.  Les retours à la ligne ne changent pas la syntaxe.</li>
+	<li>Le programme retourne la dernière instruction. <code>return/retourne</code> sont facultatifs.</li>
 	<li>N'utilisez pas <code>i</code> comme variable dans une bloucle car il est réservé pour le nombre complexe racine de -1.</li>
 	</font></em>
       </ol>	
 
     <ul>
     <li><code>f(x,y):=x+y;</code> ( <font size="-1">Synonyme: <code>f:=(x,y) -&gt; x+y;</code></font> )</li>
-    <li><code>rfact(a,b,c):={<br>
+    <font size="-1">Pour les fonctions plus longue il faut regrouper les instructions, soit avec des <code>{}</code> comme dans la syntaxe <a href="memento.html#Fonctions">classique</a>, soit avec le mot clef <code>fonction</code> comme ci dessous:</font>
+    <li><code>fonction rfact(a,b,c)<br>
         &nbsp; local d,r1,r2,x;<br>
         &nbsp; d:=b^2-4*a*c;<br>
         &nbsp;  <a href="symbol">x:='x';//<font size="-2"><i>ou bien:</i> assume(x,symbol)</a></font><br>
-        &nbsp; if(d&lt;0){<br>
-        &nbsp;&nbsp; return a*x^2+b*x+c;<br>
-        &nbsp; }<br>
-        &nbsp; else{<br>
+        &nbsp; si d&lt;0 alors<br>
+        &nbsp;&nbsp; retourne a*x^2+b*x+c;<br>
+        &nbsp; sinon<br>
         &nbsp;&nbsp; r1:=(-b-sqrt(d))/(2*a);<br>
         &nbsp;&nbsp; r2:=(-b+sqrt(d))/(2*a);<br>
-        &nbsp;&nbsp; return a*(x-r1)*(x-r2);<br>
-        &nbsp; }<br>
-    }</code></li>
+        &nbsp;&nbsp; retourne a*(x-r1)*(x-r2);<br>
+        &nbsp; fsi;<br>
+
+    
+    ffonction;</code></li>
     </ul>  
 <!--       ------------------------Tests----------------------------                        -->
 <h4>Tests</h4>
@@ -62,29 +64,33 @@
           <ul>
            <li> <code>x==y</code> , <code>x!=y</code> <font size="-1">( égaux, différents. Synonymes: <code>x=y</code> , <code>x&lt;&gt;y</code>)</font></li>
 	   <li> <code>x&lt;y</code> , <code>x&lt;=y</code> , <code>x&gt;y</code> , <code>x&gt;=y</code>    
-	   <li> <code>and</code> , <code>or</code> , <code>not</code> <font size="-1">(synonymes: <code>&&</code> , <code>||</code> , <code>!</code> )</font></li>
+	   <li> <code>et</code> , <code>ou</code> , <code>non</code> <font size="-1">(synonymes: <code>&&</code> , <code>||</code> , <code>!</code> )</font></li>
 	 </ul> 
    </li>
-   <li><code>if( <i>condi</i> ){ <i>instructions</i> ;}</code></li>
-   <li><code>if( <i>condi</i> ){   <i>instructions</i> ;}</code><br>
-       <code>else{ <i>instructions</i> ;}</code>
+   <li><code>si <i>condi</i> alors <i>instructions</i> fsi</code></li>
+   <li><code>si <i>condi</i> alors<br>
+   &nbsp; <i>instructions</i> </code><br>
+   <code>sinon<br>
+   &nbsp; <i>instructions</i><br>
+   fsi</code>
    </li>
    </ul>
 <!--     ---------------------Boucles------------------------          -->
 <h4>Boucles principales</h4><br>
-   <font size="-1"><em>NB: Les parenthèses et accolades dans for, while sont obligatoires.</em></font>  
+   
    <ul>
-   <li><code>for( <i>ini</i>; <i>condi</i>; <i>incr</i> ){ <i>instructions</i> ;}</code><br>
+   <li><code>pour <i>var</i> de <i>deb</i> jusque <i>fin</i> pas <i>p</i> faire <i>instructions</i> fpour</code><br>
+     On n'est pas obligé de préciser le pas s'il vaut 1. 
       <ul>
-        <li><code>for(j:=0; j&lt;10;j++){ print(j);}</code> <br>
-        <font size="-1">(on affiche les entiers de 0 à 9 par pas de 1)</li></font>
-        <li><code>for(j:=10; j&gt;1;j:=j-3){ print(j);}</code> <br>
-        <font size="-1">(on affiche les entiers strictements supérieurs à 1 à partir de  10 par pas de -3. ie: 10,7,4)</font></li>
+        <li><code>pour j de 0 jusque 9 faire  afficher(j) fpour</code> <br>
+        <font size="-1">(on affiche les entiers de 0 à 9 par pas de 1.)</li></font>
+        <li><code>pour j de 10 jusque 2 pas -3 faire print(j)fpour</code> <br>
+        <font size="-1">(on affiche les entiers  de 10 à 2 par pas de -3. ie: 10,7,4)</font></li>
       </ul>
    </li>
-   <li><code>while(<i>condi</i>){ <i>instructions</i> ;}</code>
+   <li><code>tanque <i>condi</i> faire <i>instructions</i> ftanque</code>
       <ul>
-        <li><code>j:=2;while(j&lt;10){j:=j*j ;}</code></li>
+        <li><code>j:=2; tantque j&lt;10 faire j:=j*j ftantque</code></li>
       </ul>
    </li>
 </ul>
