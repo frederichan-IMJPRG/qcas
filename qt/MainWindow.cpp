@@ -41,6 +41,7 @@
 #include "gui/WizardEquation.h"
 #include "gui/WizardMatrix.h"
 #include "gui/WizardCatalog.h"
+#include "gui/WizardAlgo.h"
 #include "gui/CentralTabWidget.h"
 #include "gui/FormalLine.h"
 #include "gui/FormalLineWidgets.h"
@@ -1187,6 +1188,7 @@ void MainWindow::retranslateGui(){
     matrixItem->setText(tr("Matrices"));
     equationItem->setText(tr("Equations"));
     catalogItem->setText(tr("Catalogue"));
+    algoItem->setText(tr("Prog/Algo"));
     //fred
 }
 void MainWindow::printHeader(){
@@ -1277,6 +1279,7 @@ void MainWindow::createWizards(){
     wizardPages->addWidget(new WizardMatrix(this));
     wizardPages->addWidget(new WizardEquation(this));
     wizardPages->addWidget(new WizardCatalog(this));
+    wizardPages->addWidget(new WizardAlgo(this));
     wizardPages->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),"",wizardList);
@@ -1288,6 +1291,9 @@ void MainWindow::createWizards(){
     catalogItem=new QListWidgetItem(QIcon(":/images/book.png"),"",wizardList);
     catalogItem->setTextAlignment(Qt::AlignHCenter);
     catalogItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    algoItem=new QListWidgetItem(QIcon(":/images/programming.png"),"",wizardList);
+    algoItem->setTextAlignment(Qt::AlignHCenter);
+    algoItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     connect(wizardList,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),this,SLOT(changeWizard(QListWidgetItem*,QListWidgetItem*)));
 
 }
@@ -1702,6 +1708,7 @@ void MainWindow::sendText(const QString & s){
         form->sendText(s);}
         break;
     case MainSheet::SPREADSHEET_TYPE:
+        break;
     case MainSheet::G2D_TYPE:
       {GraphWidget * g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
 	 g2d->sendText(s);}

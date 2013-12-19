@@ -34,6 +34,7 @@ TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     // +1 devrait sufire en théorie mais problème sous KDE plasma sur mon netbook
     setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
     highlighter=new Highlighter(document(),line->getWorkSheet()->getApp()->getCommandInfo());
+    setTabStopWidth(40);
     connect(document(),SIGNAL(contentsChange(int,int,int)),this,SLOT(addMultiLines(int,int,int)));
     connect(this,SIGNAL(cursorPositionChanged()),this,SLOT(matchDelimiters()));
 }
@@ -217,7 +218,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             else QPlainTextEdit::keyPressEvent(e);
             break;
         case Qt::Key_Tab:
-            if (Config::useTabCompletions){
+            if (Config::useTabCompletions && !textUnderCursor().isEmpty()){
                updateCompleter();
             }
             else QPlainTextEdit::keyPressEvent(e);

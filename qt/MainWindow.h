@@ -168,6 +168,7 @@ private:
     QListWidgetItem *matrixItem;
     QListWidgetItem *equationItem;
     QListWidgetItem *catalogItem;
+    QListWidgetItem *algoItem;
 
 
 //    QLabel* warningFirstEvaluation;

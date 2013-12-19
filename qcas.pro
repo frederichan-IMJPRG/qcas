@@ -43,6 +43,7 @@ HEADERS += qt/output.h \
     qt/gui/WizardMatrix.h \
     qt/gui/WizardEquation.h \
     qt/gui/WizardCatalog.h \
+    qt/gui/WizardAlgo.h \
     qt/gui/spreadsheet.h \
     qt/gui/qtmmlwidget.h \
     qt/gui/FormalSheet.h \
@@ -132,6 +133,7 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/gui/WizardMatrix.cpp \
     qt/gui/WizardEquation.cpp \
     qt/gui/WizardCatalog.cpp \
+    qt/gui/WizardAlgo.cpp \
     qt/gui/spreadsheet.cpp \
     qt/gui/qtmmlwidget.cpp \
     qt/gui/FormalSheet.cpp \

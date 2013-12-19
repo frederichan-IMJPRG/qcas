@@ -32,7 +32,8 @@ public:
     TextInput(Line *parent=0);
     ~TextInput();
     //    void setCompleter(QCompleter *c);
-    void ressetHistoryLevel();
+  void ressetHistoryLevel();
+
 protected:
     void keyPressEvent(QKeyEvent *e);
     bool event(QEvent*e);
