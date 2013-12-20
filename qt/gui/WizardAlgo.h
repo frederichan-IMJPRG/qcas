@@ -72,6 +72,8 @@ private:
     QPlainTextEdit *instructions;
     QLineEdit *retour;
     QLabel *labelRetour;
+    QLabel *labelEnd;
+
 
     void retranslate();
     void changeEvent(QEvent *);
@@ -96,6 +98,48 @@ private:
     QLabel *labelPas;
     QPlainTextEdit *instructions;
     QGroupBox *group;
+    QLabel *labelEnd;
+
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
+
+class TestPanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    TestPanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *condi;
+    QLabel *labelCondi;
+    QPlainTextEdit *instruction1;
+    QPlainTextEdit *instruction2;
+    QGroupBox *groupalors;
+    QGroupBox *groupsinon;
+    QLabel *labelEnd;
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
+
+class WhilePanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    WhilePanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *condi;
+    QLabel *labelCondi;
+    QPlainTextEdit *instructions;
+    QGroupBox *group;
+    QLabel *labelEnd;
 
     void retranslate();
     void changeEvent(QEvent *);
