@@ -66,8 +66,8 @@ void WizardAlgo::createGui(){
 
 
     pages->addWidget(functionPanel);
-    pages->addWidget(loopPanel);
     pages->addWidget(testPanel);
+    pages->addWidget(loopPanel);
     pages->addWidget(whilePanel);
 
     QVBoxLayout *layout=new QVBoxLayout;
@@ -441,5 +441,18 @@ WhilePanel::WhilePanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void WhilePanel::sendCommand(){
+    QString s="tantque ";
+    QString tmp;
+    QString indent="\t";
+    s.append(condi->text()).append(" faire\n");
+    tmp=instructions->document()->toPlainText();
+    if(!tmp.isEmpty()){
+        s.append(indent+tmp+"\n");
+    }
+    else{
+        s.append("\n");
+    }
 
+    s.append("ftantque;");
+    algoPanel->sendCommand(s);
 }

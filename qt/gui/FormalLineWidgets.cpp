@@ -218,7 +218,8 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             else QPlainTextEdit::keyPressEvent(e);
             break;
         case Qt::Key_Tab:
-            if (Config::useTabCompletions && !textUnderCursor().isEmpty()){
+            //if (Config::useTabCompletions && !textUnderCursor().isEmpty()){
+        if (Config::useTabCompletions && !textCursor().atBlockStart()){
                updateCompleter();
             }
             else QPlainTextEdit::keyPressEvent(e);
