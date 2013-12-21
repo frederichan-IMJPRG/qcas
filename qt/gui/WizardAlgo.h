@@ -156,8 +156,14 @@ private:
     WizardAlgo* algoPanel;
     QLineEdit *func;
     QLabel *labelFunc;
+    QLineEdit *varloc;
+    QLabel *labelVarloc;
+    QLineEdit *symbloc;
+    QLabel *labelSymbloc;
     QPlainTextEdit *instructions;
     QGroupBox *group;
+    QLineEdit *retour;
+    QLabel *labelRetour;
     QLabel *labelEnd;
 
 

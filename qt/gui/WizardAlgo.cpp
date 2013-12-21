@@ -483,6 +483,10 @@ void FuncPanel::changeEvent(QEvent *event){
 void FuncPanel::retranslate(){
     func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple:</b> f(x,y)"));
     labelFunc->setText(tr("fonction+args:"));
+    retour->setToolTip(tr("<center><b>return</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));
+    varloc->setToolTip(tr("<center><b>local</b></center>Saisir les noms de variables utilisées uniquement à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
+    symbloc->setToolTip(tr("<center><b>assume(    ,symbol)</b></center>Un symbole est une lettre utilisable dans un calcul mathématique. On peut utiliser une variable globale non initialisée. En revanche si l'on souhaite avoir des symboles locaux, il faut les déclarer ici.<br> <b>Exemple:</b> t,u"));
+    labelSymbloc->setText(tr("Symboles locaux:"));
 
     instructions->setToolTip(tr(" Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction."));
 
@@ -497,6 +501,17 @@ FuncPanel::FuncPanel(WizardAlgo *parent):AlgoTabChild(parent){
     labelFunc->setBuddy(func);
     labelEnd=new QLabel("<center><b>...}</b></center>");
 
+    QLabel *f1=new QLabel("<b>{</b>");
+    QLabel *f2=new QLabel("<b>;</b>");
+
+    varloc=new QLineEdit("");
+    labelVarloc=new QLabel("<b>local</b>");
+    labelVarloc->setBuddy(varloc);
+
+    symbloc=new QLineEdit("");
+    labelSymbloc=new QLabel("");
+    labelSymbloc->setBuddy(symbloc);
+
     QPushButton *button=new QPushButton;
     button->setIcon(QIcon(":/images/right.png"));
 
@@ -509,13 +524,25 @@ FuncPanel::FuncPanel(WizardAlgo *parent):AlgoTabChild(parent){
     group->setLayout(layout);
     group->setTitle(":={");
 
+    retour=new QLineEdit("");
+    labelRetour=new QLabel("<b>return</b>");
+    labelRetour->setBuddy(retour);
+
     QGridLayout *grid=new QGridLayout();
 
     grid->addWidget(labelFunc,0,0);
     grid->addWidget(func,0,1);
-    grid->addWidget(group,1,0,1,2);
-    grid->addWidget(labelEnd,2,0);
-    grid->addWidget(button,2,1,Qt::AlignVCenter);
+    grid->addWidget(f1,0,2);
+    grid->addWidget(labelVarloc,1,0);
+    grid->addWidget(varloc,1,1);
+    grid->addWidget(f2,1,2);
+    grid->addWidget(labelSymbloc,2,0);
+    grid->addWidget(symbloc,2,1);
+    grid->addWidget(group,3,0,1,2);
+    grid->addWidget(labelRetour,4,0);
+    grid->addWidget(retour,4,1);
+    grid->addWidget(labelEnd,5,0);
+    grid->addWidget(button,5,1,Qt::AlignVCenter);
     this->setLayout(grid);
 
     connect(button,SIGNAL(clicked()),this,SLOT(sendCommand()));
@@ -529,17 +556,44 @@ void FuncPanel::sendCommand(){
     QString s;
     QString tmp;
     QString indent="\t";
+    QStringList listsymb;
+    int i;
 
     tmp=func->text();
     if(tmp.trimmed().endsWith(";"))
         tmp.remove(";");
     s=tmp.append(":={\n");
+
+    tmp=varloc->text().trimmed();
+    if(!tmp.isEmpty()){
+      s.append(indent+"local ");
+      if(!tmp.endsWith(";"))
+          s.append(tmp).append(";\n");
+    }
+
+    tmp=symbloc->text().trimmed();
+    if(!tmp.isEmpty()){
+        listsymb=tmp.split(",");
+        for(i=0;i<listsymb.length();i++){
+            s.append(indent+tr("assume("));//trad assume
+            s.append(listsymb.at(i)).append(",symbol);\n");
+        }
+    }
+
     tmp=instructions->document()->toPlainText();
     tmp.replace("\n","\n"+indent);
-    if(!tmp.trimmed().isEmpty()){
+    tmp=tmp.trimmed();
+    if(!tmp.isEmpty()){
+        if(!(tmp.endsWith(";") || tmp.endsWith(":;")))
+            tmp.append(";");
         s.append(indent+tmp+"\n");
     }
     else(s.append("\n"));
+    tmp=retour->text();
+    if(!tmp.trimmed().isEmpty()){
+        s.append(indent+"return "+tmp+"\n");
+    }
+
     s.append("};");
     algoPanel->sendCommand(s);
 }
