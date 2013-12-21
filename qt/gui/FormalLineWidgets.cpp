@@ -454,6 +454,19 @@ bool TextInput::isStartCursor() const{
     return ret.remove("\t").isEmpty();
 }
 
+void TextInput::insertIndentedString(const QString &s){
+    QString idts=s;
+    QTextCursor tc=textCursor();
+    int pos=tc.positionInBlock();
+    tc.select(QTextCursor::LineUnderCursor);
+    QString ret=(tc.selectedText());
+    ret=ret.left(pos);
+    QString test=ret;
+    if(test.remove("\t").isEmpty())
+        idts.replace("\n","\n"+ret);
+    insertPlainText(idts);
+}
+
 void TextInput::helpCompletion(const QString &completion){
     if(!completion.isEmpty()){
        line->getWorkSheet()->getApp()->displayHelp(completion);

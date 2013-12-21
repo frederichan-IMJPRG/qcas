@@ -33,6 +33,7 @@ public:
     ~TextInput();
     //    void setCompleter(QCompleter *c);
   void ressetHistoryLevel();
+  void insertIndentedString(const QString &s);
 
 protected:
     void keyPressEvent(QKeyEvent *e);
