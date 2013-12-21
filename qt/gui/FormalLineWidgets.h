@@ -59,6 +59,7 @@ private:
     void createDelimiterSelection(int,bool);
 
     QString textUnderCursor() const;
+    bool isStartCursor() const;
     Line* line;
     QCompleter* completer;
     Highlighter* highlighter;

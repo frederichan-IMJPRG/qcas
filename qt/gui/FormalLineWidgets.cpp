@@ -219,7 +219,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             break;
         case Qt::Key_Tab:
             //if (Config::useTabCompletions && !textUnderCursor().isEmpty()){
-        if (Config::useTabCompletions && !textCursor().atBlockStart()){
+        if (Config::useTabCompletions && !isStartCursor()){
                updateCompleter();
             }
             else QPlainTextEdit::keyPressEvent(e);
@@ -442,6 +442,16 @@ QString TextInput::textUnderCursor() const{
     QTextCursor tc=textCursor();
     tc.select(QTextCursor::WordUnderCursor);
     return tc.selectedText();
+}
+
+bool TextInput::isStartCursor() const{
+    QTextCursor tc=textCursor();
+
+    int pos=tc.positionInBlock();
+    tc.select(QTextCursor::LineUnderCursor);
+    QString ret=(tc.selectedText());
+    ret=ret.left(pos);
+    return ret.remove("\t").isEmpty();
 }
 
 void TextInput::helpCompletion(const QString &completion){
