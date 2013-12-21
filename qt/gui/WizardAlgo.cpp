@@ -45,17 +45,20 @@ void WizardAlgo::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void WizardAlgo::retranslate(){
-    list->setItemText(0,tr("for( ; ; ){   }"));
-    list->setItemText(1,tr("Scolaire: fonction...ffonction"));
-    list->setItemText(2,tr("Scolaire: si alors (sinon)"));
-    list->setItemText(3,tr("Scolaire: pour...fpour"));
-    list->setItemText(4,tr("Scolaire: tantque...ftantque"));
+    list->setItemText(0,tr("f(  ):={   }"));
+    list->setItemText(1,tr("for( ; ; ){   }"));
+    list->setItemText(2,tr("Scolaire: fonction...ffonction"));
+    list->setItemText(3,tr("Scolaire: si alors (sinon)"));
+    list->setItemText(4,tr("Scolaire: pour...fpour"));
+    list->setItemText(5,tr("Scolaire: tantque...ftantque"));
 
 }
 void WizardAlgo::createGui(){
     pages=new QStackedWidget;
     list=new QComboBox;
 
+    list->addItem("");
+    FuncPanel *funcPanel=new FuncPanel(this);
     list->addItem("");
     ForPanel *forPanel=new ForPanel(this);
     list->addItem("");
@@ -67,6 +70,7 @@ void WizardAlgo::createGui(){
     list->addItem("");
     WhilePanel *whilePanel=new WhilePanel(this);
 
+    pages->addWidget(funcPanel);
     pages->addWidget(forPanel);
     pages->addWidget(functionPanel);
     pages->addWidget(testPanel);
@@ -465,8 +469,83 @@ void WhilePanel::sendCommand(){
     algoPanel->sendCommand(s);
 }
 
+/*******************************************************
+ *               Function Panel C style
+ ********************************************************/
+void FuncPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+
+void FuncPanel::retranslate(){
+    func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple:</b> f(x,y)"));
+    labelFunc->setText(tr("fonction+args:"));
+
+    instructions->setToolTip(tr(" Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction."));
+
+}
+
+
+FuncPanel::FuncPanel(WizardAlgo *parent):AlgoTabChild(parent){
+    algoPanel=parent;
+
+    func=new QLineEdit;
+    labelFunc=new QLabel("");
+    labelFunc->setBuddy(func);
+    labelEnd=new QLabel("<center><b>...}</b></center>");
+
+    QPushButton *button=new QPushButton;
+    button->setIcon(QIcon(":/images/right.png"));
+
+
+    group=new QGroupBox();
+
+    QHBoxLayout *layout=new QHBoxLayout;
+    instructions=new QPlainTextEdit(this);
+    layout->addWidget(instructions);
+    group->setLayout(layout);
+    group->setTitle(":={");
+
+    QGridLayout *grid=new QGridLayout();
+
+    grid->addWidget(labelFunc,0,0);
+    grid->addWidget(func,0,1);
+    grid->addWidget(group,1,0,1,2);
+    grid->addWidget(labelEnd,2,0);
+    grid->addWidget(button,2,1,Qt::AlignVCenter);
+    this->setLayout(grid);
+
+    connect(button,SIGNAL(clicked()),this,SLOT(sendCommand()));
+
+    retranslate();
+
+
+}
+
+void FuncPanel::sendCommand(){
+    QString s;
+    QString tmp;
+    QString indent="\t";
+
+    tmp=func->text();
+    if(tmp.trimmed().endsWith(";"))
+        tmp.remove(";");
+    s=tmp.append(":={\n");
+    tmp=instructions->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
+    if(!tmp.trimmed().isEmpty()){
+        s.append(indent+tmp+"\n");
+    }
+    else(s.append("\n"));
+    s.append("};");
+    algoPanel->sendCommand(s);
+}
+
 /******************************************************************
- *                 For Panel
+ *                 For Panel C style
  ******************************************************************/
 void ForPanel::changeEvent(QEvent *event){
     if(event->type() == QEvent::LanguageChange)

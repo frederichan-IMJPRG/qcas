@@ -145,6 +145,26 @@ private:
     void changeEvent(QEvent *);
 };
 
+class FuncPanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    FuncPanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *func;
+    QLabel *labelFunc;
+    QPlainTextEdit *instructions;
+    QGroupBox *group;
+    QLabel *labelEnd;
+
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
+
 class ForPanel:public AlgoTabChild{
     Q_OBJECT
 public:
