@@ -45,16 +45,19 @@ void WizardAlgo::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void WizardAlgo::retranslate(){
-    list->setItemText(0,tr("Scolaire: fonction...ffonction"));
-    list->setItemText(1,tr("Scolaire: si alors (sinon)"));
-    list->setItemText(2,tr("Scolaire: pour...fpour"));
-    list->setItemText(3,tr("Scolaire: tantque...ftantque"));
+    list->setItemText(0,tr("for( ; ; ){   }"));
+    list->setItemText(1,tr("Scolaire: fonction...ffonction"));
+    list->setItemText(2,tr("Scolaire: si alors (sinon)"));
+    list->setItemText(3,tr("Scolaire: pour...fpour"));
+    list->setItemText(4,tr("Scolaire: tantque...ftantque"));
 
 }
 void WizardAlgo::createGui(){
     pages=new QStackedWidget;
     list=new QComboBox;
 
+    list->addItem("");
+    ForPanel *forPanel=new ForPanel(this);
     list->addItem("");
     FunctionPanel *functionPanel=new FunctionPanel(this);
     list->addItem("");
@@ -64,7 +67,7 @@ void WizardAlgo::createGui(){
     list->addItem("");
     WhilePanel *whilePanel=new WhilePanel(this);
 
-
+    pages->addWidget(forPanel);
     pages->addWidget(functionPanel);
     pages->addWidget(testPanel);
     pages->addWidget(loopPanel);
@@ -186,6 +189,7 @@ void FunctionPanel::sendCommand(){
     }
 
     tmp=(instructions->document()->toPlainText()).trimmed();
+    tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
         s.append(indent+tmp+"\n");
     }
@@ -293,6 +297,7 @@ void LoopPanel::sendCommand(){
     }
     s.append(" faire\n");
     tmp=instructions->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
     if(!tmp.trimmed().isEmpty()){
         s.append(indent+tmp+"\n");
     }
@@ -371,6 +376,7 @@ void TestPanel::sendCommand(){
     QString indent="\t";
     s.append(condi->text()).append(" alors\n");
     tmp=instruction1->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
         s.append(indent+tmp+"\n");
     }
@@ -378,6 +384,7 @@ void TestPanel::sendCommand(){
         s.append("\n");
     }
     tmp=instruction2->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
         s.append("sinon\n"+indent+tmp+"\n");
     }
@@ -446,6 +453,7 @@ void WhilePanel::sendCommand(){
     QString indent="\t";
     s.append(condi->text()).append(" faire\n");
     tmp=instructions->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
         s.append(indent+tmp+"\n");
     }
@@ -456,3 +464,113 @@ void WhilePanel::sendCommand(){
     s.append("ftantque;");
     algoPanel->sendCommand(s);
 }
+
+/******************************************************************
+ *                 For Panel
+ ******************************************************************/
+void ForPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+
+void ForPanel::retranslate(){
+    ini->setToolTip(tr("<center><b>for(??;...;...){...}</b></center>Saisir l'initialisation de la variable de boucle. (Attention, i est reservé pour le nombre complexe)<br> <b>Exemple:</b> j:=0"));
+    labelIni->setText(tr("Initialisation:"));
+    arret->setToolTip(tr("<center><b>for(...;??;...){...}</b></center>Condition pour continuer la boucle<br> <b>Exemple:</b>j&lt;10 (pour continuer tantque j&lt;10)"));
+    labelArret->setText(tr("Condition:"));
+    incr->setToolTip(tr("<center><b>for(...;...;??){...}</b></center>instruction pour modifier la variable de boucle.<br><b>Exemple1</b>: j++<br><b>Exemple2:</b>j:=j+2"));
+    labelIncr->setText(tr("Incrémentation:"));
+
+    instructions->setToolTip(tr("Vous pouvez (si vous le souhaitez le faire maintenant) utiliser cette partie pour le corps de la boucle."));
+
+}
+
+ForPanel::ForPanel(WizardAlgo *parent):AlgoTabChild(parent){
+        algoPanel=parent;
+
+        ini=new QLineEdit;
+        labelIni=new QLabel("");
+        labelIni->setBuddy(ini);
+
+        arret=new QLineEdit;
+        labelArret=new QLabel("");
+        labelArret->setBuddy(arret);
+
+        incr=new QLineEdit;
+        labelIncr=new QLabel("");
+        labelIncr->setBuddy(incr);
+
+        labelEnd=new QLabel("<center><b>...}</b></center>");
+
+        QPushButton *button=new QPushButton;
+        button->setIcon(QIcon(":/images/right.png"));
+
+
+        group=new QGroupBox();
+
+        QHBoxLayout *layout=new QHBoxLayout;
+        instructions=new QPlainTextEdit(this);
+        layout->addWidget(instructions);
+        group->setLayout(layout);
+        group->setTitle("...){");
+        QLabel *labelTitre=new QLabel("<b><center>for(...</b><center>");
+        QLabel *pv1=new QLabel("<b>;</b>");
+        QLabel *pv2=new QLabel("<b>;</b>");
+        QLabel *pv3=new QLabel("<b>;</b>");
+
+
+        QGridLayout *grid=new QGridLayout();
+
+        grid->addWidget(labelTitre,0,0);
+        grid->addWidget(labelIni,1,0);
+        grid->addWidget(ini,1,1);
+        grid->addWidget(pv1,1,2);
+        grid->addWidget(labelArret,2,0);
+        grid->addWidget(arret,2,1);
+        grid->addWidget(pv2,2,2);
+        grid->addWidget(labelIncr,3,0);
+        grid->addWidget(incr,3,1);
+        grid->addWidget(pv3,3,2);
+        grid->addWidget(group,4,0,1,2);
+        grid->addWidget(labelEnd,5,0);
+        grid->addWidget(button,5,1,Qt::AlignVCenter);
+        this->setLayout(grid);
+
+        connect(button,SIGNAL(clicked()),this,SLOT(sendCommand()));
+
+        retranslate();
+
+}
+
+void ForPanel::sendCommand(){
+
+    QString s="for( ";
+    QString tmp;
+    QString indent="\t";
+
+    tmp=ini->text();
+    if(tmp.trimmed().endsWith(";"))
+        tmp.remove(";");
+    s.append(tmp+"; ");
+    tmp=arret->text();
+    if(tmp.trimmed().endsWith(";"))
+        tmp.remove(";");
+    s.append(tmp+"; ");
+    tmp=incr->text();
+    if(tmp.trimmed().endsWith(";"))
+        tmp.remove(";");
+    s.append(tmp+"){\n");
+
+    tmp=instructions->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
+    if(!tmp.trimmed().isEmpty()){
+        s.append(indent+tmp+"\n");
+    }
+    else(s.append("\n"));
+    s.append("};");
+    algoPanel->sendCommand(s);
+}
+

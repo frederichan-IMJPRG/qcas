@@ -1,4 +1,4 @@
-/*  Copyright (C) 2001 Le Coq Loïc
+/*   F.Han
 *    This file is part of QCAS.
 *
 *    QCAS is free software: you can redistribute it and/or modify
@@ -145,6 +145,29 @@ private:
     void changeEvent(QEvent *);
 };
 
+class ForPanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    ForPanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *ini;
+    QLabel *labelIni;
+    QLineEdit *arret;
+    QLabel *labelArret;
+    QLineEdit *incr;
+    QLabel *labelIncr;
+    QPlainTextEdit *instructions;
+    QGroupBox *group;
+    QLabel *labelEnd;
+
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
 
 
 #endif // WIZARDALGO_H
