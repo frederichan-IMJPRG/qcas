@@ -33,7 +33,7 @@ class MainWindow;
 class WizardAlgo : public QWidget{
     Q_OBJECT
 public:
-    WizardAlgo(MainWindow *parent=0);
+    WizardAlgo(MainWindow *parent=0,bool scol=false);
     void sendCommand(const QString &);
     void cursorUp();
 private:
@@ -41,6 +41,7 @@ private:
     void changeEvent(QEvent *);
     void retranslate();
     void createGui();
+    bool scolar;
     QStackedWidget* pages;
     QComboBox *list;
 
@@ -126,10 +127,10 @@ private:
     void changeEvent(QEvent *);
 };
 
-class WhilePanel:public AlgoTabChild{
+class TantquePanel:public AlgoTabChild{
     Q_OBJECT
 public:
-    WhilePanel(WizardAlgo *parent=0);
+    TantquePanel(WizardAlgo *parent=0);
 public slots:
     void sendCommand();
 
@@ -171,6 +172,28 @@ private:
     void changeEvent(QEvent *);
 };
 
+class IfPanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    IfPanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *condi;
+    QLabel *labelCondi;
+    QPlainTextEdit *instruction1;
+    QPlainTextEdit *instruction2;
+    QGroupBox *groupalors;
+    QGroupBox *groupsinon;
+    QLabel *labelEnd;
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
+
+
 class ForPanel:public AlgoTabChild{
     Q_OBJECT
 public:
@@ -195,5 +218,23 @@ private:
     void changeEvent(QEvent *);
 };
 
+class WhilePanel:public AlgoTabChild{
+    Q_OBJECT
+public:
+    WhilePanel(WizardAlgo *parent=0);
+public slots:
+    void sendCommand();
+
+private:
+    WizardAlgo* algoPanel;
+    QLineEdit *condi;
+    QLabel *labelCondi;
+    QPlainTextEdit *instructions;
+    QGroupBox *group;
+    QLabel *labelEnd;
+
+    void retranslate();
+    void changeEvent(QEvent *);
+};
 
 #endif // WIZARDALGO_H

@@ -62,11 +62,17 @@ public slots:
     void sendEquation();
     void numericCheck(int);
     void inC_Check(int);
+    void purge_Check(int);
 
 private:
     WizardEquation* eqPanel;
     QLineEdit *eq;
+    QLabel    *labelEq;
     QLineEdit *var;
+    QLabel *labelVar;
+    QLineEdit *hyp;
+    QLabel    *labelHyp;
+    QCheckBox *purge;
     QCheckBox *numeric;
     QCheckBox *inC;
 

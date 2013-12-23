@@ -168,6 +168,7 @@ OTHER_FILES += \
     qt/images/spreadsheet.png \
     qt/images/segment.png \
     qt/images/programming.png \
+    qt/images/prog-scol100.png \
     qt/images/process-stop.png \
     qt/images/previous.png \
     qt/images/point.png \

@@ -32,11 +32,13 @@
 #include <QStringList>
 #include <QSpinBox>
 
-WizardAlgo::WizardAlgo(MainWindow *parent)
+WizardAlgo::WizardAlgo(MainWindow *parent,bool scol)
     :QWidget(parent){
     mainWindow=parent;
+    scolar=scol;
     createGui();
 }
+
 void WizardAlgo::changeEvent(QEvent *event){
     if(event->type() == QEvent::LanguageChange)
         {
@@ -45,37 +47,53 @@ void WizardAlgo::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void WizardAlgo::retranslate(){
-    list->setItemText(0,tr("f(  ):={   }"));
-    list->setItemText(1,tr("for( ; ; ){   }"));
-    list->setItemText(2,tr("Scolaire: fonction...ffonction"));
-    list->setItemText(3,tr("Scolaire: si alors (sinon)"));
-    list->setItemText(4,tr("Scolaire: pour...fpour"));
-    list->setItemText(5,tr("Scolaire: tantque...ftantque"));
-
+   if(scolar){
+        list->setItemText(0,tr("fonction...ffonction"));
+        list->setItemText(1,tr("si alors (sinon)"));
+        list->setItemText(2,tr("pour...fpour"));
+        list->setItemText(3,tr("tantque...ftantque"));
+    }
+    else{
+       list->setItemText(0,tr("Fonction: ")+"f(  ):={   }");
+       list->setItemText(1,tr("Test: ")+"if(  ){   }...");
+       list->setItemText(2,tr("Boucle: ")+"for( ; ; ){   }");
+       list->setItemText(3,tr("Boucle: ")+"while(  ){   }");
+    }
 }
 void WizardAlgo::createGui(){
     pages=new QStackedWidget;
     list=new QComboBox;
 
-    list->addItem("");
-    FuncPanel *funcPanel=new FuncPanel(this);
-    list->addItem("");
-    ForPanel *forPanel=new ForPanel(this);
-    list->addItem("");
-    FunctionPanel *functionPanel=new FunctionPanel(this);
-    list->addItem("");
-    TestPanel *testPanel=new TestPanel(this);
-    list->addItem("");
-    LoopPanel *loopPanel=new LoopPanel(this);
-    list->addItem("");
-    WhilePanel *whilePanel=new WhilePanel(this);
+    if(!scolar){
+        list->addItem("");
+        FuncPanel *funcPanel=new FuncPanel(this);
+        list->addItem("");
+        ForPanel *forPanel=new ForPanel(this);
+        list->addItem("");
+        WhilePanel *whilePanel=new WhilePanel(this);
+        list->addItem("");
+        IfPanel *ifPanel=new IfPanel(this);
 
-    pages->addWidget(funcPanel);
-    pages->addWidget(forPanel);
-    pages->addWidget(functionPanel);
-    pages->addWidget(testPanel);
-    pages->addWidget(loopPanel);
-    pages->addWidget(whilePanel);
+        pages->addWidget(funcPanel);
+        pages->addWidget(ifPanel);
+        pages->addWidget(forPanel);
+        pages->addWidget(whilePanel);
+    }
+    else{
+        list->addItem("");
+        FunctionPanel *functionPanel=new FunctionPanel(this);
+        list->addItem("");
+        TestPanel *testPanel=new TestPanel(this);
+        list->addItem("");
+        LoopPanel *loopPanel=new LoopPanel(this);
+        list->addItem("");
+        TantquePanel *tantquePanel=new TantquePanel(this);
+
+        pages->addWidget(functionPanel);
+        pages->addWidget(testPanel);
+        pages->addWidget(loopPanel);
+        pages->addWidget(tantquePanel);
+    }
 
     QVBoxLayout *layout=new QVBoxLayout;
     layout->addWidget(list);
@@ -106,12 +124,16 @@ void FunctionPanel::changeEvent(QEvent *event){
 void FunctionPanel::retranslate(){
     prototype->setToolTip(tr("<center><b>fonction</b></center>Saisir le nom et les arguments<br> <b>Exemple: </b> f(a,b)"));
     labelProto->setText(tr("<b>fonction</b>"));
-    varloc->setToolTip(tr("<center><b>local</b></center>Saisir les noms de variables utilisées uniquement à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
+    labelProto->setToolTip(prototype->toolTip());
+    varloc->setToolTip(tr("<center><b>local</b></center>Saisir les noms des variables qui ne sont utilisées qu'à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
     labelVarloc->setText(tr("Variables locales:"));
+    labelVarloc->setToolTip(varloc->toolTip());
     symbloc->setToolTip(tr("<center><b>supposons(    ,symbol)</b></center>Un symbole est une lettre utilisable dans un calcul mathématique. On peut utiliser une variable globale non initialisée. En revanche si l'on souhaite avoir des symboles locaux, il faut les déclarer ici.<br> <b>Exemple:</b> t,u"));
     labelSymbloc->setText(tr("Symboles locaux:"));
+    labelSymbloc->setToolTip(symbloc->toolTip());
     retour->setToolTip(tr("<center><b>retourne</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));
     labelRetour->setText(tr("<b>retourne</b>"));
+    labelRetour->setToolTip(retour->toolTip());
     instructions->setToolTip(tr("Vous pouvez si vous le souhaitez utiliser cette partie pour compléter votre programme."));
     labelEnd->setText(tr("<b>ffonction</b>"));
 }
@@ -221,12 +243,16 @@ void LoopPanel::changeEvent(QEvent *event){
 void LoopPanel::retranslate(){
     varname->setToolTip(tr("<center><b>pour</b></center>Saisir le nom de la variable. (Attention, i est reservé pour le nombre complexe)<br> <b>Exemple:</b> j"));
     labelVarname->setText(tr("<b>pour</b>"));
+    labelVarname->setToolTip(varname->toolTip());
     deb->setToolTip(tr("<center><b>de</b></center>Valeur de départ:<br> <b>Exemple:</b> 0"));
     labelDeb->setText(tr("<b>de</b>"));
+    labelDeb->setToolTip(deb->toolTip());
     fin->setToolTip(tr("<center><b>jusque</b></center>valeur de fin"));
     labelFin->setText(tr("<b>jusque</b>"));
+    labelFin->setToolTip(fin->toolTip());
     pas->setToolTip(tr("<center><b>pas</b></center>Précisez le pas s'il est différent de 1. Sinon inutile de remplir ce champ."));
     labelPas->setText(tr("<b>pas</b>"));
+    labelPas->setToolTip(pas->toolTip());
     labelEnd->setText(tr("<b>fpour</b>"));
 
     instructions->setToolTip(tr("Vous pouvez si vous le souhaitez utiliser cette partie pour le corps de la boucle."));
@@ -325,6 +351,7 @@ void TestPanel::changeEvent(QEvent *event){
 void TestPanel::retranslate(){
     condi->setToolTip(tr("Saisir une condition.<br> <b>Exemple1:</b> j == 2<br><b>Exemple2:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 ou j&gt;3<br>"));
     labelCondi->setText(tr("<b>si</b>"));
+    labelCondi->setToolTip(condi->toolTip());
     groupalors->setTitle(tr("alors"));
     instruction1->setToolTip(tr("Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions à éxécuter si la condition est satisfaite.<br><b>Exemple:</b>a:=a+1;\na:=a*a;"));
     groupsinon->setTitle(tr("sinon"));
@@ -401,7 +428,7 @@ void TestPanel::sendCommand(){
  *                  Panel Tanque
  *****************************************************************/
 
-void WhilePanel::changeEvent(QEvent *event){
+void TantquePanel::changeEvent(QEvent *event){
     if(event->type() == QEvent::LanguageChange)
         {
             retranslate();
@@ -409,15 +436,16 @@ void WhilePanel::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 
-void WhilePanel::retranslate(){
+void TantquePanel::retranslate(){
     condi->setToolTip(tr("Saisir une condition.<br> <b>Exemple1:</b> j == 1<br><b>Exemple1:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 ou j&gt;3<br>"));
     labelCondi->setText(tr("<b>tantque</b>"));
     group->setTitle(tr("faire"));
     instructions->setToolTip(tr("Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions à éxécuter tantque la condition est satisfaite.<br><b>Exemple:</b>a:=a+1;\na:=a*a;"));
     labelEnd->setText(tr("<b>ftantque</b>"));
+    labelCondi->setToolTip(condi->toolTip());
 }
 
-WhilePanel::WhilePanel(WizardAlgo *parent):AlgoTabChild(parent){
+TantquePanel::TantquePanel(WizardAlgo *parent):AlgoTabChild(parent){
 
     algoPanel=parent;
 
@@ -451,7 +479,7 @@ WhilePanel::WhilePanel(WizardAlgo *parent):AlgoTabChild(parent){
     retranslate();
 }
 
-void WhilePanel::sendCommand(){
+void TantquePanel::sendCommand(){
     QString s="tantque ";
     QString tmp;
     QString indent="\t";
@@ -483,10 +511,14 @@ void FuncPanel::changeEvent(QEvent *event){
 void FuncPanel::retranslate(){
     func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple:</b> f(x,y)"));
     labelFunc->setText(tr("fonction+args:"));
-    retour->setToolTip(tr("<center><b>return</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));
-    varloc->setToolTip(tr("<center><b>local</b></center>Saisir les noms de variables utilisées uniquement à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
-    symbloc->setToolTip(tr("<center><b>assume(    ,symbol)</b></center>Un symbole est une lettre utilisable dans un calcul mathématique. On peut utiliser une variable globale non initialisée. En revanche si l'on souhaite avoir des symboles locaux, il faut les déclarer ici.<br> <b>Exemple:</b> t,u"));
+    labelFunc->setToolTip(func->toolTip());
+    retour->setToolTip(tr("<center><b>return ??</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));
+    labelRetour->setToolTip(retour->toolTip());
+    varloc->setToolTip(tr("<center><b>local ?? ;</b></center>Saisir les noms des variables qui ne sont utilisées qu'à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
+    labelVarloc->setToolTip(varloc->toolTip());
+    symbloc->setToolTip(tr("<center><b>assume(  ?? ,symbol);</b></center>Un symbole est une lettre utilisable dans un calcul mathématique. On peut utiliser une variable globale non initialisée. En revanche si l'on souhaite avoir des symboles locaux, il faut les déclarer ici.<br> <b>Exemple:</b> t,u"));
     labelSymbloc->setText(tr("Symboles locaux:"));
+    labelSymbloc->setToolTip(symbloc->toolTip());
 
     instructions->setToolTip(tr(" Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction."));
 
@@ -499,14 +531,15 @@ FuncPanel::FuncPanel(WizardAlgo *parent):AlgoTabChild(parent){
     func=new QLineEdit;
     labelFunc=new QLabel("");
     labelFunc->setBuddy(func);
-    labelEnd=new QLabel("<center><b>...}</b></center>");
+    labelEnd=new QLabel("<center><b>}</b></center>");
 
-    QLabel *f1=new QLabel("<b>{</b>");
+    QLabel *f1=new QLabel("<b>:={</b>");
     QLabel *f2=new QLabel("<b>;</b>");
 
     varloc=new QLineEdit("");
     labelVarloc=new QLabel("<b>local</b>");
     labelVarloc->setBuddy(varloc);
+
 
     symbloc=new QLineEdit("");
     labelSymbloc=new QLabel("");
@@ -522,7 +555,7 @@ FuncPanel::FuncPanel(WizardAlgo *parent):AlgoTabChild(parent){
     instructions=new QPlainTextEdit(this);
     layout->addWidget(instructions);
     group->setLayout(layout);
-    group->setTitle(":={");
+    //group->setTitle(":={");
 
     retour=new QLineEdit("");
     labelRetour=new QLabel("<b>return</b>");
@@ -598,6 +631,98 @@ void FuncPanel::sendCommand(){
     algoPanel->sendCommand(s);
 }
 
+
+/**********************************************************
+ *                      If Panel C Style
+ *********************************************************/
+
+void IfPanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+
+void IfPanel::retranslate(){
+    condi->setToolTip(tr("<center><b>if( ?? ){...</b></center>Saisir une condition.<br> <b>Exemple1:</b> j == 2<br><b>Exemple2:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 || j&gt;3<br><b>ou: </b><code>||</code> (synonyme: <code>or</code>)<br><b>et: </b><code>&&</code> (synonyme: <code>and</code>)<br><b>negation</b><code>!</code> (synonyme: <code>not</code>)"));
+    labelCondi->setToolTip(condi->toolTip());
+    instruction1->setToolTip(tr("Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions à éxécuter si la condition est satisfaite.<br><b>Exemple:</b>a:=a+1;\na:=a*a;"));
+    instruction2->setToolTip(tr("Facultatif. Il faut modifier cette entrée pour obtenir un <em>else{</em><br><b>Exemple:</b><br>a:=a+1;<br>a:=a*a;"));
+    groupsinon->setToolTip(instruction2->toolTip());
+}
+
+IfPanel::IfPanel(WizardAlgo *parent):AlgoTabChild(parent){
+
+    algoPanel=parent;
+
+    condi=new QLineEdit;
+    labelCondi=new QLabel("<b>if(</b>");
+    labelCondi->setBuddy(condi);
+    QLabel *pt1=new QLabel("<b>){</b>");
+
+    QPushButton *button=new QPushButton;
+    button->setIcon(QIcon(":/images/right.png"));
+
+    labelEnd=new QLabel("<b>}</b>");
+
+    groupalors=new QGroupBox();
+    QHBoxLayout *layoutalors=new QHBoxLayout;
+    instruction1=new QPlainTextEdit(this);
+    layoutalors->addWidget(instruction1);
+    groupalors->setLayout(layoutalors);
+
+    groupsinon=new QGroupBox();
+    QHBoxLayout *layoutsinon=new QHBoxLayout;
+    groupsinon->setTitle("else{");
+    instruction2=new QPlainTextEdit(this);
+    layoutsinon->addWidget(instruction2);
+    groupsinon->setLayout(layoutsinon);
+    QLabel *pt2=new QLabel("<b>}</b>");
+
+
+    QGridLayout *grid=new QGridLayout();
+    grid->addWidget(labelCondi,0,0);
+    grid->addWidget(condi,0,1);
+    grid->addWidget(pt1,0,2);
+
+    grid->addWidget(groupalors,1,0,1,2);
+    grid->addWidget(pt2,1,2,Qt::AlignBottom);
+    grid->addWidget(groupsinon,2,0,1,2);
+    grid->addWidget(labelEnd,3,0);
+    grid->addWidget(button,3,1,Qt::AlignVCenter);
+    this->setLayout(grid);
+
+    connect(button,SIGNAL(clicked()),this,SLOT(sendCommand()));
+
+    retranslate();
+
+}
+
+void IfPanel::sendCommand(){
+    QString s="if(";
+    QString tmp;
+    QString indent="\t";
+    s.append(condi->text()).append(" ){\n");
+    tmp=instruction1->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
+    if(!tmp.isEmpty()){
+        s.append(indent+tmp+"\n");
+    }
+    else{
+        s.append("\n");
+    }
+    tmp=instruction2->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
+    if(!tmp.isEmpty()){
+        s.append("}\nelse{\n"+indent+tmp+"\n");
+    }
+    s.append("};");
+    algoPanel->sendCommand(s);
+}
+
+
+
 /******************************************************************
  *                 For Panel C style
  ******************************************************************/
@@ -612,11 +737,13 @@ void ForPanel::changeEvent(QEvent *event){
 void ForPanel::retranslate(){
     ini->setToolTip(tr("<center><b>for(??;...;...){...}</b></center>Saisir l'initialisation de la variable de boucle. (Attention, i est reservé pour le nombre complexe)<br> <b>Exemple:</b> j:=0"));
     labelIni->setText(tr("Initialisation:"));
+    labelIni->setToolTip(ini->toolTip());
     arret->setToolTip(tr("<center><b>for(...;??;...){...}</b></center>Condition pour continuer la boucle<br> <b>Exemple:</b>j&lt;10 (pour continuer tantque j&lt;10)"));
     labelArret->setText(tr("Condition:"));
+    labelArret->setToolTip(arret->toolTip());
     incr->setToolTip(tr("<center><b>for(...;...;??){...}</b></center>instruction pour modifier la variable de boucle.<br><b>Exemple1</b>: j++<br><b>Exemple2:</b>j:=j+2"));
     labelIncr->setText(tr("Incrémentation:"));
-
+    labelIncr->setToolTip(incr->toolTip());
     instructions->setToolTip(tr("Vous pouvez (si vous le souhaitez le faire maintenant) utiliser cette partie pour le corps de la boucle."));
 
 }
@@ -636,7 +763,7 @@ ForPanel::ForPanel(WizardAlgo *parent):AlgoTabChild(parent){
         labelIncr=new QLabel("");
         labelIncr->setBuddy(incr);
 
-        labelEnd=new QLabel("<center><b>...}</b></center>");
+        labelEnd=new QLabel("<center><b>}</b></center>");
 
         QPushButton *button=new QPushButton;
         button->setIcon(QIcon(":/images/right.png"));
@@ -707,3 +834,75 @@ void ForPanel::sendCommand(){
     algoPanel->sendCommand(s);
 }
 
+/*****************************************************************
+ *                  Panel While C Style
+ *****************************************************************/
+
+void WhilePanel::changeEvent(QEvent *event){
+    if(event->type() == QEvent::LanguageChange)
+        {
+            retranslate();
+        }
+    QWidget::changeEvent(event);
+}
+
+void WhilePanel::retranslate(){
+    condi->setToolTip(tr("Saisir une condition.<br> <b>Exemple1:</b> j == 1<br><b>Exemple1:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 ou j&gt;3<br>"));
+    labelCondi->setToolTip(condi->toolTip());
+    instructions->setToolTip(tr("Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions à éxécuter tantque la condition est satisfaite.<br><b>Exemple:</b>a:=a+1;\na:=a*a;"));
+    labelCondi->setToolTip(condi->toolTip());
+}
+
+WhilePanel::WhilePanel(WizardAlgo *parent):AlgoTabChild(parent){
+
+    algoPanel=parent;
+
+    condi=new QLineEdit;
+    labelCondi=new QLabel("<b>while(</b>");
+    labelCondi->setBuddy(condi);
+    QLabel *pt1=new QLabel("<b>){</b>");
+
+    QPushButton *button=new QPushButton;
+    button->setIcon(QIcon(":/images/right.png"));
+
+    labelEnd=new QLabel("<b>}</b>");
+
+    group=new QGroupBox();
+    QHBoxLayout *layout=new QHBoxLayout;
+    instructions=new QPlainTextEdit(this);
+    layout->addWidget(instructions);
+    group->setLayout(layout);
+
+    QGridLayout *grid=new QGridLayout();
+    grid->addWidget(labelCondi,0,0);
+    grid->addWidget(condi,0,1);
+    grid->addWidget(pt1,0,2);
+
+
+    grid->addWidget(group,1,0,1,2);
+    grid->addWidget(labelEnd,2,0);
+    grid->addWidget(button,2,1,Qt::AlignVCenter);
+    this->setLayout(grid);
+
+    connect(button,SIGNAL(clicked()),this,SLOT(sendCommand()));
+
+    retranslate();
+}
+
+void WhilePanel::sendCommand(){
+    QString s="while( ";
+    QString tmp;
+    QString indent="\t";
+    s.append(condi->text()).append(" ){\n");
+    tmp=instructions->document()->toPlainText();
+    tmp.replace("\n","\n"+indent);
+    if(!tmp.isEmpty()){
+        s.append(indent+tmp+"\n");
+    }
+    else{
+        s.append("\n");
+    }
+
+    s.append("};");
+    algoPanel->sendCommand(s);
+}

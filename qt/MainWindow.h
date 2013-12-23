@@ -169,6 +169,7 @@ private:
     QListWidgetItem *equationItem;
     QListWidgetItem *catalogItem;
     QListWidgetItem *algoItem;
+    QListWidgetItem *algoscolItem;
 
 
 //    QLabel* warningFirstEvaluation;

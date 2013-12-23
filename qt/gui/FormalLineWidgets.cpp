@@ -436,6 +436,14 @@ void TextInput::addMultiLines(int pos,int removed,int charsAdded){
 
 
     }
+    //user cut a text:
+    if (charsAdded-removed<1){
+        //QTextCursor newcursor(document());
+        //newcursor.setPosition(pos+charsAdded-removed,QTextCursor::KeepAnchor);
+        //newcursor.setPosition(pos,QTextCursor::MoveAnchor);
+        int count=this->toPlainText().count("\n");
+        setFixedHeight((2+count)*(fontMetrics().lineSpacing()+1));
+    }
 }
 
 QString TextInput::textUnderCursor() const{

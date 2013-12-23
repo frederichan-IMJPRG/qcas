@@ -45,7 +45,7 @@ void WizardEquation::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void WizardEquation::retranslate(){
-    list->setItemText(0,tr("Equation/inéquation"));
+    list->setItemText(0,tr("Equation/Inéquation"));
     list->setItemText(1,tr("Equation différentielle"));
     list->setItemText(2,tr("Système d'équations"));
 
@@ -91,23 +91,36 @@ void EqPanel::changeEvent(QEvent *event){
 }
 void EqPanel::retranslate(){
     eq->setToolTip(tr("Saisir l'équation à résoudre <br> <b>Exemple: </b> x^2+2*x=x^3"));
+    labelEq->setText(tr("Equation/Inéquation"));
+    labelVar->setText(tr("Variable:"));
+    var->setToolTip(tr("Indiquez le nom de l'inconnue (une seule variable).<br><b>Exemple: </b>x"));
+    labelVar->setToolTip(var->toolTip());
     numeric->setText(tr("Résolution numérique"));
     inC->setText(tr("Solutions complexes"));
+    hyp->setToolTip(tr("<center><b>supposons</b></center>(Facultatif). Pour résoudre, il faut  parfois faire une hypothèse sur la variable.<br><b>Exemple: </b>x&gt;-2*pi and x&lt;2*pi"));
+    labelHyp->setText(tr("Hypothèses"));
+    purge->setToolTip(tr("<center><b>purge(??)</b></center>Nettoyer la variable aprés la résolution pour enlever les hypothèses."));
 
 }
 EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         eqPanel=parent;
-        QLabel *labelEq=new QLabel(tr("&Equation:"));
+        labelEq=new QLabel("");
         eq=new QLineEdit;
         labelEq->setBuddy(eq);
 
 
-        QLabel *labelVar=new QLabel(tr("&Variable:"));
+        labelVar=new QLabel("");
         var=new QLineEdit("x");
         labelVar->setBuddy(var);
 
+        labelHyp=new QLabel("");
+        hyp=new QLineEdit("");
+        labelHyp->setBuddy(hyp);
+
         numeric=new QCheckBox("");
         inC=new QCheckBox("");
+        purge=new QCheckBox("");
+        purge->setChecked(true);
 
         QPushButton *button=new QPushButton;
         button->setIcon(QIcon(":/images/right.png"));
@@ -117,15 +130,19 @@ EqPanel::EqPanel(WizardEquation *parent):TabChild(parent){
         grid->addWidget(eq,0,1);
         grid->addWidget(labelVar,1,0);
         grid->addWidget(var,1,1);
-        grid->addWidget(numeric,2,0,2,1,Qt::AlignTop);
-        grid->addWidget(inC,3,0,2,1,Qt::AlignTop);
-        grid->addWidget(button,4,1,Qt::AlignTop);
+        grid->addWidget(labelHyp,2,0);
+        grid->addWidget(hyp,2,1);
+        grid->addWidget(purge,2,2);
+        grid->addWidget(numeric,3,0,2,1,Qt::AlignTop);
+        grid->addWidget(inC,4,0,2,1,Qt::AlignTop);
+        grid->addWidget(button,5,1,Qt::AlignTop);
         this->setLayout(grid);
 
         connect(button,SIGNAL(clicked()),this,SLOT(sendEquation()));
         connect(numeric,SIGNAL(stateChanged(int)),this,SLOT(numericCheck(int)));
         connect(inC,SIGNAL(stateChanged(int)),this,SLOT(inC_Check(int)));
-	
+        connect(purge,SIGNAL(stateChanged(int)),this,SLOT(purge_Check(int)));
+
 	retranslate();
    }
 void EqPanel::inC_Check(int a){
@@ -144,8 +161,20 @@ void EqPanel::numericCheck(int a){
     }
 }
 
+void EqPanel::purge_Check(int a){
+    if (a==Qt::Checked){
+        if (purge->isChecked()) {
+            purge->setChecked(false);
+        }
+    }
+}
+
 void EqPanel::sendEquation(){
     QString s;
+    if(!hyp->text().trimmed().isEmpty()){
+        s="assume(";
+        s.append(hyp->text().append(" ):;\n"));
+    }
     if (inC->isChecked()) {
         s.append("csolve(");
     }
@@ -157,6 +186,8 @@ void EqPanel::sendEquation(){
     s.append(",");
     s.append(var->text());
     s.append(");");
+    if(purge->isChecked() && !hyp->text().trimmed().isEmpty())
+        s.append("\npurge( ").append(var->text()).append("):;");
     eqPanel->sendEquation(s);
 }
 

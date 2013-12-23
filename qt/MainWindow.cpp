@@ -1186,9 +1186,10 @@ void MainWindow::retranslateGui(){
     displayInStatusBar(tr("Shift+Entrée pour évaluer"),"red");
 
     matrixItem->setText(tr("Matrices"));
-    equationItem->setText(tr("Equations"));
+    equationItem->setText(tr("Résoudre"));
     catalogItem->setText(tr("Catalogue"));
-    algoItem->setText(tr("Prog/Algo"));
+    algoItem->setText(tr("Prog/Giac"));
+    algoscolItem->setText(tr("Prog/Algo"));
     //fred
 }
 void MainWindow::printHeader(){
@@ -1279,7 +1280,8 @@ void MainWindow::createWizards(){
     wizardPages->addWidget(new WizardMatrix(this));
     wizardPages->addWidget(new WizardEquation(this));
     wizardPages->addWidget(new WizardCatalog(this));
-    wizardPages->addWidget(new WizardAlgo(this));
+    wizardPages->addWidget(new WizardAlgo(this,false));
+    wizardPages->addWidget(new WizardAlgo(this,true));
     wizardPages->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     matrixItem=new QListWidgetItem(QIcon(":/images/matrix.png"),"",wizardList);
@@ -1294,6 +1296,9 @@ void MainWindow::createWizards(){
     algoItem=new QListWidgetItem(QIcon(":/images/programming.png"),"",wizardList);
     algoItem->setTextAlignment(Qt::AlignHCenter);
     algoItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    algoscolItem=new QListWidgetItem(QIcon(":/images/prog-scol100.png"),"",wizardList);
+    algoscolItem->setTextAlignment(Qt::AlignHCenter);
+    algoscolItem->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     connect(wizardList,SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),this,SLOT(changeWizard(QListWidgetItem*,QListWidgetItem*)));
 
 }
@@ -1663,7 +1668,7 @@ void MainWindow::evaluate(){
     case MainSheet::FORMAL_TYPE:
         {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
                 evaluate(form->getCurrentLine()->getTextInput()->toPlainText());
-            }
+        }
         break;
     case MainSheet::SPREADSHEET_TYPE:
     case MainSheet::G2D_TYPE:
