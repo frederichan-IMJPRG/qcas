@@ -40,7 +40,8 @@ for FI in FICH:
                  klist=keyword.split(":")
               else:
                  klist=[keyword]
-              keyword1='<a href="'+(klist[0]).replace("(","").replace(")","")+'">'+klist[0]+'</a>'
+              keyword1='<a href="'+(klist[0]).replace("(","").replace(")","")+'">'+'?'+'</a>'
+              keyword1=keyword1+' <a href="!'+(klist[0]).replace("(","").replace(")","")+'">'+klist[0]+'</a>'
               keyword2=''
               if (len(klist)>1):
                  keyword2=': <font size="-1">'    

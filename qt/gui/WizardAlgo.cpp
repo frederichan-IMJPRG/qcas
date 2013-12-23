@@ -54,7 +54,7 @@ void WizardAlgo::retranslate(){
         list->setItemText(3,tr("tantque...ftantque"));
     }
     else{
-       list->setItemText(0,tr("Fonction: ")+"f(  ):={   }");
+       list->setItemText(0,tr("Nouvelle fonction: ")+"f(  ):={   }");
        list->setItemText(1,tr("Test: ")+"if(  ){   }...");
        list->setItemText(2,tr("Boucle: ")+"for( ; ; ){   }");
        list->setItemText(3,tr("Boucle: ")+"while(  ){   }");
@@ -314,25 +314,25 @@ LoopPanel::LoopPanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void LoopPanel::sendCommand(){
-    QString s="pour ";
+    QString s=tr("pour ");
     QString tmp;
     QString indent="\t";
 
     s.append(varname->text());
-    s.append(" de ").append(deb->text());
-    s.append(" jusque ").append(fin->text());
+    s.append(tr(" de ")).append(deb->text());
+    s.append(tr(" jusque ")).append(fin->text());
     tmp=pas->text();
     if(!tmp.trimmed().isEmpty()){
-        s.append(" pas "+tmp+" ");
+        s.append(tr(" pas ")+tmp+" ");
     }
-    s.append(" faire\n");
+    s.append(tr(" faire\n"));
     tmp=instructions->document()->toPlainText();
     tmp.replace("\n","\n"+indent);
     if(!tmp.trimmed().isEmpty()){
         s.append(indent+tmp+"\n");
     }
     else(s.append("\n"));
-    s.append("fpour;");
+    s.append(tr("fpour;"));
     algoPanel->sendCommand(s);
 }
 
@@ -402,10 +402,10 @@ TestPanel::TestPanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void TestPanel::sendCommand(){
-    QString s="si ";
+    QString s=tr("si ");
     QString tmp;
     QString indent="\t";
-    s.append(condi->text()).append(" alors\n");
+    s.append(condi->text()).append(tr(" alors\n"));
     tmp=instruction1->document()->toPlainText();
     tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
@@ -417,9 +417,9 @@ void TestPanel::sendCommand(){
     tmp=instruction2->document()->toPlainText();
     tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
-        s.append("sinon\n"+indent+tmp+"\n");
+        s.append(tr("sinon\n")+indent+tmp+"\n");
     }
-    s.append("fsi;");
+    s.append(tr("fsi;"));
     algoPanel->sendCommand(s);
 }
 
@@ -480,10 +480,10 @@ TantquePanel::TantquePanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void TantquePanel::sendCommand(){
-    QString s="tantque ";
+    QString s=tr("tantque ");
     QString tmp;
     QString indent="\t";
-    s.append(condi->text()).append(" faire\n");
+    s.append(condi->text()).append(tr(" faire\n"));
     tmp=instructions->document()->toPlainText();
     tmp.replace("\n","\n"+indent);
     if(!tmp.isEmpty()){
@@ -493,7 +493,7 @@ void TantquePanel::sendCommand(){
         s.append("\n");
     }
 
-    s.append("ftantque;");
+    s.append(tr("ftantque;"));
     algoPanel->sendCommand(s);
 }
 

@@ -553,27 +553,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DiffPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="165"/>
+        <location filename="../gui/WizardEquation.cpp" line="196"/>
         <source>&amp;Equation:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="169"/>
+        <location filename="../gui/WizardEquation.cpp" line="200"/>
         <source>Saisir l&apos;Ã©quation diffÃ©rentielle&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; y&apos;&apos;+y=sin(x)</source>
         <translation>Input the differential equation&lt;br&gt; &lt;b&gt; Example: &lt;/b&gt; y&apos;&apos;+y=sin(x)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="170"/>
+        <location filename="../gui/WizardEquation.cpp" line="201"/>
         <source>&amp;Variable:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="174"/>
+        <location filename="../gui/WizardEquation.cpp" line="205"/>
         <source>Conditions initiales</source>
         <translation>Initial conditions</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="177"/>
+        <location filename="../gui/WizardEquation.cpp" line="208"/>
         <source>&lt;b&gt;Exemples:&lt;/b&gt;&lt;br&gt; y(0)=1&lt;br&gt;y&apos;(0)=2</source>
         <translation>&lt;b&gt;Examples:&lt;/b&gt;&lt;br&gt; y(0)=1&lt;br&gt;y&apos;(0)=2</translation>
     </message>
@@ -612,29 +612,87 @@ que toutes ses dÃ©pendances.
 <context>
     <name>EqPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="100"/>
-        <source>&amp;Equation:</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="../gui/WizardEquation.cpp" line="93"/>
         <source>Saisir l&apos;Ã©quation Ã  rÃ©soudre &lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; x^2+2*x=x^3</source>
         <translation>Input the equation to be solved &lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; x^2+2*x=x^3</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="105"/>
-        <source>&amp;Variable:</source>
+        <location filename="../gui/WizardEquation.cpp" line="94"/>
+        <source>Equation/InÃ©quation</source>
+        <translation>Equation/Inequation</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="95"/>
+        <source>Variable:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="94"/>
+        <location filename="../gui/WizardEquation.cpp" line="96"/>
+        <source>Indiquez le nom de l&apos;inconnue (une seule variable).&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x</source>
+        <translation>Enter the indeterminate name. (Only one).&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="98"/>
         <source>RÃ©solution numÃ©rique</source>
         <translation>Numerical solve</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="95"/>
+        <location filename="../gui/WizardEquation.cpp" line="99"/>
         <source>Solutions complexes</source>
         <translation>Complex solutions</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="100"/>
+        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
+        <translation>&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="101"/>
+        <source>HypothÃ¨ses</source>
+        <translation>Hypothesis</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="102"/>
+        <source>&lt;center&gt;&lt;b&gt;purge(??)&lt;/b&gt;&lt;/center&gt;Nettoyer la variable aprÃ©s la rÃ©solution pour enlever les hypothÃ¨ses.</source>
+        <translation>&lt;center&gt;&lt;b&gt;purge(??)&lt;/b&gt;&lt;/center&gt;After the resolution, clean a variable to remove the previous assumptions.</translation>
+    </message>
+</context>
+<context>
+    <name>ForPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="738"/>
+        <source>&lt;center&gt;&lt;b&gt;for(??;...;...){...}&lt;/b&gt;&lt;/center&gt;Saisir l&apos;initialisation de la variable de boucle. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j:=0</source>
+        <translation>&lt;center&gt;&lt;b&gt;for(??;...;...){...}&lt;/b&gt;&lt;/center&gt;enter the initialisation command for the loop variable. (Warning, &lt;code&gt;i&lt;/code&gt; is a keyword reserved for hte complex number)&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; j:=0</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="739"/>
+        <source>Initialisation:</source>
+        <translation>Initialization:</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="741"/>
+        <source>&lt;center&gt;&lt;b&gt;for(...;??;...){...}&lt;/b&gt;&lt;/center&gt;Condition pour continuer la boucle&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt;j&amp;lt;10 (pour continuer tantque j&amp;lt;10)</source>
+        <translation>&lt;center&gt;&lt;b&gt;for(...;??;...){...}&lt;/b&gt;&lt;/center&gt;Condition to continue in the loop&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt;j&amp;lt;10 (pour continuer tantque j&amp;lt;10)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="742"/>
+        <source>Condition:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="744"/>
+        <source>&lt;center&gt;&lt;b&gt;for(...;...;??){...}&lt;/b&gt;&lt;/center&gt;instruction pour modifier la variable de boucle.&lt;br&gt;&lt;b&gt;Exemple1&lt;/b&gt;: j++&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;j:=j+2</source>
+        <translation>&lt;center&gt;&lt;b&gt;for(...;...;??){...}&lt;/b&gt;&lt;/center&gt;update the loop variable&lt;br&gt;&lt;b&gt;Example1&lt;/b&gt;: j++&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;j:=j+2</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="745"/>
+        <source>IncrÃ©mentation:</source>
+        <translation>Incrementation</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="747"/>
+        <source>Vous pouvez (si vous le souhaitez le faire maintenant) utiliser cette partie pour le corps de la boucle.</source>
+        <translation>(Optional). You can enter the loop code here.</translation>
     </message>
 </context>
 <context>
@@ -663,6 +721,117 @@ que toutes ses dÃ©pendances.
         <location filename="../output.cpp" line="109"/>
         <source>Zoom Out</source>
         <translation></translation>
+    </message>
+</context>
+<context>
+    <name>FuncPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="512"/>
+        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt; f(x,y)</source>
+        <translation>Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="513"/>
+        <source>fonction+args:</source>
+        <translation>function+args</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="515"/>
+        <source>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
+        <translation>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Return value of the function. It can be a single object, or a list or sequence.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;[a,b,c]</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="517"/>
+        <source>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
+        <translation>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Variables that are usefull only inside the program.&lt;br&gt;NB: Your program must initialize them.&lt;br&gt; &lt;b&gt; Example:&lt;/b&gt; j,k</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="519"/>
+        <source>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
+        <translation>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;A symbol is a letter which can be used in a mathematical computation. One can use a free global variable. But if you want a local symbol, put it here&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; t,u</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="520"/>
+        <source>Symboles locaux:</source>
+        <translation>Local symbols</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="523"/>
+        <source> Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction.</source>
+        <translation>(Optional). You can fill the main function here.</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="611"/>
+        <source>assume(</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>FunctionPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="125"/>
+        <source>&lt;center&gt;&lt;b&gt;fonction&lt;/b&gt;&lt;/center&gt;Saisir le nom et les arguments&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; f(a,b)</source>
+        <translation>&lt;center&gt;&lt;b&gt;proc&lt;/b&gt;&lt;/center&gt;Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="126"/>
+        <source>&lt;b&gt;fonction&lt;/b&gt;</source>
+        <translation>&lt;b&gt;proc&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="128"/>
+        <source>&lt;center&gt;&lt;b&gt;local&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
+        <translation>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Variables that are usefull only inside the program.&lt;br&gt;NB: Your program must initialize them.&lt;br&gt; &lt;b&gt; Example:&lt;/b&gt; j,k</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="129"/>
+        <source>Variables locales:</source>
+        <translation>Local variables:</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="131"/>
+        <source>&lt;center&gt;&lt;b&gt;supposons(    ,symbol)&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
+        <translation>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;A symbol is a letter which can be used in a mathematical computation. One can use a free global variable. But if you want a local symbol, put it here&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; t,u</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="132"/>
+        <source>Symboles locaux:</source>
+        <translation>Local symbols:</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="134"/>
+        <source>&lt;center&gt;&lt;b&gt;retourne&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
+        <translation>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Return value of the function. It can be a single object, or a list or sequence.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;[a,b,c]</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="135"/>
+        <source>&lt;b&gt;retourne&lt;/b&gt;</source>
+        <translation>&lt;b&gt;return&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="137"/>
+        <source>Vous pouvez si vous le souhaitez utiliser cette partie pour complÃ©ter votre programme.</source>
+        <translation>(Optional) You can fill the code of your program here.</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="138"/>
+        <source>&lt;b&gt;ffonction&lt;/b&gt;</source>
+        <translation>&lt;b&gt;end_proc&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="194"/>
+        <source>fonction </source>
+        <translation>proc </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="212"/>
+        <source>supposons(</source>
+        <translation>assume(</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="227"/>
+        <source>ffonction;</source>
+        <translation>end_proc;</translation>
     </message>
 </context>
 <context>
@@ -1090,6 +1259,26 @@ que toutes ses dÃ©pendances.
     </message>
 </context>
 <context>
+    <name>IfPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="648"/>
+        <source>&lt;center&gt;&lt;b&gt;if( ?? ){...&lt;/b&gt;&lt;/center&gt;Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 || j&amp;gt;3&lt;br&gt;&lt;b&gt;ou: &lt;/b&gt;&lt;code&gt;||&lt;/code&gt; (synonyme: &lt;code&gt;or&lt;/code&gt;)&lt;br&gt;&lt;b&gt;et: &lt;/b&gt;&lt;code&gt;&amp;&amp;&lt;/code&gt; (synonyme: &lt;code&gt;and&lt;/code&gt;)&lt;br&gt;&lt;b&gt;negation&lt;/b&gt;&lt;code&gt;!&lt;/code&gt; (synonyme: &lt;code&gt;not&lt;/code&gt;)</source>
+        <translation>&lt;center&gt;&lt;b&gt;if( ?? ){...&lt;/b&gt;&lt;/center&gt;give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 || j&amp;gt;3&lt;br&gt;&lt;b&gt;or: &lt;/b&gt;&lt;code&gt;||&lt;/code&gt; (synonym: &lt;code&gt;or&lt;/code&gt;)&lt;br&gt;&lt;b&gt;and: &lt;/b&gt;&lt;code&gt;&amp;&amp;&lt;/code&gt; (synonym: &lt;code&gt;and&lt;/code&gt;)&lt;br&gt;&lt;b&gt;negation&lt;/b&gt;&lt;code&gt;!&lt;/code&gt; (synonym: &lt;code&gt;not&lt;/code&gt;)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="650"/>
+        <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
+a:=a*a;</source>
+        <translation>(Optional) Give here the commands to be executed if the condition is true&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt;a:=a+1;
+a:=a*a;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="651"/>
+        <source>Facultatif. Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;else{&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
+        <translation>(Optional). To add an &lt;em&gt;else&lt;/em&gt; bloc, you must modify this entry.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</translation>
+    </message>
+</context>
+<context>
     <name>Interactive2dPanel</name>
     <message>
         <location filename="../gui/prefdialog.cpp" line="604"/>
@@ -1143,6 +1332,96 @@ que toutes ses dÃ©pendances.
         <location filename="../output.cpp" line="6301"/>
         <source>personnalisÃ©</source>
         <translation>Custommed</translation>
+    </message>
+</context>
+<context>
+    <name>LoopPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="244"/>
+        <source>&lt;center&gt;&lt;b&gt;pour&lt;/b&gt;&lt;/center&gt;Saisir le nom de la variable. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j</source>
+        <translation>&lt;center&gt;&lt;b&gt;for&lt;/b&gt;&lt;/center&gt;give the name of the loop variable. (Warning, &lt;code&gt;i&lt;/code&gt; is reserved for the complex number)&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; j</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="245"/>
+        <source>&lt;b&gt;pour&lt;/b&gt;</source>
+        <translation>&lt;b&gt;for&lt;/for&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="247"/>
+        <source>&lt;center&gt;&lt;b&gt;de&lt;/b&gt;&lt;/center&gt;Valeur de dÃ©part:&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; 0</source>
+        <translation>&lt;center&gt;&lt;b&gt;from&lt;/b&gt;&lt;/center&gt;First value:&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; 0</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="248"/>
+        <source>&lt;b&gt;de&lt;/b&gt;</source>
+        <translation>&lt;b&gt;from&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="250"/>
+        <source>&lt;center&gt;&lt;b&gt;jusque&lt;/b&gt;&lt;/center&gt;valeur de fin</source>
+        <translation>&lt;center&gt;&lt;b&gt;to&lt;/b&gt;&lt;/center&gt;last value</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="251"/>
+        <source>&lt;b&gt;jusque&lt;/b&gt;</source>
+        <translation>&lt;b&gt;to&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="253"/>
+        <source>&lt;center&gt;&lt;b&gt;pas&lt;/b&gt;&lt;/center&gt;PrÃ©cisez le pas s&apos;il est diffÃ©rent de 1. Sinon inutile de remplir ce champ.</source>
+        <translation>&lt;center&gt;&lt;b&gt;by&lt;/b&gt;&lt;/center&gt;Optional if the step is 1. Else give the step.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;-2</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="254"/>
+        <source>&lt;b&gt;pas&lt;/b&gt;</source>
+        <translation>&lt;b&gt;by&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="256"/>
+        <source>&lt;b&gt;fpour&lt;/b&gt;</source>
+        <translation>&lt;b&gt;end_for&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="258"/>
+        <source>Vous pouvez si vous le souhaitez utiliser cette partie pour le corps de la boucle.</source>
+        <translation>(Optional) You can fill the loop commands here.</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="259"/>
+        <source>faire</source>
+        <translation>do</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="317"/>
+        <source>pour </source>
+        <translation>for </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="322"/>
+        <source> de </source>
+        <translation> from </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="323"/>
+        <source> jusque </source>
+        <translation> to </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="326"/>
+        <source> pas </source>
+        <translation> by </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="328"/>
+        <source> faire
+</source>
+        <translation> do
+</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="335"/>
+        <source>fpour;</source>
+        <translation>end_do;</translation>
     </message>
 </context>
 <context>
@@ -1207,32 +1486,32 @@ Do you want to do it now?</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../MainWindow.cpp" line="319"/>
+        <location filename="../MainWindow.cpp" line="320"/>
         <source>&amp;Nouveau</source>
         <translation>&amp;New Session</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="360"/>
+        <location filename="../MainWindow.cpp" line="361"/>
         <source>Ctrl+N</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="321"/>
+        <location filename="../MainWindow.cpp" line="322"/>
         <source>CrÃ©er un nouvel espace de travail</source>
         <translation>Create a new and empty session</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="323"/>
+        <location filename="../MainWindow.cpp" line="324"/>
         <source>&amp;Ouvrir...</source>
         <translation>&amp;Open</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="324"/>
+        <location filename="../MainWindow.cpp" line="325"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="325"/>
+        <location filename="../MainWindow.cpp" line="326"/>
         <source>Ouvrir un nouveau fichier</source>
         <translation>Open a new file</translation>
     </message>
@@ -1241,82 +1520,82 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&amp;Save</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="328"/>
+        <location filename="../MainWindow.cpp" line="329"/>
         <source>Ctrl+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="329"/>
+        <location filename="../MainWindow.cpp" line="330"/>
         <source>Enregistrer le fichier courant</source>
         <translation>Save current workspace</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="331"/>
+        <location filename="../MainWindow.cpp" line="332"/>
         <source>&amp;Enregistrer sous...</source>
         <translation>&amp;Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="333"/>
+        <location filename="../MainWindow.cpp" line="334"/>
         <source>Enregistrer sous un nouveau nom de fichier</source>
         <translation>Save current session with another name</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="335"/>
+        <location filename="../MainWindow.cpp" line="336"/>
         <source>&amp;Quitter</source>
         <translation>&amp;Quit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="336"/>
+        <location filename="../MainWindow.cpp" line="337"/>
         <source>Ctrl+Q</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="337"/>
+        <location filename="../MainWindow.cpp" line="338"/>
         <source>Quitter</source>
         <translation>Exit from Qcas</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="339"/>
+        <location filename="../MainWindow.cpp" line="340"/>
         <source>&amp;Copier</source>
         <translation>&amp;Copy</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="340"/>
+        <location filename="../MainWindow.cpp" line="341"/>
         <source>Ctrl+C</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="341"/>
+        <location filename="../MainWindow.cpp" line="342"/>
         <source>Copier</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="343"/>
+        <location filename="../MainWindow.cpp" line="344"/>
         <source>Co&amp;uper</source>
         <translation>Cu&amp;t</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="344"/>
+        <location filename="../MainWindow.cpp" line="345"/>
         <source>Ctrl+X</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="345"/>
+        <location filename="../MainWindow.cpp" line="346"/>
         <source>Couper</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="347"/>
+        <location filename="../MainWindow.cpp" line="348"/>
         <source>C&amp;oller</source>
         <translation>P&amp;aste</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="348"/>
+        <location filename="../MainWindow.cpp" line="349"/>
         <source>Ctrl+V</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="349"/>
+        <location filename="../MainWindow.cpp" line="350"/>
         <source>Coller</source>
         <translation>PAste</translation>
     </message>
@@ -1325,37 +1604,37 @@ Do you want to do it now?</translation>
         <translation type="obsolete">U&amp;ndo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="352"/>
+        <location filename="../MainWindow.cpp" line="353"/>
         <source>Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="353"/>
+        <location filename="../MainWindow.cpp" line="354"/>
         <source>Annuler</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="355"/>
+        <location filename="../MainWindow.cpp" line="356"/>
         <source>&amp;RÃ©tablir</source>
         <translation>&amp;Redo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="356"/>
+        <location filename="../MainWindow.cpp" line="357"/>
         <source>Shift+Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="357"/>
+        <location filename="../MainWindow.cpp" line="358"/>
         <source>RÃ©tablir</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="359"/>
+        <location filename="../MainWindow.cpp" line="360"/>
         <source>&amp;Nouvelle EntrÃ©e</source>
         <translation>&amp;New entry</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="361"/>
+        <location filename="../MainWindow.cpp" line="362"/>
         <source>Nouvelle EntrÃ©e</source>
         <translation>Insert a new line</translation>
     </message>
@@ -1376,83 +1655,83 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Hints:&lt;br&gt;&lt;center&gt;CTRL Space&lt;/center&gt;gives the completions of the known keywords.&lt;br&gt;&lt;center&gt;F1&lt;/center&gt;When the mouse is left on a keyword a tooltips appears&lt;br&gt;then F1 will show this keyword documentation in the help widget (on the left)&lt;br&gt;On can hide the lefts widgets by pushing the midle bar strongly on the lefts.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="374"/>
+        <location filename="../MainWindow.cpp" line="375"/>
         <source>&amp;Evaluer</source>
         <translation>&amp;Compute</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="375"/>
+        <location filename="../MainWindow.cpp" line="376"/>
         <source>Shift+EntrÃ©e</source>
         <translation>Shift+Enter</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="376"/>
+        <location filename="../MainWindow.cpp" line="377"/>
         <source>Evaluer</source>
         <translation>Evaluate</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="378"/>
+        <location filename="../MainWindow.cpp" line="379"/>
         <source>&amp;Aide Html</source>
         <translation>&amp;Html help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="379"/>
+        <location filename="../MainWindow.cpp" line="380"/>
         <source>Aide html de Giac/Qcas</source>
         <translation>Giac&apos;s html help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="381"/>
+        <location filename="../MainWindow.cpp" line="382"/>
         <source>&amp;A propos</source>
         <translation>&amp;About</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="382"/>
+        <location filename="../MainWindow.cpp" line="383"/>
         <source>Principales informations concernant QCAS</source>
         <translation>About</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="385"/>
         <location filename="../MainWindow.cpp" line="386"/>
+        <location filename="../MainWindow.cpp" line="387"/>
         <source>Interrompre le calcul en cours</source>
         <translation>stop computation</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="389"/>
+        <location filename="../MainWindow.cpp" line="390"/>
         <source>&amp;PrÃ©fÃ©rences...</source>
         <translation>&amp;Preferences</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="439"/>
+        <location filename="../MainWindow.cpp" line="440"/>
         <source>&amp;Edition</source>
         <translation>&amp;Edit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1027"/>
+        <location filename="../MainWindow.cpp" line="1028"/>
         <source>fichiers XCAS  (*.xws);;fichiers GIAC  (*.cas)</source>
         <translation>XCAS files  (*.xws);; GIAC files  (*.cas)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1037"/>
+        <location filename="../MainWindow.cpp" line="1038"/>
         <source>Sans titre</source>
         <translation>No Title</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1301"/>
+        <location filename="../MainWindow.cpp" line="1312"/>
         <source>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Licence:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Auteur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintenance et dÃ©veloppement de QCAS: &lt;/b&gt;Han FrÃ©dÃ©ric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
         <translation>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintainer and developper of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©velopper of Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1317"/>
+        <location filename="../MainWindow.cpp" line="1328"/>
         <source>Astuces</source>
         <translation>Hints</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1317"/>
+        <location filename="../MainWindow.cpp" line="1328"/>
         <source>&lt;center&gt;&lt;h2&gt;Racourcis&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL espace:&lt;/b&gt;&lt;center&gt;donne les complÃ©tions possibles de la chaine saisie&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL flÃ¨che haut ou bas&lt;/b&gt;&lt;center&gt;InsÃ¨re une commande de l&apos;historique&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Supprime les lignes sÃ©lectionnÃ©es&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(Lorsque l&apos;on laisse le pointeur sur un mot clef)&lt;center&gt;F1 affiche l&apos;aide dÃ©taillÃ©e correspondante dans le widget d&apos;aide (Ã  gauche)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Astuces&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;En poussant la barre du milieu fort Ã  gauche on peut cacher les widegts de gauche&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
         <translation>&lt;center&gt;&lt;h2&gt;Shortcuts&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL space:&lt;/b&gt;&lt;center&gt;Completions of the current entry&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Up or Down&lt;/b&gt;&lt;center&gt;Insert a previous command from historic&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Delete selected lines&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(When the focus stays on a keyword)&lt;center&gt;F1 print the detailled giac help about this keyword (in the left panel)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Hints&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;One can close the left Panel by pushing the split bar (far) on the left&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1476"/>
+        <location filename="../MainWindow.cpp" line="1487"/>
         <source>Vous n&apos;avez cochÃ© aucune ligne!&lt;br&gt;Il n&apos;y a donc aucune commande Ã  envoyer en gÃ©omÃ©rie inÃ©ractive.</source>
         <translation>No lines are checked&lt;br&gt;There si no command to be sent to interactive geometry</translation>
     </message>
@@ -1461,32 +1740,32 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintener of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©velopper of Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="351"/>
+        <location filename="../MainWindow.cpp" line="352"/>
         <source>&amp;Annuler</source>
         <translation>&amp;Undo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="327"/>
+        <location filename="../MainWindow.cpp" line="328"/>
         <source>Enregistrer</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="363"/>
+        <location filename="../MainWindow.cpp" line="364"/>
         <source>&amp;Supprimer les lignes cochÃ©es</source>
         <translation>Delete Selected Lines</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="364"/>
+        <location filename="../MainWindow.cpp" line="365"/>
         <source>Ctrl+BackSpace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="365"/>
+        <location filename="../MainWindow.cpp" line="366"/>
         <source>DÃ©truit les niveaux sÃ©lectionnÃ©s</source>
         <translation>Delete Selected Levels</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="368"/>
+        <location filename="../MainWindow.cpp" line="369"/>
         <source>Evalue la ligne courante en mode gÃ©omÃ©trie intÃ©ractive&lt;center&gt;(ExpÃ©rimental et limitÃ©)&lt;/center&gt;Les objets entre crochets sÃ©parÃ© par des virgules seront considÃ©rÃ©s comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considÃ©rÃ©es comme des listes et ne seront pas selectionnables Ã  la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d&apos;intersection pour une construction.</source>
         <translation>Send the current entry to an interactive 2d tab&lt;center&gt;(Experimental/ Limited)&lt;/center&gt;Widgets between brackets or Intersections inter() are considered as a single object. (Ex point(1),point(2)] ). They are not direclty avaible for a further construction. Use inter_unique instead.</translation>
     </message>
@@ -1495,12 +1774,12 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h2&gt;Shortcuts&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL space:&lt;/b&gt;&lt;center&gt;Completions of the current entry&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Up or Down&lt;/b&gt;&lt;center&gt;Insert a previous command from historic&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Delete selected lines&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(When the focus stays on a keyword)&lt;center&gt;F1 print the detailled giac help about this keyword (in the left panel)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Hints&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;One can close the left Panel by pushing the split bar (far) on the left&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="390"/>
+        <location filename="../MainWindow.cpp" line="391"/>
         <source>Afficher la fenÃªtre des prÃ©fÃ©rences</source>
         <translation>Customise the interface and the CAS</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="438"/>
+        <location filename="../MainWindow.cpp" line="439"/>
         <source>&amp;Fichier</source>
         <translation>&amp;File</translation>
     </message>
@@ -1509,138 +1788,153 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Edit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="370"/>
+        <location filename="../MainWindow.cpp" line="371"/>
         <source>Evaluer toutes les feuilles depuis le dÃ©but.</source>
         <translation>Evaluate all sheets from the beginning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="372"/>
+        <location filename="../MainWindow.cpp" line="373"/>
         <source>Astuces:&lt;br&gt;&lt;center&gt;CTRL Espace&lt;/center&gt;donne les complÃ©tions possibles de la chaine saisie&lt;br&gt;&lt;center&gt;CTRL flÃ¨che haut ou bas&lt;/center&gt;InsÃ¨re une commande de l&apos;historique&lt;br&gt;&lt;center&gt;CTRL Delete&lt;/center&gt;&lt;br&gt;Supprime les lignes sÃ©lectionnÃ©es&lt;center&gt;F1&lt;/center&gt;Lorsque l&apos;on laisse le pointeur sur un mot clef,&lt;br&gt;F1 affiche l&apos;aide dÃ©taillÃ©e correspondante dans le widget d&apos;aide (Ã  gauche)&lt;br&gt;En poussant la barre du milieu fort Ã  gauche on peut cacher les widgets de gauche</source>
         <translation>Hints:&lt;br&gt;&lt;center&gt;CTRL Space&lt;/center&gt;gives the completions of the known keywords.&lt;br&gt;&lt;center&gt;F1&lt;/center&gt;When the mouse is left on a keyword a tooltips appears&lt;br&gt;then F1 will show this keyword documentation in the help widget (on the left)&lt;br&gt;On can hide the lefts widgets by pushing the midle bar strongly on the lefts.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="440"/>
+        <location filename="../MainWindow.cpp" line="441"/>
         <source>&amp;Options</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="441"/>
+        <location filename="../MainWindow.cpp" line="442"/>
         <source>&amp;Aide</source>
         <translation>&amp;Help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="490"/>
+        <location filename="../MainWindow.cpp" line="491"/>
         <source>Le document a Ã©tÃ© modifiÃ©.</source>
         <translation>The file has been modified</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="491"/>
+        <location filename="../MainWindow.cpp" line="492"/>
         <source>Voulez-vous sauvegarder les modifications?</source>
         <translation>Do you want to save changes</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="508"/>
+        <location filename="../MainWindow.cpp" line="509"/>
         <source>Ouvrir un fichier</source>
         <translation>Open a file</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="508"/>
+        <location filename="../MainWindow.cpp" line="509"/>
         <source>QCAS or Giac/Xcas files (*.qcas *.cas *.xws)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="803"/>
+        <location filename="../MainWindow.cpp" line="804"/>
         <source>Avertissement</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="803"/>
+        <location filename="../MainWindow.cpp" line="804"/>
         <source>Vous essayez d&apos;enregistrer pendant un calcul. Recommencez plus tard.</source>
         <translation>You are trying to save during a computation. Please try it again later.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="954"/>
+        <location filename="../MainWindow.cpp" line="955"/>
         <source>Des fichiers de sauvegarde automatique d&apos;Xcas ou Qcas ont Ã©tÃ© trouvÃ©s.</source>
         <translation>Some automatic backup files from Xcas or QCas have been found.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="955"/>
+        <location filename="../MainWindow.cpp" line="956"/>
         <source>Voulez vous charger le plus rÃ©cent?
  Ou alors ouvrir la liste des fichiers, ou  dÃ©truire ces archives (Reset).</source>
         <translation>Do you want to load the latest one?\n Or browse a list of files, or delete those backups (Reset).</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="968"/>
+        <location filename="../MainWindow.cpp" line="969"/>
         <source>auto_save</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="968"/>
+        <location filename="../MainWindow.cpp" line="969"/>
         <source>QCAS or Giac/Xcas files (xcas_auto_*.xws)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1001"/>
+        <location filename="../MainWindow.cpp" line="1002"/>
         <source>Enregistrer sous...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1001"/>
+        <location filename="../MainWindow.cpp" line="1002"/>
         <source>QCAS files (*.qcas);;XCAS files (*.xws);;GIAC files (*.cas)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1013"/>
+        <location filename="../MainWindow.cpp" line="1014"/>
         <source>fichiers XCAS (*.xws)</source>
         <translation>XCAS files (*.xws)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1015"/>
+        <location filename="../MainWindow.cpp" line="1016"/>
         <source>fichiers GIAC (*.cas)</source>
         <translation>GIAC files (*.cas)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1027"/>
+        <location filename="../MainWindow.cpp" line="1028"/>
         <source>Exporter vers...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1044"/>
+        <location filename="../MainWindow.cpp" line="1045"/>
         <source>%1[*] - %2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1063"/>
+        <location filename="../MainWindow.cpp" line="1064"/>
         <source>&amp;%1 %2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1184"/>
+        <location filename="../MainWindow.cpp" line="1185"/>
         <source>Messages Giac</source>
         <translation>Giac Messages</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1185"/>
+        <location filename="../MainWindow.cpp" line="1186"/>
         <source>Shift+EntrÃ©e pour Ã©valuer</source>
         <translation>Shif Entry to Compute</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1196"/>
+        <location filename="../MainWindow.cpp" line="1189"/>
+        <source>RÃ©soudre</source>
+        <translation>Solve</translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="1191"/>
+        <source>Prog/Giac</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="1192"/>
+        <source>Prog/Algo</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="1199"/>
         <source>Feuille </source>
         <translation>Sheat</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1196"/>
+        <location filename="../MainWindow.cpp" line="1199"/>
         <source>, ligne </source>
         <translation>line</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1261"/>
+        <location filename="../MainWindow.cpp" line="1264"/>
         <source>&lt;br&gt;&lt;font color=&quot;gray&quot;&gt;Temps mis:</source>
         <translation>Time</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1187"/>
+        <location filename="../MainWindow.cpp" line="1188"/>
         <source>Matrices</source>
         <translation>Matrix</translation>
     </message>
@@ -1649,17 +1943,16 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Compute the selected levels and display the result in an interactive geometry window&lt;center&gt;Experimental with limited features&lt;/center&gt;Geometric objects inside brackets separated by commas will be treated as a single object (example: [point(1),point(2)]). Intersections  inter()  will be considered as lists under brackets. They can&apos;t be selected with the mouse for another construction. Use inter_unique instead.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1188"/>
         <source>Equations</source>
-        <translation>Equations</translation>
+        <translation type="obsolete">Equations</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1189"/>
+        <location filename="../MainWindow.cpp" line="1190"/>
         <source>Catalogue</source>
         <translation>Catalog</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1301"/>
+        <location filename="../MainWindow.cpp" line="1312"/>
         <source>A propos de QCAS</source>
         <translation>About QCAS</translation>
     </message>
@@ -1668,22 +1961,22 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL &lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; 0.2 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq &lt;center&gt;&lt;a href=&quot;mailto:loic@qcas.tuxfamily.org&quot;&gt; loic@qcas.tuxfamily.org&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1536"/>
+        <location filename="../MainWindow.cpp" line="1547"/>
         <source>Attention! &lt;br&gt; Pour affecter une valeur Ã  une variable, vous devez utiliser le symbole :=</source>
         <translation>Warning! &lt;br&gt; To store somthing in a variable, you must use the symbol :=</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1735"/>
+        <location filename="../MainWindow.cpp" line="1747"/>
         <source>Tentative d&apos;interruption...</source>
         <translation>Trying to interrupt</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1747"/>
+        <location filename="../MainWindow.cpp" line="1759"/>
         <source>Avertissement!</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1747"/>
+        <location filename="../MainWindow.cpp" line="1759"/>
         <source>Risque de crash important lors de l&apos;interruption requise.</source>
         <translation>Crash could happen during this interruption.</translation>
     </message>
@@ -1886,27 +2179,27 @@ Do you want to do it now?</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1837"/>
+        <location filename="../MainWindow.cpp" line="1849"/>
         <source>Synonyme(s):</source>
         <translation>Synonyms</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1847"/>
+        <location filename="../MainWindow.cpp" line="1859"/>
         <source>(Plus de dÃ©tails)&lt;/a&gt;</source>
         <translation>(Detailled help)&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1852"/>
+        <location filename="../MainWindow.cpp" line="1864"/>
         <source>Exemples:</source>
         <translation>Examples:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1858"/>
+        <location filename="../MainWindow.cpp" line="1870"/>
         <source>Voir aussi: </source>
         <translation>See also:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1915"/>
+        <location filename="../MainWindow.cpp" line="1927"/>
         <source>Aucun rÃ©sultat</source>
         <translation>No answer</translation>
     </message>
@@ -2012,50 +2305,159 @@ Do you want to do it now?</translation>
 <context>
     <name>SystPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="229"/>
+        <location filename="../gui/WizardEquation.cpp" line="260"/>
         <source>Nombre d&apos;Ã©quations:</source>
         <translation>Number of equations</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="232"/>
+        <location filename="../gui/WizardEquation.cpp" line="263"/>
         <source>&lt;b&gt;Exemple:&lt;br&gt; &lt;/b&gt; 2*x+3*y=10</source>
         <translation>&lt;b&gt;Example:&lt;br&gt; &lt;/b&gt; 2*x+3*y=10</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="235"/>
+        <location filename="../gui/WizardEquation.cpp" line="266"/>
         <source>&lt;b&gt;Exemple: &lt;/b&gt;&lt;br&gt; x^2-y=3</source>
         <translation>&lt;b&gt;Example: &lt;/b&gt;&lt;br&gt; x^2-y=3</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="239"/>
+        <location filename="../gui/WizardEquation.cpp" line="270"/>
         <source>Equation nÂ°1:</source>
         <translation>Equation n°1:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="240"/>
+        <location filename="../gui/WizardEquation.cpp" line="271"/>
         <source>Equation nÂ°2:</source>
         <translation>Equation n°2:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="244"/>
+        <location filename="../gui/WizardEquation.cpp" line="275"/>
         <source>&amp;Variable:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="248"/>
+        <location filename="../gui/WizardEquation.cpp" line="279"/>
         <source>SystÃ¨mes linÃ©aires</source>
         <translation>Linear systems</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="283"/>
+        <location filename="../gui/WizardEquation.cpp" line="314"/>
         <source>Equation nÂ°</source>
         <translation>Equation n°</translation>
     </message>
 </context>
 <context>
+    <name>TantquePanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="440"/>
+        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
+        <translation>Give a condition.&lt;br&gt;Warning! this syntax is border line outside maple_mode. It is &lt;b&gt;forbidden&lt;/b&gt; to surround this condition with parenthesis.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 or j&amp;gt;3&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="441"/>
+        <source>&lt;b&gt;tantque&lt;/b&gt;</source>
+        <translation>&lt;b&gt;while&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="442"/>
+        <source>faire</source>
+        <translation>do</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="443"/>
+        <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
+a:=a*a;</source>
+        <translation>(Optional) You can fill the loop commands here.(separated with &lt;code&gt;;&lt;code&gt;)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="444"/>
+        <source>&lt;b&gt;ftantque&lt;/b&gt;</source>
+        <translation>&lt;b&gt;end_do&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="483"/>
+        <source>tantque </source>
+        <translation>while </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="486"/>
+        <source> faire
+</source>
+        <translation> do
+</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="496"/>
+        <source>ftantque;</source>
+        <translation>end_do;</translation>
+    </message>
+</context>
+<context>
+    <name>TestPanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="352"/>
+        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
+        <translation>give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 or j&amp;gt;3&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="353"/>
+        <source>&lt;b&gt;si&lt;/b&gt;</source>
+        <translation>&lt;b&gt;if&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="355"/>
+        <source>alors</source>
+        <translation>then</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="356"/>
+        <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
+a:=a*a;</source>
+        <translation>(Optional) You can fill here the commands to be executed if the condition is true.</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="357"/>
+        <source>sinon</source>
+        <translation>else</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="358"/>
+        <source>Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;sinon&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
+        <translation>To obtain an &lt;em&gt;else&lt;/em&gt; bloc, you must modify this entry.Example:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="359"/>
+        <source>&lt;b&gt;fsi&lt;/b&gt;</source>
+        <translation>&lt;b&gt;end_if&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="405"/>
+        <source>si </source>
+        <translation>if </translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="408"/>
+        <source> alors
+</source>
+        <translation> then
+</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="420"/>
+        <source>sinon
+</source>
+        <translation>else
+</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="422"/>
+        <source>fsi;</source>
+        <translation>end_if;</translation>
+    </message>
+</context>
+<context>
     <name>TextInput</name>
     <message>
-        <location filename="../gui/FormalLineWidgets.cpp" line="407"/>
+        <location filename="../gui/FormalLineWidgets.cpp" line="409"/>
         <source>Mot-clÃ©:</source>
         <translation>Keyword</translation>
     </message>
@@ -2157,6 +2559,59 @@ Do you want to do it now?</translation>
     </message>
 </context>
 <context>
+    <name>WhilePanel</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="850"/>
+        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
+        <translation>Give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="852"/>
+        <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
+a:=a*a;</source>
+        <translation>(Optional) you can fill the loop commands here.</translation>
+    </message>
+</context>
+<context>
+    <name>WizardAlgo</name>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="51"/>
+        <source>fonction...ffonction</source>
+        <translation>proc...end_proc</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="52"/>
+        <source>si alors (sinon)</source>
+        <translation>if then (else)</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="53"/>
+        <source>pour...fpour</source>
+        <translation>for...end_for</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="54"/>
+        <source>tantque...ftantque</source>
+        <translation>while...end_do</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="57"/>
+        <source>Nouvelle fonction: </source>
+        <translation>New Function:</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="58"/>
+        <source>Test: </source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="59"/>
+        <location filename="../gui/WizardAlgo.cpp" line="60"/>
+        <source>Boucle: </source>
+        <translation>Loop:</translation>
+    </message>
+</context>
+<context>
     <name>WizardCatalog</name>
     <message>
         <source>&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;&lt;center&gt;&lt;h3&gt;&lt;font color=&quot;#40A497&quot;&gt;Recherche par mot-clÃ©&lt;/font&gt;&lt;/h3&gt;&lt;/center&gt;&lt;hr&gt; &lt;center&gt;Cet outil vous permet de naviguer aisÃ©ment parmi les diffÃ©rents commandes ainsi que leurs descriptions.&lt;/center&gt;</source>
@@ -2228,8 +2683,12 @@ Do you want to do it now?</translation>
 <context>
     <name>WizardEquation</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="48"/>
         <source>Equation/inÃ©quation</source>
+        <translation type="obsolete">Equation/Inequation</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="48"/>
+        <source>Equation/InÃ©quation</source>
         <translation>Equation/Inequation</translation>
     </message>
     <message>

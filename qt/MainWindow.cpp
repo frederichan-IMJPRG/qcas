@@ -1844,7 +1844,7 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         }
         }
         line.clear();
-        line.append("<h3><font color=\"#40A497\">").append(minimaltoHtml(command)).append("</font></h3>");
+        line.append("<h3><font color=\"#40A497\">").append(minimaltoHtml(command)).append("</font> <a href=\"!"+command.split("(").at(0)+"\">-></a></h3>");
         if (!synonym.isEmpty()){
             line.append("<b>").append(QObject::tr("Synonyme(s):")).append("</b>");
             for( int i=0;i<synonym.size();++i){

@@ -167,9 +167,13 @@ void WizardCatalog::newPage(QUrl url){
     QString keyWord=url.toString();//to keep the fragments (#...)
     //qDebug()<<"history:"<<keyWord<<"tostring"<<url.toString();
 
-    if (url.toString().startsWith("?")){
-        addHistory(url.toString());
-        mainWindow->displayXcasHelp(url.toString());
+    if (keyWord.startsWith("!")){
+        keyWord.remove(QRegExp("^!"));
+        mainWindow->sendText(keyWord);
+    }
+    else if (url.toString().startsWith("?")){
+            addHistory(url.toString());
+            mainWindow->displayXcasHelp(url.toString());
 
     }
     else{
@@ -186,6 +190,8 @@ void WizardCatalog::newPage(QUrl url){
 
     if(zone->toPlainText().isEmpty()){
         zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+        //mainWindow->sendText(keyWord);
+
     }
     }
 }
