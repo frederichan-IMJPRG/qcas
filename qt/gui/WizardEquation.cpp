@@ -92,13 +92,15 @@ void EqPanel::changeEvent(QEvent *event){
 void EqPanel::retranslate(){
     eq->setToolTip(tr("Saisir l'équation à résoudre <br> <b>Exemple: </b> x^2+2*x=x^3"));
     labelEq->setText(tr("Equation/Inéquation"));
+    labelEq->setToolTip(eq->toolTip());
     labelVar->setText(tr("Variable:"));
     var->setToolTip(tr("Indiquez le nom de l'inconnue (une seule variable).<br><b>Exemple: </b>x"));
     labelVar->setToolTip(var->toolTip());
     numeric->setText(tr("Résolution numérique"));
     inC->setText(tr("Solutions complexes"));
-    hyp->setToolTip(tr("<center><b>supposons</b></center>(Facultatif). Pour résoudre, il faut  parfois faire une hypothèse sur la variable.<br><b>Exemple: </b>x&gt;-2*pi and x&lt;2*pi"));
+    hyp->setToolTip(tr("<center><b>supposons</b></center>(Facultatif). Pour résoudre, il faut  parfois faire une hypothèse sur la variable. Par exemple pour <code>solve(sin(2*x)>1/2</code>, on donnerait un intervalle borné.<br><b>Exemple: </b>x&gt;-2*pi and x&lt;2*pi"));
     labelHyp->setText(tr("Hypothèses"));
+    labelHyp->setToolTip(hyp->toolTip());
     purge->setToolTip(tr("<center><b>purge(??)</b></center>Nettoyer la variable aprés la résolution pour enlever les hypothèses."));
 
 }
@@ -263,7 +265,7 @@ SystPanel::SystPanel(WizardEquation *parent):TabChild(parent){
     eq1->setToolTip(tr("<b>Exemple:<br> </b> 2*x+3*y=10"));
 
     QLineEdit *eq2=new QLineEdit;
-    eq1->setToolTip(tr("<b>Exemple: </b><br> x^2-y=3"));
+    eq2->setToolTip(tr("<b>Exemple: </b><br> x^2-y=3"));
 
     label=new QVector<QLabel*>;
     edit=new QVector<QLineEdit*>;
@@ -272,9 +274,11 @@ SystPanel::SystPanel(WizardEquation *parent):TabChild(parent){
     edit->append(eq1);
     edit->append(eq2);
 
-    labelVar=new QLabel(tr("&Variable:"));
-    var=new QLineEdit("x y");
+    labelVar=new QLabel(tr("Variable:"));
+    var=new QLineEdit("x,y");
+    var->setToolTip(tr("Liste des inconnues séparées par des virgules.<br><b>Exemple: <b>x,y,z"));
     labelVar->setBuddy(var);
+    labelVar->setToolTip(var->toolTip());
 
     check=new QCheckBox(tr("Systèmes linéaires"));
     button=new QPushButton;
@@ -345,7 +349,7 @@ void SystPanel::sendEquation(){
         }
    }
    s.append("],[");
-   QStringList list=var->text().split(" ",QString::SkipEmptyParts);
+   QStringList list=var->text().split(",",QString::SkipEmptyParts);
    for(int i=0;i<list.size();++i){
        s.append(list.at(i));
        if (i!=list.size()-1){

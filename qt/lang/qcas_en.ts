@@ -553,27 +553,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DiffPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="196"/>
+        <location filename="../gui/WizardEquation.cpp" line="198"/>
         <source>&amp;Equation:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="200"/>
+        <location filename="../gui/WizardEquation.cpp" line="202"/>
         <source>Saisir l&apos;Ã©quation diffÃ©rentielle&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; y&apos;&apos;+y=sin(x)</source>
         <translation>Input the differential equation&lt;br&gt; &lt;b&gt; Example: &lt;/b&gt; y&apos;&apos;+y=sin(x)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="201"/>
+        <location filename="../gui/WizardEquation.cpp" line="203"/>
         <source>&amp;Variable:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="205"/>
+        <location filename="../gui/WizardEquation.cpp" line="207"/>
         <source>Conditions initiales</source>
         <translation>Initial conditions</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="208"/>
+        <location filename="../gui/WizardEquation.cpp" line="210"/>
         <source>&lt;b&gt;Exemples:&lt;/b&gt;&lt;br&gt; y(0)=1&lt;br&gt;y&apos;(0)=2</source>
         <translation>&lt;b&gt;Examples:&lt;/b&gt;&lt;br&gt; y(0)=1&lt;br&gt;y&apos;(0)=2</translation>
     </message>
@@ -622,37 +622,41 @@ que toutes ses dÃ©pendances.
         <translation>Equation/Inequation</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="95"/>
+        <location filename="../gui/WizardEquation.cpp" line="96"/>
         <source>Variable:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="96"/>
+        <location filename="../gui/WizardEquation.cpp" line="97"/>
         <source>Indiquez le nom de l&apos;inconnue (une seule variable).&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x</source>
         <translation>Enter the indeterminate name. (Only one).&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="98"/>
+        <location filename="../gui/WizardEquation.cpp" line="99"/>
         <source>RÃ©solution numÃ©rique</source>
         <translation>Numerical solve</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="99"/>
+        <location filename="../gui/WizardEquation.cpp" line="100"/>
         <source>Solutions complexes</source>
         <translation>Complex solutions</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="100"/>
-        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
-        <translation>&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
+        <location filename="../gui/WizardEquation.cpp" line="101"/>
+        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable. Par exemple pour &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt;, on donnerait un intervalle bornÃ©.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
+        <translation>&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.For instance to do &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt; we should give a bounded interval&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="101"/>
+        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
+        <translation type="obsolete">&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="102"/>
         <source>HypothÃ¨ses</source>
         <translation>Hypothesis</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="102"/>
+        <location filename="../gui/WizardEquation.cpp" line="104"/>
         <source>&lt;center&gt;&lt;b&gt;purge(??)&lt;/b&gt;&lt;/center&gt;Nettoyer la variable aprÃ©s la rÃ©solution pour enlever les hypothÃ¨ses.</source>
         <translation>&lt;center&gt;&lt;b&gt;purge(??)&lt;/b&gt;&lt;/center&gt;After the resolution, clean a variable to remove the previous assumptions.</translation>
     </message>
@@ -660,37 +664,37 @@ que toutes ses dÃ©pendances.
 <context>
     <name>ForPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="738"/>
+        <location filename="../gui/WizardAlgo.cpp" line="850"/>
         <source>&lt;center&gt;&lt;b&gt;for(??;...;...){...}&lt;/b&gt;&lt;/center&gt;Saisir l&apos;initialisation de la variable de boucle. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j:=0</source>
         <translation>&lt;center&gt;&lt;b&gt;for(??;...;...){...}&lt;/b&gt;&lt;/center&gt;enter the initialisation command for the loop variable. (Warning, &lt;code&gt;i&lt;/code&gt; is a keyword reserved for hte complex number)&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; j:=0</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="739"/>
+        <location filename="../gui/WizardAlgo.cpp" line="851"/>
         <source>Initialisation:</source>
         <translation>Initialization:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="741"/>
+        <location filename="../gui/WizardAlgo.cpp" line="853"/>
         <source>&lt;center&gt;&lt;b&gt;for(...;??;...){...}&lt;/b&gt;&lt;/center&gt;Condition pour continuer la boucle&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt;j&amp;lt;10 (pour continuer tantque j&amp;lt;10)</source>
         <translation>&lt;center&gt;&lt;b&gt;for(...;??;...){...}&lt;/b&gt;&lt;/center&gt;Condition to continue in the loop&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt;j&amp;lt;10 (pour continuer tantque j&amp;lt;10)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="742"/>
+        <location filename="../gui/WizardAlgo.cpp" line="854"/>
         <source>Condition:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="744"/>
+        <location filename="../gui/WizardAlgo.cpp" line="856"/>
         <source>&lt;center&gt;&lt;b&gt;for(...;...;??){...}&lt;/b&gt;&lt;/center&gt;instruction pour modifier la variable de boucle.&lt;br&gt;&lt;b&gt;Exemple1&lt;/b&gt;: j++&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;j:=j+2</source>
         <translation>&lt;center&gt;&lt;b&gt;for(...;...;??){...}&lt;/b&gt;&lt;/center&gt;update the loop variable&lt;br&gt;&lt;b&gt;Example1&lt;/b&gt;: j++&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;j:=j+2</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="745"/>
+        <location filename="../gui/WizardAlgo.cpp" line="857"/>
         <source>IncrÃ©mentation:</source>
         <translation>Incrementation</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="747"/>
+        <location filename="../gui/WizardAlgo.cpp" line="859"/>
         <source>Vous pouvez (si vous le souhaitez le faire maintenant) utiliser cette partie pour le corps de la boucle.</source>
         <translation>(Optional). You can enter the loop code here.</translation>
     </message>
@@ -726,112 +730,112 @@ que toutes ses dÃ©pendances.
 <context>
     <name>FuncPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="512"/>
         <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt; f(x,y)</source>
-        <translation>Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
+        <translation type="obsolete">Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="513"/>
+        <location filename="../gui/WizardAlgo.cpp" line="624"/>
+        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
+        <translation>Function name followed by parenthesis and the arguments separated by comma.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Example2: &lt;/b&gt;g()</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="625"/>
         <source>fonction+args:</source>
         <translation>function+args</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="515"/>
+        <location filename="../gui/WizardAlgo.cpp" line="627"/>
         <source>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
         <translation>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Return value of the function. It can be a single object, or a list or sequence.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;[a,b,c]</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="517"/>
+        <location filename="../gui/WizardAlgo.cpp" line="629"/>
         <source>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
         <translation>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Variables that are usefull only inside the program.&lt;br&gt;NB: Your program must initialize them.&lt;br&gt; &lt;b&gt; Example:&lt;/b&gt; j,k</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="519"/>
+        <location filename="../gui/WizardAlgo.cpp" line="631"/>
         <source>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
         <translation>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;A symbol is a letter which can be used in a mathematical computation. One can use a free global variable. But if you want a local symbol, put it here&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; t,u</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="520"/>
+        <location filename="../gui/WizardAlgo.cpp" line="632"/>
         <source>Symboles locaux:</source>
         <translation>Local symbols</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="523"/>
+        <location filename="../gui/WizardAlgo.cpp" line="635"/>
         <source> Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction.</source>
         <translation>(Optional). You can fill the main function here.</translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="611"/>
-        <source>assume(</source>
-        <translation></translation>
     </message>
 </context>
 <context>
     <name>FunctionPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="125"/>
         <source>&lt;center&gt;&lt;b&gt;fonction&lt;/b&gt;&lt;/center&gt;Saisir le nom et les arguments&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; f(a,b)</source>
-        <translation>&lt;center&gt;&lt;b&gt;proc&lt;/b&gt;&lt;/center&gt;Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
+        <translation type="obsolete">&lt;center&gt;&lt;b&gt;proc&lt;/b&gt;&lt;/center&gt;Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
     </message>
     <message>
         <location filename="../gui/WizardAlgo.cpp" line="126"/>
+        <source>&lt;center&gt;&lt;b&gt;fonction&lt;/b&gt;&lt;/center&gt;Saisir le nom et les arguments&lt;br&gt; &lt;b&gt;Exemple1: &lt;/b&gt; f(a,b)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
+        <translation>&lt;center&gt;&lt;b&gt;proc&lt;/b&gt;&lt;/center&gt;Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Example2: &lt;/b&gt;g()</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="127"/>
         <source>&lt;b&gt;fonction&lt;/b&gt;</source>
         <translation>&lt;b&gt;proc&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="128"/>
+        <location filename="../gui/WizardAlgo.cpp" line="129"/>
         <source>&lt;center&gt;&lt;b&gt;local&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
         <translation>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Variables that are usefull only inside the program.&lt;br&gt;NB: Your program must initialize them.&lt;br&gt; &lt;b&gt; Example:&lt;/b&gt; j,k</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="129"/>
+        <location filename="../gui/WizardAlgo.cpp" line="130"/>
         <source>Variables locales:</source>
         <translation>Local variables:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="131"/>
+        <location filename="../gui/WizardAlgo.cpp" line="132"/>
         <source>&lt;center&gt;&lt;b&gt;supposons(    ,symbol)&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
         <translation>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;A symbol is a letter which can be used in a mathematical computation. One can use a free global variable. But if you want a local symbol, put it here&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; t,u</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="132"/>
+        <location filename="../gui/WizardAlgo.cpp" line="133"/>
         <source>Symboles locaux:</source>
         <translation>Local symbols:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="134"/>
+        <location filename="../gui/WizardAlgo.cpp" line="135"/>
         <source>&lt;center&gt;&lt;b&gt;retourne&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
         <translation>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Return value of the function. It can be a single object, or a list or sequence.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt;[a,b,c]</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="135"/>
+        <location filename="../gui/WizardAlgo.cpp" line="136"/>
         <source>&lt;b&gt;retourne&lt;/b&gt;</source>
         <translation>&lt;b&gt;return&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="137"/>
+        <location filename="../gui/WizardAlgo.cpp" line="138"/>
         <source>Vous pouvez si vous le souhaitez utiliser cette partie pour complÃ©ter votre programme.</source>
         <translation>(Optional) You can fill the code of your program here.</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="138"/>
+        <location filename="../gui/WizardAlgo.cpp" line="139"/>
         <source>&lt;b&gt;ffonction&lt;/b&gt;</source>
         <translation>&lt;b&gt;end_proc&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="194"/>
         <source>fonction </source>
-        <translation>proc </translation>
+        <translation type="obsolete">proc </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="212"/>
         <source>supposons(</source>
-        <translation>assume(</translation>
+        <translation type="obsolete">assume(</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="227"/>
         <source>ffonction;</source>
-        <translation>end_proc;</translation>
+        <translation type="obsolete">end_proc;</translation>
     </message>
 </context>
 <context>
@@ -1261,19 +1265,19 @@ que toutes ses dÃ©pendances.
 <context>
     <name>IfPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="648"/>
+        <location filename="../gui/WizardAlgo.cpp" line="760"/>
         <source>&lt;center&gt;&lt;b&gt;if( ?? ){...&lt;/b&gt;&lt;/center&gt;Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 || j&amp;gt;3&lt;br&gt;&lt;b&gt;ou: &lt;/b&gt;&lt;code&gt;||&lt;/code&gt; (synonyme: &lt;code&gt;or&lt;/code&gt;)&lt;br&gt;&lt;b&gt;et: &lt;/b&gt;&lt;code&gt;&amp;&amp;&lt;/code&gt; (synonyme: &lt;code&gt;and&lt;/code&gt;)&lt;br&gt;&lt;b&gt;negation&lt;/b&gt;&lt;code&gt;!&lt;/code&gt; (synonyme: &lt;code&gt;not&lt;/code&gt;)</source>
         <translation>&lt;center&gt;&lt;b&gt;if( ?? ){...&lt;/b&gt;&lt;/center&gt;give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 || j&amp;gt;3&lt;br&gt;&lt;b&gt;or: &lt;/b&gt;&lt;code&gt;||&lt;/code&gt; (synonym: &lt;code&gt;or&lt;/code&gt;)&lt;br&gt;&lt;b&gt;and: &lt;/b&gt;&lt;code&gt;&amp;&amp;&lt;/code&gt; (synonym: &lt;code&gt;and&lt;/code&gt;)&lt;br&gt;&lt;b&gt;negation&lt;/b&gt;&lt;code&gt;!&lt;/code&gt; (synonym: &lt;code&gt;not&lt;/code&gt;)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="650"/>
+        <location filename="../gui/WizardAlgo.cpp" line="762"/>
         <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation>(Optional) Give here the commands to be executed if the condition is true&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt;a:=a+1;
 a:=a*a;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="651"/>
+        <location filename="../gui/WizardAlgo.cpp" line="763"/>
         <source>Facultatif. Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;else{&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
         <translation>(Optional). To add an &lt;em&gt;else&lt;/em&gt; bloc, you must modify this entry.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</translation>
     </message>
@@ -1337,91 +1341,85 @@ a:=a*a;</translation>
 <context>
     <name>LoopPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="244"/>
+        <location filename="../gui/WizardAlgo.cpp" line="286"/>
         <source>&lt;center&gt;&lt;b&gt;pour&lt;/b&gt;&lt;/center&gt;Saisir le nom de la variable. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j</source>
         <translation>&lt;center&gt;&lt;b&gt;for&lt;/b&gt;&lt;/center&gt;give the name of the loop variable. (Warning, &lt;code&gt;i&lt;/code&gt; is reserved for the complex number)&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; j</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="245"/>
+        <location filename="../gui/WizardAlgo.cpp" line="287"/>
         <source>&lt;b&gt;pour&lt;/b&gt;</source>
         <translation>&lt;b&gt;for&lt;/for&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="247"/>
+        <location filename="../gui/WizardAlgo.cpp" line="289"/>
         <source>&lt;center&gt;&lt;b&gt;de&lt;/b&gt;&lt;/center&gt;Valeur de dÃ©part:&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; 0</source>
         <translation>&lt;center&gt;&lt;b&gt;from&lt;/b&gt;&lt;/center&gt;First value:&lt;br&gt; &lt;b&gt;Example:&lt;/b&gt; 0</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="248"/>
+        <location filename="../gui/WizardAlgo.cpp" line="290"/>
         <source>&lt;b&gt;de&lt;/b&gt;</source>
         <translation>&lt;b&gt;from&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="250"/>
+        <location filename="../gui/WizardAlgo.cpp" line="292"/>
         <source>&lt;center&gt;&lt;b&gt;jusque&lt;/b&gt;&lt;/center&gt;valeur de fin</source>
         <translation>&lt;center&gt;&lt;b&gt;to&lt;/b&gt;&lt;/center&gt;last value</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="251"/>
+        <location filename="../gui/WizardAlgo.cpp" line="293"/>
         <source>&lt;b&gt;jusque&lt;/b&gt;</source>
         <translation>&lt;b&gt;to&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="253"/>
+        <location filename="../gui/WizardAlgo.cpp" line="295"/>
         <source>&lt;center&gt;&lt;b&gt;pas&lt;/b&gt;&lt;/center&gt;PrÃ©cisez le pas s&apos;il est diffÃ©rent de 1. Sinon inutile de remplir ce champ.</source>
         <translation>&lt;center&gt;&lt;b&gt;by&lt;/b&gt;&lt;/center&gt;Optional if the step is 1. Else give the step.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;-2</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="254"/>
+        <location filename="../gui/WizardAlgo.cpp" line="296"/>
         <source>&lt;b&gt;pas&lt;/b&gt;</source>
         <translation>&lt;b&gt;by&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="256"/>
+        <location filename="../gui/WizardAlgo.cpp" line="298"/>
         <source>&lt;b&gt;fpour&lt;/b&gt;</source>
         <translation>&lt;b&gt;end_for&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="258"/>
+        <location filename="../gui/WizardAlgo.cpp" line="300"/>
         <source>Vous pouvez si vous le souhaitez utiliser cette partie pour le corps de la boucle.</source>
         <translation>(Optional) You can fill the loop commands here.</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="259"/>
+        <location filename="../gui/WizardAlgo.cpp" line="301"/>
         <source>faire</source>
         <translation>do</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="317"/>
         <source>pour </source>
-        <translation>for </translation>
+        <translation type="obsolete">for </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="322"/>
         <source> de </source>
-        <translation> from </translation>
+        <translation type="obsolete"> from </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="323"/>
         <source> jusque </source>
-        <translation> to </translation>
+        <translation type="obsolete"> to </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="326"/>
         <source> pas </source>
-        <translation> by </translation>
+        <translation type="obsolete"> by </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="328"/>
         <source> faire
 </source>
-        <translation> do
+        <translation type="obsolete"> do
 </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="335"/>
         <source>fpour;</source>
-        <translation>end_do;</translation>
+        <translation type="obsolete">end_do;</translation>
     </message>
 </context>
 <context>
@@ -2305,42 +2303,47 @@ Do you want to do it now?</translation>
 <context>
     <name>SystPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="260"/>
+        <location filename="../gui/WizardEquation.cpp" line="262"/>
         <source>Nombre d&apos;Ã©quations:</source>
         <translation>Number of equations</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="263"/>
+        <location filename="../gui/WizardEquation.cpp" line="265"/>
         <source>&lt;b&gt;Exemple:&lt;br&gt; &lt;/b&gt; 2*x+3*y=10</source>
         <translation>&lt;b&gt;Example:&lt;br&gt; &lt;/b&gt; 2*x+3*y=10</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="266"/>
+        <location filename="../gui/WizardEquation.cpp" line="268"/>
         <source>&lt;b&gt;Exemple: &lt;/b&gt;&lt;br&gt; x^2-y=3</source>
         <translation>&lt;b&gt;Example: &lt;/b&gt;&lt;br&gt; x^2-y=3</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="270"/>
+        <location filename="../gui/WizardEquation.cpp" line="272"/>
         <source>Equation nÂ°1:</source>
         <translation>Equation n°1:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="271"/>
+        <location filename="../gui/WizardEquation.cpp" line="273"/>
         <source>Equation nÂ°2:</source>
         <translation>Equation n°2:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="275"/>
-        <source>&amp;Variable:</source>
+        <location filename="../gui/WizardEquation.cpp" line="277"/>
+        <source>Variable:</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../gui/WizardEquation.cpp" line="279"/>
+        <source>Liste des inconnues sÃ©parÃ©es par des virgules.&lt;br&gt;&lt;b&gt;Exemple: &lt;b&gt;x,y,z</source>
+        <translation>List of indeterminates. (separated by comma)&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x,y,z</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="283"/>
         <source>SystÃ¨mes linÃ©aires</source>
         <translation>Linear systems</translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="314"/>
+        <location filename="../gui/WizardEquation.cpp" line="318"/>
         <source>Equation nÂ°</source>
         <translation>Equation n°</translation>
     </message>
@@ -2348,110 +2351,115 @@ Do you want to do it now?</translation>
 <context>
     <name>TantquePanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="440"/>
+        <location filename="../gui/WizardAlgo.cpp" line="530"/>
         <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation>Give a condition.&lt;br&gt;Warning! this syntax is border line outside maple_mode. It is &lt;b&gt;forbidden&lt;/b&gt; to surround this condition with parenthesis.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 or j&amp;gt;3&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="441"/>
+        <location filename="../gui/WizardAlgo.cpp" line="531"/>
         <source>&lt;b&gt;tantque&lt;/b&gt;</source>
         <translation>&lt;b&gt;while&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="442"/>
+        <location filename="../gui/WizardAlgo.cpp" line="532"/>
         <source>faire</source>
         <translation>do</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="443"/>
+        <location filename="../gui/WizardAlgo.cpp" line="533"/>
         <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation>(Optional) You can fill the loop commands here.(separated with &lt;code&gt;;&lt;code&gt;)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="444"/>
+        <location filename="../gui/WizardAlgo.cpp" line="534"/>
         <source>&lt;b&gt;ftantque&lt;/b&gt;</source>
         <translation>&lt;b&gt;end_do&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="483"/>
         <source>tantque </source>
-        <translation>while </translation>
+        <translation type="obsolete">while </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="486"/>
         <source> faire
 </source>
-        <translation> do
+        <translation type="obsolete"> do
 </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="496"/>
+        <source>ftantque;
+</source>
+        <translation type="obsolete">end_do;
+</translation>
+    </message>
+    <message>
         <source>ftantque;</source>
-        <translation>end_do;</translation>
+        <translation type="obsolete">end_do;</translation>
     </message>
 </context>
 <context>
     <name>TestPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="352"/>
+        <location filename="../gui/WizardAlgo.cpp" line="419"/>
         <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation>give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 or j&amp;gt;3&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="353"/>
+        <location filename="../gui/WizardAlgo.cpp" line="420"/>
         <source>&lt;b&gt;si&lt;/b&gt;</source>
         <translation>&lt;b&gt;if&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="355"/>
+        <location filename="../gui/WizardAlgo.cpp" line="422"/>
         <source>alors</source>
         <translation>then</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="356"/>
+        <location filename="../gui/WizardAlgo.cpp" line="423"/>
         <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation>(Optional) You can fill here the commands to be executed if the condition is true.</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="357"/>
+        <location filename="../gui/WizardAlgo.cpp" line="424"/>
         <source>sinon</source>
         <translation>else</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="358"/>
+        <location filename="../gui/WizardAlgo.cpp" line="425"/>
         <source>Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;sinon&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
         <translation>To obtain an &lt;em&gt;else&lt;/em&gt; bloc, you must modify this entry.Example:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="359"/>
+        <location filename="../gui/WizardAlgo.cpp" line="426"/>
         <source>&lt;b&gt;fsi&lt;/b&gt;</source>
         <translation>&lt;b&gt;end_if&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="405"/>
         <source>si </source>
-        <translation>if </translation>
+        <translation type="obsolete">if </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="408"/>
         <source> alors
 </source>
-        <translation> then
+        <translation type="obsolete"> then
 </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="420"/>
         <source>sinon
 </source>
-        <translation>else
+        <translation type="obsolete">else
 </translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="422"/>
+        <source>fsi;
+</source>
+        <translation type="obsolete">end_fi;
+</translation>
+    </message>
+    <message>
         <source>fsi;</source>
-        <translation>end_if;</translation>
+        <translation type="obsolete">end_if;</translation>
     </message>
 </context>
 <context>
@@ -2561,12 +2569,16 @@ a:=a*a;</source>
 <context>
     <name>WhilePanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="850"/>
         <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
+        <translation type="obsolete">Give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="962"/>
+        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation>Give a condition.&lt;br&gt; &lt;b&gt;Example1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Example2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Example3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="852"/>
+        <location filename="../gui/WizardAlgo.cpp" line="964"/>
         <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation>(Optional) you can fill the loop commands here.</translation>
@@ -2575,38 +2587,46 @@ a:=a*a;</source>
 <context>
     <name>WizardAlgo</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="51"/>
+        <location filename="../gui/WizardAlgo.cpp" line="52"/>
         <source>fonction...ffonction</source>
         <translation>proc...end_proc</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="52"/>
+        <location filename="../gui/WizardAlgo.cpp" line="53"/>
         <source>si alors (sinon)</source>
         <translation>if then (else)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="53"/>
         <source>pour...fpour</source>
-        <translation>for...end_for</translation>
+        <translation type="obsolete">for...end_for</translation>
+    </message>
+    <message>
+        <source>tantque...ftantque</source>
+        <translation type="obsolete">while...end_do</translation>
     </message>
     <message>
         <location filename="../gui/WizardAlgo.cpp" line="54"/>
-        <source>tantque...ftantque</source>
-        <translation>while...end_do</translation>
+        <source>pour...faire...fpour</source>
+        <translation>for...do...end_do</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="57"/>
+        <location filename="../gui/WizardAlgo.cpp" line="55"/>
+        <source>tantque...faire...ftantque</source>
+        <translation>while...do...end_do</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="58"/>
         <source>Nouvelle fonction: </source>
         <translation>New Function:</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="58"/>
+        <location filename="../gui/WizardAlgo.cpp" line="59"/>
         <source>Test: </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="59"/>
         <location filename="../gui/WizardAlgo.cpp" line="60"/>
+        <location filename="../gui/WizardAlgo.cpp" line="61"/>
         <source>Boucle: </source>
         <translation>Loop:</translation>
     </message>

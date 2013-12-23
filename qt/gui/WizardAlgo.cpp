@@ -31,6 +31,7 @@
 #include <QPlainTextEdit>
 #include <QStringList>
 #include <QSpinBox>
+#include "../config.h"
 
 WizardAlgo::WizardAlgo(MainWindow *parent,bool scol)
     :QWidget(parent){
@@ -50,8 +51,8 @@ void WizardAlgo::retranslate(){
    if(scolar){
         list->setItemText(0,tr("fonction...ffonction"));
         list->setItemText(1,tr("si alors (sinon)"));
-        list->setItemText(2,tr("pour...fpour"));
-        list->setItemText(3,tr("tantque...ftantque"));
+        list->setItemText(2,tr("pour...faire...fpour"));
+        list->setItemText(3,tr("tantque...faire...ftantque"));
     }
     else{
        list->setItemText(0,tr("Nouvelle fonction: ")+"f(  ):={   }");
@@ -122,7 +123,7 @@ void FunctionPanel::changeEvent(QEvent *event){
     QWidget::changeEvent(event);
 }
 void FunctionPanel::retranslate(){
-    prototype->setToolTip(tr("<center><b>fonction</b></center>Saisir le nom et les arguments<br> <b>Exemple: </b> f(a,b)"));
+    prototype->setToolTip(tr("<center><b>fonction</b></center>Saisir le nom et les arguments<br> <b>Exemple1: </b> f(a,b)<br><b>Exemple2: </b> g()"));
     labelProto->setText(tr("<b>fonction</b>"));
     labelProto->setToolTip(prototype->toolTip());
     varloc->setToolTip(tr("<center><b>local</b></center>Saisir les noms des variables qui ne sont utilisées qu'à l'intérieur du programme.<br>NB: Votre programme devra les initialiser.<br> <b> Exemple:</b> j,k"));
@@ -191,40 +192,81 @@ FunctionPanel::FunctionPanel(WizardAlgo *parent):AlgoTabChild(parent){
    }
 
 void FunctionPanel::sendCommand(){
-    QString s=tr("fonction ");//trad: proc
-    QString tmp;
-    QStringList listsymb;
-    QString indent="\t";
-    int i;
-    s.append(prototype->text()).append(("\n"));
+    QString s;
+    if(Config::language==Config::FRENCH){
+        s="fonction ";
+        QString tmp;
+        QStringList listsymb;
+        QString indent="\t";
+        int i;
+        s.append(prototype->text()).append(("\n"));
 
-    tmp=varloc->text().trimmed();
-    if(!tmp.isEmpty()){
-      s.append(indent+"local ");
-      if(!tmp.endsWith(";"))
-          s.append(tmp).append(";\n");
-    }
-
-    tmp=symbloc->text().trimmed();
-    if(!tmp.isEmpty()){
-        listsymb=tmp.split(",");
-        for(i=0;i<listsymb.length();i++){
-            s.append(indent+tr("supposons("));//trad assume
-            s.append(listsymb.at(i)).append(",symbol);\n");
+        tmp=varloc->text().trimmed();
+        if(!tmp.isEmpty()){
+            s.append(indent+"local ");
+        if(!tmp.endsWith(";"))
+            s.append(tmp).append(";\n");
         }
+
+        tmp=symbloc->text().trimmed();
+        if(!tmp.isEmpty()){
+          listsymb=tmp.split(",");
+          for(i=0;i<listsymb.length();i++){
+              s.append(indent+"supposons(");//trad assume
+               s.append(listsymb.at(i)).append(",symbol);\n");
+           }
+        }
+
+        tmp=(instructions->document()->toPlainText()).trimmed();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+              s.append(indent+tmp+"\n");
+        }
+        s.append(indent+"\n");
+        tmp=retour->text();
+        if(!tmp.trimmed().isEmpty()){
+            s.append(indent+"retourne ").append(tmp).append(";\n");
+        }
+        s.append("ffonction;\n");// trad: end_proc
+    }
+    else{
+        s="proc ";
+        QString tmp;
+        QStringList listsymb;
+        QString indent="\t";
+        int i;
+        s.append(prototype->text()).append(("\n"));
+
+        tmp=varloc->text().trimmed();
+        if(!tmp.isEmpty()){
+            s.append(indent+"local ");
+        if(!tmp.endsWith(";"))
+            s.append(tmp).append(";\n");
+        }
+
+        tmp=symbloc->text().trimmed();
+        if(!tmp.isEmpty()){
+          listsymb=tmp.split(",");
+          for(i=0;i<listsymb.length();i++){
+              s.append(indent+"assume(");//trad assume
+               s.append(listsymb.at(i)).append(",symbol);\n");
+           }
+        }
+
+        tmp=(instructions->document()->toPlainText()).trimmed();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+              s.append(indent+tmp+"\n");
+        }
+        s.append(indent+"\n");
+        tmp=retour->text();
+        if(!tmp.trimmed().isEmpty()){
+            s.append(indent+"return ").append(tmp).append(";\n");
+        }
+        s.append("end_proc;\n");
+
     }
 
-    tmp=(instructions->document()->toPlainText()).trimmed();
-    tmp.replace("\n","\n"+indent);
-    if(!tmp.isEmpty()){
-        s.append(indent+tmp+"\n");
-    }
-    s.append(indent+"\n");
-    tmp=retour->text();
-    if(!tmp.trimmed().isEmpty()){
-        s.append(indent+"retourne ").append(tmp).append(";\n");
-    }
-    s.append(tr("ffonction;"));// trad: end_proc
     algoPanel->sendCommand(s);
 
 }
@@ -314,25 +356,50 @@ LoopPanel::LoopPanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void LoopPanel::sendCommand(){
-    QString s=tr("pour ");
-    QString tmp;
-    QString indent="\t";
+    QString s;
+    if(Config::language==Config::FRENCH){
+        s="pour ";
+        QString tmp;
+        QString indent="\t";
 
-    s.append(varname->text());
-    s.append(tr(" de ")).append(deb->text());
-    s.append(tr(" jusque ")).append(fin->text());
-    tmp=pas->text();
-    if(!tmp.trimmed().isEmpty()){
-        s.append(tr(" pas ")+tmp+" ");
+        s.append(varname->text());
+        s.append(" de ").append(deb->text());
+        s.append(" jusque ").append(fin->text());
+        tmp=pas->text();
+        if(!tmp.trimmed().isEmpty()){
+            s.append(" pas "+tmp+" ");
+        }
+        s.append(" faire\n");
+        tmp=instructions->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.trimmed().isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else(s.append("\n"));
+            s.append("fpour;\n");
     }
-    s.append(tr(" faire\n"));
-    tmp=instructions->document()->toPlainText();
-    tmp.replace("\n","\n"+indent);
-    if(!tmp.trimmed().isEmpty()){
-        s.append(indent+tmp+"\n");
+    else{
+        s="for ";
+        QString tmp;
+        QString indent="\t";
+
+        s.append(varname->text());
+        s.append(" from ").append(deb->text());
+        s.append(" to ").append(fin->text());
+        tmp=pas->text();
+        if(!tmp.trimmed().isEmpty()){
+            s.append(" by "+tmp+" ");
+        }
+        s.append(" do\n");
+        tmp=instructions->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.trimmed().isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else(s.append("\n"));
+            s.append("end_do;\n");
+
     }
-    else(s.append("\n"));
-    s.append(tr("fpour;"));
     algoPanel->sendCommand(s);
 }
 
@@ -402,24 +469,47 @@ TestPanel::TestPanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void TestPanel::sendCommand(){
-    QString s=tr("si ");
-    QString tmp;
-    QString indent="\t";
-    s.append(condi->text()).append(tr(" alors\n"));
-    tmp=instruction1->document()->toPlainText();
-    tmp.replace("\n","\n"+indent);
-    if(!tmp.isEmpty()){
-        s.append(indent+tmp+"\n");
+    QString s;
+    if(Config::language==Config::FRENCH){
+        s="si ";
+        QString tmp;
+        QString indent="\t";
+        s.append(condi->text()).append(" alors\n");
+        tmp=instruction1->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else{
+            s.append("\n");
+        }
+        tmp=instruction2->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append("sinon\n"+indent+tmp+"\n");
+        }
+        s.append("fsi;\n");
     }
     else{
-        s.append("\n");
+        s="if ";
+        QString tmp;
+        QString indent="\t";
+        s.append(condi->text()).append(" then\n");
+        tmp=instruction1->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else{
+            s.append("\n");
+        }
+        tmp=instruction2->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append("else\n"+indent+tmp+"\n");
+        }
+        s.append("end_if;\n");
     }
-    tmp=instruction2->document()->toPlainText();
-    tmp.replace("\n","\n"+indent);
-    if(!tmp.isEmpty()){
-        s.append(tr("sinon\n")+indent+tmp+"\n");
-    }
-    s.append(tr("fsi;"));
     algoPanel->sendCommand(s);
 }
 
@@ -480,20 +570,42 @@ TantquePanel::TantquePanel(WizardAlgo *parent):AlgoTabChild(parent){
 }
 
 void TantquePanel::sendCommand(){
-    QString s=tr("tantque ");
-    QString tmp;
-    QString indent="\t";
-    s.append(condi->text()).append(tr(" faire\n"));
-    tmp=instructions->document()->toPlainText();
-    tmp.replace("\n","\n"+indent);
-    if(!tmp.isEmpty()){
-        s.append(indent+tmp+"\n");
-    }
-    else{
-        s.append("\n");
-    }
+    QString s;
+    if(Config::language==Config::FRENCH){
 
-    s.append(tr("ftantque;"));
+        s="tantque ";
+        QString tmp;
+        QString indent="\t";
+        s.append(condi->text()).append(" faire\n");
+        tmp=instructions->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else{
+            s.append("\n");
+        }
+
+        s.append("ftantque;\n");
+        }
+    else{
+
+        s="while ";
+        QString tmp;
+        QString indent="\t";
+        s.append(condi->text()).append(" do\n");
+        tmp=instructions->document()->toPlainText();
+        tmp.replace("\n","\n"+indent);
+        if(!tmp.isEmpty()){
+            s.append(indent+tmp+"\n");
+        }
+        else{
+            s.append("\n");
+        }
+
+        s.append("end_do;\n");
+
+    }
     algoPanel->sendCommand(s);
 }
 
@@ -509,7 +621,7 @@ void FuncPanel::changeEvent(QEvent *event){
 }
 
 void FuncPanel::retranslate(){
-    func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple:</b> f(x,y)"));
+    func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple1:</b> f(x,y)<br><b>Exemple2: </b> g()"));
     labelFunc->setText(tr("fonction+args:"));
     labelFunc->setToolTip(func->toolTip());
     retour->setToolTip(tr("<center><b>return ??</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));
@@ -608,7 +720,7 @@ void FuncPanel::sendCommand(){
     if(!tmp.isEmpty()){
         listsymb=tmp.split(",");
         for(i=0;i<listsymb.length();i++){
-            s.append(indent+tr("assume("));//trad assume
+            s.append(indent+"assume(");//trad assume
             s.append(listsymb.at(i)).append(",symbol);\n");
         }
     }
@@ -627,7 +739,7 @@ void FuncPanel::sendCommand(){
         s.append(indent+"return "+tmp+"\n");
     }
 
-    s.append("};");
+    s.append("};\n");
     algoPanel->sendCommand(s);
 }
 
@@ -717,7 +829,7 @@ void IfPanel::sendCommand(){
     if(!tmp.isEmpty()){
         s.append("}\nelse{\n"+indent+tmp+"\n");
     }
-    s.append("};");
+    s.append("};\n");
     algoPanel->sendCommand(s);
 }
 
@@ -830,7 +942,7 @@ void ForPanel::sendCommand(){
         s.append(indent+tmp+"\n");
     }
     else(s.append("\n"));
-    s.append("};");
+    s.append("};\n");
     algoPanel->sendCommand(s);
 }
 
@@ -847,7 +959,7 @@ void WhilePanel::changeEvent(QEvent *event){
 }
 
 void WhilePanel::retranslate(){
-    condi->setToolTip(tr("Saisir une condition.<br> <b>Exemple1:</b> j == 1<br><b>Exemple1:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 ou j&gt;3<br>"));
+    condi->setToolTip(tr("Saisir une condition.<br> <b>Exemple1:</b> j == 1<br><b>Exemple2:</b> j != 2<br><b>Exemple3:</b> j &lt;= 2 ou j&gt;3<br>"));
     labelCondi->setToolTip(condi->toolTip());
     instructions->setToolTip(tr("Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions à éxécuter tantque la condition est satisfaite.<br><b>Exemple:</b>a:=a+1;\na:=a*a;"));
     labelCondi->setToolTip(condi->toolTip());
@@ -903,6 +1015,6 @@ void WhilePanel::sendCommand(){
         s.append("\n");
     }
 
-    s.append("};");
+    s.append("};\n");
     algoPanel->sendCommand(s);
 }

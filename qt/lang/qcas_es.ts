@@ -546,27 +546,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DiffPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="196"/>
+        <location filename="../gui/WizardEquation.cpp" line="198"/>
         <source>&amp;Equation:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="200"/>
+        <location filename="../gui/WizardEquation.cpp" line="202"/>
         <source>Saisir l&apos;Ã©quation diffÃ©rentielle&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; y&apos;&apos;+y=sin(x)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="201"/>
+        <location filename="../gui/WizardEquation.cpp" line="203"/>
         <source>&amp;Variable:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="205"/>
+        <location filename="../gui/WizardEquation.cpp" line="207"/>
         <source>Conditions initiales</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="208"/>
+        <location filename="../gui/WizardEquation.cpp" line="210"/>
         <source>&lt;b&gt;Exemples:&lt;/b&gt;&lt;br&gt; y(0)=1&lt;br&gt;y&apos;(0)=2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -615,37 +615,37 @@ que toutes ses dÃ©pendances.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="95"/>
+        <location filename="../gui/WizardEquation.cpp" line="96"/>
         <source>Variable:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="96"/>
+        <location filename="../gui/WizardEquation.cpp" line="97"/>
         <source>Indiquez le nom de l&apos;inconnue (une seule variable).&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="98"/>
+        <location filename="../gui/WizardEquation.cpp" line="99"/>
         <source>RÃ©solution numÃ©rique</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="99"/>
+        <location filename="../gui/WizardEquation.cpp" line="100"/>
         <source>Solutions complexes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="100"/>
-        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../gui/WizardEquation.cpp" line="101"/>
-        <source>HypothÃ¨ses</source>
+        <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable. Par exemple pour &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt;, on donnerait un intervalle bornÃ©.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../gui/WizardEquation.cpp" line="102"/>
+        <source>HypothÃ¨ses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="104"/>
         <source>&lt;center&gt;&lt;b&gt;purge(??)&lt;/b&gt;&lt;/center&gt;Nettoyer la variable aprÃ©s la rÃ©solution pour enlever les hypothÃ¨ses.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -653,37 +653,37 @@ que toutes ses dÃ©pendances.
 <context>
     <name>ForPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="738"/>
+        <location filename="../gui/WizardAlgo.cpp" line="850"/>
         <source>&lt;center&gt;&lt;b&gt;for(??;...;...){...}&lt;/b&gt;&lt;/center&gt;Saisir l&apos;initialisation de la variable de boucle. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j:=0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="739"/>
+        <location filename="../gui/WizardAlgo.cpp" line="851"/>
         <source>Initialisation:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="741"/>
+        <location filename="../gui/WizardAlgo.cpp" line="853"/>
         <source>&lt;center&gt;&lt;b&gt;for(...;??;...){...}&lt;/b&gt;&lt;/center&gt;Condition pour continuer la boucle&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt;j&amp;lt;10 (pour continuer tantque j&amp;lt;10)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="742"/>
+        <location filename="../gui/WizardAlgo.cpp" line="854"/>
         <source>Condition:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="744"/>
+        <location filename="../gui/WizardAlgo.cpp" line="856"/>
         <source>&lt;center&gt;&lt;b&gt;for(...;...;??){...}&lt;/b&gt;&lt;/center&gt;instruction pour modifier la variable de boucle.&lt;br&gt;&lt;b&gt;Exemple1&lt;/b&gt;: j++&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;j:=j+2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="745"/>
+        <location filename="../gui/WizardAlgo.cpp" line="857"/>
         <source>IncrÃ©mentation:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="747"/>
+        <location filename="../gui/WizardAlgo.cpp" line="859"/>
         <source>Vous pouvez (si vous le souhaitez le faire maintenant) utiliser cette partie pour le corps de la boucle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -719,111 +719,91 @@ que toutes ses dÃ©pendances.
 <context>
     <name>FuncPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="512"/>
-        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt; f(x,y)</source>
+        <location filename="../gui/WizardAlgo.cpp" line="624"/>
+        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="513"/>
+        <location filename="../gui/WizardAlgo.cpp" line="625"/>
         <source>fonction+args:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="515"/>
+        <location filename="../gui/WizardAlgo.cpp" line="627"/>
         <source>&lt;center&gt;&lt;b&gt;return ??&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="517"/>
+        <location filename="../gui/WizardAlgo.cpp" line="629"/>
         <source>&lt;center&gt;&lt;b&gt;local ?? ;&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="519"/>
+        <location filename="../gui/WizardAlgo.cpp" line="631"/>
         <source>&lt;center&gt;&lt;b&gt;assume(  ?? ,symbol);&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="520"/>
+        <location filename="../gui/WizardAlgo.cpp" line="632"/>
         <source>Symboles locaux:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="523"/>
+        <location filename="../gui/WizardAlgo.cpp" line="635"/>
         <source> Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="611"/>
-        <source>assume(</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FunctionPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="125"/>
-        <source>&lt;center&gt;&lt;b&gt;fonction&lt;/b&gt;&lt;/center&gt;Saisir le nom et les arguments&lt;br&gt; &lt;b&gt;Exemple: &lt;/b&gt; f(a,b)</source>
+        <location filename="../gui/WizardAlgo.cpp" line="126"/>
+        <source>&lt;center&gt;&lt;b&gt;fonction&lt;/b&gt;&lt;/center&gt;Saisir le nom et les arguments&lt;br&gt; &lt;b&gt;Exemple1: &lt;/b&gt; f(a,b)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="126"/>
+        <location filename="../gui/WizardAlgo.cpp" line="127"/>
         <source>&lt;b&gt;fonction&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="128"/>
+        <location filename="../gui/WizardAlgo.cpp" line="129"/>
         <source>&lt;center&gt;&lt;b&gt;local&lt;/b&gt;&lt;/center&gt;Saisir les noms des variables qui ne sont utilisÃ©es qu&apos;Ã  l&apos;intÃ©rieur du programme.&lt;br&gt;NB: Votre programme devra les initialiser.&lt;br&gt; &lt;b&gt; Exemple:&lt;/b&gt; j,k</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="129"/>
+        <location filename="../gui/WizardAlgo.cpp" line="130"/>
         <source>Variables locales:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="131"/>
+        <location filename="../gui/WizardAlgo.cpp" line="132"/>
         <source>&lt;center&gt;&lt;b&gt;supposons(    ,symbol)&lt;/b&gt;&lt;/center&gt;Un symbole est une lettre utilisable dans un calcul mathÃ©matique. On peut utiliser une variable globale non initialisÃ©e. En revanche si l&apos;on souhaite avoir des symboles locaux, il faut les dÃ©clarer ici.&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; t,u</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="132"/>
+        <location filename="../gui/WizardAlgo.cpp" line="133"/>
         <source>Symboles locaux:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="134"/>
+        <location filename="../gui/WizardAlgo.cpp" line="135"/>
         <source>&lt;center&gt;&lt;b&gt;retourne&lt;/b&gt;&lt;/center&gt;Objet retournÃ© par la fonction. On peut ne rien retourner, ou retourner une liste ou une sÃ©quence.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt;a,b,c&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt;[a,b,c]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="135"/>
+        <location filename="../gui/WizardAlgo.cpp" line="136"/>
         <source>&lt;b&gt;retourne&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="137"/>
+        <location filename="../gui/WizardAlgo.cpp" line="138"/>
         <source>Vous pouvez si vous le souhaitez utiliser cette partie pour complÃ©ter votre programme.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="138"/>
+        <location filename="../gui/WizardAlgo.cpp" line="139"/>
         <source>&lt;b&gt;ffonction&lt;/b&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="194"/>
-        <source>fonction </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="212"/>
-        <source>supposons(</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="227"/>
-        <source>ffonction;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1254,18 +1234,18 @@ que toutes ses dÃ©pendances.
 <context>
     <name>IfPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="648"/>
+        <location filename="../gui/WizardAlgo.cpp" line="760"/>
         <source>&lt;center&gt;&lt;b&gt;if( ?? ){...&lt;/b&gt;&lt;/center&gt;Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 || j&amp;gt;3&lt;br&gt;&lt;b&gt;ou: &lt;/b&gt;&lt;code&gt;||&lt;/code&gt; (synonyme: &lt;code&gt;or&lt;/code&gt;)&lt;br&gt;&lt;b&gt;et: &lt;/b&gt;&lt;code&gt;&amp;&amp;&lt;/code&gt; (synonyme: &lt;code&gt;and&lt;/code&gt;)&lt;br&gt;&lt;b&gt;negation&lt;/b&gt;&lt;code&gt;!&lt;/code&gt; (synonyme: &lt;code&gt;not&lt;/code&gt;)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="650"/>
+        <location filename="../gui/WizardAlgo.cpp" line="762"/>
         <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="651"/>
+        <location filename="../gui/WizardAlgo.cpp" line="763"/>
         <source>Facultatif. Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;else{&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1329,89 +1309,58 @@ a:=a*a;</source>
 <context>
     <name>LoopPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="244"/>
+        <location filename="../gui/WizardAlgo.cpp" line="286"/>
         <source>&lt;center&gt;&lt;b&gt;pour&lt;/b&gt;&lt;/center&gt;Saisir le nom de la variable. (Attention, i est reservÃ© pour le nombre complexe)&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; j</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="245"/>
+        <location filename="../gui/WizardAlgo.cpp" line="287"/>
         <source>&lt;b&gt;pour&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="247"/>
+        <location filename="../gui/WizardAlgo.cpp" line="289"/>
         <source>&lt;center&gt;&lt;b&gt;de&lt;/b&gt;&lt;/center&gt;Valeur de dÃ©part:&lt;br&gt; &lt;b&gt;Exemple:&lt;/b&gt; 0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="248"/>
+        <location filename="../gui/WizardAlgo.cpp" line="290"/>
         <source>&lt;b&gt;de&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="250"/>
+        <location filename="../gui/WizardAlgo.cpp" line="292"/>
         <source>&lt;center&gt;&lt;b&gt;jusque&lt;/b&gt;&lt;/center&gt;valeur de fin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="251"/>
+        <location filename="../gui/WizardAlgo.cpp" line="293"/>
         <source>&lt;b&gt;jusque&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="253"/>
+        <location filename="../gui/WizardAlgo.cpp" line="295"/>
         <source>&lt;center&gt;&lt;b&gt;pas&lt;/b&gt;&lt;/center&gt;PrÃ©cisez le pas s&apos;il est diffÃ©rent de 1. Sinon inutile de remplir ce champ.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="254"/>
+        <location filename="../gui/WizardAlgo.cpp" line="296"/>
         <source>&lt;b&gt;pas&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="256"/>
+        <location filename="../gui/WizardAlgo.cpp" line="298"/>
         <source>&lt;b&gt;fpour&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="258"/>
+        <location filename="../gui/WizardAlgo.cpp" line="300"/>
         <source>Vous pouvez si vous le souhaitez utiliser cette partie pour le corps de la boucle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="259"/>
+        <location filename="../gui/WizardAlgo.cpp" line="301"/>
         <source>faire</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="317"/>
-        <source>pour </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="322"/>
-        <source> de </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="323"/>
-        <source> jusque </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="326"/>
-        <source> pas </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="328"/>
-        <source> faire
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="335"/>
-        <source>fpour;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2243,42 +2192,47 @@ a:=a*a;</source>
 <context>
     <name>SystPanel</name>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="260"/>
+        <location filename="../gui/WizardEquation.cpp" line="262"/>
         <source>Nombre d&apos;Ã©quations:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="263"/>
+        <location filename="../gui/WizardEquation.cpp" line="265"/>
         <source>&lt;b&gt;Exemple:&lt;br&gt; &lt;/b&gt; 2*x+3*y=10</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="266"/>
+        <location filename="../gui/WizardEquation.cpp" line="268"/>
         <source>&lt;b&gt;Exemple: &lt;/b&gt;&lt;br&gt; x^2-y=3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="270"/>
+        <location filename="../gui/WizardEquation.cpp" line="272"/>
         <source>Equation nÂ°1:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="271"/>
+        <location filename="../gui/WizardEquation.cpp" line="273"/>
         <source>Equation nÂ°2:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="275"/>
-        <source>&amp;Variable:</source>
+        <location filename="../gui/WizardEquation.cpp" line="277"/>
+        <source>Variable:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../gui/WizardEquation.cpp" line="279"/>
+        <source>Liste des inconnues sÃ©parÃ©es par des virgules.&lt;br&gt;&lt;b&gt;Exemple: &lt;b&gt;x,y,z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardEquation.cpp" line="283"/>
         <source>SystÃ¨mes linÃ©aires</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardEquation.cpp" line="314"/>
+        <location filename="../gui/WizardEquation.cpp" line="318"/>
         <source>Equation nÂ°</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2286,106 +2240,68 @@ a:=a*a;</source>
 <context>
     <name>TantquePanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="440"/>
+        <location filename="../gui/WizardAlgo.cpp" line="530"/>
         <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="441"/>
+        <location filename="../gui/WizardAlgo.cpp" line="531"/>
         <source>&lt;b&gt;tantque&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="442"/>
+        <location filename="../gui/WizardAlgo.cpp" line="532"/>
         <source>faire</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="443"/>
+        <location filename="../gui/WizardAlgo.cpp" line="533"/>
         <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="444"/>
+        <location filename="../gui/WizardAlgo.cpp" line="534"/>
         <source>&lt;b&gt;ftantque&lt;/b&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="483"/>
-        <source>tantque </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="486"/>
-        <source> faire
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="496"/>
-        <source>ftantque;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>TestPanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="352"/>
+        <location filename="../gui/WizardAlgo.cpp" line="419"/>
         <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 2&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="353"/>
+        <location filename="../gui/WizardAlgo.cpp" line="420"/>
         <source>&lt;b&gt;si&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="355"/>
+        <location filename="../gui/WizardAlgo.cpp" line="422"/>
         <source>alors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="356"/>
+        <location filename="../gui/WizardAlgo.cpp" line="423"/>
         <source>Vous pouvez (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter si la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="357"/>
+        <location filename="../gui/WizardAlgo.cpp" line="424"/>
         <source>sinon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="358"/>
+        <location filename="../gui/WizardAlgo.cpp" line="425"/>
         <source>Il faut modifier cette entrÃ©e pour obtenir un &lt;em&gt;sinon&lt;/em&gt;&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;&lt;br&gt;a:=a+1;&lt;br&gt;a:=a*a;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="359"/>
+        <location filename="../gui/WizardAlgo.cpp" line="426"/>
         <source>&lt;b&gt;fsi&lt;/b&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="405"/>
-        <source>si </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="408"/>
-        <source> alors
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="420"/>
-        <source>sinon
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../gui/WizardAlgo.cpp" line="422"/>
-        <source>fsi;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2496,12 +2412,12 @@ a:=a*a;</source>
 <context>
     <name>WhilePanel</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="850"/>
-        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
+        <location filename="../gui/WizardAlgo.cpp" line="962"/>
+        <source>Saisir une condition.&lt;br&gt; &lt;b&gt;Exemple1:&lt;/b&gt; j == 1&lt;br&gt;&lt;b&gt;Exemple2:&lt;/b&gt; j != 2&lt;br&gt;&lt;b&gt;Exemple3:&lt;/b&gt; j &amp;lt;= 2 ou j&amp;gt;3&lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="852"/>
+        <location filename="../gui/WizardAlgo.cpp" line="964"/>
         <source>Vous pouvez  (si vous souhaitez le faire maintenant), remplir dans ce cadre les instructions Ã  Ã©xÃ©cuter tantque la condition est satisfaite.&lt;br&gt;&lt;b&gt;Exemple:&lt;/b&gt;a:=a+1;
 a:=a*a;</source>
         <translation type="unfinished"></translation>
@@ -2510,38 +2426,38 @@ a:=a*a;</source>
 <context>
     <name>WizardAlgo</name>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="51"/>
+        <location filename="../gui/WizardAlgo.cpp" line="52"/>
         <source>fonction...ffonction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="52"/>
+        <location filename="../gui/WizardAlgo.cpp" line="53"/>
         <source>si alors (sinon)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="53"/>
-        <source>pour...fpour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../gui/WizardAlgo.cpp" line="54"/>
-        <source>tantque...ftantque</source>
+        <source>pour...faire...fpour</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="57"/>
-        <source>Nouvelle fonction: </source>
+        <location filename="../gui/WizardAlgo.cpp" line="55"/>
+        <source>tantque...faire...ftantque</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../gui/WizardAlgo.cpp" line="58"/>
-        <source>Test: </source>
+        <source>Nouvelle fonction: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../gui/WizardAlgo.cpp" line="59"/>
+        <source>Test: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../gui/WizardAlgo.cpp" line="60"/>
+        <location filename="../gui/WizardAlgo.cpp" line="61"/>
         <source>Boucle: </source>
         <translation type="unfinished"></translation>
     </message>
