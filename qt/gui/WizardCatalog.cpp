@@ -168,31 +168,31 @@ void WizardCatalog::newPage(QUrl url){
     //qDebug()<<"history:"<<keyWord<<"tostring"<<url.toString();
 
     if (keyWord.startsWith("!")){
-        keyWord.remove(QRegExp("^!"));
+        keyWord.remove(0,1);
         mainWindow->sendText(keyWord);
     }
-    else if (url.toString().startsWith("?")){
+    else{
+        if (url.toString().startsWith("?")){
             addHistory(url.toString());
             mainWindow->displayXcasHelp(url.toString());
 
-    }
-    else{
-    addHistory(keyWord);
-    zone->setSource(url);
+        }
+        else{
+            addHistory(keyWord);
+            zone->setSource(url);
 
-    /*if(zone->toPlainText().isEmpty()){
-        QFile fichressources(":doc/"+url.path());
-        fichressources.open(QIODevice::ReadOnly);
-            QTextStream stream(& fichressources);
-            stream.setCodec("UTF-8");
-            zone->setText(stream.readAll());
-    }*/
+              /*if(zone->toPlainText().isEmpty()){
+                  QFile fichressources(":doc/"+url.path());
+                    fichressources.open(QIODevice::ReadOnly);
+                    QTextStream stream(& fichressources);
+                    stream.setCodec("UTF-8");
+                    zone->setText(stream.readAll());
+                }*/
 
-    if(zone->toPlainText().isEmpty()){
-        zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
-        //mainWindow->sendText(keyWord);
-
-    }
+            if(zone->toPlainText().isEmpty()){
+                zone->setText(mainWindow->getCommandInfo()->displayPage(keyWord));
+            }
+        }
     }
 }
 void WizardCatalog::updateButtons(){

@@ -1788,6 +1788,7 @@ void CommandInfo::listAllCommands(){
             }
         }
     }
+
     commandList.sort();
 }
 
@@ -1876,8 +1877,13 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         return(line);
     }
 
-QString CommandInfo::seekForKeyword(const QString & keyWord) const{
-    QFile file(":/aide_cas");
+QString CommandInfo::seekForKeyword(const QString & inputkeyWord) const{
+
+        //consider if the keyword can be translated by giac.
+        QString keyWord=QString::fromStdString(giac::unlocalize(inputkeyWord.toStdString()));
+        //qDebug()<<"traduction par giac:"<<keyWord;
+
+        QFile file(":/aide_cas");
         file.open(QIODevice::ReadOnly);
         QTextStream stream(&file);
         stream.setCodec("UTF-8");
@@ -1892,12 +1898,18 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
             if (line.startsWith("#")) currentCommand=line.remove(0,2);
             else if (line.startsWith(QString::number(Config::giaclanguage))&&  // giac lang
                      (line.contains(keyWord,Qt::CaseInsensitive)||currentCommand.contains(keyWord,Qt::CaseInsensitive))){
-                if(currentCommand.startsWith(keyWord)){
+                if(currentCommand.startsWith(keyWord+" ") || currentCommand==keyWord){
                     html.append("<a href=\"");
                     html.append(currentCommand);
                     html.append("\">");
                     html.append(minimaltoHtml(currentCommand));
-                    html.append("</a><br>\n");
+                    html.append("</a> ");
+                    if(keyWord != inputkeyWord){
+                        html.append(" <b>("+inputkeyWord+")</b><br>\n");
+                    }
+                    else{
+                        html.append("<br>\n");
+                    }
                     html.append(minimaltoHtml(line.remove(0,2)));
                     html.append("<br><br>");
                 }
@@ -1930,7 +1942,8 @@ QString CommandInfo::seekForKeyword(const QString & keyWord) const{
 
     }
 bool CommandInfo::isCommand(const QString &st) const{
-    return (commandList.contains(st));
+    QString keyWord=QString::fromStdString(giac::unlocalize(st.toStdString()));
+    return (commandList.contains(keyWord));
 }
 QCompleter* CommandInfo::getCompleter() const{
     return completer;
