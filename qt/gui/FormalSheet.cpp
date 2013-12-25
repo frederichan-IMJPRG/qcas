@@ -84,6 +84,7 @@ void Highlighter::highlightBlock(const QString &text){
     int slash=-1;
     bool backslash=false;
     int quote=-1;
+    int j;
 
     for (int i=start;i<text.length();++i){
         c=text.at(i);
@@ -94,7 +95,7 @@ void Highlighter::highlightBlock(const QString &text){
             if (slash!=-1) {
                 bool find_return=false;
 
-                for(int j=i+1;j<text.length();j++){
+                for(j=i+1;j<text.length();j++){
                     if (text.at(j)==QChar('\n')){
                         setFormat(slash,j-slash+1,commentFormat);
                         find_return=true;
@@ -103,6 +104,7 @@ void Highlighter::highlightBlock(const QString &text){
                 }
                 if (!find_return) setFormat(slash,text.length()-slash+1,commentFormat);
                 slash=-1;
+                i=j-1;//don't hilight the commented part
             }
             else slash=i;
 
@@ -140,7 +142,6 @@ void Highlighter::highlightBlock(const QString &text){
             key=-1;
 
 
-            //            qDebug()<< c <<"inserted at "<<i;
         }
         else if (c==QChar('"')){
             // Character \"
