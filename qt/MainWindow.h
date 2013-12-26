@@ -83,6 +83,7 @@ class MainWindow :public QMainWindow {
     int getDecimalDigit() const;
     void setDecimalDigits(const int & a);
     bool loadFile(const QString &fileName);
+    bool appendFile(const QString &fileName);
     bool autoSave();
     void cleanautoSaveFiles();
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
@@ -133,6 +134,7 @@ private:
     QToolBar *editToolBar;
     QAction *newAction;
     QAction *openAction;
+    QAction *appendfAction;
     QAction *saveAction;
     QAction *saveAsAction;
     QAction *exitAction;
@@ -192,6 +194,7 @@ public slots:
 private slots:
     void newFile();
     void open();
+    void appendf();
     bool save();
     bool saveAs();
     bool saveAsgiacxcas();

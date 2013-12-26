@@ -229,6 +229,10 @@ void MainWindow::createAction(){
     openAction->setIcon(QIcon(":/images/open.png"));
     connect(openAction,SIGNAL(triggered()),this,SLOT(open()));
 
+    appendfAction=new QAction("",this);
+    appendfAction->setIcon(QIcon(":/images/open.png"));
+    connect(appendfAction,SIGNAL(triggered()),this,SLOT(appendf()));
+
     saveAction=new QAction("",this);
     saveAction->setIcon(QIcon(":/images/document-save.png"));
     connect(saveAction,SIGNAL(triggered()),this,SLOT(save()));
@@ -325,6 +329,9 @@ void MainWindow::retranslateAction(){
     openAction->setShortcut(tr("Ctrl+O"));
     openAction->setStatusTip(tr("Ouvrir un nouveau fichier"));
 
+    appendfAction->setText(tr("Ajouter un Fichier"));
+    appendfAction->setToolTip(tr("Ajoute un fichier à la suite de la session courante"));
+
     saveAction->setText(tr("Enregistrer"));
     saveAction->setShortcut(tr("Ctrl+S"));
     saveAction->setStatusTip(tr("Enregistrer le fichier courant"));
@@ -409,6 +416,7 @@ void MainWindow::createMenus(){
     fileMenu=menuBar()->addMenu("");
     fileMenu->addAction(newAction);
     fileMenu->addAction(openAction);
+    fileMenu->addAction(appendfAction);
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
     separatorAction=fileMenu->addSeparator();
@@ -508,8 +516,15 @@ void MainWindow::open(){
         clearWorkspace();
         QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS or Giac/Xcas files (*.qcas *.cas *.xws)"));
         if (!fileName.isEmpty()){
-	    loadFile(fileName);
-	}
+        loadFile(fileName);
+    }
+    }
+}
+
+void MainWindow::appendf(){
+        QString fileName=QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),".qcas",tr("QCAS or Giac/Xcas files (*.qcas *.cas *.xws)"));
+        if (!fileName.isEmpty()){
+        appendFile(fileName);
     }
 }
 
@@ -518,13 +533,25 @@ bool MainWindow::loadFile(const QString &fileName){
       if(tabPages->count()>0){tabPages->closeTabwithoutWarning(0);}
 
       if (!fileName.isEmpty()){
- 	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
-	    return loadGiacFile(fileName);
- 	  }
-	  else
-	    return loadQcasFile(fileName);
+      if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
+        return loadGiacFile(fileName);
+      }
+      else
+        return loadQcasFile(fileName);
       }
 }
+
+bool MainWindow::appendFile(const QString &fileName){
+
+      if (!fileName.isEmpty()){
+      if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){
+        return loadGiacFile(fileName);
+      }
+      else
+        return loadQcasFile(fileName);
+      }
+}
+
 bool MainWindow::loadQcasFile(const QString &fileName){
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)){
