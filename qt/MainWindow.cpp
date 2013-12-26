@@ -454,13 +454,13 @@ void MainWindow::createContextMenu(){
  *
  */
 void MainWindow::clearWorkspace(){
-
+    MainSheet* sheet=0;
     for (int i=tabPages->count()-2;i>=0;--i){
-        tabPages->removeTab(i);
+        tabPages->closeTabwithoutWarning(i);
     }
+
     delete cas;
     cas=new CasManager(this);
-
     tabPages->addFormalSheet();
 }
 
@@ -515,7 +515,7 @@ void MainWindow::open(){
 
 bool MainWindow::loadFile(const QString &fileName){
 
-      if(tabPages->count()>0){tabPages->removeTab(0);}
+      if(tabPages->count()>0){tabPages->closeTabwithoutWarning(0);}
 
       if (!fileName.isEmpty()){
  	  if (fileName.endsWith(".cas")||(fileName.endsWith(".xws"))){

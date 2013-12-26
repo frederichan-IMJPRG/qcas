@@ -621,7 +621,7 @@ void FuncPanel::changeEvent(QEvent *event){
 }
 
 void FuncPanel::retranslate(){
-    func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par de virgules.<br><b>Exemple1:</b> f(x,y)<br><b>Exemple2: </b> g()"));
+    func->setToolTip(tr("Saisir le nom de la fonction suivi de ses arguments entre parenthèses et séparés par des virgules.<br><b>Exemple1:</b> f(x,y)<br><b>Exemple2: </b> g()"));
     labelFunc->setText(tr("fonction+args:"));
     labelFunc->setToolTip(func->toolTip());
     retour->setToolTip(tr("<center><b>return ??</b></center>Objet retourné par la fonction. On peut ne rien retourner, ou retourner une liste ou une séquence.<br><b>Exemple1:</b>a,b,c<br><b>Exemple2:</b>[a,b,c]"));

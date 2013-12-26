@@ -734,8 +734,12 @@ que toutes ses dÃ©pendances.
         <translation type="obsolete">Function name followed by parenthesis and the arguments names separated by comma.&lt;br&gt;&lt;b&gt;Example:&lt;/b&gt; f(x,y)</translation>
     </message>
     <message>
-        <location filename="../gui/WizardAlgo.cpp" line="624"/>
         <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
+        <translation type="obsolete">Function name followed by parenthesis and the arguments separated by comma.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Example2: &lt;/b&gt;g()</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardAlgo.cpp" line="624"/>
+        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par des virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
         <translation>Function name followed by parenthesis and the arguments separated by comma.&lt;br&gt;&lt;b&gt;Example1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Example2: &lt;/b&gt;g()</translation>
     </message>
     <message>
@@ -2177,27 +2181,27 @@ Do you want to do it now?</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1849"/>
+        <location filename="../MainWindow.cpp" line="1850"/>
         <source>Synonyme(s):</source>
         <translation>Synonyms</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1859"/>
+        <location filename="../MainWindow.cpp" line="1860"/>
         <source>(Plus de dÃ©tails)&lt;/a&gt;</source>
         <translation>(Detailled help)&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1864"/>
+        <location filename="../MainWindow.cpp" line="1865"/>
         <source>Exemples:</source>
         <translation>Examples:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1870"/>
+        <location filename="../MainWindow.cpp" line="1871"/>
         <source>Voir aussi: </source>
         <translation>See also:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1927"/>
+        <location filename="../MainWindow.cpp" line="1939"/>
         <source>Aucun rÃ©sultat</source>
         <translation>No answer</translation>
     </message>

@@ -720,7 +720,7 @@ que toutes ses dÃ©pendances.
     <name>FuncPanel</name>
     <message>
         <location filename="../gui/WizardAlgo.cpp" line="624"/>
-        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par de virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
+        <source>Saisir le nom de la fonction suivi de ses arguments entre parenthÃ¨ses et sÃ©parÃ©s par des virgules.&lt;br&gt;&lt;b&gt;Exemple1:&lt;/b&gt; f(x,y)&lt;br&gt;&lt;b&gt;Exemple2: &lt;/b&gt; g()</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2066,27 +2066,27 @@ a:=a*a;</source>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1849"/>
+        <location filename="../MainWindow.cpp" line="1850"/>
         <source>Synonyme(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1859"/>
+        <location filename="../MainWindow.cpp" line="1860"/>
         <source>(Plus de dÃ©tails)&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1864"/>
+        <location filename="../MainWindow.cpp" line="1865"/>
         <source>Exemples:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1870"/>
+        <location filename="../MainWindow.cpp" line="1871"/>
         <source>Voir aussi: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1927"/>
+        <location filename="../MainWindow.cpp" line="1939"/>
         <source>Aucun rÃ©sultat</source>
         <translation type="unfinished"></translation>
     </message>

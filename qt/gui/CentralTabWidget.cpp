@@ -99,6 +99,14 @@ void MainTabWidget::closeTab(int id){
      int r=QMessageBox::warning(this,tr("Confirmation"),tr("Vous allez supprimer cet objet ainsi \n que toutes ses dépendances. \n Voulez-vous poursuivre?"),QMessageBox::Yes|QMessageBox::Default,QMessageBox::Cancel|QMessageBox::Escape);
      if (r!=QMessageBox::Yes) return;
 
+    closeTabwithoutWarning(id);
+
+}
+
+void MainTabWidget::closeTabwithoutWarning(int id){
+
+  //
+     if (count()-id==1) return;//on macosx the empty tab with the button shows a close button, so we prevent it from closing
 
     MainSheet* sheet=dynamic_cast<MainSheet*>(widget(id));
     switch(sheet->getType()){
@@ -125,6 +133,7 @@ void MainTabWidget::closeTab(int id){
 
 
 }
+
 void MainTabWidget::insertG2dSheet(int i, const QString &titre){
     //qDebug()<<"i="<<i;
     if((i<count())&&(i>=0)){
