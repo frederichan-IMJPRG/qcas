@@ -644,11 +644,11 @@ que toutes ses dÃ©pendances.
     <message>
         <location filename="../gui/WizardEquation.cpp" line="101"/>
         <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable. Par exemple pour &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt;, on donnerait un intervalle bornÃ©.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
-        <translation>&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.For instance to do &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt; we should give a bounded interval&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
+        <translation>&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumptions on the indeterminate. Enter them here.For instance to do &lt;code&gt;solve(sin(2*x)&gt;1/2&lt;/code&gt; we should give a bounded interval&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
     </message>
     <message>
         <source>&lt;center&gt;&lt;b&gt;supposons&lt;/b&gt;&lt;/center&gt;(Facultatif). Pour rÃ©soudre, il faut  parfois faire une hypothÃ¨se sur la variable.&lt;br&gt;&lt;b&gt;Exemple: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</source>
-        <translation type="obsolete">&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumtions on the indeterminate. Enter them here.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
+        <translation type="obsolete">&lt;center&gt;&lt;b&gt;assume&lt;/b&gt;&lt;/center&gt;(Optional). Some resolutions need assumptions on the indeterminate. Enter them here.&lt;br&gt;&lt;b&gt;Example: &lt;/b&gt;x&amp;gt;-2*pi and x&amp;lt;2*pi</translation>
     </message>
     <message>
         <location filename="../gui/WizardEquation.cpp" line="102"/>
