@@ -2548,18 +2548,28 @@ a:=a*a;</source>
 <context>
     <name>WizardMatrix</name>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="44"/>
+        <location filename="../gui/WizardMatrix.cpp" line="45"/>
         <source>Dimensions:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="45"/>
+        <location filename="../gui/WizardMatrix.cpp" line="46"/>
         <source>Lignes:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="46"/>
+        <location filename="../gui/WizardMatrix.cpp" line="47"/>
         <source>Colonnes:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardMatrix.cpp" line="149"/>
+        <source>Astuces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardMatrix.cpp" line="149"/>
+        <source>&lt;center&gt;&lt;h2&gt;Vecteurs&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;Dans Giac/Xcas, les vecteurs sont donnÃ©s par leurs coordonnÃ©es sÃ©parÃ©es par des virgules et entre crochets.Ci dessous v1,v2,v3 sont des vecteurs. v1 et v2 sont identiques.&lt;li&gt;&lt;b&gt;Exemple1:&lt;/b&gt; &lt;code&gt;v1:=[0,1,2,3,4];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple2:&lt;/b&gt; &lt;code&gt;v2:=[seq(j,j=0..4)];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple3:&lt;/b&gt; &lt;code&gt;v3:=v1+2*v2;&lt;/code&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Matrices&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;Une matrice est donnÃ©e par la liste de ses lignes entre crochets. Chaque ligne est entre crochets sÃ©parÃ©e par des virgules.Ci dessous les matrices m1 et m2 sont identiques et ont 2 lignes 5 colonnes.&lt;li&gt;&lt;b&gt;Exemple1:&lt;/b&gt; &lt;code&gt;m1:=[[0,1,2,3,4],[0,3,6,9,12]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple2:&lt;/b&gt; &lt;code&gt;m2:=[v1,v3];&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;Les matrices m3 et m4 sont identiques et sont des matrices 1 ligne 5 colonnes.Elles diffÃ¨rent de m5 qui est une matrice 1 colonne et 5 lignes. Aucune des matrices mi n&apos;est un vecteur. v4 est le vecteur [30,90]&lt;li&gt;&lt;b&gt;Exemple3:&lt;/b&gt; &lt;code&gt;m3:=[[0,1,2,3,4]]&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple4:&lt;/b&gt; &lt;code&gt;m4:=[v1];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple5:&lt;/b&gt; &lt;code&gt;m5:=[[0],[1],[2],[3],[4]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple6:&lt;/b&gt; &lt;code&gt;v4:=m1*v1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;De nombreuses instructions (Ex ker) retournent une liste de vecteurs entre crochets.Dans l&apos;exemple suivant, N est une base du noyau de m1. N[0] le premier vecteur de cette base N[1] le second ...Remarque: N affichera donc ces vecteurs en &lt;u&gt;ligne&lt;/u&gt;.&lt;li&gt;&lt;b&gt;Exemple7:&lt;/b&gt; &lt;code&gt;N:=ker m1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

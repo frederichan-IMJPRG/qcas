@@ -13,7 +13,7 @@
 <br>
 <hr>
 -->
-(<a href="memento.html#Functions">Fonctions</a>, <a href="memento.html#Tests">Tests</a>, <a href="memento.html#Loops">Boucles</a>, <a href="memento.html#Lists">Listes</a>, <a href="memento.html#Advanced">Avancé</a>)   
+(<a href="memento.html#Functions">Fonctions</a>, <a href="memento.html#Tests">Tests</a>, <a href="memento.html#Loops">Boucles</a>, <a href="memento.html#Lists">Listes et Matrices</a>, <a href="memento.html#Advanced">Avancé</a>)   
 
 <center><h3><font color="#40A497">Memento: Programmation (style Algorithmique)</font></h3></center>
 <h4>Instructions élémentaires</h4>
@@ -95,13 +95,14 @@
         <li><code>j:=2; tantque j&lt;10 faire j:=j*j ftantque</code></li>
       </ul>
    </li>
+   <li><code>NB:</code><font size="-1"> Une boucle retourne la dernière instruction exécutée et n'affiche pas les autres calculs ou objets géométriques.</font></li> 
 </ul>
 <!--      ---------------------Listes----------------    -->
-<h4><a name="Lists">Séquences <code>( , , )</code> et Listes <code>[ , , ]</code></a></h4>
+<h4><a name="Lists">Séquences <code>( , , )</code> et Listes <code>[ , , ]</code> et Matrices</a></h4>
 <font size="-1"><font color="#4004A7"<em>Les séquences et listes sont numérotées à <u>partir de 0</u> (sauf en mode maple). on accède aux éléments avec des crochets:</em>
    <center><code>a[0]</code>  est le premier élément de la liste ou séquence <code>a</code></center></font>
 <br>
-   <em>Les séquences <code>( , , )</code> sont des objets ordonnés séparés par des virgules. Les parenthèses sont simplifiées. Les opérations +,* ... <u>n'ont rien à voir</u> avec celles des vecteurs</em><br>
+   <em><u>Les séquences</u> <code>( , , )</code> sont des objets ordonnés séparés par des virgules. Les parenthèses sont simplifiées. Les opérations +,* ... <u>n'ont rien à voir</u> avec celles des vecteurs</em><br>
    <ul> Ci dessous, <code>a</code>, <code>b</code> et <code>c</code> sont identiques
        <li> <code>a:=0,1,2,3,4,5;</code></li>
        <li> <code>b:=(0,1),((2,3),4,5);</code></li>
@@ -110,7 +111,7 @@
        <li> <code>d:=NULL;d:=d,1;d:=d,2;</code>
    </ul><br>
 
-   <em>Les listes <code>[ , , ]</code> sont des objets entre crochets séparés par des virgules. Les objets sont ordonnés et aucun crochet n'est simplifié. On les utilise pour les <u>vecteurs</u> et les <a href="matrix"><u>matrices</u></a>.</em><br>
+   <em><u>Les listes</u> <code>[ , , ]</code> sont des objets entre crochets séparés par des virgules. Les objets sont ordonnés et aucun crochet n'est simplifié. On les utilise pour les <u>vecteurs</u> et les <a href="matrix"><u>matrices</u></a>.</em><br>
    <ul> Ci dessous, <code>a1</code> et <code>a2</code> sont identiques et sont des vecteurs. Ils diffèrent de <code>b</code> qui est une matrice à 2 lignes 3 colonnes.
        <li> <code>a1:=[0,1,2,3,4,5];</code></li>
        <li> <code>a2:=[seq(j,j=0..5)];</code></li>
@@ -119,7 +120,23 @@
        <li> <code>op(a1)</code> permet d'enlever les crochets externes pour passer d'une liste à une séquence.<li>
        <li> <code>[seq(j*j, j=a1)];</code> <i>(on crée la liste des carrés des éléments de la liste <code>a1</code>)</i>
        <li> <code>a3:=<a href="newList">newList</a>(10^7);</code> <i>(permet de créer rapidement une liste de zéros)</i>
-   </ul>
+   </ul><br>
+   <em><u>Une matrice</u> <code>[[ , , ],[ , ,]]</code>est donnée par la liste de ses lignes entre crochets. Chaque ligne est entre crochets séparée par des virgules. Ci dessous les matrices m1 et m2 sont identiques et ont 2 lignes 5 colonnes.</em>
+     <ul>
+       <li> <code>m1:=[[0,1,2,3,4],[0,3,6,9,12]];</code</li>
+       <li><code>m2:=[a1,a3];</code> (où a1,a3 sont définis ci dessus.)</li>
+       </ul>
+       <ul>Les matrices m3 et m4 sont identiques et sont des matrices 1 ligne 5 colonnes. Elles diffèrent de m5 qui est une matrice 1 colonne et 5 lignes. Aucune des matrices mi n'est un vecteur. v4 est le vecteur [30,90].
+           <li><code>m3:=[[0,1,2,3,4]]</code></li>
+           <li><code>m4:=[a1]</code></li>
+           <li><code>m5:=[[0],[1],[2],[3],[4]];</code></li>
+           <li><code>v4:=m1*a1;</code></li>
+           </ul>
+	<ul>De nombreuses instructions (Ex ker) retournent une liste de vecteurs entre crochets. Dans l'exemple suivant, N est une base du noyau de m1. N[0] le premier vecteur de cette base N[1] le second ...<br>
+	  Remarque: N affichera donc ces vecteurs en <u>ligne</u>.
+          <li><code>N:=ker m1;</li>
+        </ul>
+
 </font>
 <h4><a name="Advanced">Notions avancées</a></h4>
    <font size="-1">

@@ -42,5 +42,6 @@ private slots:
     void modifyRow(int);
     void modifyColumn(int);
     void writeMatrix();
+    void helpMatrix();
 };
 #endif // WIZARDMATRIX_H

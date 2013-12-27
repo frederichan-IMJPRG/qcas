@@ -2741,19 +2741,29 @@ a:=a*a;</source>
 <context>
     <name>WizardMatrix</name>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="44"/>
+        <location filename="../gui/WizardMatrix.cpp" line="45"/>
         <source>Dimensions:</source>
         <translation>Dimensions</translation>
     </message>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="45"/>
+        <location filename="../gui/WizardMatrix.cpp" line="46"/>
         <source>Lignes:</source>
         <translation>Rows</translation>
     </message>
     <message>
-        <location filename="../gui/WizardMatrix.cpp" line="46"/>
+        <location filename="../gui/WizardMatrix.cpp" line="47"/>
         <source>Colonnes:</source>
         <translation>Columns</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardMatrix.cpp" line="149"/>
+        <source>Astuces</source>
+        <translation>Hints</translation>
+    </message>
+    <message>
+        <location filename="../gui/WizardMatrix.cpp" line="149"/>
+        <source>&lt;center&gt;&lt;h2&gt;Vecteurs&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;Dans Giac/Xcas, les vecteurs sont donnÃ©s par leurs coordonnÃ©es sÃ©parÃ©es par des virgules et entre crochets.Ci dessous v1,v2,v3 sont des vecteurs. v1 et v2 sont identiques.&lt;li&gt;&lt;b&gt;Exemple1:&lt;/b&gt; &lt;code&gt;v1:=[0,1,2,3,4];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple2:&lt;/b&gt; &lt;code&gt;v2:=[seq(j,j=0..4)];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple3:&lt;/b&gt; &lt;code&gt;v3:=v1+2*v2;&lt;/code&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Matrices&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;Une matrice est donnÃ©e par la liste de ses lignes entre crochets. Chaque ligne est entre crochets sÃ©parÃ©e par des virgules.Ci dessous les matrices m1 et m2 sont identiques et ont 2 lignes 5 colonnes.&lt;li&gt;&lt;b&gt;Exemple1:&lt;/b&gt; &lt;code&gt;m1:=[[0,1,2,3,4],[0,3,6,9,12]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple2:&lt;/b&gt; &lt;code&gt;m2:=[v1,v3];&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;Les matrices m3 et m4 sont identiques et sont des matrices 1 ligne 5 colonnes.Elles diffÃ¨rent de m5 qui est une matrice 1 colonne et 5 lignes. Aucune des matrices mi n&apos;est un vecteur. v4 est le vecteur [30,90]&lt;li&gt;&lt;b&gt;Exemple3:&lt;/b&gt; &lt;code&gt;m3:=[[0,1,2,3,4]]&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple4:&lt;/b&gt; &lt;code&gt;m4:=[v1];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple5:&lt;/b&gt; &lt;code&gt;m5:=[[0],[1],[2],[3],[4]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Exemple6:&lt;/b&gt; &lt;code&gt;v4:=m1*v1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;De nombreuses instructions (Ex ker) retournent une liste de vecteurs entre crochets.Dans l&apos;exemple suivant, N est une base du noyau de m1. N[0] le premier vecteur de cette base N[1] le second ...Remarque: N affichera donc ces vecteurs en &lt;u&gt;ligne&lt;/u&gt;.&lt;li&gt;&lt;b&gt;Exemple7:&lt;/b&gt; &lt;code&gt;N:=ker m1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
+        <translation>&lt;center&gt;&lt;h2&gt;Vectors&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;In Giac/Xcas, vectors are defined by surrounding brackets containing the list of coordinates separated with commas.In the following, v1,v2,v3 are vectors. v1 and v2 are identical.&lt;li&gt;&lt;b&gt;Example1:&lt;/b&gt; &lt;code&gt;v1:=[0,1,2,3,4];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example2:&lt;/b&gt; &lt;code&gt;v2:=[seq(j,j=0..4)];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example3:&lt;/b&gt; &lt;code&gt;v3:=v1+2*v2;&lt;/code&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Matrices&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;A matrix is defined by the list of its rows surrounded by brackets. Each row is surrounded by brackets and its entries are separated by commas.In the following the matrices m1 and m2 are identical with 2 rows and 5 columns.&lt;li&gt;&lt;b&gt;Example1:&lt;/b&gt; &lt;code&gt;m1:=[[0,1,2,3,4],[0,3,6,9,12]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example2:&lt;/b&gt; &lt;code&gt;m2:=[v1,v3];&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;The matrices m3 and m4 are identical. The have 1 row and 5 columns.The differ from m5. The matrix m5 has 1 column and 5 rows. None of the matrices mi is vector. v4 is the vector [30,90]&lt;li&gt;&lt;b&gt;Example3:&lt;/b&gt; &lt;code&gt;m3:=[[0,1,2,3,4]]&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example4:&lt;/b&gt; &lt;code&gt;m4:=[v1];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example5:&lt;/b&gt; &lt;code&gt;m5:=[[0],[1],[2],[3],[4]];&lt;/code&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Example6:&lt;/b&gt; &lt;code&gt;v4:=m1*v1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;ul&gt;Many commands (Ex ker) return a list of vectors surrounded with brackets.In the following example, N is a basis of the kernel of m1. N[0] is the first  vector of this basis, N[1] the second ...Remark: &lt;code&gt;N&lt;/code&gt; will print these vectors as &lt;u&gt;rows&lt;/u&gt;.&lt;li&gt;&lt;b&gt;Example7:&lt;/b&gt; &lt;code&gt;N:=ker m1;&lt;/code&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
 </context>
 </TS>

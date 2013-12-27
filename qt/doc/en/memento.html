@@ -13,7 +13,7 @@
 <br>
 <hr>
 -->
-(<a href="memento.html#Functions">Functions</a>, <a href="memento.html#Tests">Tests</a>, <a href="memento.html#Loops">Loops</a>, <a href="memento.html#Lists">Lists</a>, <a href="memento.html#Advanced">Advanced</a>)   
+(<a href="memento.html#Functions">Functions</a>, <a href="memento.html#Tests">Tests</a>, <a href="memento.html#Loops">Loops</a>, <a href="memento.html#Lists">Lists and Matrices</a>, <a href="memento.html#Advanced">Advanced</a>)   
 
 <center><h3><font color="#40A497">Memento: Programmation</font></h3></center>
 <h4>Elementary commands</h4>
@@ -91,11 +91,11 @@
    </li>
 </ul>
 <!--      ---------------------Listes----------------    -->
-<h4><a name="List">Sequences <code>( , , )</code> and Lists <code>[ , , ]</code></a></h4>
+<h4><a name="List">Sequences <code>( , , )</code> Lists <code>[ , , ] and Matrices</code></a></h4>
 <font size="-1"><font color="#4004A7"<em>Sequences and lists are indexed <u>from 0</u> (except in mode maple). Use brackets to get an element:</em>
    <center><code>a[0]</code>  is the first element of the  list or sequence <code>a</code></center></font>
 <br>
-   <em>Sequences <code>( , , )</code> are ordered objects separated with commas. Les parenthesis are simplified. Operators +,* ... <u>are really not</u> the usual operations of vectors</em><br>
+   <em><u>Sequences</u> <code>( , , )</code> are ordered objects separated with commas. Les parenthesis are simplified. Operators +,* ... <u>are really not</u> the usual operations of vectors</em><br>
    <ul> Below, <code>a</code>, <code>b</code> and <code>c</code> are the same.
        <li> <code>a:=0,1,2,3,4,5;</code></li>
        <li> <code>b:=(0,1),((2,3),4,5);</code></li>
@@ -104,7 +104,7 @@
        <li> <code>d:=NULL;d:=d,1;d:=d,2;</code>
    </ul><br>
 
-   <em>Lists <code>[ , , ]</code> are  objets between brackets and separated by commas. They are ordered and no bracket is simplified. They are used for  <u>vectors</u> and <a href="matrix"><u>matrices</u></a>.</em><br>
+   <em><u>Lists</u> <code>[ , , ]</code> are  objets between brackets and separated by commas. They are ordered and no bracket is simplified. They are used for  <u>vectors</u> and <a href="matrix"><u>matrices</u></a>.</em><br>
    <ul> Below, <code>a1</code> et <code>a2</code> are identical. They are vectors. They differ from <code>b</code> who is a matrix with 2 rows and 3 colons. 
        <li> <code>a1:=[0,1,2,3,4,5];</code></li>
        <li> <code>a2:=[seq(j,j=0..5)];</code></li>
@@ -113,7 +113,23 @@
        <li> <code>op(a1)</code> is usefull to remove the external brackets of a list.<li>
        <li> <code>[seq(j*j, j=a1)];</code> <i>(is the list of j*j when j moves in the list <code>a1</code>)</i>
        <li> <code>a3:=<a href="newList">newList</a>(10^7);</code> <i>(to efficiently create a list of zeros)</i>
-   </ul>
+   </ul><br>
+   <em><u>A Matrix</u> <code>[[ , , ],[ , ,]]</code>is defined by the list of its rows surrounded by brackets. Each row is a list of entries separated by comma and is surrounded by brackets. In the following the matrices m1 and m2 are identical. They have 2 rows and 5 columns</em>
+     <ul>
+       <li> <code>m1:=[[0,1,2,3,4],[0,3,6,9,12]];</code</li>
+       <li><code>m2:=[a1,a3];</code> (where a1,a3 are defined above)</li>
+       </ul>
+       <ul>The matrices m3 and m4 are identical and they have 1 row and 5 columns. They differ from m5. The matrix m5 have 1 colomn and 5 rows. None of the mi is a vector. v4 est the vector [30,90].
+           <li><code>m3:=[[0,1,2,3,4]]</code></li>
+           <li><code>m4:=[a1]</code></li>
+           <li><code>m5:=[[0],[1],[2],[3],[4]];</code></li>
+           <li><code>v4:=m1*a1;</code></li>
+           </ul>
+	<ul>Many commands (Ex ker) return a list of vectors. In the following example, <code>N</code> is a basis of the kernel of  <code>m1</code>. <code>N[0]</code> is the first  vector of this basis, N[1] the next one...<br>
+	  Warning: <code>N</code> will print these vectors as <u>rows</u>.
+          <li><code>N:=ker m1;</li>
+        </ul>
+
 </font>
 <h4><a name="advanced">Notions avancées</a></h4>
    <font size="-1">

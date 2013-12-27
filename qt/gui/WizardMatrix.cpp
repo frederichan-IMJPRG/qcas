@@ -21,6 +21,7 @@
 #include <QLabel>
 #include <QTableWidget>
 #include <QPushButton>
+#include <QMessageBox>
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -70,8 +71,13 @@ void WizardMatrix::createGui(){
     QPushButton* button=new QPushButton;
     button->setIcon(QIcon(":/images/right.png"));
 
+    QPushButton* helpbutton=new QPushButton;
+    helpbutton->setIcon(QIcon(":/images/ampoule.png"));
+
+
     QHBoxLayout *hLayout=new QHBoxLayout;
     hLayout->addWidget(box);
+    hLayout->addWidget(helpbutton);
     hLayout->addWidget(button);
 
     table=new QTableWidget;
@@ -94,6 +100,8 @@ void WizardMatrix::createGui(){
     connect(rowSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyRow(int)));
     connect(columnSpin,SIGNAL(valueChanged(int)),this,SLOT(modifyColumn(int)));
     connect(button,SIGNAL(clicked()),this,SLOT(writeMatrix()));
+    connect(helpbutton,SIGNAL(clicked()),this,SLOT(helpMatrix()));
+
 
     retranslate();
 
@@ -135,4 +143,36 @@ void WizardMatrix::writeMatrix(){
     }
     s.append("]");
     mainWindow->sendText(s);
+}
+
+void WizardMatrix::helpMatrix(){
+    QMessageBox::about(this,tr("Astuces"),tr("<center><h2>Vecteurs</h2></center>"
+                                                      "<hr>"
+                                             "<ul>Dans Giac/Xcas, les vecteurs sont donnés par leurs coordonnées séparées par des virgules et entre crochets."
+                                             "Ci dessous v1,v2,v3 sont des vecteurs. v1 et v2 sont identiques."
+                                             "<li><b>Exemple1:</b> <code>v1:=[0,1,2,3,4];</code></li>"
+                                             "<li><b>Exemple2:</b> <code>v2:=[seq(j,j=0..4)];</code></li>"
+                                             "<li><b>Exemple3:</b> <code>v3:=v1+2*v2;</code>"
+                                             "</ul>"
+                                             "<center><h2>Matrices</h2></center>"
+                                             "<ul>Une matrice est donnée par la liste de ses lignes entre crochets. Chaque ligne est entre crochets séparée par des virgules."
+                                             "Ci dessous les matrices m1 et m2 sont identiques et ont 2 lignes 5 colonnes."
+                                             "<li><b>Exemple1:</b> <code>m1:=[[0,1,2,3,4],[0,3,6,9,12]];</code></li>"
+                                             "<li><b>Exemple2:</b> <code>m2:=[v1,v3];</code></li>"
+                                             "</ul><ul>Les matrices m3 et m4 sont identiques et sont des matrices 1 ligne 5 colonnes."
+                                             "Elles diffèrent de m5 qui est une matrice 1 colonne et 5 lignes. Aucune des matrices mi n'est un vecteur. v4 est le vecteur [30,90]"
+
+                                             "<li><b>Exemple3:</b> <code>m3:=[[0,1,2,3,4]]</code></li>"
+                                             "<li><b>Exemple4:</b> <code>m4:=[v1];</code></li>"
+                                             "<li><b>Exemple5:</b> <code>m5:=[[0],[1],[2],[3],[4]];</code></li>"
+                                             "<li><b>Exemple6:</b> <code>v4:=m1*v1;</code></li>"
+                                             "</ul><ul>De nombreuses instructions (Ex ker) retournent une liste de vecteurs entre crochets."
+                                             "Dans l'exemple suivant, N est une base du noyau de m1. N[0] le premier vecteur de cette base N[1] le second ..."
+                                             "Remarque: N affichera donc ces vecteurs en <u>ligne</u>."
+                                             "<li><b>Exemple7:</b> <code>N:=ker m1;</code></li>"
+                                             "</ul><hr>"
+                                                      ));
+
+
+
 }
