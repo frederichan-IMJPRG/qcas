@@ -377,7 +377,20 @@ void MainWindow::retranslateAction(){
 
     evaluateallAction->setText(tr("Evaluer toutes les feuilles depuis le début."));
 
-    hintAction->setText(tr("Astuces:<br><center>CTRL Espace</center>donne les complétions possibles de la chaine saisie<br><center>CTRL flèche haut ou bas</center>Insère une commande de l'historique<br><center>CTRL Delete</center><br>Supprime les lignes sélectionnées<center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche"));
+    //hintAction->setText(tr("<center><h2>Racourcis</h2></center>")+"<br><center>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Space).toString()+tr("</center>donne les complétions possibles de la chaine saisie<br><center>")+QKeySequence::QKeySequence(Qt::CTRL).toString()+tr("flèche haut ou bas</center>Insère une commande de l'historique<br><center>")+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Delete).toString()+tr("</center><br>Supprime les lignes sélectionnées<center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche"));
+    hintAction->setText((   "<center><h2>"+tr("Racourcis")+"</h2></center>"
+                                                          "<hr>"
+                                                          "<ul>"
+                                                          "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Space).toString()+":</b><center>"+tr("donne les complétions possibles de la chaine saisie")+"</center></li>"
+                                                 "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL).toString()+tr("flèche haut ou bas</b><center>Insère une commande de l'historique</center></li>")+
+                                                 "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Backspace).toString()+tr("</b><center>Supprime les lignes sélectionnées</center></li>")+
+                                                 tr("<li><b>F1</b>(Lorsque l'on laisse le pointeur sur un mot clef)<center>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)</center></li>")+
+                                                 "</ul>"
+                                                 "<center><h2>"+tr("Astuces")+"</h2></center>"
+                                                 "<ul>"
+                                                 "<li>"+tr("En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche</li>")+
+                                                          "</ul><hr>"
+                                                          ));
 
     evaluateAction->setText(tr("&Evaluer"));
     evaluateAction->setShortcut(tr("Shift+Entrée"));
@@ -1360,19 +1373,7 @@ void MainWindow::about(){
 
 }
 void MainWindow::astuces(){
-    QMessageBox::about(this,tr("Astuces"),tr("<center><h2>Racourcis</h2></center>"
-                                                      "<hr>"
-                                                      "<ul>"
-                                                      "<li><b>CTRL espace:</b><center>donne les complétions possibles de la chaine saisie</center></li>"
-                                             "<li><b>CTRL flèche haut ou bas</b><center>Insère une commande de l'historique</center></li>"
-                                             "<li><b>CTRL Delete</b><center>Supprime les lignes sélectionnées</center></li>"
-                                             "<li><b>F1</b>(Lorsque l'on laisse le pointeur sur un mot clef)<center>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)</center></li>"
-                                             "</ul>"
-                                             "<center><h2>Astuces</h2></center>"
-                                             "<ul>"
-                                             "<li>En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche</li>"
-                                                      "</ul><hr>"
-                                                      ));
+    QMessageBox::about(this,tr("Astuces"),hintAction->text());
 
 }
 

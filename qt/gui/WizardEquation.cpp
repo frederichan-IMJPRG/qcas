@@ -98,7 +98,7 @@ void EqPanel::retranslate(){
     labelVar->setToolTip(var->toolTip());
     numeric->setText(tr("Résolution numérique"));
     inC->setText(tr("Solutions complexes"));
-    hyp->setToolTip(tr("<center><b>supposons</b></center>(Facultatif). Pour résoudre, il faut  parfois faire une hypothèse sur la variable. Par exemple pour <code>solve(sin(2*x)>1/2</code>, on donnerait un intervalle borné.<br><b>Exemple: </b>x&gt;-2*pi and x&lt;2*pi"));
+    hyp->setToolTip(tr("<center><b>supposons</b></center>(Facultatif). Pour résoudre, il faut  parfois faire une hypothèse sur la variable. Par exemple pour <code>solve(sin(2*x)>1/2)</code>, on donnerait un intervalle borné.<br><b>Exemple: </b>x&gt;-2*pi and x&lt;2*pi"));
     labelHyp->setText(tr("Hypothèses"));
     labelHyp->setToolTip(hyp->toolTip());
     purge->setToolTip(tr("<center><b>purge(??)</b></center>Nettoyer la variable aprés la résolution pour enlever les hypothèses."));
