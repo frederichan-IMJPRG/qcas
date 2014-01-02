@@ -960,13 +960,21 @@ bool MainWindow::saveToGiacFile(const QString &fileName){
 
 void MainWindow::initAutoSave(){
 
+    QDir curD=QDir::current();
+    //We use the current dir only if it is under home
+    if(!curD.absolutePath().startsWith(QDir::homePath()))
+        curD=QDir::home();
+    QStringList filter;
+    QString curDpath=curD.path();
+    if(!curDpath.endsWith("/"))
+        curDpath.append("/");
+
     QString tmp=QDateTime::currentDateTime().toString("yy:MM:dd:hh:mm:ss");
     tmp.remove(":");
     if(tmp.isEmpty())
         tmp="99998877";
-    autosaveFileName="xcas_auto_"+tmp+".xws";
-    QDir curD=QDir::current();
-    QStringList filter;
+    autosaveFileName=curDpath+"xcas_auto_"+tmp+".xws";
+
     filter<<"xcas_auto*.xws";
     //curD.setNameFilters(filter);
     curD.setSorting(QDir::Time);
@@ -986,19 +994,19 @@ void MainWindow::initAutoSave(){
         int r = msgBox.exec();
         if (r==QMessageBox::Yes){
 
-             if(loadGiacFile(autofound.at(0))){
-                     autosaveFileName=autofound.at(0);
+             if(loadGiacFile(curDpath+autofound.at(0))){
+                     autosaveFileName=curDpath+autofound.at(0);
                      setWindowModified(true);
              }
             return;
         }
         else if (r==QMessageBox::Open){
-            QString fileName=QFileDialog::getOpenFileName(this,tr("auto_save"), QDir::currentPath(),tr("QCAS or Giac/Xcas files (xcas_auto_*.xws)"));
+            QString fileName=QFileDialog::getOpenFileName(this,tr("auto_save"), curDpath ,tr("QCAS or Giac/Xcas files (xcas_auto_*.xws)"));
            return;
         }
         else if (r== QMessageBox::Reset){
             for(i=0;i<autofound.size();i++){
-                delfile.setFileName(autofound.at(i));
+                delfile.setFileName(curDpath+autofound.at(i));
                 delfile.remove();
             }
         }
