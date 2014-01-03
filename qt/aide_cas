@@ -1,9 +1,17 @@
+# flatten
+1 Aplatit récursivement une liste contenant des listes.
+2 Recursively flatten a list containing lists.
+0 Lst
+-1 mat2list
+flatten([[1,[2,3],4],[5,6]])
+
 # chisquaret
-1 Test du Chi2 d'adequation entre 2 (or n) echantillons ou entre 1 echantillon et une loi de distribution (multinomiale ou donnee par une fonction)
-2 Chi2 test : adequation between 2 (or n) samples or between 1 sample and a distribution law (multinomial or given by a law)
+1 Test du Chi2 d'adéquation entre 2 (or n) échantillons ou entre 1 échantillon et une loi de distribution (multinomiale ou donnée par une fonction).
+2 Chi2 test : adequation between 2 (or n) samples or between 1 sample and a distribution law (multinomial or given by a law).
 0 Data,[Func],[FuncParams]
--1 chisquare
--2 kolmogorovt
+-1 normalt
+-2 studentt
+-3 kolmogorovt
 chisquaret([57,54])
 chisquaret([1,1,1,1,1,0,0,1,0,0,1,1,1,0,1,1,0,1,1,0,0,0,0],[.4,.6])
 chisquaret([57,30],[.6,.4])
@@ -11,6 +19,8 @@ chisquaret([17,15,12,15],[15,13,13,14])
 chisquaret(ranv(1000,binomial,10,.5),binomial)
 chisquaret(ranv(1000,binomial,10,.5),binomial,11,.5)
 chisquaret(ranv(1000,normald,0,.2),normald)
+chisquaret([11,16,17,22,14,10],[1/6,1/6,1/6,1/6,1/6,1/6])
+chisquaret([11,16,17,22,14,10],[(1/6)$6])
 
 # plotcdf
 1 Representation graphique d'une distribution cumulée pour une loi de probabilité.
@@ -309,13 +319,17 @@ mgf(binomial,n,p)
 kolmogorovd(1.36)
 
 # kolmogorovt
-1 Test de Kolmogorov-Smirnov d'adéquation à une loi de distribution continue, entre 2 échantillons l1 l2 (loi inconnue) ou entre 1 échantillon l1 et une loi s
-2 Kolmogorov-Smirnov adequation test to a continuous distribution law, between 2 samples l1 l2 (unknown law) or between a sample l1 and a distribution law s
+1 Test de Kolmogorov-Smirnov d'adéquation à une loi de distribution continue, entre 2 échantillons l1 l2 (loi inconnue) ou entre 1 échantillon l1 et une loi s.
+2 Kolmogorov-Smirnov adequation test to a continuous distribution law, between 2 samples l1 l2 (unknown law) or between a sample l1 and a distribution law s.
 0 Lst(l1),Lst(l2) || DistribLaw(s)
+-1 chisquaret
+-2 normalt
+-3 studentt
 kolmogorovt(randvector(100,normald,0,1),randvector(100,normald,0,1))
 kolmogorovt(randvector(100,normald,0,1),randvector(100,normald,3,1))
 kolmogorovt(randvector(100,normald,0,1),normald(0,1))
 kolmogorovt(randvector(100,normald,0,1),student(2))
+
 
 # gammad
 1 Renvoie la densité de probabilité de la loi Gamma (=x^(a-1)*exp(-b*x)*b^a/Gamma(a)).
@@ -1389,6 +1403,7 @@ ifft([100.0,-52.2842712475+6*i,-8.0*i,4.28427124746-6*i,4.0,4.28427124746+6*i,8*
 4 Αναγωγή πίνακα σε μορφή Hessenberg.
 8 Hessenberg (Schur) 分解。 将矩形矩阵分解成两个矩阵。 如果矩阵为实矩阵，则结果为 {[[正交矩阵]]、[[准上三角矩阵]]}。 如果启用了复数模式，并且矩阵为复矩阵，则结果为 {[[酉矩阵]]、[[上三角矩阵]]}。
 0 Mtrx(A),[Intg(n)]
+-1 SCHUR
 hessenberg([[1,2,3],[4,5,6],[7,8,1]])
 hessenberg([[1,2,3,4],[4,5,6,7],[7,8,9,0],[0,1,2,3]])
 hessenberg([[1,2,3],[4,5,6],[7,8,1]],-1)
@@ -1402,6 +1417,7 @@ hessenberg([[1,2,3],[4,5,6],[7,8,1]],3)
 4 Αναγωγή πίνακα σε μορφή Hessenberg : SCHUR(A)=hessenberg(A,-1).
 8 Schur 分解。 将矩形矩阵分解成两个矩阵。 如果矩阵为实矩阵，则结果为 {[[正交矩阵]]、[[准上三角矩阵]]}。 如果启用了复数模式，并且矩阵为复矩阵，则结果为 {[[酉矩阵]]、[[上三角矩阵]]}。 SCHUR(A)=hessenberg(A,-1)。 
 0 Mtrx(A)
+-1 hessenberg
 SCHUR([[1,2,3],[4,5,6],[7,8,1]])
 SCHUR([[1,2,3,4],[4,5,6,7],[7,8,9,0],[0,1,2,3]])
 
@@ -1429,13 +1445,17 @@ cote(point[1,2,3])
 cote(point(1,2,3))
 
 # chrem
-1 Restes chinois pour des entiers.
-2 Chinese remainders for integers.
-3 Restos chinos para enteros.
-4 Κινεζικός αλγόριθμος υπολοίπων για ακεραίους.
+1 Restes chinois pour des entiers ou pour des polynômes écrits sous forme 
+symbolique.
+2 Chinese remainders for integers or for polynomials.
+3 Restos chinos para entero S o para polinomios.
+4 Κινεζικός αλγόριθμος υπολοίπων για ακεραίους ή υπόλοιπο για πολυώνυμα.
+8 整数的中国余数  或 多项式的中国余数
 0 LstIntg(a,b,c....),LstIntg(p,q,r,....)
 -1 gcd
 -2 fracmod
+-3 chinrem
+-4 ichinrem
 chrem([2,3],[7,5])
 chrem([2,4,6],[3,5,7])
 chrem([2,4,6,7],[3,5,7,11])
@@ -1685,10 +1705,10 @@ plane(x+y+z=0)
 plane(2*x+y-2*z-1)
 
 # line
-1 droite(A,B) (resp droite(A,pente=m) ou droite(a*x+b*y+c=0) ou droite(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0)) trace la droite AB (resp la droite passant par A et de pente m ou d'équation l'argument) dans le plan ou dans l'espace 3D.
-2 line(A,B) (resp line(A,slope=m) or line(a*x+b*y+c=0) or line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0)) draws the line AB (resp the line going through A with slope m or of equation the argument) in the plane or in the 3D space.
-3 line(A,B)(resp line(A,slope=m) o line(a*x+b*y+c=0) o line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0)) traza la recta AB (resp la recta pasando por A y de pendiente m o de ecuación el argumento) en el plano o el espacio 3D.
-4 line(A,B) (resp line(a*x+b*y+c=0) ή line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0)) σχεδιάζει την ευθεία AB (αναφορικά με την εξίσωση του ορίσματος) στο επίπεδο ή στον 3-Δ χώρο.
+1 droite(A,B) (resp droite(A,pente=m) ou droite(A,[1,m]) ou droite(a*x+b*y+c=0) ou droite(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0) ou droite(A,u)) trace la droite AB (resp la droite passant par A et de pente m ou de vecteur directeur u ou d'équation l'argument) dans le plan ou dans l'espace 3D.
+2 line(A,B) (resp line(A,slope=m) or line(A,[1,m]) or line(a*x+b*y+c=0) or line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0) or line(A,u)) draws the line AB (resp the line going through A with slope m or with direction vector u or of equation the argument) in the plane or in the 3D space.
+3 line(A,B)(resp line(A,slope=m) o line(A,[1,m]) o line(a*x+b*y+c=0) o line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0 o line(A,u)) traza la recta AB (resp la recta pasando por A y de pendiente m, o vector director u, o de ecuación el argumento) en el plano o el espacio 3D.
+4 line(A,B) (resp line(A,slope=m)  ή  line(A,[1,m]) ή   line(a*x+b*y+c=0) ή line(a*x+b*y+c*z+d=0,aa*x+bb*y+cc*z+dd=0) ή line(A,u)) σχεδιάζει την ευθεία AB (αναφορικά με την εξίσωση του ορίσματος) στο επίπεδο ή στον 3-Δ χώρο.
 0 Pnt||Cplx||Eq,[Pnt||slope||Var]
 -1 point
 -2 plane
@@ -2392,7 +2412,7 @@ coordinates(vecteur([1,2,3],[4,5,6]))
 2 infixed boolean operator (or)
 3 operador booleano infijo (o)
 4 εντεθειμένος λογικός τελεστής (Η)
-8 逻辑 OR。  如果 value1 或 value2 为非零值，则返回 1，否则返回 0。
+8 逻辑 OR。  如果 value1 或 如果 value2 为非零值，则返回 1，否则返回 0。
 0 Expr, Expr
 -1 and
 -2 not
@@ -5950,11 +5970,11 @@ LU([[1,2],[3,4]],L,U,P)
 LU([[6,12,18],[5,14,31],[3,8,18]],L,U,P)
 
 # SVD
-1 Pour A matrice numérique réelle renvoie une matrice orthogonal U, une matrice orthogonale Q et le vecteur S des valeurs singulières de A tel que A=U*diag(S)*tran(Q).
-2 Singular Value Decomposition for a numerical real matrix A, returns U an orthogonal matrix, Q an orthogonal matrix and S the vector of singular values such that A=U*diag(S)*tran(Q)
-3 Para una matriz real numércia A, devuelve L una matriz ortogonal, U una matriz ortogonal, y S un vector de Singular Value tal que A=U*diag(S)*tran(Q).
-4 Επιστρέφει U,Q,S : A=U*diag(S)*tran(Q).
-8 奇数分解。 将一个 n × n 矩阵分解成两个矩阵和一个矢量： {U=[[n × n 正交方阵]]、Q=[[n × n 正交方阵]]、S=[实数]} (A=U*diag(S)*tran(Q))。
+1 Pour A matrice numérique réelle renvoie une matrice orthogonale U, le vecteur S des valeurs singulières de A et une matrice orthogonale Q tel que A=U*diag(S)*trn(Q).
+2 Singular Value Decomposition for a numerical real matrix A, returns U an orthogonal matrix, S the vector of singular values of A and Q an orthogonal matrix and S the vector of singular values such that A=U*diag(S)*trn(Q)
+3 Para una matriz real numércia A, devuelve L una matriz ortogonal, S un vector de Singular Value y U una matriz ortogonal tal que A=U*diag(S)*trn(Q).
+4 Επιστρέφει U,Q,S : A=U*diag(S)*trn(Q).
+8 奇数分解。 将一个 n × n 矩阵分解成两个矩阵和一个矢量： {U=[[n × n 正交方阵]]、S=[实数]}、Q=[[n × n 正交方阵]] (A=U*diag(S)*trn(Q))。
 0 Mtrx(A)
 -1 lu
 -2 svd
@@ -5966,7 +5986,7 @@ SVD([[6,12,18],[5,14,31],[3,8,18]])
 2 For a numerical real matrix A returns the singular value vector i.e. sqrt(eigenvals(A*trn(A))).
 3 Devuelve un vector de Singular Value i.e. sqrt(eigenvals(A*trn(A)))
 4 Επιστρέφει S= sqrt(eigenvals(A*trn(A)))
-8 奇值。 返回包含矩阵奇值的向量。(A=数值矩阵)。
+8 奇值。 返回包含矩阵奇值的向量。(A=数值矩阵)。S= sqrt(eigenvals(A*trn(A)))。
 0 Mtrx(A)
 -1 lu
 -2 svd
@@ -6360,8 +6380,8 @@ unarchive("aa.txt")
 CopyVar(A,B)
 
 # csolve cSolve resoudre_dans_C
-1 Renvoie la matrice dont les lignes sont solutions dans ℂ du système d'équations polynomiales.
-2 Returns the matrix where the rows are ℂ-solutions of the system of polynomial equations.
+1 Renvoie la liste des solutions complexes d'une équation ou la matrice dont les lignes sont solutions dans ℂ d'un système d'équations polynomiales.
+2 Returns the list of complex solutions of an equation or a matrix where the rows are ℂ-solutions of a system of polynomial equations.
 3 Devuelve la matriz cuyas filas son soluciones en ℂ del sistema de ecuaciones polinomiales.
 4 Επιστρέφει τον πίνακα όπου οι γραμμές είναι λύσεις στο ℂ ενός συστήματος πολυωνυμικών εξισώσεων.
 0 LstEq,LstVar
@@ -6419,6 +6439,17 @@ abscissa(point(1+2*i))
 abscissa(point(i)-point(1+2*i))
 abscissa(-1-i)
 abscissa(point(1,2,3))
+
+# multinomial
+1 Renvoie n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
+2 Returns n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
+3 Devuelve n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
+4 Επιστρέφει n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
+8 =n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n)。
+0 Intg(n),Vect(k),Vect(p)
+-1 binomial
+multinomial(10,[0.5,0.5],[3,7])
+multinomial(10,[0.2,0.3,0.5],[3,3,6])
 
 # binomial
 1 Renvoie comb(n,k)*p^k*(1-p)^(n-k) ou comb(n,k) si pas de 3ème argument.
@@ -6859,6 +6890,7 @@ list2mat([1,8,4,9],2)
 4 Επιστρέφει μια λίστα που περιέχει τους όρους του πίνακα.
 0 Mtrx
 -1 list2mat
+-2 flatten
 mat2list([[1,8],[4,9]])
 
 # deltalist
@@ -8695,9 +8727,9 @@ degree(x^3+x)
 degree([1,0,1,0])
 
 # desolve deSolve dsolve
-1 Résout une équation différentielle.
-2 Solves a differential equation.
-3 Resuelve una ecuación diferencial.
+1 Résout une équation différentielle ou un système différentiel linéaire à coefficients constants.
+2 Solves a differential equation or a differential linear system with constant coefficients.
+3 Resuelve una ecuación diferencial o un sistema diferencial lineal con coeficientes constants.
 4 Επίλυση μιας διαφορικής εξίσωσης.
 0 Eq,[TimeVar],FncVar
 -1 integrate
@@ -8709,6 +8741,7 @@ desolve(y'+x*y=0)
 desolve(y'+x*y=0,y)
 desolve(y'+x*y=0,[0,1])
 desolve([y'+x*y=0,y(0)=1],y)
+desolve([y'=[[1,2],[2,1]]*y+[x,x+1],y(0)=[1,2]]) 
 desolve(y''+y=0,y)
 desolve([y''+y=sin(x),y(0)=1,y'(0)=2],y)
 desolve([y''+y=sin(x),y(0)=1,y'(0)=2],x,y)
@@ -9758,10 +9791,12 @@ ibpu(ibpu(ln(x),ln(x),x,2,3),0,x,2,3)
 2 Chinese remainders for integers.
 3 Restos chinos de enteros.
 4 Κινέζικο υπόλοιπο για τους ακεραίους.
-8 整数的中国余数。 取 [a, p] 和 [b, q] 两列，返回一个双整数列 [r, n]，使 x=r mod n。在该例中，x 有 x=a mod p，并且 x=b mod q； 并有 n=p*q。
+8 整数的中国余数。 取 [a, p] 和 [b, q] 两a列，返回一个双整数列 [r, n]，使 x=r mod n。在该例中，x 有 x=a mod p，并且 x=b mod q； 并有 n=p*q。
 0 LstIntg(a,p),LstIntg(b,q)
 -1 gcd
 -2 fracmod
+-3 chinrem
+-4 chrem
 ichinrem([2,7],[3,5])
 ichinrem([2%7,3%5])
 ichinrem([2%7,3%5,1%9])
@@ -10122,8 +10157,8 @@ kill()
 4 Επιστρέφει το πολυώνυμο παρεμβολής βαθμού n-1 έτσι ώστε P(xk)=yk k=0..n-1
 0 (Lst_xk,Lst_yk) or Mtrx_2*n
 -1 spline
-lagrange([1,3],[0,1])
-lagrange([[1,3],[0,1]])
+lagrange([1,3,4],[0,1,2])
+lagrange([[1,3,4],[0,1,2]])
 
 # laguerre
 1 Renvoie le n-ième polynôme de Laguerre
@@ -11398,10 +11433,10 @@ quorem(t^4-1,(t+1)^2,t)
 q2a(x^2+2*x*y+2*y^2,[x,y])
 
 # rand
-1 rand(n)=un entier (resp rand(p,n)=un réel ou rand(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (n entier par défaut=2^32) ou rand(n,b1,b2)=n entiers de [b1;b2] ou rand(n,L)=n éléments de L.
-2 rand(n)=a random integer (resp rand(p,n)=a real or rand(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(n integer by defaults=2^32) or rand(n,b1,b2)=n integers between b1 and b2 or rand(n,L)=n elements of L.
-3 rand(n)=un número (resp rand(p,n)=un número real o rand(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (n=número por defecto=2^32) o rand(n,b1,b2)= enteros entre b1 y b2 o rand(n,L)=n elementos de L.
-4 rand(n)=έναν τυχαίο ακέραιο (αντίστοιχα rand(p,n)=ένα πραγματικό ή rand(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(n ακέραιος από προεπιλογή=2^32) ή rand(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή rand(n,L)=n στοιχεία του L.
+1 rand(n)=un entier (resp rand(p,n)=un réel ou rand(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (rand()=rand(0,1)=un réel de [0,1[) ou rand(n,b1,b2)=n entiers de [b1;b2] ou rand(n,L)=n éléments de L.
+2 rand(n)=a random integer (resp rand(p,n)=a real or rand(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(rand()=rand(0,1)=a real in [0,1[) or rand(n,b1,b2)=n integers between b1 and b2 or rand(n,L)=n elements of L.
+3 rand(n)=un número (resp rand(p,n)=un número real o rand(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (rand()=rand(0,1)) o rand(n,b1,b2)= enteros entre b1 y b2 o rand(n,L)=n elementos de L.
+4 rand(n)=έναν τυχαίο ακέραιο (αντίστοιχα rand(p,n)=ένα πραγματικό ή rand(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(rand()=rand(0,1)) ή rand(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή rand(n,L)=n στοιχεία του L.
 0 Intg(n) or Interval(p..n) or NULL,[Intg(b1) or Lst(L)],[Intg(b2)]
 -1 srand
 -2 randpoly
@@ -11417,10 +11452,10 @@ rand(3,1,10)
 rand(3,["r","r","r","b","n"])
 
 # hasard
-1 hasard(n)=un entier (resp hasard(p,n)=un réel ou hasard(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (n entier par défaut=2^32) ou hasard(n,b1,b2)=n entiers de [b1;b2] ou hasard(n,L)=n éléments de L. Si hasard a un seul argument il peut se passer de () (compatibilité langage tortue)
-2 hasard(n)=a random integer (resp hasard(p,n)=a real or hasard(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(n integer by defaults=2^32) or hasard(n,b1,b2)=n integers between b1 and b2 or hasard(n,L)=n elements of L. If hasard has only one argument, () are not necessary (compatibility with turtle language)
-3 hasard(n)=un número (resp hasard(p,n)=un número real o hasard(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (n=número por defecto=2^32) o nhasard(n,b1,b2)= enteros entre b1 y b2 o hasard(n,L)=n elementos de L. Si hasard tiene un sólo arguemnto, no se tiene que poner () (compatibilidad lenguaje tortuga)
-4 hasard(n)=έναν τυχαίο ακέραιο (αντίστοιχα hasard(p,n)=ένα πραγματικό ή hasard(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(n ακέραιος από προεπιλογή=2^32) ή hasard(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή hasard(n,L)=n στοιχεία του L. Εάν η hasard έχει ένα μόνο όρισμα τότε οι () δεν είναι απαραίτητες (συμβατότητα με τη γλώσσα προγραμματισμού για την χελώνα)
+1 (hasard n)=un entier (resp (hasard p,n)=un réel ou hasard(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (hasard ou (hasard 0,1)=un réel aléatoire de [0,1[) ou hasard(n,b1,b2)=n entiers de [b1;b2] ou hasard(n,L)=n éléments de L. Si hasard a un seul argument il peut se passer de () (compatibilité langage tortue)
+2 (hasard n)=a random integer (resp (hasard p,n)=a real or hasard(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(hasard= (hasard 0,1)=a random real in [0,1[) or hasard(n,b1,b2)=n integers between b1 and b2 or hasard(n,L)=n elements of L. If hasard has only one argument, () are not necessary (compatibility with turtle language)
+3 (hasard n)=un número (resp hasard(p,n)=un número real o hasard(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (hasard =(hasard 0,1)) o nhasard(n,b1,b2)= enteros entre b1 y b2 o hasard(n,L)=n elementos de L. Si hasard tiene un sólo arguemnto, no se tiene que poner () (compatibilidad lenguaje tortuga)
+4 (hasard n)=έναν τυχαίο ακέραιο (αντίστοιχα (hasard p,n)=ένα πραγματικό ή hasard(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(hasard=(hasard 0,1)) ή hasard(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή hasard(n,L)=n στοιχεία του L. Εάν η hasard έχει ένα μόνο όρισμα τότε οι () δεν είναι απαραίτητες (συμβατότητα με τη γλώσσα προγραμματισμού για την χελώνα)
 0 Intg(n) or Interval(p..n) or NULL,[Intg(b1) or Lst(L)],[Intg(b2)]
 -1 rand
 -2 randpoly
@@ -12538,10 +12573,10 @@ tableseq(cos(x),x,0.0)
 tableseq(x+y,[x,y],[1,1])
 
 # seqsolve
-1 Donne la valeur d'une suite récurrente (u_{n+1}=f(u_n) ou u_{n+2}=f(u_{n+1},u_n)...) ou d'un système de suites récurrentes.
-2 Gives the value of a recurrent sequence (u_{n+1}=f(u_n) or u_{n+2}=f(u_{n+1},u_n)...) or of a system of recurrent sequences.
-3 Valores de una secuencia recurente (u_{n+1}=f(u_n) o u_{n+2}=f(u_{n+1},u_n)...) o de un sistema de secuencias recurrentes.
-4 Τιμές μιας αναδρομικής ακολουθίας (u_{n+1}=f(u_n) ή u_{n+2}=f(u_{n+1},u_n)...) ή ενός συστήματος αναδρομικών ακολουθιών.
+1 Donne la valeur d'une suite récurrente (u_{n+1}=f(u_n) ou u_{n+2}=f(,u_n,u_{n+1},...) ou d'un système de suites récurrentes.
+2 Gives the value of a recurrent sequence (u_{n+1}=f(u_n) or u_{n+2}=f(,u_n,u_{n+1}...) or of a system of recurrent sequences.
+3 Valores de una secuencia recurente (u_{n+1}=f(u_n) o u_{n+2}=f(u_n,u_{n+1}...) o de un sistema de secuencias recurrentes.
+4 Τιμές μιας αναδρομικής ακολουθίας (u_{n+1}=f(u_n) ή u_{n+2}=f(u_n,u_{n+1},...) ή ενός συστήματος αναδρομικών ακολουθιών.
 0 (Expr or LstExpr),(Var or LstVar),(InitVal or LstInitVal)
 -1 rsolve
 -2 plotseq
@@ -12549,7 +12584,7 @@ tableseq(x+y,[x,y],[1,1])
 seqsolve(2x+n,[x,n],1)
 seqsolve(2x+n*3^n,[x,n],1)
 seqsolve(x+y,[x,y,n],[1,1])
-seqsolve([x+y,x],[x,y,n],[1,1])
+seqsolve([x+2*y,n+1,x],[x,y,n],[0,1])
 
 # rsolve
 1 Donne la valeur d'une suite récurrente ou d'un système de suites récurrentes.
@@ -12766,23 +12801,6 @@ truncate((x^2+x)^2,3)
 -2 catch
  essai(x):={local y,err;try {y:=[[1,2]]*x;}catch (err){y:="erreur fatale:"+err;} return y;};essai([1,2,3])
 
-# type
-1 Renvoie n dans [1..12] définissant le type de l'argument
-2 Returns n in [1..12] that define the type of the argument
-3 Devuelve n de [1..12] que define el tipo del argumento
-4 Επιστρέφει n στο [1..12] που ορίζει τον τύπο του ορίσματος
-0 Expr
--1 DOM_FLOAT
--2 DOM_INT
--3 DOM_COMPLEX
--4 DOM_IDENT
--5 DOM_LIST
--6 DOM_SYMBOLIC
--7 DOM_RAT
--8 DOM_STRING
--9 DOM_FUNC
-type("abc")
-type([1,2,3])
 # type
 1 Renvoie n dans [1..12] définissant le type de l'argument
 2 Returns n in [1..12] that define the type of the argument
@@ -13971,14 +13989,16 @@ plotproba([[1/2,1/3,1/12,1/12],[1/3,1/2,1/6,0],[0,0,1/2,1/2],[1/4,1/4,1/4,1/4]],
  L:=point(1):;C:=point(0.5+0.3*i):;G:=point(0.5+0.8*i):;plotproba([[1/2,1/3,1/12],[1/3,1/2,1/6],[0,0,1/2]],[L,C,G])
 
 # autosimplify 
-1 A pour argument une commande qui sera utilisée pour réécrire les résultats dans Xcas (valeur au lancement regroup).
-2 The argument is a command that Xcas will use to rewrite answers (initial value is regroup).
+1 A pou argument une commande que Xcas utilise pour réécrire les résultats dans Xcas (au lancement c'est regroup ou 1 et pour pas de simplification c'est nop ou 0).
+2 The argument is a command that Xcas will use to rewrite answers (initial value is regroup and for no simplification it is nop or 0).
 0 Cmds
 -1 simplify
 -2 factor
 -3 regroup
 autosimplify(nop)
+autosimplify(0)
 autosimplify(regroup)
+autosimplify(1)
 autosimplify(factor)
 autosimplify(simplify)
 
@@ -14010,4 +14030,25 @@ is_inside(point(1-i),triangle([1,2-i,3+i]))
 -2 greduce
 in_ideal((x+y)^2,[y^2,x^2+2*x*y],[x,y])
 in_ideal(x+y,[y^2,x^2+2*x*y],[x,y])
+
+# normalt
+1 Test Z d'hypothèses /loi normale : arg1=[succes,essais] ou [moyenne, taille] ou données, arg2=proportion ou moyenne population ou données, arg3 optionnel si données=sigma, arg4 alternative '!=' ou '>' ou '<', arg5 optionnel confiance alpha.
+2 Z-Test/normal law: arg1=[success,trial] or [mean,sample size] or data, arg2=proportion or data, arg3 optional if data=sigma, arg4 alternative '!=' or '>' or '<', arg5 optional alpha confidence level.
+0 Lst,Real,[Real],Fnc,[Real]
+-1 studentt
+-2 chisquaret
+-3 kolmogorovt
+normalt([10,30],.5,.02,'!=',0.1)
+normalt([0.48,50],0.5,0.1,'<')
+
+
+# studentt
+1 Test T d'hypothèses /loi Student : arg1=[succes,essais] ou [moyenne, taille] ou données, arg2=proportion ou moyenne population ou données, arg3 optionnel si données=sigma, arg4 alternative '!=' ou '>' ou '<', arg5 optionnel confiance alpha.
+2 T-Test/Student law: arg1=[success,trial] or [mean,sample size] or data, arg2=proportion or data, arg3 optional if data=sigma, arg4 alternative '!=' or '>' or '<', arg5 optional alpha confidence level.
+0 Lst,Real,[Real],Fnc,[Real]
+-1 normalt
+-2 chisquaret
+-3 kolmogorovt
+studentt([10,20],.5,.02,'!=',0.1)
+studentt([0.48,20],0.5,0.1,'<')
 
