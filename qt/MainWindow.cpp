@@ -1904,7 +1904,11 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         if (!examples.isEmpty()){
             line.append("<br><b>").append(QObject::tr("Exemples:")).append("</b><br>");
             for( int i=0;i<examples.size();++i){
-                line.append(minimaltoHtml(examples.at(i))).append("<br>");
+                if(!examples.at(i).contains('"'))
+                    line.append(minimaltoHtml(examples.at(i))).append("  <a href=\"!"+examples.at(i)+" \">-></a><br>");
+                else
+                    line.append(minimaltoHtml(examples.at(i))).append("<br>");
+
             }
         }
         if (!seeAlso.isEmpty()){
