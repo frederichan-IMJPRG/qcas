@@ -632,7 +632,7 @@ void FuncPanel::retranslate(){
     labelSymbloc->setText(tr("Symboles locaux:"));
     labelSymbloc->setToolTip(symbloc->toolTip());
 
-    instructions->setToolTip(tr(" Si vous le souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction."));
+    instructions->setToolTip(tr(" Si vous souhaitez le faire maintenant, vous pouvez utiliser cette partie pour le corps de la fonction."));
 
 }
 

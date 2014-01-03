@@ -71,6 +71,11 @@
 
   **/
 
+#ifdef Q_WS_MACX
+#define STRCTRL "Cmd"
+#else
+#define STRCTRL "Ctrl"
+#endif
 
 MainWindow::MainWindow(){
 
@@ -377,18 +382,17 @@ void MainWindow::retranslateAction(){
 
     evaluateallAction->setText(tr("Evaluer toutes les feuilles depuis le début."));
 
-    //hintAction->setText(tr("<center><h2>Racourcis</h2></center>")+"<br><center>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Space).toString()+tr("</center>donne les complétions possibles de la chaine saisie<br><center>")+QKeySequence::QKeySequence(Qt::CTRL).toString()+tr("flèche haut ou bas</center>Insère une commande de l'historique<br><center>")+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Delete).toString()+tr("</center><br>Supprime les lignes sélectionnées<center>F1</center>Lorsque l'on laisse le pointeur sur un mot clef,<br>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)<br>En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche"));
     hintAction->setText((   "<center><h2>"+tr("Racourcis")+"</h2></center>"
                                                           "<hr>"
                                                           "<ul>"
-                                                          "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Space).toString()+":</b><center>"+tr("donne les complétions possibles de la chaine saisie")+"</center></li>"
-                                                 "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL).toString()+tr("flèche haut ou bas</b><center>Insère une commande de l'historique</center></li>")+
-                                                 "<li><b>"+QKeySequence::QKeySequence(Qt::CTRL+Qt::Key_Backspace).toString()+tr("</b><center>Supprime les lignes sélectionnées</center></li>")+
+                                                          "<li><b>"+STRCTRL+"+"+QKeySequence::QKeySequence(Qt::Key_Space).toString()+":</b><center>"+tr("donne les complétions possibles de la chaine saisie")+"</center></li>"
+                                                 "<li><b>"+STRCTRL+"+"+tr("flèche haut ou bas</b><center>Insère une commande de l'historique</center></li>")+
+                                                 "<li><b>"+STRCTRL+"+BackSpace"+tr("</b><center>Supprime les lignes sélectionnées</center></li>")+
                                                  tr("<li><b>F1</b>(Lorsque l'on laisse le pointeur sur un mot clef)<center>F1 affiche l'aide détaillée correspondante dans le widget d'aide (à gauche)</center></li>")+
                                                  "</ul>"
                                                  "<center><h2>"+tr("Astuces")+"</h2></center>"
                                                  "<ul>"
-                                                 "<li>"+tr("En poussant la barre du milieu fort à gauche on peut cacher les widegts de gauche</li>")+
+                                                 "<li>"+tr("En poussant la barre du milieu fort à gauche on peut cacher les widgets de gauche</li>")+
                                                           "</ul><hr>"
                                                           ));
 
