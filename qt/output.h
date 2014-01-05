@@ -566,6 +566,7 @@ private slots:
     void displaySource();
     void displayObject(bool);
     void exportToPNG();
+    void exportToSVG();
     void displayLegend(bool);
     void deleteObject();
     void trace(bool);

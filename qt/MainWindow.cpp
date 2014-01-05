@@ -1162,7 +1162,7 @@ void MainWindow::createGui(){
     giacLayout->addWidget(giacMessages);
     giacPanel->setLayout(giacLayout);
     giacPanel->setMinimumHeight(100);
-    giacPanel->setMaximumHeight(200);
+    giacPanel->setMaximumHeight(250);
     QVBoxLayout *leftLayout=new QVBoxLayout;
     leftLayout->addLayout(h);
     //leftLayout->addStretch(1);
@@ -1401,8 +1401,8 @@ void MainWindow::pref(){
 
 }
 void MainWindow::readSettings(){
-    QSettings settings("http://qcas.tuxfamily.org","QCAS");
-    QRect rect=settings.value("geometry",QRect(200,200,600,400)).toRect();
+    QSettings settings("qcas.tuxfamily.org","QCAS");
+    QRect rect=settings.value("geometry",QRect(50,50,850,650)).toRect();
     move(rect.topLeft());
     resize(rect.size());
 
@@ -1411,7 +1411,7 @@ void MainWindow::readSettings(){
 }
 
 void MainWindow::writeSettings(){
-    QSettings settings("http://qcas.tuxfamily.org","QCAS");
+    QSettings settings("qcas.tuxfamily.org","QCAS");
     settings.setValue("geometry",geometry());
     settings.setValue("recentFiles",recentFiles);
 
@@ -1683,7 +1683,7 @@ void MainWindow::evaluateall(){
 
 
 void MainWindow::displayResult(){
-   displayGiacMessages();
+    displayGiacMessages();
     tabPages->setCurrentIndex(taskProperties.currentSheet);
     // Formal Sheet
     if (taskProperties.currentLine>-1){

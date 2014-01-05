@@ -41,6 +41,8 @@
 #include <QComboBox>
 #include <QColorDialog>
 #include <QPushButton>
+
+#include <QtSvg/QSvgGenerator>
 #include "gui/FormalLine.h"
 #include "config.h"
 #include "gui/qtmmlwidget.h"
@@ -1523,8 +1525,9 @@ void Canvas2D::createMenuAction(){
     exportPNG=new QAction(tr("image au format PNG, JPG ou BMP"),this);
     exportPNG->setIcon(QIcon(":/images/png.png"));
     connect(exportPNG,SIGNAL(triggered()),this,SLOT(exportToPNG()));
-    exportSVG=new QAction(tr("image *.svg"),this);
+    exportSVG=new QAction(tr("image vectorielle *.svg"),this);
     exportSVG->setIcon(QIcon(":/images/svg.png"));
+    connect(exportSVG,SIGNAL(triggered()),this,SLOT(exportToSVG()));
     exportLatex=new QAction(tr("format PSTricks (LaTeX)"),this);
     exportLatex->setIcon(QIcon(":/images/tex.png"));
 
@@ -1549,7 +1552,7 @@ void Canvas2D::createMenuAction(){
     menuGeneral->addSeparator();
 
     menuExport=new QMenu(tr("Export vers..."),this);
-    menuExport->addAction(exportLatex);
+    //menuExport->addAction(exportLatex); //TODO not yet connected
     menuExport->addAction(exportPNG);
     menuExport->addAction(exportSVG);
     menuGeneral->addMenu(menuExport);
@@ -3046,6 +3049,42 @@ void Canvas2D::exportToPNG(){
         return;
     }
     pixmap.save(fileName);
+
+}
+void Canvas2D::exportToSVG(){
+    QString fileName=QFileDialog::getSaveFileName(this,tr("Enregistrer sous..."),".svg");
+    if (fileName.isEmpty()){
+        return;
+    }
+    //pixmap.save(fileName);
+    QSvgGenerator generator;
+         generator.setFileName(fileName);
+
+         generator.setSize(this->size());
+         generator.setViewBox(QRect(this->rect()));
+         /* generator.setTitle(tr("SVG Generator Example Drawing"));
+            generator.setDescription(tr("An SVG drawing created by the SVG Generator "
+                                     "Example provided with Qt."));
+         */
+         QPainter painter;
+         painter.begin(&generator);
+
+            drawGrid(&painter);
+            drawAxes(&painter);
+            // Export all "fillable" Items
+            for (int i=0;i<filledItems.size();++i){
+                filledItems.at(i)->draw(&painter);
+            }
+            // Export all "line" Items
+            for (int i=0;i<lineItems.size();++i){
+                lineItems.at(i)->draw(&painter);
+            }
+            // Export all "point" Items
+            for (int i=0;i<pointItems.size();++i){
+                pointItems.at(i)->draw(&painter);
+            }
+
+         painter.end();
 
 }
 void Canvas2D::displayObject(bool b){

@@ -3,7 +3,8 @@
 # #####################################################################
 QT += core \
      gui \
-     xml
+     xml \
+     svg
 TARGET = qcas
 TEMPLATE = app
 QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter

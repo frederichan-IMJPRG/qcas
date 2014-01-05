@@ -4,17 +4,17 @@
 <context>
     <name>AxisGridPanel</name>
     <message>
-        <location filename="../output.cpp" line="6594"/>
+        <location filename="../output.cpp" line="6633"/>
         <source>Axe (Ox)</source>
         <translation>Axis (Ox)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6595"/>
+        <location filename="../output.cpp" line="6634"/>
         <source>Axe (Oy)</source>
         <translation>Axis (Oy)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6596"/>
+        <location filename="../output.cpp" line="6635"/>
         <source>Grille</source>
         <translation>Grid</translation>
     </message>
@@ -22,32 +22,32 @@
 <context>
     <name>AxisPanel</name>
     <message>
-        <location filename="../output.cpp" line="6777"/>
+        <location filename="../output.cpp" line="6816"/>
         <source>Afficher l&apos;axe</source>
         <translation>Show axis</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6778"/>
+        <location filename="../output.cpp" line="6817"/>
         <source>Minimum:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6783"/>
+        <location filename="../output.cpp" line="6822"/>
         <source>Maximum:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6787"/>
+        <location filename="../output.cpp" line="6826"/>
         <source>LÃ©gende:</source>
         <translation>Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6789"/>
+        <location filename="../output.cpp" line="6828"/>
         <source>Suffixe (unitÃ©):</source>
         <translation>Suffix (unit)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6791"/>
+        <location filename="../output.cpp" line="6830"/>
         <source>Espace-graduations:</source>
         <translation>Spacing-Granding</translation>
     </message>
@@ -55,182 +55,187 @@
 <context>
     <name>Canvas2D</name>
     <message>
-        <location filename="../output.cpp" line="1492"/>
+        <location filename="../output.cpp" line="1494"/>
         <source>Afficher la grille</source>
         <translation>Show gridlines</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1497"/>
+        <location filename="../output.cpp" line="1499"/>
         <source>Afficher les axes</source>
         <translation>Show axis</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1503"/>
+        <location filename="../output.cpp" line="1505"/>
         <source>Zoom avant</source>
         <translation>Zoom in</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1507"/>
+        <location filename="../output.cpp" line="1509"/>
         <source>Zoom arriÃ¨re</source>
         <translation>Zoom Out</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1511"/>
+        <location filename="../output.cpp" line="1513"/>
         <source>OrthonormÃ©</source>
         <translation>Orthonormed</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1516"/>
+        <location filename="../output.cpp" line="1518"/>
         <source>Code de la figure</source>
         <translation>Picture source</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1523"/>
+        <location filename="../output.cpp" line="1525"/>
         <source>image au format PNG, JPG ou BMP</source>
         <translation>PNG, JPG or BMP picture</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1526"/>
         <source>image *.svg</source>
-        <translation>vectoriel picture *.svg</translation>
+        <translation type="obsolete">vectoriel picture *.svg</translation>
     </message>
     <message>
         <location filename="../output.cpp" line="1528"/>
+        <source>image vectorielle *.svg</source>
+        <translation>scalable vector picture *.svg</translation>
+    </message>
+    <message>
+        <location filename="../output.cpp" line="1531"/>
         <source>format PSTricks (LaTeX)</source>
         <translation>PSTricks (Latex) output</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1532"/>
+        <location filename="../output.cpp" line="1535"/>
         <source>Graphique</source>
         <translation>Graphic</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1551"/>
+        <location filename="../output.cpp" line="1554"/>
         <source>Export vers...</source>
         <translation>Export to</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1562"/>
+        <location filename="../output.cpp" line="1565"/>
         <source>Afficher l&apos;objet</source>
         <translation>Show item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1566"/>
+        <location filename="../output.cpp" line="1569"/>
         <source>Afficher la lÃ©gende</source>
         <translation>Show Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1571"/>
+        <location filename="../output.cpp" line="1574"/>
         <source>Trace activÃ©e</source>
         <translation>Trace on</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1576"/>
+        <location filename="../output.cpp" line="1579"/>
         <source>Supprimer l&apos;objet</source>
         <translation>Delete item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1580"/>
+        <location filename="../output.cpp" line="1583"/>
         <source>Renommer l&apos;objet</source>
         <translation>rename item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1699"/>
+        <location filename="../output.cpp" line="1702"/>
         <source>Equation</source>
         <translation>Equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1699"/>
+        <location filename="../output.cpp" line="1702"/>
         <source>Droite dÃ©finie par une Ã©quation</source>
         <translation>Line defined by equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2871"/>
+        <location filename="../output.cpp" line="2874"/>
         <source>Impossible de renommer le point</source>
         <translation>Can&apos;t rename this point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2871"/>
+        <location filename="../output.cpp" line="2874"/>
         <source>Le nom de variable choisi est actuellement indisponible.
 La variable est dÃ©jÃ  utilisÃ©e pour un objet externe Ã  cette feuille de gÃ©omÃ©trie.</source>
         <translation>This name is currently not available</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2888"/>
+        <location filename="../output.cpp" line="2891"/>
         <source>Nouveau nom:</source>
         <translation>New name</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2888"/>
+        <location filename="../output.cpp" line="2891"/>
         <source>Renommer un objet</source>
         <translation>Change an item&apos;s name</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2913"/>
+        <location filename="../output.cpp" line="2916"/>
         <source>Confirmation</source>
         <translation>Confirm</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2913"/>
+        <location filename="../output.cpp" line="2916"/>
         <source>Vous allez supprimer cet objet ainsi 
 que toutes ses dÃ©pendances. 
  Voulez-vous poursuivre?</source>
         <translation>You are going to delete this item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3044"/>
+        <location filename="../output.cpp" line="3047"/>
+        <location filename="../output.cpp" line="3055"/>
         <source>Enregistrer sous...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3899"/>
+        <location filename="../output.cpp" line="3938"/>
         <source>Rayon:</source>
         <translation>Radius</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3899"/>
+        <location filename="../output.cpp" line="3938"/>
         <source>dÃ©finir le rayon du cercle</source>
         <translation>Define circle&apos;s radius</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4063"/>
+        <location filename="../output.cpp" line="4102"/>
         <source>Nombre de cÃ´tÃ©s:</source>
         <translation>Number of edges</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4063"/>
+        <location filename="../output.cpp" line="4102"/>
         <source>PolygÃ´ne rÃ©gulier</source>
         <translation>Regular polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4394"/>
-        <location filename="../output.cpp" line="4442"/>
+        <location filename="../output.cpp" line="4433"/>
+        <location filename="../output.cpp" line="4481"/>
         <source>Angle:</source>
         <translation>Angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4394"/>
+        <location filename="../output.cpp" line="4433"/>
         <source>DÃ©finir l&apos;angle de la rotation</source>
         <translation>Set rotation angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4412"/>
-        <location filename="../output.cpp" line="4430"/>
+        <location filename="../output.cpp" line="4451"/>
+        <location filename="../output.cpp" line="4469"/>
         <source>Rapport:</source>
         <translation>Ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4412"/>
+        <location filename="../output.cpp" line="4451"/>
         <source>DÃ©finir le rapport de l&apos;homothÃ©tie</source>
         <translation>Define the homothety ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4430"/>
+        <location filename="../output.cpp" line="4469"/>
         <source>DÃ©finir le rapport de la similitude</source>
         <translation>Set the similarity ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4442"/>
+        <location filename="../output.cpp" line="4481"/>
         <source>DÃ©finir l&apos;angle de la similitude</source>
         <translation>Set the similarity angle</translation>
     </message>
@@ -474,7 +479,7 @@ que toutes ses dÃ©pendances.
 <context>
     <name>ColorPanel</name>
     <message>
-        <location filename="../output.cpp" line="6231"/>
+        <location filename="../output.cpp" line="6270"/>
         <source>Couleur:</source>
         <translation>Color</translation>
     </message>
@@ -482,27 +487,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>CoordsDialog</name>
     <message>
-        <location filename="../output.cpp" line="7214"/>
+        <location filename="../output.cpp" line="7253"/>
         <source>Point dÃ©fini par ses coordonnÃ©es</source>
         <translation>Point defined by coordinates</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7216"/>
+        <location filename="../output.cpp" line="7255"/>
         <source>Abscisse x:</source>
         <translation>Abscissa</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7218"/>
+        <location filename="../output.cpp" line="7257"/>
         <source>OrdonnÃ©e y:</source>
         <translation>Ordinate</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7219"/>
+        <location filename="../output.cpp" line="7258"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7220"/>
+        <location filename="../output.cpp" line="7259"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -510,42 +515,42 @@ que toutes ses dÃ©pendances.
 <context>
     <name>CursorDialog</name>
     <message>
-        <location filename="../output.cpp" line="7273"/>
+        <location filename="../output.cpp" line="7312"/>
         <source>DÃ©finir un curseur</source>
         <translation>Define a Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7275"/>
+        <location filename="../output.cpp" line="7314"/>
         <source>Nom:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7277"/>
+        <location filename="../output.cpp" line="7316"/>
         <source>Min:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7279"/>
+        <location filename="../output.cpp" line="7318"/>
         <source>Max:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7281"/>
+        <location filename="../output.cpp" line="7320"/>
         <source>Pas:</source>
         <translation>Step:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7283"/>
+        <location filename="../output.cpp" line="7322"/>
         <source>DÃ©faut:</source>
         <translation>Default:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7286"/>
+        <location filename="../output.cpp" line="7325"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7287"/>
+        <location filename="../output.cpp" line="7326"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -581,7 +586,7 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DisplayObjectPanel</name>
     <message>
-        <location filename="../output.cpp" line="6554"/>
+        <location filename="../output.cpp" line="6593"/>
         <source>Afficher l&apos;objet</source>
         <translation>Show item</translation>
     </message>
@@ -589,22 +594,22 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DisplayProperties</name>
     <message>
-        <location filename="../output.cpp" line="6106"/>
+        <location filename="../output.cpp" line="6145"/>
         <source>Ãpaisseur (1-8):</source>
         <translation>Thickness (1-8)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6113"/>
+        <location filename="../output.cpp" line="6152"/>
         <source>Transparence (0%-100%):</source>
         <translation>Transparency (0%-100%):</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6124"/>
+        <location filename="../output.cpp" line="6163"/>
         <source>GÃ©nÃ©ral</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6125"/>
+        <location filename="../output.cpp" line="6164"/>
         <source>Style</source>
         <translation></translation>
     </message>
@@ -710,27 +715,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>FormulaWidget</name>
     <message>
-        <location filename="../output.cpp" line="101"/>
+        <location filename="../output.cpp" line="103"/>
         <source>Copier</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="103"/>
+        <location filename="../output.cpp" line="105"/>
         <source>Copier vers LaTeX</source>
         <translation>Copy to Latex</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="105"/>
+        <location filename="../output.cpp" line="107"/>
         <source>Copier vers Mathml</source>
         <translation>Copy to Mathml</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="107"/>
+        <location filename="../output.cpp" line="109"/>
         <source>Zoom In</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="109"/>
+        <location filename="../output.cpp" line="111"/>
         <source>Zoom Out</source>
         <translation></translation>
     </message>
@@ -966,276 +971,276 @@ que toutes ses dÃ©pendances.
 <context>
     <name>GraphWidget</name>
     <message>
-        <location filename="../output.cpp" line="410"/>
+        <location filename="../output.cpp" line="412"/>
         <source>SÃ©lection</source>
         <translation>Selection</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="413"/>
-        <location filename="../output.cpp" line="570"/>
+        <location filename="../output.cpp" line="415"/>
+        <location filename="../output.cpp" line="572"/>
         <source>SÃ©lection || DÃ©placement</source>
         <translation>Selection || Move</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="414"/>
+        <location filename="../output.cpp" line="416"/>
         <source>Zoom Avant</source>
         <translation>Zoom In</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="418"/>
+        <location filename="../output.cpp" line="420"/>
         <source>Zoom ArriÃ¨re</source>
         <translation>Zoom Out</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="424"/>
+        <location filename="../output.cpp" line="426"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="428"/>
+        <location filename="../output.cpp" line="430"/>
         <source>Intersection entre deux objets</source>
         <translation>Intersection of 2 objects</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="431"/>
+        <location filename="../output.cpp" line="433"/>
         <source>2 objets (points exclus)</source>
         <translation>2 objects (without points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="432"/>
+        <location filename="../output.cpp" line="434"/>
         <source>Milieu ou centre</source>
         <translation>Midle or center</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="435"/>
+        <location filename="../output.cpp" line="437"/>
         <source>Segment || Deux points||Cercle</source>
         <translation>Segment || 2 points || Circle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="436"/>
+        <location filename="../output.cpp" line="438"/>
         <source>Point repÃ©rÃ©</source>
         <translation>Point by coordinates</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="442"/>
+        <location filename="../output.cpp" line="444"/>
         <source>Droite</source>
         <translation>Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="445"/>
-        <location filename="../output.cpp" line="453"/>
-        <location filename="../output.cpp" line="457"/>
-        <location filename="../output.cpp" line="526"/>
-        <location filename="../output.cpp" line="572"/>
+        <location filename="../output.cpp" line="447"/>
+        <location filename="../output.cpp" line="455"/>
+        <location filename="../output.cpp" line="459"/>
+        <location filename="../output.cpp" line="528"/>
+        <location filename="../output.cpp" line="574"/>
         <source>Deux points</source>
         <translation>Two points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="446"/>
+        <location filename="../output.cpp" line="448"/>
         <source>Droite par Ã©quation</source>
         <translation>Line by equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="450"/>
+        <location filename="../output.cpp" line="452"/>
         <source>Segment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="454"/>
+        <location filename="../output.cpp" line="456"/>
         <source>Demie-droite</source>
         <translation>Half-Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="458"/>
+        <location filename="../output.cpp" line="460"/>
         <source>Vecteur</source>
         <translation>Vector</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="461"/>
+        <location filename="../output.cpp" line="463"/>
         <source>Origine puis extrÃ©mitÃ©</source>
         <translation>Origin and End</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="462"/>
+        <location filename="../output.cpp" line="464"/>
         <source>MÃ©diatrice d&apos;un segment</source>
         <translation>Mediatrix of a segment</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="465"/>
+        <location filename="../output.cpp" line="467"/>
         <source>Segment || Deux points</source>
         <translation>Segment || 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="466"/>
+        <location filename="../output.cpp" line="468"/>
         <source>Bissectrice d&apos;un angle</source>
         <translation>Bissectrix of an angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="469"/>
+        <location filename="../output.cpp" line="471"/>
         <source>Sommet puis 2 points</source>
         <translation>Corner, then 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="470"/>
+        <location filename="../output.cpp" line="472"/>
         <source>Tangente Ã  une courbe ou un cercle</source>
         <translation>Tangent to a curve or a circle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="473"/>
+        <location filename="../output.cpp" line="475"/>
         <source>(Courbe|| Cercle) puis point de contact</source>
         <translation>(Curve || Circle) then the contact point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="477"/>
+        <location filename="../output.cpp" line="479"/>
         <source>Droite parallÃ¨le</source>
         <translation>Parallel Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="480"/>
-        <location filename="../output.cpp" line="484"/>
-        <location filename="../output.cpp" line="574"/>
+        <location filename="../output.cpp" line="482"/>
+        <location filename="../output.cpp" line="486"/>
+        <location filename="../output.cpp" line="576"/>
         <source>Droite puis point</source>
         <translation>Line the Point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="481"/>
+        <location filename="../output.cpp" line="483"/>
         <source>Droite perpendiculaire</source>
         <translation>Orthogonal Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="485"/>
+        <location filename="../output.cpp" line="487"/>
         <source>SymÃ©trie axiale</source>
         <translation>Axial Symmetry</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="488"/>
+        <location filename="../output.cpp" line="490"/>
         <source>Axe de symÃ©trie puis objet</source>
         <translation>Symmetry axis, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="489"/>
+        <location filename="../output.cpp" line="491"/>
         <source>SymÃ©trie centrale</source>
         <translation>Central Symmetry</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="492"/>
+        <location filename="../output.cpp" line="494"/>
         <source>Centre de symÃ©trie puis objet</source>
         <translation>Center, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="493"/>
+        <location filename="../output.cpp" line="495"/>
         <source>Rotation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="496"/>
-        <location filename="../output.cpp" line="504"/>
-        <location filename="../output.cpp" line="508"/>
+        <location filename="../output.cpp" line="498"/>
+        <location filename="../output.cpp" line="506"/>
+        <location filename="../output.cpp" line="510"/>
         <source>Centre puis objet</source>
         <translation>Center, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="497"/>
+        <location filename="../output.cpp" line="499"/>
         <source>Translation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="500"/>
+        <location filename="../output.cpp" line="502"/>
         <source>Vecteur puis objet</source>
         <translation>Vector, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="501"/>
+        <location filename="../output.cpp" line="503"/>
         <source>HomothÃ©tie</source>
         <translation>Homothety</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="505"/>
+        <location filename="../output.cpp" line="507"/>
         <source>Similitude</source>
         <translation>Similarity</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="511"/>
+        <location filename="../output.cpp" line="513"/>
         <source>Courbe reprÃ©sentative</source>
         <translation>Representative curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="515"/>
+        <location filename="../output.cpp" line="517"/>
         <source>Courbe de BÃ©zier</source>
         <translation>Bezier curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="518"/>
+        <location filename="../output.cpp" line="520"/>
         <source>Points de contrÃ´le puis clic droit pour le dernier point</source>
         <translation>Control points, then right clic  for the last one</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="519"/>
+        <location filename="../output.cpp" line="521"/>
         <source>PolygÃ´ne/Ligne brisÃ©e</source>
         <translation>Polygon/Open Polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="522"/>
+        <location filename="../output.cpp" line="524"/>
         <source>Sommets puis clic droit pour le dernier sommet</source>
         <translation>Vertices, then right clil for the last one</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="523"/>
+        <location filename="../output.cpp" line="525"/>
         <source>PolygÃ´ne rÃ©gulier</source>
         <translation>Regular polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="528"/>
+        <location filename="../output.cpp" line="530"/>
         <source>Curseur numÃ©rique</source>
         <translation>Numeric Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="532"/>
+        <location filename="../output.cpp" line="534"/>
         <source>Curseur symbolique</source>
         <translation>Symbolic Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="538"/>
+        <location filename="../output.cpp" line="540"/>
         <source>Cercle (centre-point)</source>
         <translation>Circle (center-point)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="543"/>
+        <location filename="../output.cpp" line="545"/>
         <source>Cercle (centre-rayon)</source>
         <translation>Circle (center-radius)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="548"/>
+        <location filename="../output.cpp" line="550"/>
         <source>Cercle (3 points)</source>
         <translation>Circle (3 points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="551"/>
+        <location filename="../output.cpp" line="553"/>
         <source>Trois points</source>
         <translation>3 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="552"/>
+        <location filename="../output.cpp" line="554"/>
         <source>Arc de cercle (3 points)</source>
         <translation>Arc of circle (3 points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="555"/>
+        <location filename="../output.cpp" line="557"/>
         <source>ExtrÃ©mitÃ©s puis troisiÃ¨me point</source>
         <translation>Extremal points, then third point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="560"/>
+        <location filename="../output.cpp" line="562"/>
         <source>Angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="563"/>
+        <location filename="../output.cpp" line="565"/>
         <source>Sommet de l&apos;angle puis deux points</source>
         <translation>Corner of the angle, then 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="578"/>
+        <location filename="../output.cpp" line="580"/>
         <source>Centre puis point</source>
         <translation>Center then point</translation>
     </message>
@@ -1243,37 +1248,37 @@ que toutes ses dÃ©pendances.
 <context>
     <name>GridPanel</name>
     <message>
-        <location filename="../output.cpp" line="6694"/>
+        <location filename="../output.cpp" line="6733"/>
         <source>Afficher la grille</source>
         <translation>Show gridlines</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6696"/>
+        <location filename="../output.cpp" line="6735"/>
         <source>CartÃ©sienne</source>
         <translation>Cartesian</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6697"/>
+        <location filename="../output.cpp" line="6736"/>
         <source>Polaire</source>
         <translation>Polar</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6701"/>
+        <location filename="../output.cpp" line="6740"/>
         <source>Distance:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6702"/>
+        <location filename="../output.cpp" line="6741"/>
         <source>Angle:</source>
         <translation>Angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6721"/>
+        <location filename="../output.cpp" line="6760"/>
         <source>x:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6722"/>
+        <location filename="../output.cpp" line="6761"/>
         <source>y:</source>
         <translation></translation>
     </message>
@@ -1314,42 +1319,42 @@ a:=a*a;</translation>
 <context>
     <name>LegendPanel</name>
     <message>
-        <location filename="../output.cpp" line="6283"/>
+        <location filename="../output.cpp" line="6322"/>
         <source>Afficher la lÃ©gende</source>
         <translation>Show Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6285"/>
+        <location filename="../output.cpp" line="6324"/>
         <source>LÃ©gende:</source>
         <translation>Legend:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6292"/>
+        <location filename="../output.cpp" line="6331"/>
         <source>Position:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6297"/>
+        <location filename="../output.cpp" line="6336"/>
         <source>quadrant1</source>
         <translation>square1</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6298"/>
+        <location filename="../output.cpp" line="6337"/>
         <source>quadrant2</source>
         <translation>square2</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6299"/>
+        <location filename="../output.cpp" line="6338"/>
         <source>quadrant3</source>
         <translation>square3</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6300"/>
+        <location filename="../output.cpp" line="6339"/>
         <source>quadrant4</source>
         <translation>square4</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6301"/>
+        <location filename="../output.cpp" line="6340"/>
         <source>personnalisÃ©</source>
         <translation>Custommed</translation>
     </message>
@@ -2055,12 +2060,12 @@ Do you want to do it now?</translation>
 <context>
     <name>OneArgDialog</name>
     <message>
-        <location filename="../output.cpp" line="7252"/>
+        <location filename="../output.cpp" line="7291"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7253"/>
+        <location filename="../output.cpp" line="7292"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -2068,68 +2073,68 @@ Do you want to do it now?</translation>
 <context>
     <name>PanelProperties</name>
     <message>
-        <location filename="../output.cpp" line="5773"/>
+        <location filename="../output.cpp" line="5812"/>
         <source>Objets</source>
         <oldsource>Objects</oldsource>
         <translation>Objects</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5790"/>
+        <location filename="../output.cpp" line="5829"/>
         <source>Axes/grille</source>
         <translation>Axis/Grid</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5791"/>
+        <location filename="../output.cpp" line="5830"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5792"/>
+        <location filename="../output.cpp" line="5831"/>
         <source>Courbe</source>
         <translation>Curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5793"/>
+        <location filename="../output.cpp" line="5832"/>
         <source>Vecteur</source>
         <translation>Vector</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5794"/>
+        <location filename="../output.cpp" line="5833"/>
         <source>Droite</source>
         <translation>Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5795"/>
+        <location filename="../output.cpp" line="5834"/>
         <source>Segment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5796"/>
+        <location filename="../output.cpp" line="5835"/>
         <source>Demie-droite</source>
         <translation>Half-Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5797"/>
+        <location filename="../output.cpp" line="5836"/>
         <source>PolygÃ´ne</source>
         <translation>Polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5798"/>
+        <location filename="../output.cpp" line="5837"/>
         <source>Cercle ou arc</source>
         <translation>Circle or Arc</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5799"/>
+        <location filename="../output.cpp" line="5838"/>
         <source>Angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5800"/>
+        <location filename="../output.cpp" line="5839"/>
         <source>Liste</source>
         <translation>List</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5801"/>
+        <location filename="../output.cpp" line="5840"/>
         <source>Objets indÃ©finis</source>
         <translation>Undefined objects</translation>
     </message>
@@ -2253,12 +2258,12 @@ Do you want to do it now?</translation>
         <translation>Examples:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1911"/>
+        <location filename="../MainWindow.cpp" line="1915"/>
         <source>Voir aussi: </source>
         <translation>See also:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1979"/>
+        <location filename="../MainWindow.cpp" line="1983"/>
         <source>Aucun rÃ©sultat</source>
         <translation>No answer</translation>
     </message>
@@ -2338,12 +2343,12 @@ Do you want to do it now?</translation>
         <translation>Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1193"/>
+        <location filename="../output.cpp" line="1195"/>
         <source>Ajouter</source>
         <translation>Add</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1240"/>
+        <location filename="../output.cpp" line="1242"/>
         <source>Supprimer </source>
         <translation>Delete</translation>
     </message>
@@ -2351,12 +2356,12 @@ Do you want to do it now?</translation>
 <context>
     <name>SourceDialog</name>
     <message>
-        <location filename="../output.cpp" line="6864"/>
+        <location filename="../output.cpp" line="6903"/>
         <source>Construction de la figure</source>
         <translation>Picture&apos;s construction</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6872"/>
+        <location filename="../output.cpp" line="6911"/>
         <source>Supprimer</source>
         <translation>Delete</translation>
     </message>
@@ -2534,47 +2539,47 @@ a:=a*a;</source>
 <context>
     <name>TypeLinePanel</name>
     <message>
-        <location filename="../output.cpp" line="6473"/>
+        <location filename="../output.cpp" line="6512"/>
         <source>Style:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6486"/>
+        <location filename="../output.cpp" line="6525"/>
         <source>solid_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6491"/>
+        <location filename="../output.cpp" line="6530"/>
         <source>dash_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6496"/>
+        <location filename="../output.cpp" line="6535"/>
         <source>dot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6502"/>
+        <location filename="../output.cpp" line="6541"/>
         <source>dashdot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6507"/>
+        <location filename="../output.cpp" line="6546"/>
         <source>dashdotdot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6513"/>
+        <location filename="../output.cpp" line="6552"/>
         <source>cap_flat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6524"/>
+        <location filename="../output.cpp" line="6563"/>
         <source>cap_round</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6533"/>
+        <location filename="../output.cpp" line="6572"/>
         <source>cap_square</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2582,47 +2587,47 @@ a:=a*a;</source>
 <context>
     <name>TypePointPanel</name>
     <message>
-        <location filename="../output.cpp" line="6361"/>
+        <location filename="../output.cpp" line="6400"/>
         <source>Style:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6378"/>
+        <location filename="../output.cpp" line="6417"/>
         <source>point_croix</source>
         <translation>point_cross</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6390"/>
+        <location filename="../output.cpp" line="6429"/>
         <source>point_losange</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6400"/>
+        <location filename="../output.cpp" line="6439"/>
         <source>point_plus</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6412"/>
+        <location filename="../output.cpp" line="6451"/>
         <source>point_square</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6415"/>
+        <location filename="../output.cpp" line="6454"/>
         <source>point_invisible</source>
         <translation>point_hidden</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6427"/>
+        <location filename="../output.cpp" line="6466"/>
         <source>point_triangle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6440"/>
+        <location filename="../output.cpp" line="6479"/>
         <source>point_etoile</source>
         <translation>point_star</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6450"/>
+        <location filename="../output.cpp" line="6489"/>
         <source>point_point</source>
         <translation></translation>
     </message>
