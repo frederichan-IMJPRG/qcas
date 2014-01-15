@@ -28,3 +28,8 @@ puis point(xt(t))
     document()->setDefaultFont(f);
     */
    
+
+
+8) Pb avec plotinequation et le rempli pas toujours du bon cote:
+
+plotinequation(x^2-y>0,[x=0..4,y=0..4],xstep=0.5,ystep=0.1)

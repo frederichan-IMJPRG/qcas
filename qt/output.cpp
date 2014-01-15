@@ -213,10 +213,11 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
 	}
         catch(std::exception& e) {
           qDebug() << "Exception thrown:" << e.what();
-	}
+    }
+
         m.append("\n</math>");
     }
-//    qDebug()<<m;
+    //qDebug()<<m;
     QString errorMsg;
       int errorLine;
       int errorColumn;

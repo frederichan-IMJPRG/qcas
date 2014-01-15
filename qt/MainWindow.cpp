@@ -1019,7 +1019,10 @@ void MainWindow::initAutoSave(){
         }
         else if (r==QMessageBox::Open){
             QString fileName=QFileDialog::getOpenFileName(this,tr("auto_save"), curDpath ,tr("QCAS or Giac/Xcas files (xcas_auto_*.xws)"));
-           return;
+            if (!fileName.isEmpty()){
+                loadFile(fileName);
+            }
+            return;
         }
         else if (r== QMessageBox::Reset){
             for(i=0;i<autofound.size();i++){
