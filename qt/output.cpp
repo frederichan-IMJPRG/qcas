@@ -202,7 +202,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     context=c;
     formula=g;
 
-
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
     QString m("<math mode=\"display\">\n");
     if (giac::taille(formula,6000)>6000){
         m.append("<mtext> Done </mtext></math>");
