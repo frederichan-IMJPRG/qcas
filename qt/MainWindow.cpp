@@ -1405,11 +1405,15 @@ void MainWindow::pref(){
 }
 void MainWindow::readSettings(){
     QSettings settings("qcas.tuxfamily.org","QCAS");
-    QRect rect=settings.value("geometry",QRect(50,50,850,650)).toRect();
+    QRect rect=settings.value("geometry",QRect(50,50,1000,700)).toRect();
     move(rect.topLeft());
     resize(rect.size());
 
     recentFiles=settings.value("recentFiles").toStringList();
+    int siz=settings.value("mmlfontsize").toInt();
+    if(siz>9 && siz<21){
+        Config::mml_fontsize=siz;
+    }
     updateRecentFileActions();
 }
 
@@ -1417,6 +1421,7 @@ void MainWindow::writeSettings(){
     QSettings settings("qcas.tuxfamily.org","QCAS");
     settings.setValue("geometry",geometry());
     settings.setValue("recentFiles",recentFiles);
+    settings.setValue("mmlfontsize",Config::mml_fontsize);
 
 }
 
