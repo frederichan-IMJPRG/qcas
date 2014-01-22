@@ -1946,7 +1946,7 @@ giac::context* Canvas2D::getContext() const{
 }
 
 void Canvas2D::addToVector(const giac::gen &g,QList <MyItem*> & scene){
-//    std::cout<<print(g,context)<<std::endl;
+    //std::cout<<print(g,context)<<std::endl;
     if (giac::is_undef(g)) {
         scene.append(new UndefItem(this));
         return;
@@ -2056,7 +2056,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       gen point=f[0];
 
       if (point.type==_VECT && point.subtype==_POINT__VECT)
-        return;
+        return;//3D?
       bool isCurve=false;
       if ( (f[0].type==_SYMB) && (f[0]._SYMBptr->sommet==at_curve) && (f[0]._SYMBptr->feuille.type==_VECT) && (f[0]._SYMBptr->feuille._VECTptr->size()) ){
          isCurve=true;
@@ -2073,7 +2073,7 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       fl_line_style(type_line,width+1,0);*/
       if (point.type==_SYMB) {
         if (point._SYMBptr->sommet==at_hyperplan || point._SYMBptr->sommet==at_hypersphere)
-          return;
+          return;//3D?
         /****  Bezier curve *************
          *
          ********************************/
@@ -2466,7 +2466,10 @@ std::pair<Fl_Image *,Fl_Image *> * texture = 0;
       // For a segment
      if ( (point.subtype==_GROUP__VECT) && (point._VECTptr->size()==2)){
 
-           curve->setValue(giac::_simplify(giac::abs(save2-save,context),context));
+           //curve->setValue(giac::_simplify(giac::abs(save2-save,context),context));//fred: PB peut etre lourd.
+           //segment(1/sqrt(2),exp(2*i*pi/32))
+         gen valueseg(makevecteur(giac::_tran(giac::_coordonnees(point[0],context),context),giac::_tran(giac::_coordonnees(point[1],context),context)));
+           curve->setValue(valueseg);
     }
        // no legend for segment
       else {
