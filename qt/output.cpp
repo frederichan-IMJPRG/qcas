@@ -6937,7 +6937,7 @@ void Canvas2D::toInteractiveXCAS2D(QString  &top){
 
 void Canvas2D::sendText(const QString &s){
     //TODO les :;    invisibles avec 
-  QStringList ls=s.split(QRegExp(":*\\s*;|\r|\n"),QString::SkipEmptyParts);
+/*  QStringList ls=s.split(QRegExp(":*\\s*;|\r|\n"),QString::SkipEmptyParts);
   if(ls.size()>1){
     for( int i =0; i<ls.size();++i){
       sendText(ls.at(i));
@@ -6951,6 +6951,8 @@ void Canvas2D::sendText(const QString &s){
   //qDebug()<<"text recu: "<<s;
 
     QString command=ls.at(0).remove(QRegExp("\\s+"));
+*/
+    QString command=s;
 
     gen g(command.toStdString(),getContext());
     sendinteractivegiacgen(g);
@@ -6995,7 +6997,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
       }
 
     newCommand.command=QString::fromStdString(print(g,context));
-    //qDebug()<<"command: "<<newCommand.command;
+    qDebug()<<"command: "<<newCommand.command;
 
     //
     //tests:
