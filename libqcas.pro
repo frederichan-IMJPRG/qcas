@@ -3,7 +3,8 @@
 # #####################################################################
 QT += core \
      gui \
-     xml
+     xml \
+     svg
 TARGET = qcas
 TEMPLATE = lib
 CONFIG+=staticlib
@@ -29,7 +30,7 @@ win32{
     QMAKE_CXXFLAGS+=-D__MINGW_H
     QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
     INCLUDEPATH+=pthread
-    win32:LIBS+=-lgiac -lgsl -lgslcblas -lmpfr -lgmp -lpthread
+    win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
 }
 unix{
     LIBS += -ldl -lgiac -lgmp
@@ -46,6 +47,7 @@ HEADERS += qt/output.h \
     qt/gui/WizardMatrix.h \
     qt/gui/WizardEquation.h \
     qt/gui/WizardCatalog.h \
+    qt/gui/WizardAlgo.h \
     qt/gui/spreadsheet.h \
     qt/gui/qtmmlwidget.h \
     qt/gui/FormalSheet.h \
@@ -136,6 +138,7 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/gui/WizardMatrix.cpp \
     qt/gui/WizardEquation.cpp \
     qt/gui/WizardCatalog.cpp \
+    qt/gui/WizardAlgo.cpp \
     qt/gui/spreadsheet.cpp \
     qt/gui/qtmmlwidget.cpp \
     qt/gui/FormalSheet.cpp \
@@ -147,10 +150,30 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/gui/plotfunctiondialog.cpp
 #
 OTHER_FILES += \ 
+    qt/doc/fr/menu.html \
+    qt/doc/fr/memento.html \
+    qt/doc/fr/memento_algo.html \
+    qt/doc/fr/xcasmenu.html \
+    qt/doc/en/menu.html \
+    qt/doc/en/memento.html \
+    qt/doc/en/xcasmenu.html \
+    qt/doc/el/menu.html \
+    qt/doc/el/memento.html \
+    qt/doc/el/xcasmenu.html \
+    qt/doc/es/menu.html \
+    qt/doc/es/memento.html \
+    qt/doc/es/xcasmenu.html \
+    qt/doc/zh/menu.html \
+    qt/doc/zh/memento.html \
+    qt/doc/zh/xcasmenu.html \
+    qt/doc/de/menu.html \
+    qt/doc/de/memento.html \
+    qt/doc/de/xcasmenu.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \
     qt/images/programming.png \
+    qt/images/prog-scol100.png \
     qt/images/process-stop.png \
     qt/images/previous.png \
     qt/images/point.png \
