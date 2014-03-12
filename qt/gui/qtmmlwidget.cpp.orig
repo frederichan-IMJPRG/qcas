@@ -1070,31 +1070,6 @@ static const OperSpec g_oper_spec_defaults =
 
 static const uint g_oper_spec_count = sizeof(g_oper_spec_data)/sizeof(OperSpec) - 1;
 
-/* g_xml_entity_data[] is too big for some qt libs , it can't be fully included in QDomDocument.
-
-  So we keep only a limited number of entries, enough for giac.
-
-*/
-
-static const EntitySpec g_xml_entity_data[] = {
-    { "ge",	"&#x02265;" },
-    { "infin",	"&#x0221E;" },
-    { "Int",	"&#x0222C;" },
-    { "int",	"&#x0222B;" },
-    { "nbsp",	"&#x000A0;" },
-    { "part",	"&#x02202;" },
-    { "Pi",	"&#x003A0;" },
-    { "pi",	"&#x003C0;" },
-    { "rarr",	"&#x02192;" },
-    { "Sigma",	"&#x003A3;" },
-    { "sigma",	"&#x003C3;" },
-    { "times",	"&#x000D7;" },
-    { "VerticalBar",	"&#x02223;" },
-    { 0, 0 }
-
-};
-/* FH
-
 static const EntitySpec g_xml_entity_data[] = {
     { "angzarr",	"&#x0237C;" },
     { "cirmid",	"&#x02AEF;" },
@@ -3041,9 +3016,8 @@ static const EntitySpec g_xml_entity_data[] = {
     { "wr",	"&#x02240;" },
     { "zeetrf",	"&#x02128;" },
     { 0, 0 }
+};
 
-};FH:
-*/
 // *******************************************************************
 // MmlDocument
 // *******************************************************************
@@ -3207,11 +3181,12 @@ bool MmlDocument::setContent(QString text, QString *errorMsg,
     }
 
     QDomDocument dom;
-    if (!dom.setContent(prefix + text, false, errorMsg, errorLine, errorColumn)) { // FH: I got PB with some qt libs if prefix is too big
+    if (!dom.setContent(prefix + text, false, errorMsg, errorLine, errorColumn)) {
 	if (errorLine != 0)
 	    *errorLine -= prefix_lines;
 	return false;
     }
+
     // we don't have access to line info from now on
     if (errorLine != 0) *errorLine = -1;
     if (errorColumn != 0) *errorColumn = -1;
@@ -5465,7 +5440,7 @@ bool QtMmlWidget::setContent(const QString &text, QString *errorMsg,
 {
     bool result = m_doc->setContent(text, errorMsg, errorLine, errorColumn);
     if (result)
-    update();
+	update();
     return result;
 }
 
