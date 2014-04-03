@@ -206,12 +206,12 @@ QString MyItem::getLegend() const{
     return legend;
 }
 void MyItem::setLegend(const QString &s){
-  if(s.startsWith(Config::GeoVarPrefix)){
+  /*if(s.startsWith(Config::GeoVarPrefix)){
     legend=s.right(s.length()-(Config::GeoVarPrefix).length());
   }
-  else{  
+  else{*/
     legend=s;
-  }
+  //}
 }
 void MyItem::setLevel(const int & i){
     level=i;

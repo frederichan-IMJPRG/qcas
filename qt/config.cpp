@@ -28,9 +28,9 @@ int Config::mml_fontsize=14;//default mml size
 /* We add a prefix  to automatic names of geometric objects for storing in giac to avoid unexpected 
    non free variables names in formal calculus.
 */
-QString Config::GeoVarPrefix="autoG2D\_";
+QString Config::GeoVarPrefix="autoG2D\_"; //obsolete, trying to remove it.
 
-QString Config::QcasVersion="0.4.3";
+QString Config::QcasVersion="0.4.4";
 
 Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;

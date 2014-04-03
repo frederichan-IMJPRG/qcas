@@ -1432,7 +1432,14 @@ void DisplayObjectCommand::undo(){
 
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
-    context=c;
+    externalcontext =0;
+
+    if(parent->isInteractive()){
+        context=&localcontext;
+        externalcontext=c;
+    }
+    else{  context=c;}
+
     ortho=true;
     selectionRight=false;
     selectionLeft=false;
@@ -1910,6 +1917,37 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
             }
         }
 
+}
+
+
+void Canvas2D::importparentvalues(gen &expression){
+    if (expression.type==giac::_SYMB){
+        giac::gen g=expression._SYMBptr->feuille;
+        importparentvalues(g);
+    }
+    else if (expression.type==giac::_VECT){
+        giac::vecteur *v=expression._VECTptr;
+        vecteur::iterator it;
+        for(it=v->begin();it<v->end();it++){
+            importparentvalues(*it);
+        }
+    }
+    else if(expression.type==giac::_IDNT){
+        QString s=QString::fromStdString(expression._IDNTptr->name());
+        //check that this identificator is not already used in the local context.
+        QString lvar=QString::fromStdString(giac::print(giac::_VARS(1,context),context));
+        lvar=lvar.mid(1,lvar.length()-2);//we remove the brackets [  ]
+        //qDebug()<<"lvar"<<lvar;
+        QStringList lvarlist=lvar.split(",");
+
+        if(!(lvarlist.contains(s))){
+            giac::gen geva=giac::protecteval(expression,5,externalcontext);
+            if(parent->isInteractive()){
+                giac::sto(geva,expression,&localcontext);
+                //qDebug()<<"storing: "<<s<<"ds"<<QString::fromStdString(giac::print(geva,context));
+            }
+        }
+    }
 }
 
 
@@ -3391,10 +3429,11 @@ ormal calculus.
   **/
 void Canvas2D::findFreeVar(QString & var){
 
-  if (!var.startsWith(Config::GeoVarPrefix)){
+  /*if (!var.startsWith(Config::GeoVarPrefix)){
     var=var.prepend(Config::GeoVarPrefix);
   }
-  QString vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());
+  QString vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());*/
+  QString vpostfix=var;
   gen g(var.toStdString(),context);
   QString lvar=QString::fromStdString(giac::print(giac::_VARS(1,context),context));
   lvar=lvar.mid(1,lvar.length()-2);//we remove the brackets [  ]
@@ -3405,9 +3444,10 @@ void Canvas2D::findFreeVar(QString & var){
   while(lvarlist.contains(var) || lvarlist.contains(vpostfix) || (findItemFromVar(vpostfix,&cursorItems)!=-1))
   {
        incrementVariable(var);
-       vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());
+       //vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());
+       vpostfix=var;
   }
-  g=gen(var.toStdString(),context);  
+  //g=gen(var.toStdString(),context);
 }
 
 /**
@@ -3418,9 +3458,10 @@ void Canvas2D::findFreeVar(QString & var){
 
 void Canvas2D::incrementVariable(QString & var){
     int idec=0;
+    /*
     if(var.startsWith(Config::GeoVarPrefix)){
       idec=(Config::GeoVarPrefix).length();
-    }
+    }*/
     QChar c=var.at(idec);
     if (c=='Z'){
         QString s="A";
@@ -6970,6 +7011,7 @@ void Canvas2D::sendgiacgen(const giac::gen &g){
 void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
     //qDebug()<<"WARNING, sending a gen to interactive qcas is not stable.";
     giac::gen g=gg;
+    importparentvalues(g);
     Command newCommand;
     newCommand.isCustom=false;
     evaluationLevel=commands.size();
@@ -6997,7 +7039,7 @@ void Canvas2D::sendinteractivegiacgen(const giac::gen &gg){
       }
 
     newCommand.command=QString::fromStdString(print(g,context));
-    qDebug()<<"command: "<<newCommand.command;
+    //qDebug()<<"command: "<<newCommand.command;
 
     //
     //tests:

@@ -1077,6 +1077,7 @@ static const uint g_oper_spec_count = sizeof(g_oper_spec_data)/sizeof(OperSpec) 
 */
 
 static const EntitySpec g_xml_entity_data[] = {
+    { "comp",	"&#x02201;" },
     { "ge",	"&#x02265;" },
     { "infin",	"&#x0221E;" },
     { "Int",	"&#x0222C;" },

@@ -618,9 +618,10 @@ void Interactive2dPanel::initGui(){
     autovar2dGrid->addWidget(labelGeoVarPrefix,0,0);
     //autovar2dGrid->setSizeConstraint(QLayout::SetFixedSize);
 
+    /*
     retranslate();
-    mainLayout->addWidget(autovar2dGroup);
-
+    mainLayout->addWidget(autovar2dGroup);//obsolete
+    */
     setLayout(mainLayout);
 }
 

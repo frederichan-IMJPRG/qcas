@@ -438,6 +438,8 @@ protected:
 
 private:
     giac::context*context;
+    giac::context localcontext;
+    giac::context* externalcontext;
 
     // Item which could be highlighted
     MyItem* focusOwner;
@@ -554,6 +556,7 @@ private:
     void executeMyAction(bool );
     void renameObject(MyItem*,const QString&);
     void findIDNT(giac::gen &, MyItem *);
+    void importparentvalues(giac::gen &);
 
    void updateAllLevelsFrom(const int& );
 
