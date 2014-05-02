@@ -158,6 +158,7 @@ CasManager::CasManager(MainWindow* main){
     context=new giac::context;
     mainWindow->setDecimalDigits(giac::decimal_digits(context));
     giac::read_env(context,true);
+    giac::protected_read_config(context,false);// otherwise approx(pi,5) gave a _VECT instead of a DOUBLE
     giac::set_language(giac::language(context),context);
 
     monitor=new MonitorThread(context);
@@ -483,7 +484,7 @@ bool CasManager::isRunning() const{
 
 
 OutputWidget* CasManager::createDisplay(){
-//   info(answer,0);//to have debug xml info
+//    info(answer,0);//to have debug info of anwser
     if (answer.type == _VECT && graph_output_type(answer)){
       if (is3d(answer._VECTptr->back())){
         return new OutputWidget();
