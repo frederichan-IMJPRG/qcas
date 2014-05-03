@@ -1921,7 +1921,7 @@ void Canvas2D::findIDNT(gen &expression,MyItem* item){
 
 
 void Canvas2D::importparentvalues(gen &expression){
-    if (expression.type==giac::_SYMB){
+   if (expression.type==giac::_SYMB){
         giac::gen g=expression._SYMBptr->feuille;
         importparentvalues(g);
     }
@@ -1940,7 +1940,7 @@ void Canvas2D::importparentvalues(gen &expression){
         //qDebug()<<"lvar"<<lvar;
         QStringList lvarlist=lvar.split(",");
 
-        if(!(lvarlist.contains(s))){
+        if(!(lvarlist.contains(s)) && (s!="undef")){
             giac::gen geva=giac::protecteval(expression,5,externalcontext);
             if(parent->isInteractive()){
                 giac::sto(geva,expression,&localcontext);
