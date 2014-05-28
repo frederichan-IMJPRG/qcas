@@ -21,6 +21,7 @@
 #include "giac/gen.h"
 class QGridLayout;
 class TextInput;
+class TextEditOutput;
 class FormalWorkSheet;
 class OutputWidget;
 class QToolButton;
@@ -38,19 +39,23 @@ public:
     OutputWidget* getOuputWidget();
     void evaluate(const QString&);
     void displayResult(OutputWidget*);
-  //  OutputWidget* gen2Widget(const QString &);
     void addStopButton(QToolButton* stop);
     void removeStopButton();
+
 private:
     int id;
     FormalWorkSheet* workSheet;
     QGridLayout *mainLayout;
     QCheckBox *check;
     TextInput *input;
+    TextEditOutput *textformula;
     OutputWidget *out;
+    QCheckBox *checkshowout;
+
 
 private slots:
     void selectLevel();
+    void showhideOutWidgets();
 };
 
 #endif // FORMALLINE_H

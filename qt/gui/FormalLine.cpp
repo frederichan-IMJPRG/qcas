@@ -36,21 +36,35 @@ Line::Line(int id,FormalWorkSheet *parent):QWidget(parent){
 
     out=0;
     check=new QCheckBox(QString::number(id+1));
+    checkshowout=new QCheckBox(this);
 
-   input=new TextInput(this);
+    input=new TextInput(this);
+    textformula=new TextEditOutput(this);
+    textformula->hide();
 
+    QPalette p=textformula->palette();
+    p.setColor(QPalette::Base,p.window().color());
+    textformula->setPalette(p);
+    checkshowout->setTristate(true);
 
-   mainLayout=new QGridLayout;
-   mainLayout->addWidget(input,0,1,Qt::AlignTop);
-   mainLayout->addWidget(check,0,0,Qt::AlignTop);
-   setLayout(mainLayout);
-   connect(check,SIGNAL(clicked()),this,SLOT(selectLevel()));
+    mainLayout=new QGridLayout;
+    mainLayout->addWidget(input,0,1,Qt::AlignTop);
+    mainLayout->addWidget(check,0,0,Qt::AlignTop);
+    mainLayout->addWidget(textformula,2,1,Qt::AlignTop);
+    mainLayout->addWidget(checkshowout,1,1,Qt::AlignLeft);
+    checkshowout->hide();
+    setLayout(mainLayout);
+    connect(check,SIGNAL(clicked()),this,SLOT(selectLevel()));
+    connect(checkshowout,SIGNAL(clicked()),this,SLOT(showhideOutWidgets()));
+
 }
 Line::~Line(){
     delete mainLayout;
     delete check;
     delete input;
+    delete textformula;
     delete out;
+    delete checkshowout;
 
 }
 /** When the user selects or unselects the checkBox number
@@ -90,46 +104,44 @@ void Line::evaluate(const QString & formula){
     if (out!=0){
         mainLayout->removeWidget(out);
         delete out;
+        out=0;
     }
     getWorkSheet()->getApp()->evaluate(formula);
 
 }
+
 OutputWidget* Line::getOuputWidget(){
     return out;
 }
 
 void Line::displayResult(OutputWidget* uuu){
     this->out=uuu;
+    textformula->setPlainText(out->getTextOutput());
+    textformula->adjustHeight();
 
     out->setMinimumSize(out->sizeHint());
     out->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
-    mainLayout->addWidget(out,1,1,Qt::AlignLeft);
-    out->show();
+    mainLayout->addWidget(out,3,1,Qt::AlignLeft);
+    checkshowout->show();
+    showhideOutWidgets();
     getWorkSheet()->goToNextLine();
 
 }
-/*OutputWidget* Line::gen2Widget(const QString &mathml){
-    QString m("<math mode=\"display\">\n");
-    m.append(mathml);
-    m.append("\n</math>");
 
-
-    qDebug()<<"----------------------";
-    qDebug()<<m;
-    qDebug()<<"----------------------";
-
-    QtMmlWidget *mmlWidget=new QtMmlWidget;
-
-    QString errorMsg;
-      int errorLine;
-      int errorColumn;
-      bool ok = mmlWidget->setContent(m, &errorMsg, &errorLine, &errorColumn);
-      if (!ok) {
-        qWarning("MathML error: %s, Line: %d, Column: %d",
-        errorMsg.constData()->toLatin1(), errorLine, errorColumn);
-      }
-      QPalette p=mmlWidget->palette();
-      p.setColor(QPalette::WindowText,QColor::fromRgb(0,0,255));
-      mmlWidget->setPalette(p);
-      return new FormulaWidget(mmlWidget);
-}*/
+void Line::showhideOutWidgets(){
+    if(out==0)
+        return;
+    if(checkshowout->checkState()==Qt::Unchecked){
+       out->show();textformula->hide();
+    }
+    if(checkshowout->checkState()==Qt::PartiallyChecked){
+       out->hide();
+       textformula->adjustHeight();
+       textformula->show();
+    }
+    if(checkshowout->checkState()==Qt::Checked){
+       out->show();
+       textformula->adjustHeight();
+       textformula->show();
+    }
+}

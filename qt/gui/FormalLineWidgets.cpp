@@ -28,6 +28,7 @@
 #include "../MainWindow.h"
 #include "../config.h"
 #include "qtmmlwidget.h"
+
 TextInput::TextInput(Line *parent):QPlainTextEdit(parent){
     line=parent;
     historylevel=-1;
@@ -72,24 +73,7 @@ void TextInput::matchDelimiters(){
                   }
               }
           }
-/*          if (info->position == curPos){
-              int index=QString("([{").indexOf(info->character);
-              if (index!=-1){
-                  QChar right=QString(")]}").at(index);
-                  if (matchLeftDelimiter(info->character,right,textCursor().block(), i+1, 0))
-                      createDelimiterSelection(pos + info->position,true);
-                    else createDelimiterSelection(pos + info->position,false);
-              }
-              else {
-                  index=QString(")]}").indexOf(info->character);
-                  if (index!=-1){
-                      QChar left=QString("([{").at(index);
-                      if (matchRightDelimiter(left,info->character,textCursor().block(), data->size()-i, 0))
-                          createDelimiterSelection(pos + info->position,true);
-                        else createDelimiterSelection(pos + info->position,false);
-                  }
-              }*/
-          }
+         }
       }
    }
 
@@ -179,9 +163,6 @@ void TextInput::installCompleter(){
     connect(completer,SIGNAL(activated(QString)),this,SLOT(insertCompletion(QString)));
 }
 
-//void TextInput::setCompleter(QCompleter *c){
-//    completer=c;
-//}
 
 void TextInput::keyPressEvent(QKeyEvent *e){
     if (completer&&completer->popup()->isVisible()){
@@ -231,7 +212,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
         case Qt::Key_Enter:
             if (e->modifiers()&Qt::ShiftModifier) {
                 //prevent crash when enter is pressed during evaluation
-                if(! line->getWorkSheet()->getApp()->isEvaluating()  ){
+                if(! line->getWorkSheet()->getApp()->isEvaluating() ){
                     line->evaluate(toPlainText());
                 }
             }
@@ -296,7 +277,7 @@ void TextInput::keyPressEvent(QKeyEvent *e){
             break;
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
-         {
+        {
             QTextCursor cursor=this->textCursor();
             QString st;
             if (cursor.hasSelection()){
@@ -319,14 +300,17 @@ void TextInput::keyPressEvent(QKeyEvent *e){
                updateCompleter();
             }
 
-        break;}
+            break;
+       }
        default:
-         QPlainTextEdit::keyPressEvent(e);
-         if (completer->popup()->isVisible()){
-            updateCompleter();
-         }
-        }
+       {  QPlainTextEdit::keyPressEvent(e);
+          if (completer->popup()->isVisible()){
+               updateCompleter();
+          }
+
+       }
     }
+}
 
 void TextInput::updateCompleter(){
     QString completionPrefix=textUnderCursor();
@@ -487,21 +471,72 @@ void TextInput::insertCompletion(const QString &completion){
     setTextCursor(tc);
 }
 
-/*
-void Highlighter::highlightBlock(const QString &text)
-{
-    TextBlockData *data = new TextBlockData;
-    int leftPos = text.indexOf('(');
-    while (leftPos != -1) {
-        ParenthesisInfo *info = new ParenthesisInfo;
-        info->character = '(';
-        data->insert(info);
-        leftPos = text.indexOf('(', leftPos + 1);
-    }
-    setCurrentBlockUserData(data);
+
+TextEditOutput::TextEditOutput(Line *parent):TextInput(parent){
+    setMinimumHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
+    setFrameStyle(QFrame::NoFrame);
+ }
+
+TextEditOutput::~TextEditOutput(){
 }
-*/
 
+void TextEditOutput::adjustHeight(){
+    int nblignes=document()->size().height();
+    if(nblignes>30)
+        nblignes=30;
+    this->setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+\
+                             2*document()->documentMargin()+6\
+                             +fontMetrics().lineSpacing()*(nblignes-1)\
+                             );
+}
 
+void TextEditOutput::keyPressEvent(QKeyEvent *e){
+    switch(e->key())
+    {
+        case Qt::Key_C : {
+            if(e->modifiers()&Qt::ControlModifier)
+                 QPlainTextEdit::keyPressEvent(e);
+        break;
+        }
+        case Qt::Key_A : {
+            if(e->modifiers()&Qt::ControlModifier){
+                QPlainTextEdit::keyPressEvent(e);
+            }
+            break;
+
+        }
+        case Qt::Key_Left :
+            QPlainTextEdit::keyPressEvent(e);break;
+        case Qt::Key_Right :
+            QPlainTextEdit::keyPressEvent(e);break;
+        case Qt::Key_Down: {
+            if (e->modifiers()&Qt::ShiftModifier){
+                //we stay in this line during selection
+                QPlainTextEdit::keyPressEvent(e);
+            }
+            else{
+                if (goDown()){
+                    QPlainTextEdit::keyPressEvent(e);
+                }
+            }
+            break;
+        }
+
+        case Qt::Key_Up: {
+            if (e->modifiers()&Qt::ShiftModifier){
+                //we stay in this line during selection
+                QPlainTextEdit::keyPressEvent(e);
+             }
+             else{
+                if (goUp()){
+                     QPlainTextEdit::keyPressEvent(e);
+                }
+            }
+            break;
+    }
+    default:
+        e->ignore();
+    }
+}
 
 

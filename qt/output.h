@@ -216,6 +216,7 @@ public:
     OutputWidget(QWidget* widget=0);
     void setLine(Line* );
     virtual void toXML(QDomElement&);
+    virtual QString getTextOutput();
 
 private:
     Line* line;
@@ -231,6 +232,7 @@ public:
     void zoomIn();
     void zoomOut();
     virtual void toXML(QDomElement &);
+    QString getTextOutput();
 protected:
     QSize sizeHint();
 private:

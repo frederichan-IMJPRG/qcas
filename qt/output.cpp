@@ -75,6 +75,10 @@ void OutputWidget::setLine(Line* l){
 }
 void OutputWidget::toXML(QDomElement &){
 }
+QString OutputWidget::getTextOutput(){
+    return "";
+}
+
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
     formula=giac::undef;
     context=0;
@@ -85,6 +89,16 @@ FormulaWidget::FormulaWidget(const giac::gen &g,giac::context *c){
     context=c;
     initGui();
 }
+QString FormulaWidget::getTextOutput(){
+    if(context!=0){
+        if(giac::taille(formula,8000)<8000  && formula!= giac::undef) {
+            return QString::fromStdString(formula.print(context));
+        }
+        else
+            return "";
+    }
+}
+
 void FormulaWidget::initGui(){
 //    qDebug()<<"----------------------";
 //    qDebug()<<m;

@@ -25,6 +25,7 @@ class Line;
 class QFocusEvent;
 class Highlighter;
 
+
 class TextInput : public QPlainTextEdit{
     Q_OBJECT
 
@@ -36,12 +37,14 @@ public:
   void insertIndentedString(const QString &s);
 
 protected:
-    void keyPressEvent(QKeyEvent *e);
+    virtual void keyPressEvent(QKeyEvent *e);
     bool event(QEvent*e);
     void focusInEvent(QFocusEvent* e);
     void focusOutEvent(QFocusEvent* e);
     void keyReleaseEvent(QKeyEvent *e);
 
+    bool goDown();
+    bool goUp();
 
 
 private slots:
@@ -50,8 +53,8 @@ private slots:
     void helpCompletion(const QString &completion);
     void matchDelimiters();
 private:
-    bool goDown();
-    bool goUp();
+//    bool goDown();
+//    bool goUp();
     void updateCompleter();
     void xcasmenuCompleter(QString section);
     void installCompleter();
@@ -68,5 +71,18 @@ private:
 };
 
 
+class TextEditOutput : public TextInput{
+    Q_OBJECT
+
+public:
+    TextEditOutput(Line * parent=0);
+    ~TextEditOutput();
+    void adjustHeight();
+
+protected:
+    void keyPressEvent(QKeyEvent *e);
+
+
+};
 
 #endif // FORMALLINEWIDGETS_H
