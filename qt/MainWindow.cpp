@@ -82,6 +82,8 @@ MainWindow::MainWindow(){
     displayTimeAfterProcess=true;
     time=new QTime;
 
+    lastgiacmessage="";
+
     history=new QStringList();
 
     isevaluatingall=false;
@@ -1312,9 +1314,12 @@ void MainWindow::setDecimalDigits(const int &a){
 
 void MainWindow::displayGiacMessages(){
     printHeader();
+    lastgiacmessage="";
     QStringList list=cas->getGiacDisplay();
     for (int  i=0;i<list.size();++i){
         giacMessages->appendHtml(list.at(i));
+        lastgiacmessage.append(list.at(i));
+        lastgiacmessage.append("\n");
     }
     giacMessages->appendHtml(tr("<br><font color=\"gray\">Temps mis:")+QString::number(time->elapsed())+" ms</font><br>");
     giacMessages->verticalScrollBar()->setValue(giacMessages->verticalScrollBar()->maximum());
@@ -2003,4 +2008,3 @@ QCompleter* CommandInfo::getCompleter() const{
 QStringList CommandInfo::getCommands(){
     return commandList;
 }
-

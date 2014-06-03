@@ -35,8 +35,10 @@ Line::Line(int id,FormalWorkSheet *parent):QWidget(parent){
     workSheet=parent;
 
     out=0;
+    giacmessages=0;
+
     check=new QCheckBox(QString::number(id+1));
-    checkshowout=new QCheckBox(this);
+    checkshowout=new QCheckBox(this);    
 
     input=new TextInput(this);
     textformula=new TextEditOutput(this);
@@ -51,7 +53,7 @@ Line::Line(int id,FormalWorkSheet *parent):QWidget(parent){
     mainLayout->addWidget(input,0,1,Qt::AlignTop);
     mainLayout->addWidget(check,0,0,Qt::AlignTop);
     mainLayout->addWidget(textformula,2,1,Qt::AlignTop);
-    mainLayout->addWidget(checkshowout,1,1,Qt::AlignLeft);
+    mainLayout->addWidget(checkshowout,3,0,Qt::AlignRight);
     checkshowout->hide();
     setLayout(mainLayout);
     connect(check,SIGNAL(clicked()),this,SLOT(selectLevel()));
@@ -65,6 +67,7 @@ Line::~Line(){
     delete textformula;
     delete out;
     delete checkshowout;
+    delete giacmessages;
 
 }
 /** When the user selects or unselects the checkBox number
@@ -105,6 +108,11 @@ void Line::evaluate(const QString & formula){
         mainLayout->removeWidget(out);
         delete out;
         out=0;
+        if(giacmessages != 0){
+            mainLayout->removeWidget(giacmessages);
+            delete giacmessages;
+            giacmessages=0;
+        }
     }
     getWorkSheet()->getApp()->evaluate(formula);
 
@@ -116,7 +124,33 @@ OutputWidget* Line::getOuputWidget(){
 
 void Line::displayResult(OutputWidget* uuu){
     this->out=uuu;
-    textformula->setPlainText(out->getTextOutput());
+    if(!this->getgiacmessages().isEmpty()){
+        //textformula->setPlainText('"'+this->getgiacmessages()+'"'+'\n');
+        giacmessages=new QPlainTextEdit(this);
+        giacmessages->setReadOnly(true);
+        giacmessages->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+        giacmessages->setMinimumWidth(input->width());
+        giacmessages->setPlainText(this->getgiacmessages());
+        giacmessages->setFrameStyle(QFrame::NoFrame);
+        int nblignes=giacmessages->document()->size().height();
+        //qDebug()<<"nb lignes: "<<nblignes;
+        if(nblignes>4)
+            nblignes=5;
+        giacmessages->setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+\
+                                 2*giacmessages->document()->documentMargin()+6\
+                                 +fontMetrics().lineSpacing()*(nblignes-1)\
+                                 );
+        QPalette p=giacmessages->palette();
+        p.setColor(QPalette::Base,p.window().color());
+        p.setColor(QPalette::Text,Qt::darkGreen);
+        giacmessages->setPalette(p);
+        mainLayout->addWidget(giacmessages,1,1,Qt::AlignLeft);
+
+    }
+
+    textformula->setPlainText("");
+
+    textformula->appendPlainText(out->getTextOutput());
     textformula->adjustHeight();
 
     out->setMinimumSize(out->sizeHint());
@@ -132,16 +166,24 @@ void Line::showhideOutWidgets(){
     if(out==0)
         return;
     if(checkshowout->checkState()==Qt::Unchecked){
+       mainLayout->removeWidget(checkshowout);
+       mainLayout->addWidget(checkshowout,3,0,Qt::AlignRight);
        out->show();textformula->hide();
     }
     if(checkshowout->checkState()==Qt::PartiallyChecked){
        out->hide();
-       textformula->adjustHeight();
+       mainLayout->removeWidget(checkshowout);
+       mainLayout->addWidget(checkshowout,2,0,Qt::AlignRight);
        textformula->show();
+       textformula->adjustHeight();
     }
     if(checkshowout->checkState()==Qt::Checked){
        out->show();
-       textformula->adjustHeight();
        textformula->show();
+       textformula->adjustHeight();
     }
+}
+
+QString Line::getgiacmessages(){
+    return getWorkSheet()->getApp()->lastgiacmessage;
 }

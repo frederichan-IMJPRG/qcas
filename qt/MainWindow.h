@@ -89,6 +89,8 @@ class MainWindow :public QMainWindow {
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     QStringList *history;
+    QString lastgiacmessage;
+
 
 protected:
     void closeEvent(QCloseEvent *event);

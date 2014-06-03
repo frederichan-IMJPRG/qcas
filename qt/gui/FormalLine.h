@@ -23,6 +23,7 @@ class QGridLayout;
 class TextInput;
 class TextEditOutput;
 class FormalWorkSheet;
+class QPlainTextEdit;
 class OutputWidget;
 class QToolButton;
 class QCheckBox;
@@ -51,6 +52,8 @@ private:
     TextEditOutput *textformula;
     OutputWidget *out;
     QCheckBox *checkshowout;
+    QString getgiacmessages();
+    QPlainTextEdit *giacmessages;
 
 
 private slots:

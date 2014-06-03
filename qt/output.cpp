@@ -1956,10 +1956,11 @@ void Canvas2D::importparentvalues(gen &expression){
 
         if(!(lvarlist.contains(s)) && (s!="undef")){
             giac::gen geva=giac::protecteval(expression,5,externalcontext);
-            if(parent->isInteractive()){
-                giac::sto(geva,expression,&localcontext);
-                //qDebug()<<"storing: "<<s<<"ds"<<QString::fromStdString(giac::print(geva,context));
-            }
+            if(parent->isInteractive() && (geva != expression)){
+                // check that the identificator is not a constant. Ex: pi
+                // qDebug()<<"storing: "<<s<<"ds"<<QString::fromStdString(giac::print(geva,context));
+                giac::sto(geva,expression,false,&localcontext);
+                }
         }
     }
 }
