@@ -439,8 +439,8 @@ protected:
     virtual QSize minimumSizeHint() const;
 
 private:
-    giac::context*context;
-    giac::context localcontext;
+    giac::context *context;
+    giac::context *localcontext;
     giac::context* externalcontext;
 
     // Item which could be highlighted

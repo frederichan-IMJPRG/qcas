@@ -1447,12 +1447,14 @@ void DisplayObjectCommand::undo(){
 Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
     parent=g2d;
     externalcontext =0;
+    localcontext=0;
 
     if(parent->isInteractive()){
-        context=&localcontext;
+        localcontext=new giac::context();
+        context=localcontext;
         externalcontext=c;
     }
-    else{  context=c;}
+    else{ context=c;}
 
     ortho=true;
     selectionRight=false;
@@ -1509,7 +1511,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 }
 Canvas2D::~Canvas2D(){
     clearallItems();
-
+    delete localcontext;
 }
 void Canvas2D::createMenuAction(){
 
@@ -1959,7 +1961,7 @@ void Canvas2D::importparentvalues(gen &expression){
             if(parent->isInteractive() && (geva != expression)){
                 // check that the identificator is not a constant. Ex: pi
                 // qDebug()<<"storing: "<<s<<"ds"<<QString::fromStdString(giac::print(geva,context));
-                giac::sto(geva,expression,false,&localcontext);
+                giac::sto(geva,expression,false,localcontext);
                 }
         }
     }
