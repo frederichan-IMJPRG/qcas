@@ -14,7 +14,6 @@
 *    You should have received a copy of the GNU General Public License
 *    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
 */
-
 #include <QTextBrowser>
 #include <QToolButton>
 #include <QToolBar>
@@ -141,7 +140,7 @@ void WizardCatalog::displayPage(QUrl url){
     QString keyWord=url.path();
 
     if (url.toString().startsWith("?")){
-        mainWindow->displayXcasHelp(url.toString());
+            mainWindow->displayXcasHelp(url.toString());
     }
     else{
         if(keyWord.contains("html"))
@@ -162,6 +161,12 @@ void WizardCatalog::displayHome(){
     home();
 }
 
+/*
+  This function can handle 3 types of href:
+  ??find the index.html#htoc number via pattern matching. Cf doc/fr/menu.html
+  ?keyword search
+  .html* files are opened as ordinary link
+  */
 void WizardCatalog::newPage(QUrl url){
     //QString keyWord=url.path();
     QString keyWord=url.toString();//to keep the fragments (#...)
@@ -172,10 +177,26 @@ void WizardCatalog::newPage(QUrl url){
         mainWindow->sendText(keyWord);
     }
     else{
-        if (url.toString().startsWith("?")){
-            addHistory(url.toString());
-            mainWindow->displayXcasHelp(url.toString());
+        if (keyWord.startsWith("?")){
+            if(keyWord.startsWith("??")){
+                keyWord.remove(0,2);
+                QRegExp titre=QRegExp(keyWord);
+                //search the link from the pattern on the fly in index.html
+                zone->setSource(QUrl("index.html"));
+                QString indexhtml=zone->toHtml();
+                int i1=indexhtml.indexOf(titre);
+                //qDebug()<<indexhtml.mid(i1-10,30);
+                int i0=indexhtml.left(i1).lastIndexOf("#htoc");
+                i1=indexhtml.mid(i0,i1-i0).indexOf("\">");
+                keyWord="index.html"+indexhtml.mid(i0,i1);
+                addHistory(keyWord);
+                zone->setSource(QUrl(keyWord));
+            }
+            else{
 
+            addHistory(keyWord);
+            mainWindow->displayXcasHelp(keyWord);
+            }
         }
         else{
             addHistory(keyWord);

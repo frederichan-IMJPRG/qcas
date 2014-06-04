@@ -1377,7 +1377,7 @@ void MainWindow::about(){
                                                       "<li><b>Sources de QCAS: </b><center><a href=\"http://git.tuxfamily.org/?p=qcas/qcas.git\">http://git.tuxfamily.org/?p=qcas/qcas.git</a></center><br></li>"
                               "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
                                                       "<li><b>Auteur de QCAS: </b>Loïc Le Coq  (2012) </li>"
-                              "<li><b>Maintenance et développement de QCAS: </b>Han Frédéric <center><a href=\"mailto:han@math.jussieu.fr\"> han@math.jussieu.fr</a></center></li>"
+                              "<li><b>Maintenance et développement de QCAS: </b>(2013- )<center>Han Frédéric <a href=\"mailto:frederic.han@imj-prg.fr\"> frederic.han@imj-prg.fr</a></center></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
                                                       "<li><b> Site Web de XCas:  <center><a href=\"http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html\">http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html</a></center><nr></li>"
                                                       "</ul><hr>"
