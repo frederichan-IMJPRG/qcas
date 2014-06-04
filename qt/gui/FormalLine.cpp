@@ -156,7 +156,8 @@ void Line::displayResult(OutputWidget* uuu){
     out->setMinimumSize(out->sizeHint());
     out->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
     mainLayout->addWidget(out,3,1,Qt::AlignLeft);
-    checkshowout->show();
+    if(out->isFormula())
+        checkshowout->show();
     showhideOutWidgets();
     getWorkSheet()->goToNextLine();
 

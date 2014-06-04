@@ -217,6 +217,7 @@ public:
     void setLine(Line* );
     virtual void toXML(QDomElement&);
     virtual QString getTextOutput();
+    virtual bool isFormula();
 
 private:
     Line* line;
@@ -233,6 +234,7 @@ public:
     void zoomOut();
     virtual void toXML(QDomElement &);
     QString getTextOutput();
+    bool isFormula();
 protected:
     QSize sizeHint();
 private:

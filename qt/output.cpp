@@ -78,6 +78,9 @@ void OutputWidget::toXML(QDomElement &){
 QString OutputWidget::getTextOutput(){
     return "";
 }
+bool OutputWidget::isFormula(){
+    return false;
+}
 
 FormulaWidget::FormulaWidget(QWidget *p):OutputWidget(p){
     formula=giac::undef;
@@ -97,6 +100,10 @@ QString FormulaWidget::getTextOutput(){
         else
             return "";
     }
+}
+
+bool FormulaWidget::isFormula(){
+    return true;
 }
 
 void FormulaWidget::initGui(){
