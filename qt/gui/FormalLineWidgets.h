@@ -35,6 +35,7 @@ public:
     //    void setCompleter(QCompleter *c);
   void ressetHistoryLevel();
   void insertIndentedString(const QString &s);
+  QString selectedText() const;
 
 protected:
     virtual void keyPressEvent(QKeyEvent *e);

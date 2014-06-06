@@ -433,6 +433,11 @@ QString TextInput::textUnderCursor() const{
     return tc.selectedText();
 }
 
+QString TextInput::selectedText() const{
+    QTextCursor tc=textCursor();
+    return tc.selectedText();
+}
+
 bool TextInput::isStartCursor() const{
     QTextCursor tc=textCursor();
 
@@ -474,7 +479,7 @@ void TextInput::insertCompletion(const QString &completion){
 
 TextEditOutput::TextEditOutput(Line *parent):TextInput(parent){
     setMinimumHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
-    setFrameStyle(QFrame::NoFrame);
+    //setFrameStyle(QFrame::NoFrame);
  }
 
 TextEditOutput::~TextEditOutput(){
@@ -486,7 +491,7 @@ void TextEditOutput::adjustHeight(){
         nblignes=30;
     this->setFixedHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+\
                              2*document()->documentMargin()+6\
-                             +fontMetrics().lineSpacing()*(nblignes-1)\
+                             +fontMetrics().lineSpacing()*(nblignes)\
                              );
 }
 
@@ -510,6 +515,8 @@ void TextEditOutput::keyPressEvent(QKeyEvent *e){
         case Qt::Key_Right :
             QPlainTextEdit::keyPressEvent(e);break;
         case Qt::Key_Down: {
+            QPlainTextEdit::keyPressEvent(e);
+            /*
             if (e->modifiers()&Qt::ShiftModifier){
                 //we stay in this line during selection
                 QPlainTextEdit::keyPressEvent(e);
@@ -518,12 +525,13 @@ void TextEditOutput::keyPressEvent(QKeyEvent *e){
                 if (goDown()){
                     QPlainTextEdit::keyPressEvent(e);
                 }
-            }
+            }*/
             break;
         }
 
         case Qt::Key_Up: {
-            if (e->modifiers()&Qt::ShiftModifier){
+            /*
+             if (e->modifiers()&Qt::ShiftModifier){
                 //we stay in this line during selection
                 QPlainTextEdit::keyPressEvent(e);
              }
@@ -531,7 +539,8 @@ void TextEditOutput::keyPressEvent(QKeyEvent *e){
                 if (goUp()){
                      QPlainTextEdit::keyPressEvent(e);
                 }
-            }
+            }*/
+            QPlainTextEdit::keyPressEvent(e);
             break;
     }
     default:

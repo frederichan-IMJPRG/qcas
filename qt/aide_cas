@@ -1,3 +1,80 @@
+# REDIM redim
+1 Redimensionne selon n1,n2 une matrice (resp vecteur) soit en la raccourcissant, soit en l'augmentant avec des 0.
+2 Shrink or enlarge with 0 a matrix (or vector) according to the new n1 and n2 dimensions
+0 Mtrx||Vect,Intg(n1),Intg(n2)
+-1 replace
+redim([[1,2,3],[3,-9,6],[4,5,6]],1,2)
+redim([[1,2,3],[3,-9,6],[4,5,6]],4,4)
+
+# REPLACE replace
+1 La matrice B est mise en remplacement dans A à partir des 2 indices n1,n2.
+2 Replace part of matrix A from indices n1,n2 with the values of matrix B.
+0 Mtrx(A),Lst(n1,n2),Mtrx(B)
+-1 redim
+replace([[1,2,3],[3,-9,6],[4,5,6]],[1,0],[[7,8],[9,0]])
+
+# infnorm
+1 Triple norme d'une matrice subordonnée soit à la norme linfini.
+2 Matrix norm induced by linfinty norm.
+0 Mtrx
+-1 l1norm
+-2 l2norm
+-3 matrix_norm
+-4 frobenius_norm
+infnorm([[1,2,3],[3,-9,6],[4,5,6]])
+
+# frobenius_norm
+1 Norme de Frobenius d'une matrice A (=sqrt(sum |aij|^2)).
+2 Frobenius norm of a matrix A (=sqrt(sum |aij|^2)).
+0 Mtrx
+-1 l1norm
+-2 l2 norm
+-3 linfnorm
+-4 matrix_norm
+frobenius_norm([[1,2,3],[3,-9,6],[4,5,6]])
+
+# matrix_norm
+1 Triple norme d'une matrice subordonnée soit à la norme l1, soit à la norme l2, soit à la norme linfini.
+2 Matrix norm   induced by l1norm or by l2norm or by linfinty norm.
+0 Mtrx,[2]||[inf]
+-1 l1norm
+-2 l2 norm
+-3 linfnorm
+-4 frobenius_norm
+matrix_norm([[1,2,3],[3,-9,6],[4,5,6]])
+matrix_norm([[1,2,3],[3,-9,6],[4,5,6]],1)
+matrix_norm([[1,2,3],[3,-9,6],[4,5,6]],2)
+matrix_norm([[1,2,3],[3,-9,6],[4,5,6]],inf)
+
+# fadeev
+1 Option de la commande pcar ou charpoly pour spécifier l'algorithme utilisé.
+2 Option of the pcar or charpoly command to specify the algorithm.
+3 Opción del comando pcar o charpoly para especificar el algoritmo.
+4 Επιλογή της εντολής pcar ή charpoly για καθορισμό τον αλγόριθμο.
+0 Opt
+-1 pcar
+ pcar([[4,1,-2],[1,2,-1],[2,1,0]],fadeev)
+
+# COND cond
+1 Nombre de condition d'une matrice, utiliser COND(.,1) pour la norme l1, COND(.,2) pour l2 et COND(.,inf) pour linfini (1 est mis par défaut).
+2 Condition number of a matrix, use COND(.,1) for l1, COND(.,2) for l2 norm and COND(.,inf) for linf (1 by default).
+0 Mtrx,[2]||[inf]
+-1 SVL
+COND([[1,2],[1,4]])
+COND([[1,2],[1,4]],1)
+COND([[1,2],[1,4]],2)
+COND([[1,2],[1,4]],inf)
+
+# bezier
+1 Courbe de Bezier définie par des points de contrôle.
+2 Bezier curve defined by control points.
+0 Lst,[plot]
+-1 parameq
+bezier(1,1+i,2+i,3-i,plot)
+bezier(point([0,0,0]),point([1,1,0]),point([0,1,1]),plot)
+ parameq(bezier(1,1+i,2+i,3-i))
+ parameq(bezier(point([0,0,0]),point([1,1,0]),point([0,1,1])))
+
 # flatten
 1 Aplatit récursivement une liste contenant des listes.
 2 Recursively flatten a list containing lists.
@@ -6,8 +83,8 @@
 flatten([[1,[2,3],4],[5,6]])
 
 # chisquaret
-1 Test du Chi2 d'adéquation entre 2 (or n) échantillons ou entre 1 échantillon et une loi de distribution (multinomiale ou donnée par une fonction).
-2 Chi2 test : adequation between 2 (or n) samples or between 1 sample and a distribution law (multinomial or given by a law).
+1 Test du Chi^2 d'adéquation entre 2 (or n) échantillons ou entre 1 échantillon et une loi de distribution (multinomiale ou donnée par une fonction).
+2 Chi^2 test : adequation between 2 (or n) samples or between 1 sample and a distribution law (multinomial or given by a law).
 0 Data,[Func],[FuncParams]
 -1 normalt
 -2 studentt
@@ -82,8 +159,12 @@ count((x)->x<2 || x>4,[[3,9/2],[4,1]])
 0 Real(a),Real(b),Real(x)
 -1 uniform_cdf
 -2 uniform_icdf
+-3 randvector
+-4 ranm
 uniform(2,5,4)
 uniform(1.2,3.5,3)
+ randvector(3,uniform,1.2,3.5)
+ ranm(4,3,uniform,1.2,3.5)
 
 # uniform_cdf uniformd_cdf
 1 Renvoie la probabilité qu'une variable aléatoire uniforme sur [a,b] soit inférieure à x0 (ou entre x0 et y0).
@@ -118,8 +199,12 @@ uniform_icdf(3.2,5.7,0.48)
 0 Real(lambda),Real(x)
 -1 exponential_cdf
 -2 exponential_icdf
+-3 randvector
+-4 ranm
 exponential(2.1,3.5)
 exponential(2.1,0.5)
+ randvector(3,exponential,1.2)
+ ranm(4,3,exponential,1.2)
 
 # exponential_cdf exponentiald_cdf
 1 Renvoie la probabilité qu'une variable aléatoire exponentielle de parametre lambda soit inférieure à x0 (ou entre x0 et y0). 
@@ -154,8 +239,12 @@ exponential_icdf(4.2,0.6)
 0 Real(p),Intg(k)
 -1 geometric_cdf
 -2 geometric_icdf
+-3 randvector
+-4 ranm
 geometric(0.3,4)
 geometric(0.5,5)
+ randvector(3,geometric,0.3)
+ ranm(4,3,geometric,0.3)
 
 # geometric_cdf
 1 Renvoie la probabilité qu'une variable aléatoire géométrique de paramètre p (0<p<1) soit inférieure à k (ou entre k et m). 
@@ -439,8 +528,10 @@ revert(x+x^2+x^4)
 4 Συνάρτηση που είναι 0 εάν x<0 και 1 εάν x>=0.
 0 Real
 -1 Dirac
+-2 laplace
 Heaviside(1)
 Heaviside(-1)
+Heaviside(0)
 
 # Dirac
 1 Distribution de Dirac (dérivée de Heaviside).
@@ -478,12 +569,12 @@ polar_coordinates(point(1+2*i)-point(-1+i))
 -2 ordinate
 -3 rectangular_coordinates
 -4 polar_point
-rectangular_coordinates([1,-1])
+rectangular_coordinates([1,pi/4])
 rectangular_coordinates(polar_point(1,pi/4))
 
 # polar_point
-1 Renvoie le point (en 2D) de coordonnées polaires les arguments r et t.
-2 Returns the point (for 2D) with the arguments r and t as polar coordinates.
+1 Renvoie le point (en 2D) de coordonnées polaires les arguments r et t i.e. d'affixe r*exp(i*t).
+2 Returns the point (for 2D) with the arguments r and t as polar coordinates (i.e. with  r*exp(i*t) as affix).
 3 Devuelve un punto (2D) de afijo r*exp(i*t).
 4 Επιστρέφει το σημείο (2-Δ) με πολικές συντεταγμένες r και t (προσθήκης r*exp(i*t)).
 0 Real(r),Real(t)
@@ -715,13 +806,25 @@ odd(1251)
 3 set[] o %{%} definido uno conjunto.
 4 set[] ή %{%} χρησιμοποιείται για τον ορισμό ενός συνόλου.
 0 Seq
+-1 in
+-2 op
  set[1,2,3]
  %{1,2,3%}
 
+# i[]
+1 i[] est utilisé pour définir un intervalle réel.
+2 i[] is used to define a real interval.
+3 i[] definido uno intervalo real.
+4 i[] χρησιμοποιείται για τον ορισμό ενός πραγματικό διαστήματος.
+0 Seq
+-1 op
+i[1,3]
+ i[1,3]+i[2,4]*i
+
 # complexroot
-1 Renvoie la liste des sommets des carrés de côtés <=l où se trouvent les racines de P [situées dans le rectangle de sommets opposés a et b] avec leur multiplicité.
-2 Returns the list of the vertices of the squares (side<=l) containing roots of P [inside the rectangle with opposed vertices a and b] with their multiplicity.
-3 Devuelve la lista de vértices de los cuadrados (lado<=l) que contienen las raíces de P [situadas en el rectángulo de vertices opuestos a y b] con su multiplicidad.
+1 Renvoie la liste d'intervalles complexes de taille <=l où se trouvent les racines de P (par ex i[1.1,1.2]+i[2,2.4]*i pour [1.1,1.2]x[2,2.4] avec en option a=1+2*i,b=2+3*i) avec leur multiplicité.
+2 Returns the list of complex intervals of size<=l containing roots of P (for example i[1.1,1.2]+i[2,2.4]*i pour [1.1,1.2]x[2,2.4] with optionally a=1+2*i,b=2+3*i) with multiplicities.
+3 Devuelve la lista de intervalos complejos (lado<=l) que contienen las raíces de P (por ejemplo i[1.1,1.2]+i*i[2,2.4] para [1.1,1.2]x[2,2.4] con en opción a=1+2*i,b=2+3*i) con su multiplicidad.
 4 Επιστρέφει τη λίστα των κορυφών των τετραγώνων (με πλευρά <= l) που περιέχουν τις ρίζες του Ρ (μέσα στο τετράγωνο με αντίθετες κορυφές a και b) μαζί με την πολλαπλότητά τους.
 0 Poly(P),Real(l),[Cplx(a)],[Cplx(b)]
 -1 proot
@@ -729,8 +832,10 @@ odd(1251)
 -3 realroot
 -4 rationalroot
 -5 crationalroot
+complexroot(x^4+1,1e-50,0.7+i*0.7,0.8+i*0.8)
 complexroot(x^5-2*x^4+x^3+i,0.1)
 complexroot(x^3+8,1e-5,0,2+2*i)
+complexroot(x^5-2*x^4+x^3+i,0.1,1+0.5*i,1.1+0.7*i)
 
 # posubLMQ
 1 Renvoie une borne supérieure pour les racines positives de P par l'algorithme Akritas-Strzebonski-Vigklas' Local Max Quadratic (LMQ).
@@ -790,6 +895,7 @@ VAS(x^3-7*x+7)
 -5 crationalroot
 -6 sturmab
 -7 VAS
+realroot(x^3+7,0.1)
 realroot(x^3-7*x+7)
 realroot(sturm,x^3-7*x+7)
 realroot(x^5-2*x^4+x^3+1)
@@ -1200,6 +1306,18 @@ ClrIO()
 -2 prevprime
 ithprime(1229)
 ithprime(1000)
+
+# nprimes
+1 Nombre de nombres premiers inférieurs ou égals à n.
+2 Count the number of primes less than n.
+3 Devuelve el número de número primo menor que n.
+4 Επιστρέφει τον αριθμό των πρώτο αριθμό <=n.
+0 Intg(n)
+-1 ithprime
+-2 prevprime
+-3 nextprime
+-4 isprime
+nprimes(20)
 
 # assign
 1 Stocke le deuxième argument (de l'égalité) dans la variable donnée comme premier argument (de l'égalité) (compatibilité Maple).
@@ -4914,26 +5032,58 @@ StoPic(des2)
 StoPic(des3)
 
 # SortA
-1 Trie les listes par ordre croissant.
-2 Sorts the lists with increasing order.
-3 Ordena las listas en orden creciente.
-4 Ταξινομεί τις λίστες σε αύξουσα τάξη.
-0 LstReal||Seq
+1 Trie, en modifiant la valeur de l'argument, les listes par ordre croissant (comme TI) ou la 1ière ligne d'une matrice selon l'ordre croissant en conservant les colonnes.
+2 Sorts the lists with increasing order (like TI).
+3 Ordena las listas en orden creciente (like TI).
+4 Ταξινομεί τις λίστες σε αύξουσα τάξη (like TI).
+0 LstReal||Seq||Mtrx
 -1 SortD
--2 sort
-SortA([3,4,2])
-SortA([3,4,2],[6,4,5])
+-2 sorta
+-3 sort
+SortA [3,4,2]
+SortA 3,4,2
+SortA [3,4,2],[6,4,5]
+SortA [[3,4,2],[6,4,5]]
 
 # SortD
-1 Trie les listes par ordre décroissant.
-2 Sorts the lists with decreasing order.
+1 Trie, en modifiant la valeur de l'argument, les listes par ordre décroissant (comme TI) ou la 1ière ligne d'une matrice selon l'ordre décroissant en conservant les colonnes.
+2 Sorts the lists with decreasing order (like TI).
+3 Ordena las listas en orden decreciente (like TI).
+4 Ταξινομεί τις λίστες σε φθίνουσα τάξη (like TI).
+0 LstReal||Seq||Mtrx
+-1 SortA
+-2 sortd
+-3 sort
+SortD [3,4,2]
+SortD 3,4,2
+SortD [[3,4,2],[6,4,5]]
+SortD [3,4,2],[6,4,5]
+
+# sorta
+1 Trie les listes par ordre croissant ou la 1ière ligne d'une matrice selon l'ordre croissant en conservant les colonnes.
+2 Sorts the lists with increasing order or the first matrix row with increasing order and with the same columns.
+3 Ordena las listas en orden creciente.
+4 Ταξινομεί τις λίστες σε αύξουσα τάξη.
+0 LstReal||Seq×||Mtrx
+-1 SortA
+-2 sortd
+-3 sort
+sorta(3,4,2)
+sorta([3,4,2])
+sorta([[3,4,2],[6,4,5]])
+
+# sortd
+1 Trie les listes par ordre décroissant ou la 1ière ligne d'une matrice selon l'ordre décroissant en conservant les colonnes.
+2 Sorts the lists with decreasing order or the first matrix line with decreasing order and with the same columns.
 3 Ordena las listas en orden decreciente.
 4 Ταξινομεί τις λίστες σε φθίνουσα τάξη.
-0 LstReal||Seq
--1 SortA
--2 sort
-SortD([3,4,2])
-SortD([3,4,2],[6,4,5])
+0 LstReal||Seq||Mtrx
+-1 SortD
+-2 sorta
+-3 sort
+sortd(3,4,2)
+sortd([3,4,2])
+sortd([[3,4,2],[6,4,5]])
 
 # restart
 1 Purge toutes les variables.
@@ -5244,7 +5394,6 @@ write("toto",a,b,c)
 3 Para mostrar Done en lugar de un valor.
 4 Εμφανίζει τη λέξη Done στη θέση μιας τιμής.
 0 Expr
--1 
 nodisp(A:=ranm(50,50))
 
 # subsop
@@ -5253,7 +5402,6 @@ nodisp(A:=ranm(50,50))
 3 Reemplaza en la lista (o la matriz) el elemento de índice n por la expresión (con Maple los argumentos son permutados)(NULL suprime este elemento).
 4 Αντικαθιστά στη λίστα (ή τον πίνακα), το στοιχείο με δείκτη n με την παράσταση (στο Maple τα ορίσματα είναι αντιμεταθετημένα) (NULL καταργεί αυτό το στοιχείο).
 0 Lst||Mtrx,Intg(n)=Expr
--1 
 subsop([0,1,2,3,4],2=sqrt(2)+1)
 subsop([[1,2],[3,4]],[1,1]=5)
 subsop([[1,2],[3,4]],1=[10,8])
@@ -5269,7 +5417,18 @@ subsop([0,1,2,3],'1=NULL')
 -2 mRow
 mRowAdd(12,[[1,2],[3,4],[5,6]],0,2)
 
-# mRow
+# scaleadd SCALEADD
+1 Multiplie la ligne n1 de la matrice A par Xpr, puis l'ajoute à la ligne n2.
+2 Multiplies the row n1 of the matrix A by Xpr, then adds it to the row n2.
+3 Multiplica la fila n1 de la matriz A por Xpr, y lo añade a la fila n2.
+4 Πολλαπλασιάζει τη γραμμή n1 του πίνακα Α με την παράσταση Xpr, και μετά την προσθέτει στη γραμμή n2.
+0 Mtrx(A),Expr(Xpr),Intg(n1),Intg(n2)
+-1 rowAdd
+-2 scale
+-3 mRow
+scaleadd([[1,2],[3,4],[5,6]],12,0,2)
+
+# mRow 
 1 Multiplie la ligne n1 de la matrice A par Xpr.
 2 Multiplies the row n1 of the matrix A by Xpr.
 3 Multiplica la fila n1 de la matriz A por Xpr.
@@ -5278,6 +5437,17 @@ mRowAdd(12,[[1,2],[3,4],[5,6]],0,2)
 -1 rowAdd
 -2 mRowAdd
 mRow(12,[[1,2],[3,4],[5,6]],0)
+
+# scale SCALE
+1 Multiplie la ligne n1 de la matrice A par Xpr.
+2 Multiplies the row n1 of the matrix A by Xpr.
+3 Multiplica la fila n1 de la matriz A por Xpr.
+4 Πολλαπλασιάζει την γραμμή n1 του πίνακα Α με την παράσταση Xpr.
+0 Mtrx(A),Expr(Xpr),Intg(n1)
+-1 rowAdd
+-2 scaleadd
+-3 mRowAdd
+scale([[1,2],[3,4],[5,6]],12,0)
 
 # mathml
 1 Convertit l'expression en une chaîne qui permet d'afficher des maths pour le web.
@@ -5289,12 +5459,13 @@ mRow(12,[[1,2],[3,4],[5,6]],0)
 mathml(1/2)
 
 # fracmod iratrecon
-1 Retourne la fraction a/b tel que a/b=Xpr mod n, -sqrt(n)/2<a<=sqrt(n)/2 et 0<=b<sqrt(n)/2.
-2 Returns the fraction a/b such as a/b=Xpr mod n, -sqrt(n)/2<a<=sqrt(n)/2 and 0<=b<sqrt(n)/2.
-3 Devuelve la fracción a/b tal que a/b=Xpr mod n, -sqrt(n)/2<a<=sqrt(n)/2 y 0<=b<sqrt(n)/2.
-4 Επιστρέφει το κλάσμα a/b τέτοιο ώστε a/b=Xpr mod n, -sqrt(n)/2<a<=sqrt(n)/2 και 0<=b<sqrt(n)/2.
+1 Retourne la fraction a/b tel que b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 et 0<=b<sqrt(n)/2.
+2 Returns the fraction a/b such as b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 and 0<=b<sqrt(n)/2.
+3 Devuelve la fracción a/b tal que b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 y 0<=b<sqrt(n)/2.
+4 Επιστρέφει το κλάσμα a/b τέτοιο ώστε b*Xpr=a mod n, -sqrt(n)/2<a<=sqrt(n)/2 και 0<=b<sqrt(n)/2.
 0 Expr(Xpr),Intg(n)
--1 smod
+-1 mod
+-2 smod
 fracmod(41,121)
 
 # Beta
@@ -5684,14 +5855,17 @@ normalize([3,4])
  fieldplot(-t*y,[t,y],normalize,xstep=0.5,ystep=0.5)
 
 # l1norm
-1 Renvoie la norme l1 du vecteur=somme des valeurs absolues de ses coordonnées.
-2 Returns the l1 norm of the vector=sum of the absolute values of its coordinates.
-3 Devuelve la norma l1 del vector=suma de los valores absolutos de sus coordenadas.
+1 Renvoie la norme l1 du vecteur=somme des valeurs absolues de ses coordonnées
+ou triple norme d'une matrice selon l1.
+2 Returns the l1 norm of the vector=sum of the absolute values of its coordinates or matrix norm according to l1.
+3 Devuelve la norma l1 del vector=suma de los valores absolutos de sus coordenadas o matrix_norm.
 4 Επιστρέφει την l1 νόρμα του διανύσματος = άθροισμα των απολύτων τιμών των συντεταγμένων του.
 0 Vect
 -1 l2norm
 -2 maxnorm
+-3 matrixnorm
 l1norm([3,-4,2])
+l1norm([[1,2,3],[3,-9,6],[4,5,6]])
 
 # Int
 1 Renvoie la primitive ou l'intégrale (bornes a et b) sans l'évaluer.
@@ -5778,7 +5952,7 @@ risch(exp(x^2),x)
 -1 rowSwap
 rowAdd([[1,2],[3,4],[5,6]],1,2)
 
-# rowSwap
+# rowSwap swaprow rowswap SWAPROW
 1 Renvoie la matrice obtenue en échangeant dans A la ligne n1 et la ligne n2.
 2 Returns the matrix get from A by swapping the n1-th row and the n2-th row.
 3 Devuelve la matriz obtenida a partir de A intercambiando las filas n1 y n2.
@@ -5786,7 +5960,18 @@ rowAdd([[1,2],[3,4],[5,6]],1,2)
 8 交换行。
 0 Mtrx(A),Intg(n1),Intg(n2)
 -1 rowAdd
+-2 colSwap
 rowSwap([[1,2],[3,4],[5,6]],1,2)
+
+# colSwap swapcol colswap SWAPCOL
+1 Renvoie la matrice obtenue en échangeant dans A la colonne n1 et la colonne n2.
+2 Returns the matrix get from A by swapping the n1-th column and the n2-th column.
+3 Devuelve la matriz obtenida a partir de A intercambiando las columnas n1 y n2.
+4 Επιστρέφει τον πίνακα που προκύπτει αν στον Α ανταλλάξουμε τη n1 στήλη με την n2 στήλη.
+8 交换行。
+0 Mtrx(A),Intg(n1),Intg(n2)
+-1 rowSwap
+colSwap([[1,2],[3,4],[5,6]],0,1)
 
 # variance
 1 Renvoie la variance d'une liste pondérée par le deuxième argument ou la liste des variances des colonnes d'une matrice.
@@ -6415,7 +6600,7 @@ arcLen([cos(t),sin(t)],t,1,2)
 cas_setup(0,0,0,1,0,1e-10,12)
 
 # about
-1 Renvoie les hypothèses faites avec assume sur la variable a (on peut mettre about(a) ou assume(a)).
+1 Renvoie les hypothèses faites avec assume sur la variable a.
 2 Returns the hypothesis made with assume on the variable a.
 3 Devuelve las hipótesis hechas con assume en la variable a.
 4 Επιστρέφει τις υποθέσεις που έχουν γίνει με την assume για την μεταβλητή a.
@@ -6441,15 +6626,19 @@ abscissa(-1-i)
 abscissa(point(1,2,3))
 
 # multinomial
-1 Renvoie n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
-2 Returns n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
-3 Devuelve n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
-4 Επιστρέφει n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n).
-8 =n!/(k1!*k2!*..;kj!)*(p1^k1*p2^k2..*pj^kj) (sum(p)=1 et sum(k)=n)。
-0 Intg(n),Vect(k),Vect(p)
+1 Renvoie n!/(k0!*k1!*..;kj!)*(p0^k0*p1^k1..*pj^kj) (sum(p)=1 et sum(k)=n).
+2 Returns n!/(k0!*k1!*..;kj!)*(p0^k0*p1^k1..*pj^kj) (sum(p)=1 et sum(k)=n).
+3 Devuelve n!/(k0!*k1!*..;kj!)*(p0^k0*p1^k1..*pj^kj) (sum(p)=1 et sum(k)=n).
+4 Επιστρέφει n!/(k0!*k1!*..;kj!)*(p0^k0*p1^k1..*pj^kj) (sum(p)=1 et sum(k)=n).
+8 =n!/(k0!*k1!*..;kj!)*(p0^k0*p1^k1..*pj^kj) (sum(p)=1 et sum(k)=n)。
+0 Intg(n),Vect(p),Vect(k)
 -1 binomial
+-2 randvector
+-3 ranm
 multinomial(10,[0.5,0.5],[3,7])
-multinomial(10,[0.2,0.3,0.5],[3,3,6])
+multinomial(10,[0.2,0.3,0.5],[1,3,6])
+ randvector(3,multinomial,[1/2,1/3,1/6])
+ ranm(4,3,multinomial,[1/2,1/3,1/6])
 
 # binomial
 1 Renvoie comb(n,k)*p^k*(1-p)^(n-k) ou comb(n,k) si pas de 3ème argument.
@@ -6457,12 +6646,17 @@ multinomial(10,[0.2,0.3,0.5],[3,3,6])
 3 Devuelve comb(n,k)*p^k*(1-p)^(n-k) o comb(n,k) si no hay 3er argumento.
 4 Επιστρέφει comb(n,k)*p^k*(1-p)^(n-k) ή comb(n,k) αν δεν υπάρχει 3ο όρισμα.
 8 二项式概率密度函数。  计算 n 次试验 k 次成功的概率，其中每次试验成功的概率为 p。  如果没有第三个实参，则返回 Comb(n,k)。  注意 n 与 k 均为整数，并有 k=n。
-0 Intg(n),Intg(k),[Real(p)]
+0 Intg(n),Intg(k),[Real(p in 0..1)]
 -1 binomial_cdf
 -2 binomial_icdf
+-3 multinomial
+-4 randvector
+-5 ranm
 binomial(4,0,0.5)
 binomial(4,2,0.5)
 binomial(4,2)
+ randvector(6,binomial,4,0.2)
+ ranm(4,6,binomial,4,0.7)
 
 # binomial_cdf
 1 Renvoie Proba(X<=x) ou Proba(x<=X<=y) quand X suit la loi B(n,p).
@@ -6488,6 +6682,43 @@ binomial_cdf(4,0.5,2,3)
 -2 binomial_cdf
 binomial_icdf(4,0.5,0.68)
 binomial_icdf(4,0.1,0.95)
+
+# negbinomial
+1 Renvoie comb(n+k-1,k)*p^k*(1-p)^n.
+2 Returns comb(n+k-1,k)*p^k*(1-p)^n.
+3 Devuelve comb(n+k-1,k)*p^k*(1-p)^n.
+4 Επιστρέφει comb(n+k-1,k)*p^k*(1-p)^n.
+8 =comb(n+k-1,k)*p^k*(1-p)^n。
+0 Intg(n),Intg(k),Real(p in 0..1)
+-1 negbinomial_cdf
+-2 negbinomial_icdf
+-3 binomial
+negbinomial(4,0,0.5)
+negbinomial(4,2,0.6)
+negbinomial(4,6,0.3)
+
+# negbinomial_cdf
+1 Renvoie Proba(X<=x) ou Proba(x<=X<=y) quand X suit la loi negbinomial(n,p).
+2 Returns Proba(X<=x) or Proba(x<=X<=y) when X follows the negbinomial(n,p) law.
+3 Devuelve Proba(X<=x) o Proba(x<=X<=y) cuando X sigue la ley negbinomial(n,p).
+4 Επιστρέφει Proba(X<=x) όταν X ακολουθεί την κατανομή negbinomial(n,p).
+0 Intg(n),Real(p),Real(x),[Real(y)]
+-1 negbinomial
+-2 negbinomial_icdf
+negbinomial_cdf(4,0.5,2)
+negbinomial_cdf(4,0.1,2)
+negbinomial_cdf(4,0.5,2,3)
+
+# negbinomial_icdf
+1 Renvoie h tel que Proba(X<=h)=t quand X suit la loi negbinomial(n,p).
+2 Returns h such as Proba(X<=h)=t when X follows the negbinomial(n,p) law.
+3 Devuelve h tal que Proba(X<=h)=t cuando X sigue la ley negbinomial(n,p).
+4 Επιστρέφει h τέτοιο ώστε Proba(X<=x) όταν X ακολουθεί την κατανομή negbinomial(n,p).
+0 Intg(n),Real(p),Real(t)
+-1 negbinomial
+-2 negbinomial_cdf
+negbinomial_icdf(4,0.5,0.68)
+negbinomial_icdf(4,0.1,0.95)
 
 # colspace
 1 Renvoie une matrice dont les colonnes forment une base de l'espace vectoriel engendré par les colonnes de la matrice A [d est la dimension de cet espace].
@@ -6651,8 +6882,12 @@ poisson_icdf(2.5,0.9)
 0 Real(mu),Intg(k)
 -1 poisson_cdf
 -2 poisson_icdf
+-3 randvector
+-4 ranm
 poisson(0.5,2)
 poisson(4.0,2)
+ randvector(3,poisson,0.5)
+ ranm(4,3,poisson,0.5)
 
 # rowspace
 1 Renvoie une matrice dont les lignes forment une base de l'espace vectoriel engendré par les lignes de la matrice A [d est la dimension de cet espace].
@@ -6817,6 +7052,17 @@ power_regression_plot([1.0,2.0,3.0,4.0],[2.0,4.0,9.0,16.0])
 0 Opt
 -1 convert
  convert(sqrt(2),confrac,'L'),L
+
+# interval
+1 Option de la commande convert ou convertir.
+2 Option of the convert or convertir command.
+3 Opción del comando convert o convertir.
+4 Επιλογή της εντολής convert ή convertir.
+0 Opt
+-1 interval
+ convert(sqrt(2),interval)
+ convert(sqrt(2),interval,20)
+ convert(sqrt(2)*sin(2)+sqrt(2)*cos(2),interval,20)
 
 # convert convertir
 1 Renvoie la valeur de cmd(Xpr) si cmd est le nom d'une commande spécifiée par le 2ème argument ou réécrit Xpr selon l'option cmd (par ex option sin=commande trigsin).
@@ -7081,20 +7327,24 @@ permu2mat([1,3,2,4,0])
 permuorder([1,3,2,4,0])
 
 # chisquare chisquared
-1 Renvoie la densité de probabilité de la loi de Chisquare en x0 (n est le nombre de degrés de liberté).
-2 Returns the density of probability of the Chisquare law at x0 (n is the number of degrees of freedom).
+1 Renvoie la densité de probabilité de la loi de Chi^2 en x0 (n est le nombre de degrés de liberté).
+2 Returns the density of probability of the Chi^2 law at x0 (n is the number of degrees of freedom).
 3 Devuelve la densidad de probabilidad de la ley Chi-cuadrada en x0 (n es el número de grados de libertad).
 4 Επιστρέφει την πυκνότητα της πιθανότητας της κατανομής χ^2 ως προς x0 (n είναι ο αριθμός των βαθμών ελευθερίας).
 8 卡方概率密度函数。  计算卡方分布在 x0 点的概率密度，其中 n 为自由度。
 0 Intg(n),Real(x0)
 -1 chisquare_cdf
 -2 chisquare_icdf
+-3 randvector
+-4 ranm
 chisquare(2,3.2)
 chisquare(4,10.5)
+ randvector(3,chisquare,2)
+ ranm(4,3,chisquare,2)
 
 # chisquare_cdf chisquared_cdf
-1 Renvoie la probabilité qu'une variable aléatoire Chisquare soit inférieure à x0 (n est le nombre de degrés de liberté).
-2 Returns the probability that a Chisquare random variable is lower than x0 (n is the number of degrees of freedom).
+1 Renvoie la probabilité qu'une variable aléatoire Chi^2 soit inférieure à x0 (n est le nombre de degrés de liberté).
+2 Returns the probability that a Chi^2 random variable is lower than x0 (n is the number of degrees of freedom).
 3 Devuelve la probabilidad que una variable aleatoria según Chi-cuadrado sea menor que x0 (n es el número de grados de libertad).
 4 Επιστρέφει την πιθανότητα μια τυχαία μεταβλητή της κατανομής χ^2 να είναι μικρότερη του x0 (n είναι ο αριθμός των βαθμών ελευθερίας).
 8 累积卡方分布函数。  返回卡方概率密度函数在 x0 点的下限尾部概率，其中 n 为自由度。
@@ -7106,8 +7356,8 @@ chisquare_cdf(2,6.1)
 chisquare_cdf(4,6.1)
 
 # chisquare_icdf chisquared_icdf
-1 Renvoie la valeur h telle que la probabilité qu'une variable aléatoire Chisquare soit inférieure à h est p (n est le nombre de degrés de liberté et 0<=p<=1).
-2 Returns h such as the probability that a Chisquare random variable is lower than h is p (n is the number of degrees of freedom and 0<=p<=1).
+1 Renvoie la valeur h telle que la probabilité qu'une variable aléatoire Chi^2 soit inférieure à h est p (n est le nombre de degrés de liberté et 0<=p<=1).
+2 Returns h such as the probability that a Chi^2 random variable is lower than h is p (n is the number of degrees of freedom and 0<=p<=1).
 3 Devuelve h tal que la probabilidad que una variable aleatoria según Chi-cuadrado sea menor que h es p (n es el número de grados de libertad y 0<=p<=1).
 4 Επιστρέφει h τέτοιο ώστε η πιθανότητα μια τυχαία μεταβλητή της κατανομής χ^2 να είναι μικρότερη του h είναι p (n είναι ο αριθμός των βαθμών ελευθερίας και 0<=p<=1).
 8 累积卡方分布函数的反函数。  返回数值 x，使 x 点的卡方下限尾部概率为 p，其中 n 为自由度 (0<=p<=1).
@@ -7126,8 +7376,12 @@ chisquare_icdf(4,0.05)
 0 Intg(n),Intg(m),Real(x0)
 -1 fisher_cdf
 -2 fisher_icdf
+-3 randvector
+-4 ranm
 fisher(4,10,2.1)
 fisher(4,4,2.1)
+ randvector(5,fisher,4,6)
+ ranm(2,3,fisher,4,6)
 
 # fisher_cdf snedecor_cdf fisherd_cdf snedecord_cdf
 1 Renvoie la probabilité qu'une variable aléatoire Fisher-Snedecor soit inférieure à x0 (n et m sont les nombres de degrés de liberté).
@@ -7163,8 +7417,12 @@ fisher_icdf(4,10,0.05)
 0 Real(mu),Real(sigma),Real(x0)
 -1 normal_cdf
 -2 normal_icdf
+-3 randvector
+-4 ranm
 normald(1)
 normald(1,2,3.5)
+ randvector(3,normald,1,0.5)
+ ranm(4,3,normald,1,0.5)
 
 # normal_cdf normald_cdf
 1 Renvoie la probabilité qu'une variable aléatoire Normale soit inférieure à x0 ou comprise entre x0 et y0 (mu est la moyenne et sigma l'écart-type).
@@ -7725,7 +7983,7 @@ abs([-2,1+i,-4])
 -2 acosh
 acos(0)
 
-# acosh arccosh
+# acosh arccosh ACOSH
 1 Arc cosinus hyperbolique.
 2 Hyperbolic arccosine.
 3 Arcocoseno hiperbólico.
@@ -7736,7 +7994,7 @@ acos(0)
 -2 acos
 acosh(1)
 
-# acot
+# acot ACOT
 1 Arc cotangente.
 2 Arccotangent.
 3 Arcocotangente.
@@ -7747,7 +8005,7 @@ acosh(1)
 -2 arccos
 acot(0)
 
-# acsc
+# acsc ACSC
 1 Arc cosécante: acsc(x)=asin(1/x).
 2 Arccosecant: acsc(x)=asin(1/x).
 3 Arcocosecante: acsc(x)=asin(1/x).
@@ -8050,7 +8308,7 @@ arg((1+2*i)^2)
 -1 
  f(a,b):={local y; y:=args(NULL); print(y); return a+b;};f(12,5)
 
-# asin arcsin
+# asin arcsin ASIN
 1 Arc sinus.
 2 Arcsine.
 3 Arcoseno.
@@ -8072,7 +8330,7 @@ asin(0)
 asc("bonjour")
 asc("A")
 
-# asec
+# asec ASEC
 1 Arc sécante: asec(x)=acos(1/x).
 2 Arcsecant: asec(x)=acos(1/x).
 3 Arcosecante: asec(x)=acos(1/x).
@@ -8084,7 +8342,7 @@ asc("A")
 asec(1)
 asec(2)
 
-# asinh arcsinh
+# asinh arcsinh ASINH
 1 Arc sinus hyperbolique.
 2 Hyperbolic arcsine.
 3 Arcoseno hiperbólico.
@@ -8137,7 +8395,7 @@ assume(a)
 at([10,11,12],1)
 at([[1,2],[3,4]],[1,0])
 
-# atan arctan
+# atan arctan ATAN
 1 Arc tangente.
 2 Arctangent.
 3 Arcotangente.
@@ -8164,15 +8422,16 @@ atan(0)
 0 Expr
 -1 atan2asin(atan(x))
 
-# atanh arctanh
+# atanh arctanh ATANH
 1 Arc tangente hyperbolique.
 2 Hyperbolic arctangent.
 3 Arcotangente hiperbólico.
 4 Υπερβολικό τόξο εφαπτομένης.
 8 反双曲正切。
 0 Expr
--1 tan
-atan(0)
+-1 atan
+-2 tanh
+atanh(0)
 
 # a2q
 1 a2q(A,X)= la forme quadratique q associée à A, X =vecteur de variables.
@@ -8461,6 +8720,7 @@ cercle([-1,0,0],point([1,0,0]),[0,2,0])
 0 Mtrx
 -1 lu
 -2 qr
+-3 gauss
 cholesky([[3,1],[1,4]])
 
 # circumcircle
@@ -8487,11 +8747,11 @@ click()
  a:=click()
 
 # comb nCr
-1 comb(n,r)=nombre de combinaisons de r objets pris parmi n : n!/(r!(n-r)!).
-2 comb(n,r)=number of combinations of r objects taken among n : n!/(r!(n-r)!).
-3 comb(n,r)=número de combinaciones de r objetos tomados dentro de n : n!/(r!(n-r)!).
-4 comb(n,r)=ο αριθμός των συνδυασμών των p αντικειμένων από n :n!/(r!(n-r)!).
-8 组合。  返回从 n 个元素中一次取 r 个元素的组合数（不考虑顺序）。 n!/(r!(n-r)!)。
+1 comb(n,r)=nombre de combinaisons de r objets pris parmi n : n!/(r!(n-r)!) (Si n<0 comb(n,r)=n(n-1)..(n-r+1)/r!).
+2 comb(n,r)=number of combinations of r objects taken among n : n!/(r!(n-r)!) (If n<0 comb(n,r)=n(n-1)..(n-r+1)/r!).
+3 comb(n,r)=número de combinaciones de r objetos tomados dentro de n : n!/(r!(n-r)!) (si n<0 comb(n,r)=n(n-1)..(n-r+1)/r!). 
+4 comb(n,r)=ο αριθμός των συνδυασμών των p αντικειμένων από n : n!/(r!(n-r)!) (n<0 comb(n,r)=n(n-1)..(n-r+1)/r!).
+8 组合。  返回从 n 个元素中一次取 r 个元素的组合数（不考虑顺序）。 comb(n,r)=n!/(r!(n-r)!) (n<0 comb(n,r)=n(n-1)..(n-r+1)/r!)。
 0 Intg(n),Intg(r)
 -1 factorial
 -2 perm
@@ -8571,7 +8831,7 @@ member(1,%{4,3,1,2%})
 contains(%{0,1,2,3%},2)
 contains([0,1,2,3],4)
 
-# cos
+# cos COS
 1 Cosinus ou Option de la commande convert ou convertir (id trigcos).
 2 Cosine or Option of the convert or convertir command (id trigcos).
 3 Coseno o Opción del comando convert o convertir (id trigcos).
@@ -8584,7 +8844,7 @@ contains([0,1,2,3],4)
 cos(0)
  convert(cos(x)^4+sin(x)^2,cos)
 
-# cosh
+# cosh COSH
 1 Cosinus hyperbolique.
 2 Hyperbolic cosine.
 3 Coseno hiperbólico.
@@ -8594,7 +8854,7 @@ cos(0)
 -1 acosh
 cosh(0)
 
-# cot
+# cot COT
 1 Cotangente.
 2 Cotangent.
 3 Cotangente.
@@ -8616,7 +8876,7 @@ cot(pi/2)
 cross([1,2],[3,4])
 cross([1,2,3],[4,5,6])
 
-# csc
+# csc CSC
 1 Cosécante: csc(x)=1/sin(x).
 2 Cosecant: csc(x)=1/sin(x).
 3 Cosecante: csc(x)=1/sin(x).
@@ -9200,7 +9460,7 @@ evalf(sqrt(2)+pi,30)
 evalb(a==2)
 evalb(sqrt(2)+pi>a)
 
-# exp
+# exp EXP
 1 Exponentielle ou Option de la commande convert ou convertir (id trig2exp).
 2 Exponential or Option of the convert or convertir command (id trig2exp).
 3 Exponencial o Opción del comando convert o convertir (id trig2exp).
@@ -9316,8 +9576,9 @@ expand((2*x-2*1)*(x^2-3*x+2)+(x^2-2*x+3)*(2*x-3*1))
 -3 makesuite
 feuille(quote(gcd(45,126)))
 feuille('gcd(45,126)')
- feuille('1+2')[1]
+feuille('1+2')[1]
 feuille([1,2,3])
+feuille(set[1,2,3])
 
 # float2rational exact
 1 Convertit l'expression en une expression rationnelle ou réelle.
@@ -9368,12 +9629,29 @@ froot((x^5-2*x^4+x^3)/(x-1))
 4 Αριθμητική επίλυση μιας εξίσωσης ή ενός συστήματος εξίσωσεων.
 8 函数求根（类似于“求解”应用程序）。  所求变量值能使表达式的值最接近零。 使用猜测值作为初始估算值。
 0 Expr,Var,[Guess or Interval],[Method]
--1 solve
+-1 cfsolve
 -2 nSolve
--3 csolve
+-3 solve
+-4 csolve
 fsolve(cos(x)=x,x,-1..1,bisection_solver)
 fsolve(cos(x)=x,x,0,newton_solver)
 fsolve([x^2+y-2,x+y^2-2],[x,y],[0,0],newtonj_solver)
+fsolve([x^2+y-2,x+y^2-2],[x,y])
+
+# cfsolve
+1 Résolution numérique sur ℂ d'une équation ou d'un système.
+2 Numerical solution of an equation or a system of equation on ℂ.
+3 Resolución numérica de una ecuación o de un sistema de ecuaciones en ℂ.
+4 Αριθμητική επίλυση μιας εξίσωσης ή ενός συστήματος εξίσωσεων στο ℂ.
+8 函数求根（类似于“求解”应用程序）。  所求变量值能使表达式的值最接近零。 使用猜测值作为初始估算值。
+0 Expr,Var,[Guess or Interval],[Method]
+-1 fsolve
+-2 nSolve
+-3 csolve
+-4 solve
+cfsolve(cos(x)=2)
+cfsolve([x^2+y+2,x+y^2+2],[x,y])
+
 
 # nSolve
 1 Résolution numérique d'une équation ou d'un système
@@ -9417,7 +9695,7 @@ igamma(5.0,2.0,1)
 3 Descompone una forma cuadrática como suma/diferencia de cuadrados
 4 Διάσπαση μιας τετραγωνικής μορφής σε άθροισμα και διαφορά τετραγώνων
 0 Expr,VectVar
--1 
+-1 cholesky
 gauss(x^2+2*a*x*y,[x,y])
 
 # Gcd
@@ -9586,7 +9864,7 @@ perpen_bisector([0,0,0],[5,5,0])
 0 (Pnt or Cplx),(Pnt or Cplx)
 -1 median_line
 -2 perpen_bisector
-midpoint(-1,1-i,i)
+midpoint(-2,2i)
 
 # head
 1 Désigne le premier élément d'un vecteur ou d'une suite d'éléments ou d'une chaîne.
@@ -9822,7 +10100,6 @@ ichinrem([(x+1)%2,(x+2)%3,(3*x-1)%5])
  if (j<0) cos(j); else cosh(j);
  x:=0.1;if (x>0) {x:=x+1; print("x est strictement plus grand que 1");} else {x:=x-1;print("x est plus petit ou égal à -1");};x
 
-
 # ifactor factoriser_entier
 1 Factorisation d'un entier en facteurs premiers.
 2 Factorization of an integer into prime factors.
@@ -9843,8 +10120,10 @@ ifactor(123456789)
 -1 laplace
 -2 ztrans
 -3 invztrans
+-4 Heaviside
 ilaplace(1/(x^2+1)^2)
 ilaplace(s/(s^4-1),s,x)
+ilaplace(exp(-s)/s,s,x)
 
 # im imag
 1 Partie imaginaire d'un nombre complexe
@@ -9870,14 +10149,20 @@ image([[1,2],[3,6]])
 image([[1,2,3],[1,3,6],[2,5,9]])
 
 # in
-1 Itération for...end_for dans un ensemble
-2 Iteration for ...end_for in a set
-3 Iteración for ...end_for
-4 Επανάληψη for ...end_for σε ένα σύνολο
+1 Itération for...end_for dans un ensemble ou une liste ou une plage de valeurs
+2 Iteration for ...end_for in a set or a list
+3 Iteración for ...end_for en uno conjunto o una lista.
+4 Επανάληψη for ...end_for σε ένα σύνολο ή μια λίστα.
 0 
 -1 for
- s:=0;for k in %{ 1,5,7 %} do s:=s+k; end_for
- for k in %{2,1,3%} do print(k); end_for
+-2 set[]
+ s:=0;for k in 1..5 do s:=s+k; end_for;
+ s:=0;for k in %{ 1,5,7 %} do s:=s+k; end_for;
+ for k in %{2,1,3%} do print(k); end_for;
+ pour k in  %{2,1,3%} faire print(k);fpour;
+ P:=[1,3,7];L:=NULL;for k in P do L:=L,k^2 end_for; 
+ P:=[1,3,7];L:=NULL;pour k in P faire L:=L,k^2; fpour;
+
 
 # incircle
 1 inscrit(A,B,C) trace le cercle inscrit au triangle ABC.
@@ -10179,8 +10464,10 @@ laguerre(4)
 -1 invlaplace
 -2 ztrans
 -3 invztrans
+-4 Heaviside
 laplace(exp(x)*sin(x))
 laplace(sin(x)^2,x,s)
+laplace(Heaviside(x-1),x,s)
 
 # laplacian
 1 Calcule le laplacien de l'expression Xpr par rapport à la liste de variables
@@ -10373,7 +10660,6 @@ linsolve([x+y-z-1,x-y+1,x-y-z-1]%2,[x,y,z])
  gl_x_axis_name="s";
  gl_y_axis_name="m/s";
 
-
 # legend
 1 legende(za,"ici") (ou legende([20,60],"ici")) "ici" est écrit au point d'affixe za (ou à la position [20,60] en pixel) et legende=["m","s"] écrit "m","s" comme unités sur les axes
 2 legend(za,"here") (or legend([20,60],"here")) "here" is written at the point of affix za (or at the pixel position [20,60]) and legend=["m","s"] write "m","s" as units on the axis.
@@ -10418,7 +10704,7 @@ legend([30,20],"bonjour")
 legendre_symbol(132,5)
 legendre_symbol(132,25)
 
-# ln log
+# ln log LN
 1 Logarithme népérien ou Option de la commande convert ou convertir (id trig2exp).
 2 Natural logarithm or Option of the convert or convertir command (id trig2exp).
 3 Logaritmo neperiano o Opción del comando convert o convertir (id trig2exp).
@@ -10565,15 +10851,17 @@ lvar(exp(x)*2*sin(y)+ln(x))
 lname(exp(x)*2*sin(y))
 
 # norm l2norm
-1 Norme l2 d'un vecteur=sqrt(x1^2+x2^2+...xn^2)
-2 Returns the l2 norm of a vector=sqrt(x1^2+x2^2+...xn^2)
-3 Norma l2 de un vector=sqrt(x1^2+x2^2+...xn^2)
-4 Νόρμα l2 ενός διανύσματος=sqrt(x1^2+x2^2+...xn^2)
-0 Vect
+1 Norme l2 d'un vecteur = sqrt(x1^2+x2^2+...xn^2) ou norme de matrice subordonnée à la norme l2.
+2 Returns the l2 norm of a vector = sqrt(x1^2+x2^2+...xn^2) or matrix norm induced by l2 norm.
+3 Norma l2 de un vector=sqrt(x1^2+x2^2+...xn^2) o norma de una matriz induced by l2 norm.
+4 Νόρμα l2 ενός διανύσματος=sqrt(x1^2+x2^2+...xn^2) (ή matrix norm induced by l2 norm.)
+0 Vect or Mtrx
 -1 maxnorm
 -2 l1norm
 norm([1,2])
 norm([1,2,3,-4])
+norm([[1,2],[3,-4]])
+norm([[1,2,3],[3,-9,6],[4,5,6]])
 
 # maxnorm
 1 Norme du max d'un vecteur (ou d'une matrice): maxnorm([x1,x2,..,xn])=max(|x1|,..,|xn|)
@@ -10585,6 +10873,7 @@ norm([1,2,3,-4])
 -2 l1norm
 maxnorm([1,2])
 maxnorm([1,2,3,-4])
+maxnorm([[1,2],[3,-4]])
 
 # rowNorm rownorm
 1 Renvoie le maximum des sommes des valeurs absolues des éléments situés sur les lignes de la matrice: rowNorm(a_{j,k})=max_j(sum_k(|a_{j,k}|)).
@@ -11007,12 +11296,12 @@ orthogonal(point(0,0,0),line(point(1,0,0),point(0,1,0)))
 orthogonal(point(0,0,0),plane(point(1,0,0),point(0,1,0),point(0,0,1)))
 
 # proot
-1 Retourne les racines approchées d'un polynôme donné par ses coefficients (ne marche pas en général pour les racines multiples)
-2 Returns all computed roots of a polynomial given by its coefficients (may not work if roots are not simple)
-3 Devuelve todas las raíces aproximadas de un polinomio dado por sus coeficientes (no funciona en general con raíces mútliples)
-4 Επιστρέφει όλες τις ρίζες ενός πολυωνύμου που δίνεται είτε συμβολικά είτε ως λίστα των συντελεστών του (γενικά, δεν δουλεύει για πολλαπλές ρίζες)
+1 Retourne les racines approchées d'un polynôme donné par ses coefficients (ne marche pas en général pour les racines multiples). On peut en option préciser le nombre n de chiffres significatifs. 
+2 Returns all computed roots of a polynomial given by its coefficients (may not work if roots are not simple).
+3 Devuelve todas las raíces aproximadas de un polinomio dado por sus coeficientes (no funciona en general con raíces mútliples).
+4 Επιστρέφει όλες τις ρίζες ενός πολυωνύμου που δίνεται είτε συμβολικά είτε ως λίστα των συντελεστών του (γενικά, δεν δουλεύει για πολλαπλές ρίζες).
 8 多项式根。 返回具有矢量指定系数的多项式的根。
-0 Vect||Poly
+0 Vect||Poly,[Intg(n)]
 -1 pcoeff
 -2 peval
 -3 realroot
@@ -11022,6 +11311,7 @@ orthogonal(point(0,0,0),plane(point(1,0,0),point(0,1,0),point(0,0,1)))
 proot([1,0,-2])
 proot(x^2-2)
 proot([1,2,-25,-26,120])
+proot(x^4+5x-3,30)
 
 # pcoeff pcoef
 1 Retourne les coefficients du polynôme dont les racines sont données en argument avec 1 comme coefficient dominant.
@@ -11484,8 +11774,26 @@ hasard(3,["r","r","r","b","n"])
 -6 randnorm
 -7 randpoisson
 -8 randgeometric
+-9 randmultinomial
 randbinomial(10,0.4)
 randbinomial(100,0.8)
+
+# randmultinomial
+1 Renvoie un index ou un élément d'une liste K, aléatoirement selon la loi multinomiale de probabilités données par une liste P.
+2 Returns a random index or list element according to a multinomial distribution probability list P.
+3 Devuelve un índice o un elemento de K aleatorio distribuido según la ley multinomimal de probabilidad P.
+0 List(P),[List(K)]
+-1 rand
+-2 randpoly
+-3 ranm
+-4 randvector
+-5 randexp
+-6 randnorm
+-7 randpoisson
+-8 randgeometric
+-9 randbinomial
+randmultinomial([1/2,1/3,1/6])
+randmultinomial([1/2,1/3,1/6],["R","V","B"])
 
 # randgeometric
 1 Renvoie un entier aléatoirement distribué selon la loi géométrique de paramètre p
@@ -11499,6 +11807,7 @@ randbinomial(100,0.8)
 -6 randnorm
 -7 randpoisson
 -8 randbinomial
+-9 randmultinomial
 randgeometric(0.4)
 
 # randpoisson
@@ -11515,8 +11824,63 @@ randgeometric(0.4)
 -6 randbinomial
 -7 randnorm
 -8 randgeometric
+-9 randmultinomial
 randpoisson(5.4)
 randpoisson(2.8)
+
+# randchisquare
+1 Renvoie un entier aléatoirement distribué selon la loi du chi^2 ayant n degrés de liberté, χ^2(n).
+2 Returns a random integer with chi^2 distribution, χ^2(n).
+3 Devuelve un número aleatorio distribuido según la ley Chi-cuadrado, χ^2(n).
+4 Επιστρέφει έναν τυχαίο πραγματικό με κατανομή χ^2(n).
+0 Intg(n)
+-1 rand
+-2 randpoly
+-3 ranm
+-4 randvector
+-5 randexp
+-6 randbinomial
+-7 randnorm
+-8 randgeometric
+-9 randmultinomial
+randchisquare(5)
+randchisquare(2)
+
+# randstudent
+1 Renvoie un entier aléatoirement distribué selon la loi de Student S(n).
+2 Returns a random integer with Student distribution S(n).
+3 Devuelve un número aleatorio distribuido según la ley Student S(n).
+4 Επιστρέφει έναν τυχαίο πραγματικό με κατανομή Student S(n).
+0 Intg(n)
+-1 rand
+-2 randpoly
+-3 ranm
+-4 randvector
+-5 randexp
+-6 randbinomial
+-7 randnorm
+-8 randgeometric
+-9 randmultinomial
+randstudent(5)
+randstudent(2)
+
+# randfisher
+1 Renvoie un entier aléatoirement distribué selon la loi de Fisher-Snedecor F(n,m).
+2 Returns a random integer with Fisher-Snedecor distribution F(n,m).
+3 Devuelve un número aleatorio distribuido según la ley Fisher-Snedecor F(n,m).
+4 Επιστρέφει έναν τυχαίο πραγματικό με κατανομή Fisher-Snedecor F(n,m).
+0 Intg(n),Intg(m)
+-1 rand
+-2 randpoly
+-3 ranm
+-4 randvector
+-5 randexp
+-6 randbinomial
+-7 randnorm
+-8 randgeometric
+-9 randmultinomial
+randfisher(5,2)
+randfisher(2,4)
 
 # randnorm randNorm
 1 Renvoie un réel aléatoirement distribué selon la loi normale N(mu,sigma)
@@ -11531,6 +11895,8 @@ randpoisson(2.8)
 -5 randexp
 -6 randbinomial
 -7 randpoisson
+-8 randgeometric
+-9 randmultinomial
 randnorm(0,1)
 randnorm(2,1)
 
@@ -11574,13 +11940,16 @@ randpoly(t,8,-1..1)
 ranm(3)
 ranm(3,2)
 ranm(3,2,6)
-ranm(3,2,'binomial(10,0.3)')
-ranm(3,2,'poisson(5.2)')
-ranm(3,2,'randnorm(0,1)')
-ranm(3,2,'normald(0,1)')
-ranm(3,2,'exp(3.5)')
+ranm(3,2,binomial,10,0.3)
+ranm(3,2,multinomial,[1/2,1/3,1/6])
+ranm(3,2,poisson,5.2)
+ranm(3,2,randnorm,0,1)
+ranm(3,2,normald,0,1)
+ranm(3,2,exp,7/2)
+ranm(3,2,poisson,1.2)
 ranm(3,2,'rand(3)')
 ranm(3,2,1..2)
+ranm(3,5,multinomial,[1/2,1/3,1/6],["R","V","B"])
  GF(2,8,g);ranm(3,3,g)
 
 # randvector ranv
@@ -11595,7 +11964,11 @@ ranm(3,2,1..2)
 -4 ranm
 randvector(3)
 randvector(3,6)
-randvector(3,'randnorm(0,1)')
+randvector(3,normald,0,1)
+randvector(3,poisson,1.2)
+randvector(3,exponentiald,1.2)
+randvector(3,multinomial,[1/2,1/3,1/6])
+randvector(3,multinomial,[1/2,1/3,1/6],[a,b,c])
 randvector(3,'rand(3)')
 randvector(3,1..2)
  GF(2,8,g);randvector(3,g)
@@ -11915,7 +12288,7 @@ sign(4-5)
 -2 is_permu
 signature([1,0,3,4,2])
 
-# sin
+# sin SIN
 1 Sinus ou Option de la commande convert ou convertir (id trigsin).
 2 Sine or Option of the convert or convertir command (id trigsin).
 3 Seno o Opción del comando convert o convertir (id trigsin).
@@ -11960,6 +12333,7 @@ similarity(line(x=y,y=z),2,pi/3,point(-1,2,1))
 0 Lst or Str or Seq
 -1 sizes
 -2 dim
+-3 degree
 size([1,2,3])
 size("bonjour")
 size(1,2,3)
@@ -12584,7 +12958,9 @@ tableseq(x+y,[x,y],[1,1])
 seqsolve(2x+n,[x,n],1)
 seqsolve(2x+n*3^n,[x,n],1)
 seqsolve(x+y,[x,y,n],[1,1])
-seqsolve([x+2*y,n+1,x],[x,y,n],[0,1])
+seqsolve(x+2*y+n+1,[x,y,n],[0,1])
+seqsolve([x+2*y,n+1+x],[x,y,n],[0,1])
+seqsolve([x+2*y+n+1,x],[x,y,n],[0,1])
 
 # rsolve
 1 Donne la valeur d'une suite récurrente ou d'un système de suites récurrentes.
@@ -12601,7 +12977,7 @@ rsolve(u(n+1)=2*u(n)+n,u(n),u(1)^2=1)
 rsolve(u(n+1)=(u(n)-1)/(u(n)-2),u(n),u(0)=4)
 rsolve([u(n+1)=3*v(n)+u(n),v(n+1)=v(n)+u(n)],[u(n),v(n)],[u(0)=1,v(0)=2])
 
-# tan
+# tan TAN
 1 Tangente ou Option de la commande convert ou convertir (id halftan).
 2 Tangent or Option of the convert or convertir command (id halftan)
 3 Tangente o Opción del comando convert o convertir (id halftan)
@@ -12629,7 +13005,7 @@ tangent(plotfunc(sin(x)),point(3*pi/4+i*sqrt(2)/2))
 tangent(plotfunc(x^2+y^2,[x,y]),[2,2])
 tangent(plotfunc(x^2+y^2,[x,y]),point([2,2,8]))
 
-# tchebyshev1 tchebychev1
+# tchebyshev1
 1 Renvoie le n-ième polynôme de Tchebychev de première espèce.
 2 Returns the n-th Tchebyshev polynomial of first sort.
 3 Devuelve el n-ésimo polinomio de Tchebyshev de primer tipo.
@@ -12640,7 +13016,7 @@ tangent(plotfunc(x^2+y^2,[x,y]),point([2,2,8]))
 tchebyshev1(3)
 
 
-# tchebyshev2 tchebychev2
+# tchebyshev2
 1 Renvoie le n-ième polynôme de Tchebychev de seconde espèce.
 2 Returns the nt-h Tchebyshev polynomial of second sort.
 3 Devuelve el n-ésimo polinomio de Tchebyshev de segundo tipo.
@@ -12821,14 +13197,16 @@ type("abc")
 type([1,2,3])
 
 # subtype
-1 Renvoie 1 si l'argument est une séquence et 0 sinon.
-2 Returns 1 if the argument is a sequence and 0 otherwise
-3 Devuelve 1 si el argumento es una secuencia y 0 si no.
-4 Επιστρέφει 1 αν το όρισμα είνα  μια ακολουθία και 0 διαφορετικά.
+1 Renvoie 1 pour une séquence, 2 pour un ensemble, 10 pour un polynôme et 0 sinon.
+2 Returns 1 for a sequence,2 for a set, 10 for a polynomial and 0 otherwise
+3 Devuelve 1 para una secuencia, 2 para uno conjunto, 10 para uno polinómio y 0 si no.
+4 Επιστρέφει 1 (ακολουθία), 2 (σύνολο), 10 (πολυωνύμου) και 0 διαφορετικά.
 0 Expr
 -1 DOM_LIST
 -2 type
 subtype(1,2,3)
+subtype(set[1,2,3])
+subtype(poly1[1,2,3])
 subtype([1,2,3])
 
 # union
@@ -13425,6 +13803,7 @@ display(red+filled);square(0,1);
 0 Intg(n),Intg(p)
 -1 smod
 -2 irem
+-3 fracmod
  15 mod 6
  (2 mod 10)^50
  (2%10)^50

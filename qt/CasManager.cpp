@@ -317,7 +317,8 @@ void CasManager::evaluate(){
 
    if (giac::make_thread(expression,eval_level(context),CasManager::callback,(void*)context,context))
     {
-       disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
+        disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
+        disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(insertResult()));
 
         monitor->start();
         connect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
@@ -330,6 +331,26 @@ void CasManager::evaluate(){
     // Add result to history
     giac::history_in(context).push_back(expression);
     giac::history_out(context).push_back(answer);
+}
+
+void CasManager::evaluateforinsertion(){
+
+    if (stopThread->isRunning()){
+        stopThread->wait(2000);
+    }
+
+    printCache="";
+
+   if (giac::make_thread(expression,eval_level(context),CasManager::callback,(void*)context,context))
+    {
+        disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
+        disconnect(monitor,SIGNAL(finished()),mainWindow,SLOT(insertResult()));
+
+        monitor->start();
+        connect(monitor,SIGNAL(finished()),mainWindow,SLOT(insertResult()));
+    }
+    // Thread is already busy
+
 }
 
 giac::gen CasManager::getAnswer() const{

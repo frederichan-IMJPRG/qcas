@@ -73,6 +73,7 @@ class MainWindow :public QMainWindow {
     void setEvaluatingAll(bool);
     CommandInfo* getCommandInfo() const;
     void evaluate(const QString & formula);
+    void evaluateforinsertion(const QString & formula);
     QToolButton* getStopButton() const;
     giac::context * getContext() const;
     void displayStopWarning();
@@ -218,6 +219,7 @@ private slots:
     void openRecentFile();
     void changeWizard(QListWidgetItem*,QListWidgetItem*);
     void displayResult();
+    void insertResult();
     void killThread();
 signals:
     void hideCrashWarning();

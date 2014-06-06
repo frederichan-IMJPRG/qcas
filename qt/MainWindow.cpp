@@ -1693,7 +1693,39 @@ void MainWindow::evaluateall(){
     }
  }//fin for tabpages
 }
+void MainWindow::evaluateforinsertion(const QString &formula){
+    if(formula == ""){ return;}
+    autoSave();
+    setWindowModified(true);
+    displayInStatusBar("","black");
+    taskProperties.firstPrintMessage=true;
+    taskProperties.currentSheet=tabPages->currentIndex();
+    taskProperties.currentLine=-1;
+    MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
+    switch(sheet->getType()){
+    case MainSheet::FORMAL_TYPE:
+        {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+            form->getCurrentLine()->addStopButton(stopButton);
 
+            if(cas->isRunning()){
+                cas->buisyloop->exec();
+                //qDebug()<<"finished; I can compute:"
+            }
+
+            CasManager::warning id=cas->initExpression(&formula);
+
+            taskProperties.currentLine=form->getCurrentLine()->getId();
+            cas->evaluateforinsertion();
+            time->start();
+
+        }
+        break;
+    case MainSheet::SPREADSHEET_TYPE:
+    case MainSheet::G2D_TYPE:
+    case MainSheet::PROGRAMMING_TYPE:
+        break;
+    }
+}
 
 void MainWindow::displayResult(){
     displayGiacMessages();
@@ -1708,6 +1740,21 @@ void MainWindow::displayResult(){
 //        return form->getLineAt(taskProperties.currentLine)->getOuputWidget();
         form->displayResult(taskProperties.currentLine,cas->createDisplay());
 
+    }
+}
+void MainWindow::insertResult(){
+    displayGiacMessages();
+    tabPages->setCurrentIndex(taskProperties.currentSheet);
+    // Formal Sheet
+    if (taskProperties.currentLine>-1){
+        FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->widget(taskProperties.currentSheet));
+
+        form->removeStop(taskProperties.currentLine);
+        stopButton->setParent(this);
+
+        //form->displayResult(taskProperties.currentLine,cas->createDisplay());
+        form->getCurrentLine()->getTextInput()->insertPlainText(\
+                    QString::fromStdString(giac::print(cas->getAnswer(),cas->getContext())));
     }
 }
 QToolButton* MainWindow::getStopButton() const{

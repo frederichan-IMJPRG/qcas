@@ -125,7 +125,6 @@ OutputWidget* Line::getOuputWidget(){
 void Line::displayResult(OutputWidget* uuu){
     this->out=uuu;
     if(!this->getgiacmessages().isEmpty()){
-        //textformula->setPlainText('"'+this->getgiacmessages()+'"'+'\n');
         giacmessages=new QPlainTextEdit(this);
         giacmessages->setReadOnly(true);
         giacmessages->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);

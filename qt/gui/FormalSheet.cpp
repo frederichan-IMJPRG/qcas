@@ -414,9 +414,15 @@ void FormalWorkSheet::undo(){
 }
 
 void FormalWorkSheet::sendText(const QString & s){
-    //lines->at(current)->getTextInput()->insertPlainText(s);
-    lines->at(current)->getTextInput()->insertIndentedString(s);
-    lines->at(current)->setFocus();
+    QString entry=lines->at(current)->getTextInput()->selectedText();
+    if(entry==""){
+       lines->at(current)->getTextInput()->insertIndentedString(s);
+       lines->at(current)->getTextInput()->setFocus();
+    }
+    else{
+        this->getApp()->evaluateforinsertion(s+"("+entry+");");
+        lines->at(current)->getTextInput()->setFocus();
+    }
 }
 Line* FormalWorkSheet::getCurrentLine(){
     return lines->at(current);

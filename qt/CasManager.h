@@ -88,11 +88,12 @@ public:
     ~CasManager();
     CasManager(MainWindow *main );
     void evaluate();
+    void evaluateforinsertion();
     bool isRunning() const;
     void killThread();
     giac::context* getContext() const;
     giac::gen getAnswer() const;
-   CasManager::warning initExpression(const QString *str);
+    CasManager::warning initExpression(const QString *str);
     OutputWidget* createDisplay();
     void appendPrintCache(const QChar& );
     QStringList& getGiacDisplay() ;
