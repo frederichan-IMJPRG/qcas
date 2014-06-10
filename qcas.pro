@@ -150,21 +150,27 @@ OTHER_FILES += \
     qt/doc/fr/memento.html \
     qt/doc/fr/memento_algo.html \
     qt/doc/fr/xcasmenu.html \
+    qt/doc/fr/transformations.html \
     qt/doc/en/menu.html \
     qt/doc/en/memento.html \
     qt/doc/en/xcasmenu.html \
+    qt/doc/en/transformations.html \
     qt/doc/el/menu.html \
     qt/doc/el/memento.html \
     qt/doc/el/xcasmenu.html \
+    qt/doc/el/transformations.html \
     qt/doc/es/menu.html \
     qt/doc/es/memento.html \
     qt/doc/es/xcasmenu.html \
+    qt/doc/es/transformations.html \
     qt/doc/zh/menu.html \
     qt/doc/zh/memento.html \
     qt/doc/zh/xcasmenu.html \
+    qt/doc/zh/transformations.html \
     qt/doc/de/menu.html \
     qt/doc/de/memento.html \
     qt/doc/de/xcasmenu.html \
+    qt/doc/de/transformations.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \

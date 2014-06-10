@@ -1742,6 +1742,7 @@ void MainWindow::displayResult(){
 
     }
 }
+
 void MainWindow::insertResult(){
     displayGiacMessages();
     tabPages->setCurrentIndex(taskProperties.currentSheet);
@@ -1753,8 +1754,16 @@ void MainWindow::insertResult(){
         stopButton->setParent(this);
 
         //form->displayResult(taskProperties.currentLine,cas->createDisplay());
-        form->getCurrentLine()->getTextInput()->insertPlainText(\
-                    QString::fromStdString(giac::print(cas->getAnswer(),cas->getContext())));
+        QTextCursor cs=form->getCurrentLine()->getTextInput()->textCursor();
+
+        int pos=cs.selectionStart();
+        //form->getCurrentLine()->getTextInput()->cut();
+        cs.beginEditBlock();
+        cs.insertText(QString::fromStdString(giac::print(cas->getAnswer(),cas->getContext())));
+        cs.setPosition(pos,QTextCursor::KeepAnchor);
+        cs.endEditBlock();
+        form->getCurrentLine()->getTextInput()->setTextCursor(cs);
+
     }
 }
 QToolButton* MainWindow::getStopButton() const{

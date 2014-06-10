@@ -91,21 +91,27 @@
         <file>doc/fr/memento_algo.html</file>
         <file>doc/fr/menu.html</file>
         <file>doc/fr/xcasmenu.html</file>
+        <file>doc/fr/transformations.html</file>
         <file>doc/en/memento.html</file>
         <file>doc/en/menu.html</file>
         <file>doc/en/xcasmenu.html</file>
+        <file>doc/en/transformations.html</file>
         <file>doc/el/memento.html</file>
         <file>doc/el/menu.html</file>
         <file>doc/el/xcasmenu</file>
         <file>doc/el/xcasmenu.html</file>
+        <file>doc/el/transformations.html</file>
         <file>doc/es/memento.html</file>
         <file>doc/es/menu.html</file>
         <file>doc/es/xcasmenu.html</file>
+        <file>doc/es/transformations.html</file>
         <file>doc/de/memento.html</file>
         <file>doc/de/menu.html</file>
         <file>doc/de/xcasmenu.html</file>
+        <file>doc/de/transformations.html</file>
         <file>doc/zh/memento.html</file>
         <file>doc/zh/menu.html</file>
         <file>doc/zh/xcasmenu.html</file>
+        <file>doc/zh/transformations.html</file>
     </qresource>
 </RCC>

@@ -414,15 +414,44 @@ void FormalWorkSheet::undo(){
 }
 
 void FormalWorkSheet::sendText(const QString & s){
-    QString entry=lines->at(current)->getTextInput()->selectedText();
-    if(entry==""){
+    QTextCursor cs=lines->at(current)->getTextInput()->textCursor();
+    QString entry=cs.selectedText();
+    int posS=cs.selectionStart();
+    int posE=cs.selectionEnd();
+    cs.setPosition(posS);
+    if(s=="undoandselect"){
+       getCurrentLine()->getTextInput()->setTextCursor(cs);
+       lines->at(current)->getTextInput()->undo();
+       cs=lines->at(current)->getTextInput()->textCursor();
+       cs.setPosition(posS,QTextCursor::KeepAnchor);
+       getCurrentLine()->getTextInput()->setTextCursor(cs);
+    }
+    else if(s=="redoandselect"){
+        getCurrentLine()->getTextInput()->setTextCursor(cs);
+        lines->at(current)->getTextInput()->redo();
+        cs=lines->at(current)->getTextInput()->textCursor();
+        cs.setPosition(posS,QTextCursor::KeepAnchor);
+        getCurrentLine()->getTextInput()->setTextCursor(cs);
+     }
+    else if(entry==""){
        lines->at(current)->getTextInput()->insertIndentedString(s);
-       lines->at(current)->getTextInput()->setFocus();
     }
     else{
-        this->getApp()->evaluateforinsertion(s+"("+entry+");");
-        lines->at(current)->getTextInput()->setFocus();
+        if(s=="()"){
+            cs.setPosition(posE,QTextCursor::KeepAnchor);
+            cs.insertText("("+entry+")");
+            cs.setPosition(posS,QTextCursor::KeepAnchor);
+            getCurrentLine()->getTextInput()->setTextCursor(cs);
+        }
+        else{
+
+            this->getApp()->evaluateforinsertion(s+"("+entry+");");
+        }
+
     }
+
+    lines->at(current)->getTextInput()->setFocus();
+
 }
 Line* FormalWorkSheet::getCurrentLine(){
     return lines->at(current);
