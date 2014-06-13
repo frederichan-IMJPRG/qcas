@@ -153,6 +153,10 @@ CasManager::CasManager(MainWindow* main){
             giac::xcasroot()=XCASROOT.toStdString();
             Config::XcasRoot=XCASROOT;
         }
+        else{
+            qDebug()<<"Warning: doc/aide_cas not found. This file should be in \
+                      ../share/giac/ (relatively to the PATH of the executable qcas";
+        }
     }
 
     context=new giac::context;

@@ -193,9 +193,8 @@ void WizardCatalog::newPage(QUrl url){
                 zone->setSource(QUrl(keyWord));
             }
             else{
-
-            addHistory(keyWord);
-            mainWindow->displayXcasHelp(keyWord);
+                addHistory(keyWord);
+                mainWindow->displayXcasHelp(keyWord);
             }
         }
         else{

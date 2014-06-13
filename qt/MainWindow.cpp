@@ -1964,7 +1964,7 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         line.append("<hr>");
         line.append(minimaltoHtml(description));
         //
-        kwdsearch="?"+command.split(QRegExp(" ")).at(0);
+        kwdsearch="?"+command.split(QRegExp("[\s()]")).at(0);
         if(kwdsearch !="?"){
         line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a>"));
         //
