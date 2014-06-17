@@ -363,6 +363,15 @@ bool TextInput::goDown(){
     }
     return true;
 }
+void TextInput::insertAnswer(const QString &s){
+    this->goDown();
+    line->getWorkSheet()->getCurrentLine()->getTextInput()->insertIndentedString(s);
+}
+void TextInput::insertAnswerInNew(const QString &s){
+    this->goDown();
+    line->getWorkSheet()->insertline();
+    line->getWorkSheet()->getCurrentLine()->getTextInput()->insertIndentedString(s);
+}
 /**
   This method returns true if the user is able to go Up with the "Down" Key"
     in the text zone
@@ -480,6 +489,9 @@ void TextInput::insertCompletion(const QString &completion){
 TextEditOutput::TextEditOutput(Line *parent):TextInput(parent){
     setMinimumHeight(fontMetrics().lineSpacing()+fontMetrics().descent()+2*document()->documentMargin()+6);
     //setFrameStyle(QFrame::NoFrame);
+    setToolTip(tr("<li><b>Entrée</b> pour insérer la réponse ou la sélection dans la ligne suivante</li>\
+                  <li><b>Maj Entrée</b> pour insérer la réponse ou la sélection dans une nouvelle ligne</li>\
+                  <li><b>+</b> ou <b>-</b> pour agrandir ou réduire</li>"));
  }
 
 TextEditOutput::~TextEditOutput(){
@@ -542,10 +554,36 @@ void TextEditOutput::keyPressEvent(QKeyEvent *e){
             }*/
             QPlainTextEdit::keyPressEvent(e);
             break;
+        }
+        case Qt::Key_Return:{
+            QString s=this->selectedText();
+            if(s=="")
+                s=this->toPlainText();
+
+            if(e->modifiers()&Qt::ShiftModifier){
+                this->insertAnswerInNew(s);
+            }
+            else{
+                this->insertAnswer(s);
+            }
+            break;
+        }
+    case Qt::Key_Plus:{
+        int h=this->height();
+        if(h<35*fontMetrics().lineSpacing())
+            this->setMinimumHeight(h+fontMetrics().lineSpacing());
+        break;
     }
-    default:
-        e->ignore();
+    case Qt::Key_Minus:{
+        int h=this->height();
+        if(h>2*fontMetrics().lineSpacing())
+            this->setMinimumHeight(h-fontMetrics().lineSpacing());
+        break;
     }
+
+        default:
+            e->ignore();
+        }
 }
 
 

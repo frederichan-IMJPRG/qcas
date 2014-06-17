@@ -48,6 +48,7 @@ Line::Line(int id,FormalWorkSheet *parent):QWidget(parent){
     p.setColor(QPalette::Base,p.window().color());
     textformula->setPalette(p);
     checkshowout->setTristate(true);
+    checkshowout->setToolTip(tr("Affichage des réponses<center><b>Mathml</b> ou <b>Texte</b></center>"));
 
     mainLayout=new QGridLayout;
     mainLayout->addWidget(input,0,1,Qt::AlignTop);

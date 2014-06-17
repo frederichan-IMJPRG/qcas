@@ -46,6 +46,8 @@ protected:
 
     bool goDown();
     bool goUp();
+    void insertAnswerInNew(const QString &s);
+    void insertAnswer(const QString &s);
 
 
 private slots:
