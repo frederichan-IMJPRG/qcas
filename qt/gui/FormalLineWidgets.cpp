@@ -461,6 +461,7 @@ void TextInput::insertIndentedString(const QString &s){
     QString idts=s;
     QTextCursor tc=textCursor();
     int pos=tc.positionInBlock();
+    tc.beginEditBlock();
     tc.select(QTextCursor::LineUnderCursor);
     QString ret=(tc.selectedText());
     ret=ret.left(pos);
@@ -468,6 +469,7 @@ void TextInput::insertIndentedString(const QString &s){
     if(test.remove("\t").isEmpty())
         idts.replace("\n","\n"+ret);
     insertPlainText(idts);
+    tc.endEditBlock();
 }
 
 void TextInput::helpCompletion(const QString &completion){
