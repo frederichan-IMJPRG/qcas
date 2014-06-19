@@ -4,17 +4,17 @@
 <context>
     <name>AxisGridPanel</name>
     <message>
-        <location filename="../output.cpp" line="6633"/>
+        <location filename="../output.cpp" line="6702"/>
         <source>Axe (Ox)</source>
         <translation>Axis (Ox)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6634"/>
+        <location filename="../output.cpp" line="6703"/>
         <source>Axe (Oy)</source>
         <translation>Axis (Oy)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6635"/>
+        <location filename="../output.cpp" line="6704"/>
         <source>Grille</source>
         <translation>Grid</translation>
     </message>
@@ -22,32 +22,32 @@
 <context>
     <name>AxisPanel</name>
     <message>
-        <location filename="../output.cpp" line="6816"/>
+        <location filename="../output.cpp" line="6885"/>
         <source>Afficher l&apos;axe</source>
         <translation>Show axis</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6817"/>
+        <location filename="../output.cpp" line="6886"/>
         <source>Minimum:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6822"/>
+        <location filename="../output.cpp" line="6891"/>
         <source>Maximum:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6826"/>
+        <location filename="../output.cpp" line="6895"/>
         <source>LÃ©gende:</source>
         <translation>Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6828"/>
+        <location filename="../output.cpp" line="6897"/>
         <source>Suffixe (unitÃ©):</source>
         <translation>Suffix (unit)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6830"/>
+        <location filename="../output.cpp" line="6899"/>
         <source>Espace-graduations:</source>
         <translation>Spacing-Granding</translation>
     </message>
@@ -55,37 +55,37 @@
 <context>
     <name>Canvas2D</name>
     <message>
-        <location filename="../output.cpp" line="1494"/>
+        <location filename="../output.cpp" line="1525"/>
         <source>Afficher la grille</source>
         <translation>Show gridlines</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1499"/>
+        <location filename="../output.cpp" line="1530"/>
         <source>Afficher les axes</source>
         <translation>Show axis</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1505"/>
+        <location filename="../output.cpp" line="1536"/>
         <source>Zoom avant</source>
         <translation>Zoom in</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1509"/>
+        <location filename="../output.cpp" line="1540"/>
         <source>Zoom arriÃ¨re</source>
         <translation>Zoom Out</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1513"/>
+        <location filename="../output.cpp" line="1544"/>
         <source>OrthonormÃ©</source>
         <translation>Orthonormed</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1518"/>
+        <location filename="../output.cpp" line="1549"/>
         <source>Code de la figure</source>
         <translation>Picture source</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1525"/>
+        <location filename="../output.cpp" line="1556"/>
         <source>image au format PNG, JPG ou BMP</source>
         <translation>PNG, JPG or BMP picture</translation>
     </message>
@@ -94,148 +94,148 @@
         <translation type="obsolete">vectoriel picture *.svg</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1528"/>
+        <location filename="../output.cpp" line="1559"/>
         <source>image vectorielle *.svg</source>
         <translation>scalable vector picture *.svg</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1531"/>
+        <location filename="../output.cpp" line="1562"/>
         <source>format PSTricks (LaTeX)</source>
         <translation>PSTricks (Latex) output</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1535"/>
+        <location filename="../output.cpp" line="1566"/>
         <source>Graphique</source>
         <translation>Graphic</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1554"/>
+        <location filename="../output.cpp" line="1585"/>
         <source>Export vers...</source>
         <translation>Export to</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1565"/>
+        <location filename="../output.cpp" line="1596"/>
         <source>Afficher l&apos;objet</source>
         <translation>Show item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1569"/>
+        <location filename="../output.cpp" line="1600"/>
         <source>Afficher la lÃ©gende</source>
         <translation>Show Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1574"/>
+        <location filename="../output.cpp" line="1605"/>
         <source>Trace activÃ©e</source>
         <translation>Trace on</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1579"/>
+        <location filename="../output.cpp" line="1610"/>
         <source>Supprimer l&apos;objet</source>
         <translation>Delete item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1583"/>
+        <location filename="../output.cpp" line="1614"/>
         <source>Renommer l&apos;objet</source>
         <translation>rename item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1702"/>
+        <location filename="../output.cpp" line="1733"/>
         <source>Equation</source>
         <translation>Equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1702"/>
+        <location filename="../output.cpp" line="1733"/>
         <source>Droite dÃ©finie par une Ã©quation</source>
         <translation>Line defined by equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2874"/>
+        <location filename="../output.cpp" line="2940"/>
         <source>Impossible de renommer le point</source>
         <translation>Can&apos;t rename this point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2874"/>
+        <location filename="../output.cpp" line="2940"/>
         <source>Le nom de variable choisi est actuellement indisponible.
 La variable est dÃ©jÃ  utilisÃ©e pour un objet externe Ã  cette feuille de gÃ©omÃ©trie.</source>
         <translation>This name is currently not available</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2891"/>
+        <location filename="../output.cpp" line="2957"/>
         <source>Nouveau nom:</source>
         <translation>New name</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2891"/>
+        <location filename="../output.cpp" line="2957"/>
         <source>Renommer un objet</source>
         <translation>Change an item&apos;s name</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2916"/>
+        <location filename="../output.cpp" line="2982"/>
         <source>Confirmation</source>
         <translation>Confirm</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="2916"/>
+        <location filename="../output.cpp" line="2982"/>
         <source>Vous allez supprimer cet objet ainsi 
 que toutes ses dÃ©pendances. 
  Voulez-vous poursuivre?</source>
         <translation>You are going to delete this item</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3047"/>
-        <location filename="../output.cpp" line="3055"/>
+        <location filename="../output.cpp" line="3113"/>
+        <location filename="../output.cpp" line="3121"/>
         <source>Enregistrer sous...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3938"/>
+        <location filename="../output.cpp" line="4007"/>
         <source>Rayon:</source>
         <translation>Radius</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="3938"/>
+        <location filename="../output.cpp" line="4007"/>
         <source>dÃ©finir le rayon du cercle</source>
         <translation>Define circle&apos;s radius</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4102"/>
+        <location filename="../output.cpp" line="4171"/>
         <source>Nombre de cÃ´tÃ©s:</source>
         <translation>Number of edges</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4102"/>
+        <location filename="../output.cpp" line="4171"/>
         <source>PolygÃ´ne rÃ©gulier</source>
         <translation>Regular polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4433"/>
-        <location filename="../output.cpp" line="4481"/>
+        <location filename="../output.cpp" line="4502"/>
+        <location filename="../output.cpp" line="4550"/>
         <source>Angle:</source>
         <translation>Angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4433"/>
+        <location filename="../output.cpp" line="4502"/>
         <source>DÃ©finir l&apos;angle de la rotation</source>
         <translation>Set rotation angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4451"/>
-        <location filename="../output.cpp" line="4469"/>
+        <location filename="../output.cpp" line="4520"/>
+        <location filename="../output.cpp" line="4538"/>
         <source>Rapport:</source>
         <translation>Ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4451"/>
+        <location filename="../output.cpp" line="4520"/>
         <source>DÃ©finir le rapport de l&apos;homothÃ©tie</source>
         <translation>Define the homothety ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4469"/>
+        <location filename="../output.cpp" line="4538"/>
         <source>DÃ©finir le rapport de la similitude</source>
         <translation>Set the similarity ratio</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="4481"/>
+        <location filename="../output.cpp" line="4550"/>
         <source>DÃ©finir l&apos;angle de la similitude</source>
         <translation>Set the similarity angle</translation>
     </message>
@@ -479,7 +479,7 @@ que toutes ses dÃ©pendances.
 <context>
     <name>ColorPanel</name>
     <message>
-        <location filename="../output.cpp" line="6270"/>
+        <location filename="../output.cpp" line="6339"/>
         <source>Couleur:</source>
         <translation>Color</translation>
     </message>
@@ -487,27 +487,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>CoordsDialog</name>
     <message>
-        <location filename="../output.cpp" line="7253"/>
+        <location filename="../output.cpp" line="7325"/>
         <source>Point dÃ©fini par ses coordonnÃ©es</source>
         <translation>Point defined by coordinates</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7255"/>
+        <location filename="../output.cpp" line="7327"/>
         <source>Abscisse x:</source>
         <translation>Abscissa</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7257"/>
+        <location filename="../output.cpp" line="7329"/>
         <source>OrdonnÃ©e y:</source>
         <translation>Ordinate</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7258"/>
+        <location filename="../output.cpp" line="7330"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7259"/>
+        <location filename="../output.cpp" line="7331"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -515,42 +515,42 @@ que toutes ses dÃ©pendances.
 <context>
     <name>CursorDialog</name>
     <message>
-        <location filename="../output.cpp" line="7312"/>
+        <location filename="../output.cpp" line="7384"/>
         <source>DÃ©finir un curseur</source>
         <translation>Define a Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7314"/>
+        <location filename="../output.cpp" line="7386"/>
         <source>Nom:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7316"/>
+        <location filename="../output.cpp" line="7388"/>
         <source>Min:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7318"/>
+        <location filename="../output.cpp" line="7390"/>
         <source>Max:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7320"/>
+        <location filename="../output.cpp" line="7392"/>
         <source>Pas:</source>
         <translation>Step:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7322"/>
+        <location filename="../output.cpp" line="7394"/>
         <source>DÃ©faut:</source>
         <translation>Default:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7325"/>
+        <location filename="../output.cpp" line="7397"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7326"/>
+        <location filename="../output.cpp" line="7398"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -586,7 +586,7 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DisplayObjectPanel</name>
     <message>
-        <location filename="../output.cpp" line="6593"/>
+        <location filename="../output.cpp" line="6662"/>
         <source>Afficher l&apos;objet</source>
         <translation>Show item</translation>
     </message>
@@ -594,22 +594,22 @@ que toutes ses dÃ©pendances.
 <context>
     <name>DisplayProperties</name>
     <message>
-        <location filename="../output.cpp" line="6145"/>
+        <location filename="../output.cpp" line="6214"/>
         <source>Ãpaisseur (1-8):</source>
         <translation>Thickness (1-8)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6152"/>
+        <location filename="../output.cpp" line="6221"/>
         <source>Transparence (0%-100%):</source>
         <translation>Transparency (0%-100%):</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6163"/>
+        <location filename="../output.cpp" line="6232"/>
         <source>GÃ©nÃ©ral</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6164"/>
+        <location filename="../output.cpp" line="6233"/>
         <source>Style</source>
         <translation></translation>
     </message>
@@ -715,27 +715,27 @@ que toutes ses dÃ©pendances.
 <context>
     <name>FormulaWidget</name>
     <message>
-        <location filename="../output.cpp" line="103"/>
+        <location filename="../output.cpp" line="124"/>
         <source>Copier</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="105"/>
+        <location filename="../output.cpp" line="126"/>
         <source>Copier vers LaTeX</source>
         <translation>Copy to Latex</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="107"/>
+        <location filename="../output.cpp" line="128"/>
         <source>Copier vers Mathml</source>
         <translation>Copy to Mathml</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="109"/>
+        <location filename="../output.cpp" line="130"/>
         <source>Zoom In</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="111"/>
+        <location filename="../output.cpp" line="132"/>
         <source>Zoom Out</source>
         <translation></translation>
     </message>
@@ -971,276 +971,276 @@ que toutes ses dÃ©pendances.
 <context>
     <name>GraphWidget</name>
     <message>
-        <location filename="../output.cpp" line="412"/>
+        <location filename="../output.cpp" line="434"/>
         <source>SÃ©lection</source>
         <translation>Selection</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="415"/>
-        <location filename="../output.cpp" line="572"/>
+        <location filename="../output.cpp" line="437"/>
+        <location filename="../output.cpp" line="594"/>
         <source>SÃ©lection || DÃ©placement</source>
         <translation>Selection || Move</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="416"/>
+        <location filename="../output.cpp" line="438"/>
         <source>Zoom Avant</source>
         <translation>Zoom In</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="420"/>
+        <location filename="../output.cpp" line="442"/>
         <source>Zoom ArriÃ¨re</source>
         <translation>Zoom Out</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="426"/>
+        <location filename="../output.cpp" line="448"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="430"/>
+        <location filename="../output.cpp" line="452"/>
         <source>Intersection entre deux objets</source>
         <translation>Intersection of 2 objects</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="433"/>
+        <location filename="../output.cpp" line="455"/>
         <source>2 objets (points exclus)</source>
         <translation>2 objects (without points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="434"/>
+        <location filename="../output.cpp" line="456"/>
         <source>Milieu ou centre</source>
         <translation>Midle or center</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="437"/>
+        <location filename="../output.cpp" line="459"/>
         <source>Segment || Deux points||Cercle</source>
         <translation>Segment || 2 points || Circle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="438"/>
+        <location filename="../output.cpp" line="460"/>
         <source>Point repÃ©rÃ©</source>
         <translation>Point by coordinates</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="444"/>
+        <location filename="../output.cpp" line="466"/>
         <source>Droite</source>
         <translation>Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="447"/>
-        <location filename="../output.cpp" line="455"/>
-        <location filename="../output.cpp" line="459"/>
-        <location filename="../output.cpp" line="528"/>
-        <location filename="../output.cpp" line="574"/>
+        <location filename="../output.cpp" line="469"/>
+        <location filename="../output.cpp" line="477"/>
+        <location filename="../output.cpp" line="481"/>
+        <location filename="../output.cpp" line="550"/>
+        <location filename="../output.cpp" line="596"/>
         <source>Deux points</source>
         <translation>Two points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="448"/>
+        <location filename="../output.cpp" line="470"/>
         <source>Droite par Ã©quation</source>
         <translation>Line by equation</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="452"/>
+        <location filename="../output.cpp" line="474"/>
         <source>Segment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="456"/>
+        <location filename="../output.cpp" line="478"/>
         <source>Demie-droite</source>
         <translation>Half-Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="460"/>
+        <location filename="../output.cpp" line="482"/>
         <source>Vecteur</source>
         <translation>Vector</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="463"/>
+        <location filename="../output.cpp" line="485"/>
         <source>Origine puis extrÃ©mitÃ©</source>
         <translation>Origin and End</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="464"/>
+        <location filename="../output.cpp" line="486"/>
         <source>MÃ©diatrice d&apos;un segment</source>
         <translation>Mediatrix of a segment</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="467"/>
+        <location filename="../output.cpp" line="489"/>
         <source>Segment || Deux points</source>
         <translation>Segment || 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="468"/>
+        <location filename="../output.cpp" line="490"/>
         <source>Bissectrice d&apos;un angle</source>
         <translation>Bissectrix of an angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="471"/>
+        <location filename="../output.cpp" line="493"/>
         <source>Sommet puis 2 points</source>
         <translation>Corner, then 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="472"/>
+        <location filename="../output.cpp" line="494"/>
         <source>Tangente Ã  une courbe ou un cercle</source>
         <translation>Tangent to a curve or a circle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="475"/>
+        <location filename="../output.cpp" line="497"/>
         <source>(Courbe|| Cercle) puis point de contact</source>
         <translation>(Curve || Circle) then the contact point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="479"/>
+        <location filename="../output.cpp" line="501"/>
         <source>Droite parallÃ¨le</source>
         <translation>Parallel Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="482"/>
-        <location filename="../output.cpp" line="486"/>
-        <location filename="../output.cpp" line="576"/>
+        <location filename="../output.cpp" line="504"/>
+        <location filename="../output.cpp" line="508"/>
+        <location filename="../output.cpp" line="598"/>
         <source>Droite puis point</source>
         <translation>Line the Point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="483"/>
+        <location filename="../output.cpp" line="505"/>
         <source>Droite perpendiculaire</source>
         <translation>Orthogonal Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="487"/>
+        <location filename="../output.cpp" line="509"/>
         <source>SymÃ©trie axiale</source>
         <translation>Axial Symmetry</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="490"/>
+        <location filename="../output.cpp" line="512"/>
         <source>Axe de symÃ©trie puis objet</source>
         <translation>Symmetry axis, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="491"/>
+        <location filename="../output.cpp" line="513"/>
         <source>SymÃ©trie centrale</source>
         <translation>Central Symmetry</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="494"/>
+        <location filename="../output.cpp" line="516"/>
         <source>Centre de symÃ©trie puis objet</source>
         <translation>Center, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="495"/>
+        <location filename="../output.cpp" line="517"/>
         <source>Rotation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="498"/>
-        <location filename="../output.cpp" line="506"/>
-        <location filename="../output.cpp" line="510"/>
+        <location filename="../output.cpp" line="520"/>
+        <location filename="../output.cpp" line="528"/>
+        <location filename="../output.cpp" line="532"/>
         <source>Centre puis objet</source>
         <translation>Center, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="499"/>
+        <location filename="../output.cpp" line="521"/>
         <source>Translation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="502"/>
+        <location filename="../output.cpp" line="524"/>
         <source>Vecteur puis objet</source>
         <translation>Vector, then object</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="503"/>
+        <location filename="../output.cpp" line="525"/>
         <source>HomothÃ©tie</source>
         <translation>Homothety</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="507"/>
+        <location filename="../output.cpp" line="529"/>
         <source>Similitude</source>
         <translation>Similarity</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="513"/>
+        <location filename="../output.cpp" line="535"/>
         <source>Courbe reprÃ©sentative</source>
         <translation>Representative curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="517"/>
+        <location filename="../output.cpp" line="539"/>
         <source>Courbe de BÃ©zier</source>
         <translation>Bezier curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="520"/>
+        <location filename="../output.cpp" line="542"/>
         <source>Points de contrÃ´le puis clic droit pour le dernier point</source>
         <translation>Control points, then right clic  for the last one</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="521"/>
+        <location filename="../output.cpp" line="543"/>
         <source>PolygÃ´ne/Ligne brisÃ©e</source>
         <translation>Polygon/Open Polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="524"/>
+        <location filename="../output.cpp" line="546"/>
         <source>Sommets puis clic droit pour le dernier sommet</source>
         <translation>Vertices, then right clil for the last one</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="525"/>
+        <location filename="../output.cpp" line="547"/>
         <source>PolygÃ´ne rÃ©gulier</source>
         <translation>Regular polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="530"/>
+        <location filename="../output.cpp" line="552"/>
         <source>Curseur numÃ©rique</source>
         <translation>Numeric Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="534"/>
+        <location filename="../output.cpp" line="556"/>
         <source>Curseur symbolique</source>
         <translation>Symbolic Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="540"/>
+        <location filename="../output.cpp" line="562"/>
         <source>Cercle (centre-point)</source>
         <translation>Circle (center-point)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="545"/>
+        <location filename="../output.cpp" line="567"/>
         <source>Cercle (centre-rayon)</source>
         <translation>Circle (center-radius)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="550"/>
+        <location filename="../output.cpp" line="572"/>
         <source>Cercle (3 points)</source>
         <translation>Circle (3 points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="553"/>
+        <location filename="../output.cpp" line="575"/>
         <source>Trois points</source>
         <translation>3 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="554"/>
+        <location filename="../output.cpp" line="576"/>
         <source>Arc de cercle (3 points)</source>
         <translation>Arc of circle (3 points)</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="557"/>
+        <location filename="../output.cpp" line="579"/>
         <source>ExtrÃ©mitÃ©s puis troisiÃ¨me point</source>
         <translation>Extremal points, then third point</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="562"/>
+        <location filename="../output.cpp" line="584"/>
         <source>Angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="565"/>
+        <location filename="../output.cpp" line="587"/>
         <source>Sommet de l&apos;angle puis deux points</source>
         <translation>Corner of the angle, then 2 points</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="580"/>
+        <location filename="../output.cpp" line="602"/>
         <source>Centre puis point</source>
         <translation>Center then point</translation>
     </message>
@@ -1248,37 +1248,37 @@ que toutes ses dÃ©pendances.
 <context>
     <name>GridPanel</name>
     <message>
-        <location filename="../output.cpp" line="6733"/>
+        <location filename="../output.cpp" line="6802"/>
         <source>Afficher la grille</source>
         <translation>Show gridlines</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6735"/>
+        <location filename="../output.cpp" line="6804"/>
         <source>CartÃ©sienne</source>
         <translation>Cartesian</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6736"/>
+        <location filename="../output.cpp" line="6805"/>
         <source>Polaire</source>
         <translation>Polar</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6740"/>
+        <location filename="../output.cpp" line="6809"/>
         <source>Distance:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6741"/>
+        <location filename="../output.cpp" line="6810"/>
         <source>Angle:</source>
         <translation>Angle</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6760"/>
+        <location filename="../output.cpp" line="6829"/>
         <source>x:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6761"/>
+        <location filename="../output.cpp" line="6830"/>
         <source>y:</source>
         <translation></translation>
     </message>
@@ -1319,44 +1319,52 @@ a:=a*a;</translation>
 <context>
     <name>LegendPanel</name>
     <message>
-        <location filename="../output.cpp" line="6322"/>
+        <location filename="../output.cpp" line="6391"/>
         <source>Afficher la lÃ©gende</source>
         <translation>Show Legend</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6324"/>
+        <location filename="../output.cpp" line="6393"/>
         <source>LÃ©gende:</source>
         <translation>Legend:</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6331"/>
+        <location filename="../output.cpp" line="6400"/>
         <source>Position:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6336"/>
+        <location filename="../output.cpp" line="6405"/>
         <source>quadrant1</source>
         <translation>square1</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6337"/>
+        <location filename="../output.cpp" line="6406"/>
         <source>quadrant2</source>
         <translation>square2</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6338"/>
+        <location filename="../output.cpp" line="6407"/>
         <source>quadrant3</source>
         <translation>square3</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6339"/>
+        <location filename="../output.cpp" line="6408"/>
         <source>quadrant4</source>
         <translation>square4</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6340"/>
+        <location filename="../output.cpp" line="6409"/>
         <source>personnalisÃ©</source>
         <translation>Custommed</translation>
+    </message>
+</context>
+<context>
+    <name>Line</name>
+    <message>
+        <location filename="../gui/FormalLine.cpp" line="51"/>
+        <source>Affichage des rÃ©ponses&lt;center&gt;&lt;b&gt;Mathml&lt;/b&gt; ou &lt;b&gt;Texte&lt;/b&gt;&lt;/center&gt;</source>
+        <translation>Display answers in &lt;center&gt;&lt;b&gt;Mathml&lt;/b&gt; or &lt;b&gt;Plain Text&lt;/b&gt;&lt;/center&gt;</translation>
     </message>
 </context>
 <context>
@@ -1505,32 +1513,32 @@ Do you want to do it now?</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../MainWindow.cpp" line="329"/>
+        <location filename="../MainWindow.cpp" line="331"/>
         <source>&amp;Nouveau</source>
         <translation>&amp;New Session</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="373"/>
+        <location filename="../MainWindow.cpp" line="375"/>
         <source>Ctrl+N</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="331"/>
+        <location filename="../MainWindow.cpp" line="333"/>
         <source>CrÃ©er un nouvel espace de travail</source>
         <translation>Create a new and empty session</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="333"/>
+        <location filename="../MainWindow.cpp" line="335"/>
         <source>&amp;Ouvrir...</source>
         <translation>&amp;Open</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="334"/>
+        <location filename="../MainWindow.cpp" line="336"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="335"/>
+        <location filename="../MainWindow.cpp" line="337"/>
         <source>Ouvrir un nouveau fichier</source>
         <translation>Open a new file</translation>
     </message>
@@ -1539,82 +1547,82 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&amp;Save</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="341"/>
+        <location filename="../MainWindow.cpp" line="343"/>
         <source>Ctrl+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="342"/>
+        <location filename="../MainWindow.cpp" line="344"/>
         <source>Enregistrer le fichier courant</source>
         <translation>Save current workspace</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="344"/>
+        <location filename="../MainWindow.cpp" line="346"/>
         <source>&amp;Enregistrer sous...</source>
         <translation>&amp;Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="346"/>
+        <location filename="../MainWindow.cpp" line="348"/>
         <source>Enregistrer sous un nouveau nom de fichier</source>
         <translation>Save current session with another name</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="348"/>
+        <location filename="../MainWindow.cpp" line="350"/>
         <source>&amp;Quitter</source>
         <translation>&amp;Quit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="349"/>
+        <location filename="../MainWindow.cpp" line="351"/>
         <source>Ctrl+Q</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="350"/>
+        <location filename="../MainWindow.cpp" line="352"/>
         <source>Quitter</source>
         <translation>Exit from Qcas</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="352"/>
+        <location filename="../MainWindow.cpp" line="354"/>
         <source>&amp;Copier</source>
         <translation>&amp;Copy</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="353"/>
+        <location filename="../MainWindow.cpp" line="355"/>
         <source>Ctrl+C</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="354"/>
+        <location filename="../MainWindow.cpp" line="356"/>
         <source>Copier</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="356"/>
+        <location filename="../MainWindow.cpp" line="358"/>
         <source>Co&amp;uper</source>
         <translation>Cu&amp;t</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="357"/>
+        <location filename="../MainWindow.cpp" line="359"/>
         <source>Ctrl+X</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="358"/>
+        <location filename="../MainWindow.cpp" line="360"/>
         <source>Couper</source>
         <translation>Cut</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="360"/>
+        <location filename="../MainWindow.cpp" line="362"/>
         <source>C&amp;oller</source>
         <translation>P&amp;aste</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="361"/>
+        <location filename="../MainWindow.cpp" line="363"/>
         <source>Ctrl+V</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="362"/>
+        <location filename="../MainWindow.cpp" line="364"/>
         <source>Coller</source>
         <translation>PAste</translation>
     </message>
@@ -1623,37 +1631,37 @@ Do you want to do it now?</translation>
         <translation type="obsolete">U&amp;ndo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="365"/>
+        <location filename="../MainWindow.cpp" line="367"/>
         <source>Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="366"/>
+        <location filename="../MainWindow.cpp" line="368"/>
         <source>Annuler</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="368"/>
+        <location filename="../MainWindow.cpp" line="370"/>
         <source>&amp;RÃ©tablir</source>
         <translation>&amp;Redo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="369"/>
+        <location filename="../MainWindow.cpp" line="371"/>
         <source>Shift+Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="370"/>
+        <location filename="../MainWindow.cpp" line="372"/>
         <source>RÃ©tablir</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="372"/>
+        <location filename="../MainWindow.cpp" line="374"/>
         <source>&amp;Nouvelle EntrÃ©e</source>
         <translation>&amp;New entry</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="374"/>
+        <location filename="../MainWindow.cpp" line="376"/>
         <source>Nouvelle EntrÃ©e</source>
         <translation>Insert a new line</translation>
     </message>
@@ -1674,74 +1682,73 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Hints:&lt;br&gt;&lt;center&gt;CTRL Space&lt;/center&gt;gives the completions of the known keywords.&lt;br&gt;&lt;center&gt;F1&lt;/center&gt;When the mouse is left on a keyword a tooltips appears&lt;br&gt;then F1 will show this keyword documentation in the help widget (on the left)&lt;br&gt;On can hide the lefts widgets by pushing the midle bar strongly on the lefts.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="399"/>
+        <location filename="../MainWindow.cpp" line="401"/>
         <source>&amp;Evaluer</source>
         <translation>&amp;Compute</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="400"/>
+        <location filename="../MainWindow.cpp" line="402"/>
         <source>Shift+EntrÃ©e</source>
         <translation>Shift+Enter</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="401"/>
+        <location filename="../MainWindow.cpp" line="403"/>
         <source>Evaluer</source>
         <translation>Evaluate</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="403"/>
+        <location filename="../MainWindow.cpp" line="405"/>
         <source>&amp;Aide Html</source>
         <translation>&amp;Html help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="404"/>
+        <location filename="../MainWindow.cpp" line="406"/>
         <source>Aide html de Giac/Qcas</source>
         <translation>Giac&apos;s html help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="406"/>
+        <location filename="../MainWindow.cpp" line="408"/>
         <source>&amp;A propos</source>
         <translation>&amp;About</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="407"/>
+        <location filename="../MainWindow.cpp" line="409"/>
         <source>Principales informations concernant QCAS</source>
         <translation>About</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="410"/>
-        <location filename="../MainWindow.cpp" line="411"/>
+        <location filename="../MainWindow.cpp" line="412"/>
+        <location filename="../MainWindow.cpp" line="413"/>
         <source>Interrompre le calcul en cours</source>
         <translation>stop computation</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="414"/>
+        <location filename="../MainWindow.cpp" line="416"/>
         <source>&amp;PrÃ©fÃ©rences...</source>
         <translation>&amp;Preferences</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="465"/>
+        <location filename="../MainWindow.cpp" line="467"/>
         <source>&amp;Edition</source>
         <translation>&amp;Edit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1080"/>
+        <location filename="../MainWindow.cpp" line="1085"/>
         <source>fichiers XCAS  (*.xws);;fichiers GIAC  (*.cas)</source>
         <translation>XCAS files  (*.xws);; GIAC files  (*.cas)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1090"/>
+        <location filename="../MainWindow.cpp" line="1095"/>
         <source>Sans titre</source>
         <translation>No Title</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1364"/>
         <source>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Licence:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Auteur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintenance et dÃ©veloppement de QCAS: &lt;/b&gt;Han FrÃ©dÃ©ric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
-        <translation>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintainer and developper of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Giac/Xcas Developper: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
+        <translation type="obsolete">&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintainer and developper of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Giac/Xcas Developper: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="393"/>
-        <location filename="../MainWindow.cpp" line="1380"/>
+        <location filename="../MainWindow.cpp" line="395"/>
+        <location filename="../MainWindow.cpp" line="1388"/>
         <source>Astuces</source>
         <translation>Hints</translation>
     </message>
@@ -1750,7 +1757,7 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h2&gt;Shortcuts&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL space:&lt;/b&gt;&lt;center&gt;Completions of the current entry&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Up or Down&lt;/b&gt;&lt;center&gt;Insert a previous command from historic&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Delete selected lines&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(When the focus stays on a keyword)&lt;center&gt;F1 print the detailled giac help about this keyword (in the left panel)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Hints&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;One can close the left Panel by pushing the split bar (far) on the left&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1527"/>
+        <location filename="../MainWindow.cpp" line="1540"/>
         <source>Vous n&apos;avez cochÃ© aucune ligne!&lt;br&gt;Il n&apos;y a donc aucune commande Ã  envoyer en gÃ©omÃ©rie inÃ©ractive.</source>
         <translation>No lines are checked&lt;br&gt;There si no command to be sent to interactive geometry</translation>
     </message>
@@ -1759,42 +1766,42 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintener of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:han@math.jussieu.fr&quot;&gt; han@math.jussieu.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©velopper of Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="364"/>
+        <location filename="../MainWindow.cpp" line="366"/>
         <source>&amp;Annuler</source>
         <translation>&amp;Undo</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="340"/>
+        <location filename="../MainWindow.cpp" line="342"/>
         <source>Enregistrer</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="337"/>
+        <location filename="../MainWindow.cpp" line="339"/>
         <source>Ajouter un Fichier</source>
         <translation>Append a File</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="338"/>
+        <location filename="../MainWindow.cpp" line="340"/>
         <source>Ajoute un fichier Ã  la suite de la session courante</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="376"/>
+        <location filename="../MainWindow.cpp" line="378"/>
         <source>&amp;Supprimer les lignes cochÃ©es</source>
         <translation>Delete Selected Lines</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="377"/>
+        <location filename="../MainWindow.cpp" line="379"/>
         <source>Ctrl+BackSpace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="378"/>
+        <location filename="../MainWindow.cpp" line="380"/>
         <source>DÃ©truit les niveaux sÃ©lectionnÃ©s</source>
         <translation>Delete Selected Levels</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="381"/>
+        <location filename="../MainWindow.cpp" line="383"/>
         <source>Evalue la ligne courante en mode gÃ©omÃ©trie intÃ©ractive&lt;center&gt;(ExpÃ©rimental et limitÃ©)&lt;/center&gt;Les objets entre crochets sÃ©parÃ© par des virgules seront considÃ©rÃ©s comme un seul objet( exemple [point(1),point(2)]. Les intersections  inter()  seront considÃ©rÃ©es comme des listes et ne seront pas selectionnables Ã  la souris. Utilisez  inter_unique si vous souhaitez pouvoir selectionner un point d&apos;intersection pour une construction.</source>
         <translation>Send the current entry to an interactive 2d tab&lt;center&gt;(Experimental/ Limited)&lt;/center&gt;Widgets between brackets or Intersections inter() are considered as a single object. (Ex point(1),point(2)] ). They are not direclty avaible for a further construction. Use inter_unique instead.</translation>
     </message>
@@ -1803,12 +1810,12 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h2&gt;Shortcuts&lt;/h2&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;CTRL space:&lt;/b&gt;&lt;center&gt;Completions of the current entry&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Up or Down&lt;/b&gt;&lt;center&gt;Insert a previous command from historic&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;CTRL Delete&lt;/b&gt;&lt;center&gt;Delete selected lines&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(When the focus stays on a keyword)&lt;center&gt;F1 print the detailled giac help about this keyword (in the left panel)&lt;/center&gt;&lt;/li&gt;&lt;/ul&gt;&lt;center&gt;&lt;h2&gt;Hints&lt;/h2&gt;&lt;/center&gt;&lt;ul&gt;&lt;li&gt;One can close the left Panel by pushing the split bar (far) on the left&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="415"/>
+        <location filename="../MainWindow.cpp" line="417"/>
         <source>Afficher la fenÃªtre des prÃ©fÃ©rences</source>
         <translation>Customise the interface and the CAS</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="464"/>
+        <location filename="../MainWindow.cpp" line="466"/>
         <source>&amp;Fichier</source>
         <translation>&amp;File</translation>
     </message>
@@ -1817,7 +1824,7 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Edit</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="383"/>
+        <location filename="../MainWindow.cpp" line="385"/>
         <source>Evaluer toutes les feuilles depuis le dÃ©but.</source>
         <translation>Evaluate all sheets from the beginning</translation>
     </message>
@@ -1826,27 +1833,27 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Hints:&lt;br&gt;&lt;center&gt;CTRL Space&lt;/center&gt;gives the completions of the known keywords.&lt;br&gt;&lt;center&gt;F1&lt;/center&gt;When the mouse is left on a keyword a tooltips appears&lt;br&gt;then F1 will show this keyword documentation in the help widget (on the left)&lt;br&gt;On can hide the lefts widgets by pushing the midle bar strongly on the lefts.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="385"/>
+        <location filename="../MainWindow.cpp" line="387"/>
         <source>Racourcis</source>
         <translation>Shortcuts</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="388"/>
+        <location filename="../MainWindow.cpp" line="390"/>
         <source>donne les complÃ©tions possibles de la chaine saisie</source>
         <translation>Complete keywords</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="389"/>
+        <location filename="../MainWindow.cpp" line="391"/>
         <source>flÃ¨che haut ou bas&lt;/b&gt;&lt;center&gt;InsÃ¨re une commande de l&apos;historique&lt;/center&gt;&lt;/li&gt;</source>
         <translation>Up or Down&lt;/b&gt;&lt;center&gt;Insert a command from the historic&lt;/center&gt;&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="390"/>
+        <location filename="../MainWindow.cpp" line="392"/>
         <source>&lt;/b&gt;&lt;center&gt;Supprime les lignes sÃ©lectionnÃ©es&lt;/center&gt;&lt;/li&gt;</source>
         <translation>&lt;/b&gt;&lt;center&gt;Delete selected lines&lt;/center&gt;&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="391"/>
+        <location filename="../MainWindow.cpp" line="393"/>
         <source>&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(Lorsque l&apos;on laisse le pointeur sur un mot clef)&lt;center&gt;F1 affiche l&apos;aide dÃ©taillÃ©e correspondante dans le widget d&apos;aide (Ã  gauche)&lt;/center&gt;&lt;/li&gt;</source>
         <translation>&lt;li&gt;&lt;b&gt;F1&lt;/b&gt;(if the mouse stays on a keyword)&lt;center&gt;F1 print the detailled help in the left panel&lt;/center&gt;&lt;/li&gt;</translation>
     </message>
@@ -1855,150 +1862,155 @@ Do you want to do it now?</translation>
         <translation type="obsolete">One can hide the left widgets by pushing the middle bar far on the left&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="395"/>
+        <location filename="../MainWindow.cpp" line="397"/>
         <source>En poussant la barre du milieu fort Ã  gauche on peut cacher les widgets de gauche&lt;/li&gt;</source>
         <translation>One can hide the left widgets by pushing the middle bar far on the left&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="466"/>
+        <location filename="../MainWindow.cpp" line="468"/>
         <source>&amp;Options</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="467"/>
+        <location filename="../MainWindow.cpp" line="469"/>
         <source>&amp;Aide</source>
         <translation>&amp;Help</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="516"/>
+        <location filename="../MainWindow.cpp" line="518"/>
         <source>Le document a Ã©tÃ© modifiÃ©.</source>
         <translation>The file has been modified</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="517"/>
+        <location filename="../MainWindow.cpp" line="519"/>
         <source>Voulez-vous sauvegarder les modifications?</source>
         <translation>Do you want to save changes</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="534"/>
-        <location filename="../MainWindow.cpp" line="542"/>
+        <location filename="../MainWindow.cpp" line="536"/>
+        <location filename="../MainWindow.cpp" line="544"/>
         <source>Ouvrir un fichier</source>
         <translation>Open a file</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="534"/>
-        <location filename="../MainWindow.cpp" line="542"/>
+        <location filename="../MainWindow.cpp" line="536"/>
+        <location filename="../MainWindow.cpp" line="544"/>
         <source>QCAS or Giac/Xcas files (*.qcas *.cas *.xws)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="848"/>
+        <location filename="../MainWindow.cpp" line="850"/>
         <source>Avertissement</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="848"/>
+        <location filename="../MainWindow.cpp" line="850"/>
         <source>Vous essayez d&apos;enregistrer pendant un calcul. Recommencez plus tard.</source>
         <translation>You are trying to save during a computation. Please try it again later.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1007"/>
+        <location filename="../MainWindow.cpp" line="1009"/>
         <source>Des fichiers de sauvegarde automatique d&apos;Xcas ou Qcas ont Ã©tÃ© trouvÃ©s.</source>
         <translation>Some automatic backup files from Xcas or QCas have been found.</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1008"/>
+        <location filename="../MainWindow.cpp" line="1010"/>
         <source>Voulez vous charger le plus rÃ©cent?
  Ou alors ouvrir la liste des fichiers, ou  dÃ©truire ces archives (Reset).</source>
         <translation>Do you want to load the latest one?\n Or browse a list of files, or delete those backups (Reset).</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1021"/>
+        <location filename="../MainWindow.cpp" line="1023"/>
         <source>auto_save</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1021"/>
+        <location filename="../MainWindow.cpp" line="1023"/>
         <source>QCAS or Giac/Xcas files (xcas_auto_*.xws)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1054"/>
+        <location filename="../MainWindow.cpp" line="1059"/>
         <source>Enregistrer sous...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1054"/>
+        <location filename="../MainWindow.cpp" line="1059"/>
         <source>QCAS files (*.qcas);;XCAS files (*.xws);;GIAC files (*.cas)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1066"/>
+        <location filename="../MainWindow.cpp" line="1071"/>
         <source>fichiers XCAS (*.xws)</source>
         <translation>XCAS files (*.xws)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1068"/>
+        <location filename="../MainWindow.cpp" line="1073"/>
         <source>fichiers GIAC (*.cas)</source>
         <translation>GIAC files (*.cas)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1080"/>
+        <location filename="../MainWindow.cpp" line="1085"/>
         <source>Exporter vers...</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1097"/>
+        <location filename="../MainWindow.cpp" line="1102"/>
         <source>%1[*] - %2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1116"/>
+        <location filename="../MainWindow.cpp" line="1121"/>
         <source>&amp;%1 %2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1237"/>
+        <location filename="../MainWindow.cpp" line="1242"/>
         <source>Messages Giac</source>
         <translation>Giac Messages</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1238"/>
+        <location filename="../MainWindow.cpp" line="1243"/>
         <source>Shift+EntrÃ©e pour Ã©valuer</source>
         <translation>Shif Entry to Compute</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1241"/>
+        <location filename="../MainWindow.cpp" line="1246"/>
         <source>RÃ©soudre</source>
         <translation>Solve</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1243"/>
+        <location filename="../MainWindow.cpp" line="1248"/>
         <source>Prog/Giac</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1244"/>
+        <location filename="../MainWindow.cpp" line="1249"/>
         <source>Prog/Algo</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1251"/>
+        <location filename="../MainWindow.cpp" line="1256"/>
         <source>Feuille </source>
         <translation>Sheat</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1251"/>
+        <location filename="../MainWindow.cpp" line="1256"/>
         <source>, ligne </source>
         <translation>line</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1316"/>
+        <location filename="../MainWindow.cpp" line="1324"/>
         <source>&lt;br&gt;&lt;font color=&quot;gray&quot;&gt;Temps mis:</source>
         <translation>Time</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1240"/>
+        <location filename="../MainWindow.cpp" line="1372"/>
+        <source>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Licence:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Auteur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintenance et dÃ©veloppement de QCAS: &lt;/b&gt;(2013- )&lt;center&gt;Han FrÃ©dÃ©ric &lt;a href=&quot;mailto:frederic.han@imj-prg.fr&quot;&gt; frederic.han@imj-prg.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</source>
+        <translation>&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL v3&lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; %1 &lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Sources: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;QCAS Binaries: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Author of QCAS: &lt;/b&gt;Loïc Le Coq  (2012) &lt;/li&gt;&lt;li&gt;&lt;b&gt;Maintainer and developper of QCAS: &lt;/b&gt;Han Frédéric &lt;center&gt;&lt;a href=&quot;mailto:frederic.han@imj-prg.fr&quot;&gt; frederic.han@imj-prg.fr&lt;/a&gt;&lt;/center&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Giac/Xcas Developper: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt;Web site of XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
+    </message>
+    <message>
+        <location filename="../MainWindow.cpp" line="1245"/>
         <source>Matrices</source>
         <translation>Matrix</translation>
     </message>
@@ -2011,12 +2023,12 @@ Do you want to do it now?</translation>
         <translation type="obsolete">Equations</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1242"/>
+        <location filename="../MainWindow.cpp" line="1247"/>
         <source>Catalogue</source>
         <translation>Catalog</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1364"/>
+        <location filename="../MainWindow.cpp" line="1372"/>
         <source>A propos de QCAS</source>
         <translation>About QCAS</translation>
     </message>
@@ -2025,22 +2037,22 @@ Do you want to do it now?</translation>
         <translation type="obsolete">&lt;center&gt;&lt;h1&gt;  QCAS&lt;/h1&gt;&lt;/center&gt;&lt;hr&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;License:&lt;/b&gt; GPL &lt;/li&gt;&lt;li&gt;&lt;b&gt;Version:&lt;/b&gt; 0.2 &lt;/li&gt;&lt;li&gt;&lt;b&gt;Sources de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://git.tuxfamily.org/?p=qcas/qcas.git&quot;&gt;http://git.tuxfamily.org/?p=qcas/qcas.git&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;Binaires de QCAS: &lt;/b&gt;&lt;center&gt;&lt;a href=&quot;http://www.math.jussieu.fr/~han/qcas&quot;&gt;http://www.math.jussieu.fr/~han/qcas&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de QCAS: &lt;/b&gt;LoÃ¯c Le Coq &lt;center&gt;&lt;a href=&quot;mailto:loic@qcas.tuxfamily.org&quot;&gt; loic@qcas.tuxfamily.org&lt;/a&gt;&lt;/center&gt;&lt;br&gt;&lt;/li&gt;&lt;li&gt;&lt;b&gt;DÃ©veloppeur de Giac/Xcas: &lt;/b&gt;Bernard Parisse&lt;/li&gt;&lt;li&gt;&lt;b&gt; Site Web de XCas:  &lt;center&gt;&lt;a href=&quot;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&quot;&gt;http://www-fourier.ujf-grenoble.fr/~parisse/giac_fr.html&lt;/a&gt;&lt;/center&gt;&lt;nr&gt;&lt;/li&gt;&lt;/ul&gt;&lt;hr&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1587"/>
+        <location filename="../MainWindow.cpp" line="1600"/>
         <source>Attention! &lt;br&gt; Pour affecter une valeur Ã  une variable, vous devez utiliser le symbole :=</source>
         <translation>Warning! &lt;br&gt; To store somthing in a variable, you must use the symbol :=</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1787"/>
+        <location filename="../MainWindow.cpp" line="1856"/>
         <source>Tentative d&apos;interruption...</source>
         <translation>Trying to interrupt</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1799"/>
+        <location filename="../MainWindow.cpp" line="1868"/>
         <source>Avertissement!</source>
         <translation>Warning</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1799"/>
+        <location filename="../MainWindow.cpp" line="1868"/>
         <source>Risque de crash important lors de l&apos;interruption requise.</source>
         <translation>Crash could happen during this interruption.</translation>
     </message>
@@ -2060,12 +2072,12 @@ Do you want to do it now?</translation>
 <context>
     <name>OneArgDialog</name>
     <message>
-        <location filename="../output.cpp" line="7291"/>
+        <location filename="../output.cpp" line="7363"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="7292"/>
+        <location filename="../output.cpp" line="7364"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -2073,68 +2085,68 @@ Do you want to do it now?</translation>
 <context>
     <name>PanelProperties</name>
     <message>
-        <location filename="../output.cpp" line="5812"/>
+        <location filename="../output.cpp" line="5881"/>
         <source>Objets</source>
         <oldsource>Objects</oldsource>
         <translation>Objects</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5829"/>
+        <location filename="../output.cpp" line="5898"/>
         <source>Axes/grille</source>
         <translation>Axis/Grid</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5830"/>
+        <location filename="../output.cpp" line="5899"/>
         <source>Point</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5831"/>
+        <location filename="../output.cpp" line="5900"/>
         <source>Courbe</source>
         <translation>Curve</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5832"/>
+        <location filename="../output.cpp" line="5901"/>
         <source>Vecteur</source>
         <translation>Vector</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5833"/>
+        <location filename="../output.cpp" line="5902"/>
         <source>Droite</source>
         <translation>Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5834"/>
+        <location filename="../output.cpp" line="5903"/>
         <source>Segment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5835"/>
+        <location filename="../output.cpp" line="5904"/>
         <source>Demie-droite</source>
         <translation>Half-Line</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5836"/>
+        <location filename="../output.cpp" line="5905"/>
         <source>PolygÃ´ne</source>
         <translation>Polygon</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5837"/>
+        <location filename="../output.cpp" line="5906"/>
         <source>Cercle ou arc</source>
         <translation>Circle or Arc</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5838"/>
+        <location filename="../output.cpp" line="5907"/>
         <source>Angle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5839"/>
+        <location filename="../output.cpp" line="5908"/>
         <source>Liste</source>
         <translation>List</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="5840"/>
+        <location filename="../output.cpp" line="5909"/>
         <source>Objets indÃ©finis</source>
         <translation>Undefined objects</translation>
     </message>
@@ -2205,37 +2217,37 @@ Do you want to do it now?</translation>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="654"/>
+        <location filename="../gui/prefdialog.cpp" line="655"/>
         <source>Configuration de QCAS</source>
         <translation>QCAS Configuration</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="655"/>
+        <location filename="../gui/prefdialog.cpp" line="656"/>
         <source>GÃ©nÃ©ral</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="686"/>
+        <location filename="../gui/prefdialog.cpp" line="687"/>
         <source>CAS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="657"/>
+        <location filename="../gui/prefdialog.cpp" line="658"/>
         <source>Tableur</source>
         <translation>Spreadsheat</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="656"/>
+        <location filename="../gui/prefdialog.cpp" line="657"/>
         <source>GÃ©omÃ©trie 2D</source>
         <translation>Interactive geometry 2D</translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="702"/>
+        <location filename="../gui/prefdialog.cpp" line="703"/>
         <source>Ok</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../gui/prefdialog.cpp" line="658"/>
+        <location filename="../gui/prefdialog.cpp" line="659"/>
         <source>Annuler</source>
         <translation>Cancel</translation>
     </message>
@@ -2243,27 +2255,27 @@ Do you want to do it now?</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../MainWindow.cpp" line="1890"/>
+        <location filename="../MainWindow.cpp" line="1959"/>
         <source>Synonyme(s):</source>
         <translation>Synonyms</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1900"/>
+        <location filename="../MainWindow.cpp" line="1969"/>
         <source>(Plus de dÃ©tails)&lt;/a&gt;</source>
         <translation>(Detailled help)&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1905"/>
+        <location filename="../MainWindow.cpp" line="1974"/>
         <source>Exemples:</source>
         <translation>Examples:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1915"/>
+        <location filename="../MainWindow.cpp" line="1984"/>
         <source>Voir aussi: </source>
         <translation>See also:</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="1983"/>
+        <location filename="../MainWindow.cpp" line="2052"/>
         <source>Aucun rÃ©sultat</source>
         <translation>No answer</translation>
     </message>
@@ -2343,12 +2355,12 @@ Do you want to do it now?</translation>
         <translation>Cursor</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1195"/>
+        <location filename="../output.cpp" line="1217"/>
         <source>Ajouter</source>
         <translation>Add</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="1242"/>
+        <location filename="../output.cpp" line="1264"/>
         <source>Supprimer </source>
         <translation>Delete</translation>
     </message>
@@ -2356,12 +2368,12 @@ Do you want to do it now?</translation>
 <context>
     <name>SourceDialog</name>
     <message>
-        <location filename="../output.cpp" line="6903"/>
+        <location filename="../output.cpp" line="6972"/>
         <source>Construction de la figure</source>
         <translation>Picture&apos;s construction</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6911"/>
+        <location filename="../output.cpp" line="6980"/>
         <source>Supprimer</source>
         <translation>Delete</translation>
     </message>
@@ -2529,9 +2541,17 @@ a:=a*a;</source>
     </message>
 </context>
 <context>
+    <name>TextEditOutput</name>
+    <message>
+        <location filename="../gui/FormalLineWidgets.cpp" line="494"/>
+        <source>&lt;li&gt;&lt;b&gt;EntrÃ©e&lt;/b&gt; pour insÃ©rer la rÃ©ponse ou la sÃ©lection dans la ligne suivante&lt;/li&gt;                  &lt;li&gt;&lt;b&gt;Maj EntrÃ©e&lt;/b&gt; pour insÃ©rer la rÃ©ponse ou la sÃ©lection dans une nouvelle ligne&lt;/li&gt;                  &lt;li&gt;&lt;b&gt;+&lt;/b&gt; ou &lt;b&gt;-&lt;/b&gt; pour agrandir ou rÃ©duire&lt;/li&gt;</source>
+        <translation>&lt;li&gt;&lt;b&gt;Enter&lt;/b&gt; to insert this answer or the selected string in the next line&lt;/li&gt;                  &lt;li&gt;&lt;b&gt;Maj Enter&lt;/b&gt; to insert the answer or the selected string in a new line&lt;/li&gt;                  &lt;li&gt;&lt;b&gt;+&lt;/b&gt; or &lt;b&gt;-&lt;/b&gt; to enlarge or reduce the height&lt;/li&gt;</translation>
+    </message>
+</context>
+<context>
     <name>TextInput</name>
     <message>
-        <location filename="../gui/FormalLineWidgets.cpp" line="409"/>
+        <location filename="../gui/FormalLineWidgets.cpp" line="402"/>
         <source>Mot-clÃ©:</source>
         <translation>Keyword</translation>
     </message>
@@ -2539,47 +2559,47 @@ a:=a*a;</source>
 <context>
     <name>TypeLinePanel</name>
     <message>
-        <location filename="../output.cpp" line="6512"/>
+        <location filename="../output.cpp" line="6581"/>
         <source>Style:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6525"/>
+        <location filename="../output.cpp" line="6594"/>
         <source>solid_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6530"/>
+        <location filename="../output.cpp" line="6599"/>
         <source>dash_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6535"/>
+        <location filename="../output.cpp" line="6604"/>
         <source>dot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6541"/>
+        <location filename="../output.cpp" line="6610"/>
         <source>dashdot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6546"/>
+        <location filename="../output.cpp" line="6615"/>
         <source>dashdotdot_line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6552"/>
+        <location filename="../output.cpp" line="6621"/>
         <source>cap_flat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6563"/>
+        <location filename="../output.cpp" line="6632"/>
         <source>cap_round</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6572"/>
+        <location filename="../output.cpp" line="6641"/>
         <source>cap_square</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2587,47 +2607,47 @@ a:=a*a;</source>
 <context>
     <name>TypePointPanel</name>
     <message>
-        <location filename="../output.cpp" line="6400"/>
+        <location filename="../output.cpp" line="6469"/>
         <source>Style:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6417"/>
+        <location filename="../output.cpp" line="6486"/>
         <source>point_croix</source>
         <translation>point_cross</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6429"/>
+        <location filename="../output.cpp" line="6498"/>
         <source>point_losange</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6439"/>
+        <location filename="../output.cpp" line="6508"/>
         <source>point_plus</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6451"/>
+        <location filename="../output.cpp" line="6520"/>
         <source>point_square</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6454"/>
+        <location filename="../output.cpp" line="6523"/>
         <source>point_invisible</source>
         <translation>point_hidden</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6466"/>
+        <location filename="../output.cpp" line="6535"/>
         <source>point_triangle</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6479"/>
+        <location filename="../output.cpp" line="6548"/>
         <source>point_etoile</source>
         <translation>point_star</translation>
     </message>
     <message>
-        <location filename="../output.cpp" line="6489"/>
+        <location filename="../output.cpp" line="6558"/>
         <source>point_point</source>
         <translation></translation>
     </message>
@@ -2712,52 +2732,52 @@ a:=a*a;</source>
         <translation type="obsolete">:doc/en/</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="67"/>
+        <location filename="../gui/WizardCatalog.cpp" line="66"/>
         <source>Page d&apos;accueil</source>
         <translation>Starting Page</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="70"/>
+        <location filename="../gui/WizardCatalog.cpp" line="69"/>
         <source>Rechercher</source>
         <translation>Search</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="71"/>
+        <location filename="../gui/WizardCatalog.cpp" line="70"/>
         <source>EntrÃ©e</source>
         <translation>Enter</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="72"/>
+        <location filename="../gui/WizardCatalog.cpp" line="71"/>
         <source>Recherche la prÃ©sence du mot-clÃ© dans la description des diffÃ©rentes commandes</source>
         <translation>Search this keyword in the documentation</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="74"/>
+        <location filename="../gui/WizardCatalog.cpp" line="73"/>
         <source>&amp;PrÃ©cÃ©dent</source>
         <translation>Previous</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="75"/>
+        <location filename="../gui/WizardCatalog.cpp" line="74"/>
         <source>Alt+Gauche</source>
         <translation>Alt+Left</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="76"/>
+        <location filename="../gui/WizardCatalog.cpp" line="75"/>
         <source>Page prÃ©cÃ©dente</source>
         <translation>Next Page</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="78"/>
+        <location filename="../gui/WizardCatalog.cpp" line="77"/>
         <source>&amp;Suivant</source>
         <translation>&amp;Next</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="79"/>
+        <location filename="../gui/WizardCatalog.cpp" line="78"/>
         <source>Alt+Droite</source>
         <translation>Alt+Right</translation>
     </message>
     <message>
-        <location filename="../gui/WizardCatalog.cpp" line="80"/>
+        <location filename="../gui/WizardCatalog.cpp" line="79"/>
         <source>Page suivante</source>
         <translation>Next Page</translation>
     </message>
