@@ -56,7 +56,7 @@ void WizardCatalog::retranslate(){
     }
     if(! giacdoc.endsWith("/"))
         giacdoc.append("/");
-    QString lg=Config::GiacStrLanguage;
+    QString lg=Config::GiacHtmlLanguage;
     giacdoc.append("doc/"+lg+"/cascmd_"+lg+"");
     QStringList docpaths;
     docpaths<<":doc/"+lg+"/"<< giacdoc;

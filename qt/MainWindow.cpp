@@ -91,13 +91,17 @@ MainWindow::MainWindow(){
     commandInfo=new CommandInfo;
     taskProperties.firstPrintMessage=true;
 
-    QString lang = QLocale::system().name().section('_', 0, 0);
+    QString lang = QLocale::system().name().left(2);
     lang=lang.toLower();
-    if (lang=="c" || lang ==""){
+    QStringList availablemenulang;
+    availablemenulang << "fr" << "en" << "el" << "es" << "sp" << "zh";
+
+    // if the language has no translation we default to en
+    if (!availablemenulang.contains(lang)){
       lang="en";
     }
 
-    Config::GiacStrLanguage=lang;
+    Config::GiacHtmlLanguage=lang;
     //   qDebug()<<lang;
     translator =new QTranslator(0);
 
@@ -211,7 +215,18 @@ void MainWindow::retranslateInterface(int configlanguage){
       Config::giaclanguage=1;
     }
 
-    Config::GiacStrLanguage=lang;
+
+    /*
+      The giac html doc is non empty only in a couple of language.
+      We default to en.
+      */
+    QStringList supportedgiachtmldoc;
+    supportedgiachtmldoc << "fr" << "en" << "el";
+    if(supportedgiachtmldoc.contains(lang))
+        Config::GiacHtmlLanguage=lang;
+    else
+        Config::GiacHtmlLanguage="en";
+
     //lang = lang.toLower();
     lang = ":/lang/qcas_" + lang + ".qm";
     if ( translator )

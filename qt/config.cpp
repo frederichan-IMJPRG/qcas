@@ -34,7 +34,7 @@ QString Config::QcasVersion="0.4.4";
 
 Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;
-QString Config::GiacStrLanguage="fr";
+QString Config::GiacHtmlLanguage="fr"; // for html doc
 
 bool Config::useTabCompletions=true;
 QString Config::XcasRoot="";

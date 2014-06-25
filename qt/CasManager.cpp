@@ -227,7 +227,8 @@ CasManager::warning CasManager::initExpression(const QString *str){
 
 QString CasManager::xcashtmlHelp(const giac::gen & g){
     QStringList buf;
-    QString lg=Config::GiacStrLanguage;
+    QString lg=Config::GiacHtmlLanguage;
+    int htmllang=giac::string2lang(lg.toStdString());
     QFile file(Config::XcasRoot+"doc/"+lg+"/html_mtt");
     QString line;
     giac::gen f(g);
@@ -239,7 +240,7 @@ QString CasManager::xcashtmlHelp(const giac::gen & g){
         if (f.type==giac::_FUNC){
             s=f._FUNCptr->ptr()->s;
             if(!file.open(QIODevice::ReadOnly)){
-                 giac::html_help_init("aide_cas",Config::giaclanguage,true,true);
+                 giac::html_help_init("aide_cas",htmllang,true,true);
                  giac::html_vtt=giac::html_help(giac::html_mtt,s);
                  if (!giac::html_vtt.empty()){
                      //giac::system_browser_command(giac::html_vtt.front());
