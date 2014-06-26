@@ -164,7 +164,7 @@ CasManager::CasManager(MainWindow* main){
     giac::read_env(context,true);
     giac::secure_run=false; // enable disk acces for write()
     giac::protected_read_config(context,false);// otherwise approx(pi,5) gave a _VECT instead of a DOUBLE
-    giac::set_language(giac::language(context),context);
+    giac::set_language(Config::giaclanguage,context);
 
     monitor=new MonitorThread(context);
     stopThread=new StopThread(context);
