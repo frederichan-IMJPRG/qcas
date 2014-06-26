@@ -20,8 +20,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include "CasManager.h"
-#include "giac/giac.h"
-#include "global.h"
+#include <giac/giac.h>
+#include <giac/global.h>
 //#include "EvaluationThread.h"
 #include "gui/FormalLineWidgets.h"
 #include "gui/qtmmlwidget.h"

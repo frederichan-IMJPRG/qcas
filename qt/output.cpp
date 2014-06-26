@@ -47,7 +47,7 @@
 #include "config.h"
 #include "gui/qtmmlwidget.h"
 #include "output.h"
-#include "vecteur.h"
+#include <giac/vecteur.h>
 #include "MainWindow.h"
 #include "gui/plotfunctiondialog.h"
 using namespace giac;

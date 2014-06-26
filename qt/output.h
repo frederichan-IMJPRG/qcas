@@ -18,7 +18,7 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 #include "geometry.h"
-#include "giac/gen.h"
+#include <giac/gen.h>
 #include <QWidget>
 #include <QDialog>
 #include <QVector>

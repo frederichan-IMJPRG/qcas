@@ -21,8 +21,7 @@ QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
 DEPENDPATH += . \
     qt 
  INCLUDEPATH += . \
-    qt \
-    giac 
+    qt
 win32{
     CONFIG+=rtti
     QMAKE_CXXFLAGS+=-D__MINGW_H
@@ -51,75 +50,6 @@ HEADERS += qt/output.h \
     qt/gui/FormalLineWidgets.h \
     qt/gui/FormalLine.h \
     qt/gui/CentralTabWidget.h \
-#Header for giac
-           giac/alg_ext.h \
-           giac/cocoa.h \
-           giac/config.h \
-           giac/csturm.h \
-           giac/derive.h \
-           giac/desolve.h \
-           giac/dispatch.h \
-           giac/ezgcd.h \
-           giac/first.h \
-           giac/fraction.h \
-           giac/gauss.h \
-           giac/gausspol.h \
-           giac/gen.h \
-           giac/giac.h \
-           giac/giacintl.h \
-           giac/giacPCH.h \
-           giac/global.h \
-           giac/gmp_replacements.h \
-           giac/help.h \
-           giac/identificateur.h \
-           giac/ifactor.h \
-           giac/index.h \
-           giac/input_lexer.h \
-           giac/input_parser.h \
-           giac/intg.h \
-           giac/intgab.h \
-           giac/isom.h \
-           giac/lexer.h \
-           giac/lexer_tab_int.h \
-           giac/lin.h \
-           giac/maple.h \
-           giac/mathml.h \
-           giac/misc.h \
-           giac/modfactor.h \
-           giac/modpoly.h \
-           giac/monomial.h \
-           giac/moyal.h \
-           giac/pari.h \
-           giac/path.h \
-           giac/permu.h \
-           giac/plot.h \
-           giac/plot3d.h \
-           giac/poly.h \
-           giac/prog.h \
-           giac/quater.h \
-           giac/risch.h \
-           giac/rpn.h \
-           giac/series.h \
-           giac/solve.h \
-           giac/static.h \
-           giac/static_extern.h \
-           giac/static_help.h \
-           giac/static_lexer.h \
-           giac/static_lexer_.h \
-           giac/subst.h \
-           giac/sym2poly.h \
-           giac/symbolic.h \
-           giac/tex.h \
-           giac/threaded.h \
-           giac/ti89.h \
-           giac/tinymt32.h \
-           giac/tinymt32_license.h \
-           giac/TmpFGLM.H \
-           giac/TmpLESystemSolver.H \
-           giac/unary.h \
-           giac/usual.h \
-           giac/vecteur.h \
-           giac/vector.h \
     qt/gui/prefdialog.h \
     qt/gui/plotfunctiondialog.h \
     pthread-win32/semaphore.h \

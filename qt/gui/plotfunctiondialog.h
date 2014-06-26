@@ -18,7 +18,7 @@
 
 #ifndef PLOTFUNCTIONDIALOG_H
 #define PLOTFUNCTIONDIALOG_H
-#include "gen.h"
+#include <giac/gen.h>
 
 #include <QDialog>
 class QLineEdit;

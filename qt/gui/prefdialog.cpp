@@ -29,8 +29,8 @@
 #include <QGroupBox>
 #include "../MainWindow.h"
 #include "prefdialog.h"
-#include "global.h"
-#include "plot.h"
+#include <giac/global.h>
+#include <giac/plot.h>
 #include "config.h"
 #include <QDebug>
 

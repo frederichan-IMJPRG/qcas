@@ -21,7 +21,7 @@
 #include <QMainWindow>
 #include <ui_MainWindow.h>
 #include <QGroupBox>
-#include "global.h"
+#include <giac/global.h>
 class QAction;
 class QListWidget;
 class QStackedWidget;

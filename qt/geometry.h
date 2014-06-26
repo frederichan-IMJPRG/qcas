@@ -20,8 +20,8 @@
 #include <QVector>
 #include <QColor>
 #include <QPainterPath>
-#include "../giac/gen.h"
-#include "tex.h"
+#include <giac/gen.h>
+#include <giac/tex.h>
 #include <QDomElement>
 class QPainter;
 class Canvas2D;
