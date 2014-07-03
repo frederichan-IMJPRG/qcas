@@ -23,6 +23,7 @@ DEPENDPATH += . \
  INCLUDEPATH += . \
     qt
 win32{
+    RC_FILE=qcas.rc
     CONFIG+=rtti
     QMAKE_CXXFLAGS+=-D__MINGW_H
     QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
@@ -222,6 +223,5 @@ OTHER_FILES += \
     android/res/values-es/strings.xml
 RESOURCES += qt/qcas.qrc
 TRANSLATIONS = qt/lang/qcas_en.ts qt/lang/qcas_es.ts qt/lang/qcas_el.ts qt/lang/qcas_zh.ts
-FORMS=MainWindow.ui
-RC_FILE = qcas.rc
+FORMS=qt/MainWindow.ui
 
