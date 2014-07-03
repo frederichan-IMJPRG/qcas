@@ -1,6 +1,11 @@
 # #####################################################################
 # build of qcas against  libgiac
 # #####################################################################
+# PATH for my libgiac on os X in macports
+#
+INCLUDEPATH+=/Applications/usr/include
+LIBS+=-L/Applications/usr/64/local/lib -L/Applications/usr/lib
+#
 QT += core \
      gui \
      xml \
@@ -10,7 +15,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = qcas
 TEMPLATE = app
-QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -Fno-strict-aliasing -Wno-unused-parameter
 QMAKE_CFLAGS_RELEASE += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
 
 QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
@@ -34,17 +39,7 @@ win32{
     win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
 }
 unix{
-    LIBS += -ldl -lgiac -lgmp
-}
-macx{
-    LIBS += -lintl
-    # path to giac and gmp libraries/headers 
-    LIBS+=-L/opt/local/lib
-    INCLUDEPATH+=/opt/local/include
-    #with libgiac from the xcas installer
-    #INCLUDEPATH+=/Applications/usr/include
-    #LIBS+=-L/Applications/usr/64/local/lib -L/Applications/usr/lib
-#
+    LIBS += -ldl -lgiac -lgmp -lintl
 }
 
 
