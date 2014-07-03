@@ -52,14 +52,21 @@
 #include "gui/plotfunctiondialog.h"
 using namespace giac;
 
-
+#if QT_VERSION < 0x050000
 IconSize::IconSize(QWindowsStyle *parent) : QWindowsStyle()
+#else
+IconSize::IconSize(QProxyStyle *parent) : QProxyStyle()
+#endif
    {
    Q_UNUSED (parent);
    }
 
 int IconSize::pixelMetric(PixelMetric metric, const QStyleOption * option, const QWidget * widget)const{
+#if QT_VERSION < 0x050000
    int s = QWindowsStyle::pixelMetric(metric, option, widget);
+#else
+   int s = QProxyStyle::pixelMetric(metric, option, widget);
+#endif
    if (metric == QStyle::PM_SmallIconSize) {
        s = 32;
    }
@@ -222,8 +229,9 @@ void FormulaWidget::toXML(QDomElement & top){
 void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     context=c;
     formula=g;
-
+#if QT_VERSION < 0x050000
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
+#endif
     QString m("<math mode=\"display\">\n");
     if (giac::taille(formula,6000)>6000){
         m.append("<mtext> Done </mtext></math>");
@@ -3173,7 +3181,11 @@ void Canvas2D::displaySource(){
 //}
 void Canvas2D::updatePixmap(const bool &compute){
     pixmap=QPixmap(size());
+#if QT_VERSION < 0x050000
     pixmap.fill(this,0,0);
+#else
+    pixmap.fill(Qt::white);
+#endif
     QPainter painter(&pixmap);    
     painter.setRenderHint(QPainter::Antialiasing,true);
     painter.setClipRect(20,20,width()-40,height()-40);
@@ -3501,7 +3513,7 @@ void Canvas2D::incrementVariable(QString & var){
     else if (c=='h'&&var.length()==1) var="j";
     // letter e can't label a variable, it stands for function exp
     else if  (c=='d'&&var.length()==1) {var="f";}
-    else var[idec]=QChar(c.toAscii()+1);
+    else var[idec]=QChar(c.toLatin1()+1);
 }
 
 bool Canvas2D::checkUnderMouse(QList<MyItem*>* v, const QPointF & p){
@@ -5073,7 +5085,11 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                     if (currentActionTool==PLOT_BEZIER){
                         addNewBezierControlPoint();
                     }
+#if QT_VERSION < 0x050000
                     else if (currentActionTool==SINGLEPT) addNewPointElement(e->posF());
+#else
+                    else if (currentActionTool==SINGLEPT) addNewPointElement(e->localPos());
+#endif
                 }
 
 
@@ -5082,7 +5098,11 @@ void Canvas2D::mouseReleaseEvent(QMouseEvent *e){
                 }
                 if (isMoving) {
                     isMoving=false;
+#if QT_VERSION < 0x050000
                     undoStack->push(new MoveObjectCommand(focusOwner->getLevel(),startSel,e->posF(),this));
+#else
+		    undoStack->push(new MoveObjectCommand(focusOwner->getLevel(),startSel,e->localPos(),this));
+#endif
                 }
 
 
@@ -5166,8 +5186,11 @@ void Canvas2D::mouseMoveEvent(QMouseEvent *e){
         return;
     }
     selectionRight=false;
-
+#if QT_VERSION < 0x050000
     QPointF mousePos(e->posF());
+#else
+    QPointF mousePos(e->localPos());
+#endif
     // try to move and object
     if (parent->isInteractive()&&focusOwner!=0&& selectionLeft&&(currentActionTool==SELECT)){
 

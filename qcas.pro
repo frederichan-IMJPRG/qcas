@@ -5,6 +5,9 @@ QT += core \
      gui \
      xml \
      svg
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TARGET = qcas
 TEMPLATE = app
 QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter

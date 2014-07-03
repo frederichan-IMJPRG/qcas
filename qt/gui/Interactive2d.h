@@ -19,7 +19,11 @@
 #define INTERACTIVE2D_H
 #include <QObject>
 #include <QStyle>
-#include <QWindowsStyle>
+#if QT_VERSION < 0x050000
+    #include <QWindowsStyle>
+#else
+    #include <QProxyStyle>
+#endif
 #include "../output.h"
 #include <QWidget>
 #include "gui/CentralTabWidget.h"

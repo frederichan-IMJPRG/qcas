@@ -5477,7 +5477,11 @@ void QtMmlWidget::paintEvent(QPaintEvent *e)
     QFrame::paintEvent(e);
     QPainter p(this);
     if (e->rect().intersects(contentsRect()))
+#if QT_VERSION < 0x050000
         p.setClipRegion(e->region().intersect(contentsRect()));
+#else
+        p.setClipRegion(e->region().intersected(contentsRect()));
+#endif
 
     QSize s = m_doc->size();
     int x = (width() - s.width())/2;

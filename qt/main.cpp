@@ -26,7 +26,9 @@ int main(int argc, char * argv []){
     QApplication app(argc, argv);
     setlocale(LC_NUMERIC,"POSIX");
 
+#if QT_VERSION < 0x050000
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
 
     MainWindow win;
 

@@ -28,7 +28,11 @@
 #include <QScrollArea>
 #include <QHash>
 #include <QGroupBox>
-#include <QWindowsStyle>
+#if QT_VERSION < 0x050000
+    #include <QWindowsStyle>
+#else
+    #include <QProxyStyle>
+#endif
 #include <QTabWidget>
 #include <QList>
 #include <QPoint>
@@ -67,12 +71,19 @@ class LegendPanel;
 class AlphaFillPanel;
 class CursorPanel;
 
-
+#if QT_VERSION < 0x050000
 class IconSize : public QWindowsStyle
+#else
+class IconSize : public QProxyStyle
+#endif
  {
    Q_OBJECT
 public:
+#if QT_VERSION < 0x050000
     explicit IconSize(QWindowsStyle *parent = 0);
+#else
+    explicit IconSize(QProxyStyle *parent = 0);
+#endif
     int pixelMetric(PixelMetric metric, const QStyleOption * option = 0, const QWidget * widget = 0 ) const;
 signals:
 public slots:
