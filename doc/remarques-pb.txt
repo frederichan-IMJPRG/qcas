@@ -1,13 +1,8 @@
 geo2D inter:
 
-1)suppression des variables definies hors geo2d interact mais affichees dans la feuille?
-DONE  2) element(-5..5) ne marche pas pour les ses enfants mains (-5..5,0,0.1) oui. (Probleme de pas a 0?)
+
 3) les ellipses n'ont pas de bouton rempli
-4) open new file n'a pas du tout liberer car un quitter fait des 
- ***   bug in PARI/GP (Segmentation Fault), please report
-  ***   bug in PARI/GP (Segmentation Fault), please report
-  ***   bug in PARI/GP (Segmentation Fault), please report
-  ***   Erreur de segmentation (core dumped)
+
 5) dans sendtext geo2d un parent du type:
 xt:=1+t
 
@@ -35,3 +30,8 @@ puis point(xt(t))
 plotinequation(x^2-y>0,[x=0..4,y=0..4],xstep=0.5,ystep=0.1)
 
 9) Pb avec les plots et grands reels. Ex: cercle(0,10**100)
+
+
+
+10) mathml: rootof(x^2+x+1):=j   alors ca n'affiche pas j mais laisse des rootof.
+    mathml: les poly sous forme de liste n'affichent pas poly

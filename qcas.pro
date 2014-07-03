@@ -223,4 +223,5 @@ OTHER_FILES += \
 RESOURCES += qt/qcas.qrc
 TRANSLATIONS = qt/lang/qcas_en.ts qt/lang/qcas_es.ts qt/lang/qcas_el.ts qt/lang/qcas_zh.ts
 FORMS=MainWindow.ui
+RC_FILE = qcas.rc
 
