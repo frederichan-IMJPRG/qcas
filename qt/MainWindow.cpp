@@ -745,9 +745,21 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      f->goToNextLine();
 	    }
 	    if((xcasline.contains("N4xcas7EditeurE"))||(xcasline.contains("Xcas_Text_EditorE"))){
-	      int nbcar=(dataIn.readLine()).remove(",").toInt();
-	      if(nbcar>0){
-		xcasline=dataIn.read(nbcar);
+          int nbytes=(dataIn.readLine()).remove(",").toInt();//number of octets of the string
+          if(nbytes>0){
+          xcasline=dataIn.read(nbytes);
+          /*
+            nbytes is the number of octets of the string in the text editor.
+            but we have read nbytes characters. So if some are non 8bits we have read
+            too many characters: diff
+            so we correct this.
+            */
+          QByteArray byteline=xcasline.toUtf8();
+          int diff=byteline.size()-nbytes;
+          if(diff>0){
+              xcasline=xcasline.left(nbytes-diff);
+              dataIn.seek(dataIn.pos()-diff);
+          }
 		if(fltktag=="Geo2D"){
           //g2d->sendText(xcasline);
             if (! xcasline.contains(QRegExp(";\\s*$"))){ xcasline=xcasline.append(";"); }
