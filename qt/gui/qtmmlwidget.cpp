@@ -1,4 +1,7 @@
+// !!!!!     Modified for Qcas.       !!!!!
+//     For the original version of this file see src/qtmmlwidget.cpp 
 /****************************************************************************
+**
 ** 
 ** Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.

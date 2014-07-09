@@ -1,5 +1,7 @@
 
-/*  Copyright (C) 2001 Le Coq Loïc
+/*  Copyright (C) 2012 Le Coq Loïc
+*    Initial version 2012 by Le Coq Loïc
+*    Later modifications by Han Frederic
 *    This file is part of QCAS.
 *
 *    QCAS is free software: you can redistribute it and/or modify

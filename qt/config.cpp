@@ -1,4 +1,6 @@
-/*  Copyright (C) 2001 Le Coq Loïc
+/*  Copyright (C) 2012 Le Coq Loïc
+*    Initial version 2012 by Le Coq Loïc
+*    Later modifications by Han Frederic
 *    This file is part of QCAS.
 *
 *    QCAS is free software: you can redistribute it and/or modify
@@ -30,7 +32,7 @@ int Config::mml_fontsize=14;//default mml size
 */
 QString Config::GeoVarPrefix="autoG2D\_"; //obsolete, trying to remove it.
 
-QString Config::QcasVersion="0.4.4";
+QString Config::QcasVersion="0.4.5";
 
 Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;
