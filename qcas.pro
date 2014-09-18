@@ -28,7 +28,7 @@ DEPENDPATH += . \
 win32{
     RC_FILE=qcas.rc
     CONFIG+=rtti
-    QMAKE_CXXFLAGS+=-D__MINGW_H
+    QMAKE_CXXFLAGS+=-D__MINGW_H -DGIAC_MPQS
     QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
     INCLUDEPATH+=pthread
     win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread

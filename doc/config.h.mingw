@@ -6,6 +6,7 @@
    */
 /* #undef CRAY_STACKSEG_END */
 #define __MINGW_H
+#define GIAC_MPQS
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 

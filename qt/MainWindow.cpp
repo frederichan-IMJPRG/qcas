@@ -159,6 +159,13 @@ MainWindow::MainWindow(int startingtabmode ){
     displayTimeAfterProcess=true;
     time=new QTime;
 
+    lastgiacmessage="";
+
+    history=new QStringList();
+
+    isevaluatingall=false;
+
+ 
     commandInfo=new CommandInfo;
     taskProperties.firstPrintMessage=true;
     createAction();
