@@ -23,18 +23,18 @@
 
 <ul>
    <li>Common way to store in a variable:<br>
-      <code>a:=1;</code><font size="-2"> ans also:</font> <code>a,b,c:=1,2,3;</code></li>
+      <code>a:=1;</code><font size="-2"> and also:</font> <code>a,b,c:=1,2,3;</code></li>
    <li>Compute without printing the answer <code>:;</code><br>
       <code>a:=2^10000:;</code></li>
    <li> <code>purge(a,b)</code> <font size="-1">(free the variables a and b)</font></li>
 </ul>
-<font size="-1" color="#4004A7"><em>Except the storing, the default programation syntax of giac/xcas is like the C language</em></font>
+<font size="-1" color="#4004A7"><em>In giac/xcas, except the storage syntax, the default syntax for functions, loops and tests is like in the C language</em></font>
 <!--        ----------------------FONCTIONS-------------------------------                       -->
 <h4><a name="Functions">Functions</a></h4>
       <ol>
 	<font size="-1"><em>
 	<li>In a program, variables that are not explicitely declared with the <a href="local"><code>local</code></a> instruction are  <u>global</u>.</li>
-	<li><u>local</u> variables must be initialised. So to une a formal symbol in a function, either use a non initialised global variable, or do as in example <code>rfact</code> below.</li>
+	<li><u>local</u> variables must be initialised. So to use a formal symbol in a function, either use a non initialised global variable, or do as in example <code>rfact</code> below.</li>
 	<li>Blocs of code are in <code>{  }</code>. One can use several lines in a same bloc.</li>
 	<li>A program always return the last evaluation. The <code>return</code> command is optional.</li>
 	<li>Please do not use <code>i</code> as a  variable name in loops because it is reserved for the complex number square root of -1.</li>
@@ -46,7 +46,7 @@
     <li><code>rfact(a,b,c):={<br>
         &nbsp; local d,r1,r2,x;<br>
         &nbsp; d:=b^2-4*a*c;<br>
-        &nbsp;  <a href="symbol">x:='x';//<font size="-2"><i>ou bien:</i> assume(x,symbol)</a></font><br>
+        &nbsp;  <a href="symbol">x:='x';//<font size="-2"><i>synonym:</i> assume(x,symbol)</a></font><br>
         &nbsp; if(d&lt;0){<br>
         &nbsp;&nbsp; return a*x^2+b*x+c;<br>
         &nbsp; }<br>
@@ -91,7 +91,7 @@
    </li>
 </ul>
 <!--      ---------------------Listes----------------    -->
-<h4><a name="List">Sequences <code>( , , )</code> Lists <code>[ , , ] and Matrices</code></a></h4>
+<h4><a name="Lists">Sequences <code>( , , )</code> Lists <code>[ , , ] and Matrices</code></a></h4>
 <font size="-1"><font color="#4004A7"<em>Sequences and lists are indexed <u>from 0</u> (except in mode maple). Use brackets to get an element:</em>
    <center><code>a[0]</code>  is the first element of the  list or sequence <code>a</code></center></font>
 <br>
@@ -131,9 +131,9 @@
         </ul>
 
 </font>
-<h4><a name="advanced">Notions avancées</a></h4>
+<h4><a name="Advanced">Advanced Notions</a></h4>
    <font size="-1">
-   <ul><li><em>Affectation with <code>:=</code> is by values. With it, data is copied even with  big lists or matrices.</em></li>
+   <ul><li><em>Storing with <code>:=</code> is by values. With it, data is copied even with  big lists or matrices.</em></li>
    <i>To be more efficient, there is also an affectation by memory address:<i>
      <li><font color="#4004A7"><code>=&lt;</code></font> is the <u>affectation by reference</u>:<br>
      Ex: <code>a:=[1,2,3];b=&lt;a;b[1]=&lt;0;</code><br> now <code>a</code> is also aussi <code>[1,0,3]</code>. On the other side, if we had done <code>b[1]:=0</code>, a new list  <code>b</code> would have been created and  <code>a</code> wouldn't have changed</li>

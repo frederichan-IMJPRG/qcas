@@ -28,13 +28,13 @@
       <code>a:=2^10000:;</code></li>
    <li> <code>purge(a,b)</code> <font size="-1">(free the variables a and b)</font></li>
 </ul>
-<font size="-1" color="#4004A7"><em>Except the storing, the default programation syntax of giac/xcas is like the C language</em></font>
+<font size="-1" color="#4004A7"><em>In giac/xcas, except the storage syntax, the default syntax for functions, loops and tests is like in the C language</em></font>
 <!--        ----------------------FONCTIONS-------------------------------                       -->
 <h4><a name="Functions">Functions</a></h4>
       <ol>
 	<font size="-1"><em>
 	<li>In a program, variables that are not explicitely declared with the <a href="local"><code>local</code></a> instruction are  <u>global</u>.</li>
-	<li><u>local</u> variables must be initialised. So to une a formal symbol in a function, either use a non initialised global variable, or do as in example <code>rfact</code> below.</li>
+	<li><u>local</u> variables must be initialised. So to use a formal symbol in a function, either use a non initialised global variable, or do as in example <code>rfact</code> below.</li>
 	<li>Blocs of code are in <code>{  }</code>. One can use several lines in a same bloc.</li>
 	<li>A program always return the last evaluation. The <code>return</code> command is optional.</li>
 	<li>Please do not use <code>i</code> as a  variable name in loops because it is reserved for the complex number square root of -1.</li>
@@ -91,7 +91,7 @@
    </li>
 </ul>
 <!--      ---------------------Listes----------------    -->
-<h4><a name="List">Sequences <code>( , , )</code> Lists <code>[ , , ] and Matrices</code></a></h4>
+<h4><a name="Lists">Sequences <code>( , , )</code> Lists <code>[ , , ] and Matrices</code></a></h4>
 <font size="-1"><font color="#4004A7"<em>Sequences and lists are indexed <u>from 0</u> (except in mode maple). Use brackets to get an element:</em>
    <center><code>a[0]</code>  is the first element of the  list or sequence <code>a</code></center></font>
 <br>
@@ -131,7 +131,7 @@
         </ul>
 
 </font>
-<h4><a name="advanced">Advanced Notions</a></h4>
+<h4><a name="Advanced">Advanced Notions</a></h4>
    <font size="-1">
    <ul><li><em>Storing with <code>:=</code> is by values. With it, data is copied even with  big lists or matrices.</em></li>
    <i>To be more efficient, there is also an affectation by memory address:<i>
