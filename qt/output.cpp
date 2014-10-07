@@ -2656,11 +2656,7 @@ void Canvas2D::createScene(const giac::gen & g){
 //    autoscaleminmax(vz,zmin,zmax);
 
 
-    setXYUnit();
-    if (ortho) {
-        make_ortho();
-        ortho=true;
-    }
+     setXYUnit();
 
      double step=(yAxisParam.max-yAxisParam.min)/8;
      double tenPower=pow(10,floor(log10(step)));
@@ -2681,11 +2677,11 @@ void Canvas2D::createScene(const giac::gen & g){
      if (gridParam.isCartesian) gridParam.x=step;
      else gridParam.r=std::max(step,gridParam.r);
 
+     if (ortho) {
+         make_ortho(); //must be after the previous settings for things like circle(0,10**100)
+         ortho=true;
+     }
 
-/*    if (std::isnan(xunit)||std::isnan(yunit)|| (!std::isfinite(xunit)) || (!std::isfinite(yunit))){
-      xmin=-5;ymin=-5;xmax=5;ymax=5;
-       setXYUnit();
-    }*/
     QList<MyItem*> v;
     addToVector(g,v);
     addToScene(v);
