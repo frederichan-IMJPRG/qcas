@@ -54,10 +54,10 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/giac.
-	mkdir $(CURDIR)//debian/qcas/usr
-	mkdir $(CURDIR)//debian/qcas/usr/bin
-	cp -f $(CURDIR)/qcas $(CURDIR)/debian/qcas/usr/bin/
-
+	mkdir -p $(CURDIR)//debian/qcas/usr/bin
+	mkdir -p $(CURDIR)/debian/qcas/usr/share/applications
+	install -t $(CURDIR)/debian/qcas/usr/bin $(CURDIR)/qcas 
+	install -t $(CURDIR)/debian/qcas/usr/share/applications $(CURDIR)/debian/qcas.desktop 
 
 # Build architecture-independent files here.
 binary-indep: build install

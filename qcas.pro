@@ -34,7 +34,7 @@ win32{
     win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
 }
 unix{
-    LIBS += -ldl -lgiac -lgmp
+    LIBS += -ldl -lgiac -lao -lgmp
 }
 macx{
     LIBS += -lintl
