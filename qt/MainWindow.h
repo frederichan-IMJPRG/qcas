@@ -89,6 +89,7 @@ class MainWindow :public QMainWindow {
     bool appendFile(const QString &fileName);
     bool autoSave();
     void cleanautoSaveFiles();
+    bool askforXcasarchive();
     void loadgiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     void loadinteractivegiacgen( const giac::gen & g, giac::context * ct); //cf giacpy
     QStringList *history;

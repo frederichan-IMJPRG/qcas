@@ -853,6 +853,29 @@ bool MainWindow::loadGiacFile(const QString &fileName){
     return true;
 }
 
+bool MainWindow::askforXcasarchive(){
+    if(!curFile.isEmpty()){
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Archive Xcas");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Enregistrer une copie pour Xcas avant de quitter?"));
+        msgBox.setInformativeText(tr("Il est conseillé de garder un fichier dans un format lisible par Xcas (.xws)"));
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        int r = msgBox.exec();
+        if (r==QMessageBox::Save){
+            return MainWindow::saveToGiacFile(curFile.append("toxcas.xws"));
+        }
+        else if (r==QMessageBox::Cancel){
+            return true;
+        }
+    }
+    else{
+        return true;
+    }
+
+}
+
 
 //for giacpy
 void MainWindow::loadgiacgen(const giac::gen & g, giac::context * ct){
@@ -1432,6 +1455,7 @@ void MainWindow::closeEvent(QCloseEvent *event){
     if (okToContinue()){
         writeSettings();
         cleanautoSaveFiles();
+        askforXcasarchive();
         event->accept();
     }
     else{
