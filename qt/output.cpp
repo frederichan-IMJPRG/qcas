@@ -2649,9 +2649,9 @@ void Canvas2D::createScene(const giac::gen & g){
 
 
 
-    giac::autoscaleminmax(vx,xAxisParam.min,xAxisParam.max,true);
+    giac::autoscaleminmax(vx,xAxisParam.min,xAxisParam.max,false);
 
-    giac::autoscaleminmax(vy,yAxisParam.min,yAxisParam.max,true);
+    giac::autoscaleminmax(vy,yAxisParam.min,yAxisParam.max,false);
 //    qDebug()<<xmin<<xmax<<ymin<<ymax;
 //    autoscaleminmax(vz,zmin,zmax);
 
