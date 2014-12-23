@@ -32,7 +32,7 @@ int Config::mml_fontsize=14;//default mml size
 */
 QString Config::GeoVarPrefix="autoG2D\_"; //obsolete, trying to remove it.
 
-QString Config::QcasVersion="0.4.6";
+QString Config::QcasVersion="0.4.6"; // 23 Dec 2014
 
 Config::LANGUAGES Config::language=Config::FRENCH;
 int Config::giaclanguage=1;
