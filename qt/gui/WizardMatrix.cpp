@@ -56,12 +56,12 @@ void WizardMatrix::createGui(){
 
     rowSpin=new QSpinBox(this);
     rowSpin->setMaximum(10);
-    rowSpin->setMinimum(2);
+    rowSpin->setMinimum(1);
     rowSpin->setValue(2);
 
     columnSpin=new QSpinBox(this);
     columnSpin->setMaximum(10);
-    columnSpin->setMinimum(2);
+    columnSpin->setMinimum(1);
     columnSpin->setValue(2);
 
     QGridLayout *grid=new QGridLayout;
