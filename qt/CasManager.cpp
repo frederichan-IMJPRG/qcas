@@ -222,7 +222,10 @@ CasManager::warning CasManager::initExpression(const QString *str){
         }
 
     }
-
+    // fred input/output/inputform
+    if(expression.is_symb_of_sommet(giac::at_input)){
+        qDebug()<<"input form found";
+    }
 
     return CasManager::No_warning;
 }
