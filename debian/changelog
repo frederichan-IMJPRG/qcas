@@ -1,3 +1,9 @@
+qcas (0.4.7) unstable; urgency=low
+
+  * upstream fixes for newer giac doc
+
+ -- Frederic Han  <frederic.han@imj-prg.fr>  Tue, 29 May 2015 17:29:00 +0100
+
 qcas (0.4.6) unstable; urgency=low
 
   * source package automatically created by f.han
