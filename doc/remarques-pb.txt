@@ -35,3 +35,5 @@ plotinequation(x^2-y>0,[x=0..4,y=0..4],xstep=0.5,ystep=0.1)
 
 10) mathml: rootof(x^2+x+1):=j   alors ca n'affiche pas j mais laisse des rootof.
     mathml: les poly sous forme de liste n'affichent pas poly
+
+11) mathml: [seq(seq(k*j,j=0..3),k=4..7)]  affiche une matrice.

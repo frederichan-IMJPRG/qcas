@@ -1468,6 +1468,7 @@ Canvas2D::Canvas2D(GraphWidget *g2d, giac::context * c){
 
     if(parent->isInteractive()){
         localcontext=new giac::context();
+        giac::approx_mode(true,localcontext);
         context=localcontext;
         externalcontext=c;
     }
