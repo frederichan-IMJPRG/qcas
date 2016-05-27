@@ -54,6 +54,7 @@
 #include "gui/plotfunctiondialog.h"
 using namespace giac;
 
+
 #if QT_VERSION < 0x050000
 IconSize::IconSize(QWindowsStyle *parent) : QWindowsStyle()
 #else
@@ -241,6 +242,7 @@ void FormulaWidget::updateFormula(const gen & g,giac::context* c){
     else {
         try{
           m.append(QString::fromStdString(giac::gen2mathml(formula,context)));
+          if(formula.type<5){m=m.remove("\\<br>");}
 	}
         catch(std::exception& e) {
           qDebug() << "Exception thrown:" << e.what();
@@ -3470,9 +3472,11 @@ void Canvas2D::findFreeVar(QString & var){
   QString vpostfix=var.right(var.length()-(Config::GeoVarPrefix).length());*/
   QString vpostfix=var;
   gen g(var.toStdString(),context);
-  QString lvar=QString::fromStdString(giac::print(giac::_VARS(1,context),context));
-  lvar=lvar.mid(1,lvar.length()-2);//we remove the brackets [  ]
+  //change in giac output?? make the varlist buggy
+  //QString lvar=QString::fromStdString(giac::print(giac::_VARS(1,context),context));
+  QString lvar=QString::fromStdString(giac::print(giac::_VARS(0,context),context));
   //qDebug()<<lvar;
+  lvar=lvar.mid(1,lvar.length()-2);//we remove the brackets [  ]
   QStringList lvarlist=lvar.split(",");
   //Warning it could be very long to test if a variable is not empty by evalutating it. 
   //with the following: ((eval(g,1,context)!=g) 

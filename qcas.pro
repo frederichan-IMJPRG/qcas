@@ -16,11 +16,11 @@ QMAKE_CFLAGS_RELEASE += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parame
 QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
+    -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
 QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
+    -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
 DEPENDPATH += . \
     qt 
  INCLUDEPATH += . \

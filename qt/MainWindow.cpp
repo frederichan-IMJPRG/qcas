@@ -73,11 +73,20 @@
 
   **/
 
+#if QT_VERSION < 0x050000
 #ifdef Q_WS_MACX
 #define STRCTRL "Cmd"
 #else
 #define STRCTRL "Ctrl"
 #endif
+#else
+#ifdef Q_OS_MACX
+#define STRCTRL "Cmd"
+#else
+#define STRCTRL "Ctrl"
+#endif
+#endif
+
 
 MainWindow::MainWindow(){
 
@@ -356,8 +365,9 @@ void MainWindow::retranslateAction(){
     //newAction->setShortcut(tr("Ctrl+N"));
     newAction->setStatusTip(tr("Créer un nouvel espace de travail"));
 
-    openAction->setText(tr("&Ouvrir..."));
+    openAction->setText(tr("Ouvrir..."));
     openAction->setShortcut(tr("Ctrl+O"));
+    //openAction->setShortcut(QKeySequence(QKeySequence::Open));
     openAction->setStatusTip(tr("Ouvrir un nouveau fichier"));
 
     appendfAction->setText(tr("Ajouter un Fichier"));
@@ -1987,13 +1997,18 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
                 if (i==1) command=list.at(1);
                 else if (i>1) synonym.append(list.at(i));
             }
+            kwdsearch=command; // on sauve le nom de la commande
             do{
                 line=stream.readLine();
                 if (line.startsWith("#")) break;
                 if (line.startsWith("0")){
                     list=line.split(" ",QString::SkipEmptyParts);
                     if (list.size()>1){
-                        command.append("(").append(list.at(1)).append(")");
+                        command.append("(");
+                        for(int i=1;i<list.size();++i){
+                            command.append(list.at(i));
+                        }
+                        command.append(")");
                     }
                 }
 		//else if (line.startsWith("1")){
@@ -2024,7 +2039,10 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         line.append("<hr>");
         line.append(minimaltoHtml(description));
         //
-        kwdsearch="?"+command.split(QRegExp("[\s()]")).at(0);
+        qDebug()<<command<<"fin de commande\n";
+        //kwdsearch="?"+command.split(QRegExp("[\s(]")).at(0);
+        kwdsearch.prepend("?");
+        qDebug()<<kwdsearch;
         if(kwdsearch !="?"){
         line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a>"));
         //

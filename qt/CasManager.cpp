@@ -368,7 +368,10 @@ giac::gen CasManager::getAnswer() const{
 }
 
 QString CasManager::gen2mathml(const giac::gen &result){
-    return QString(giac::gen2mathml(result,context).c_str());
+    QString resultmathml=QString(giac::gen2mathml(result,context).c_str());
+    //
+    if(result.type < 5){resultmathml=resultmathml.remove("\\<br>");}
+    return resultmathml;
 }
 void CasManager::killThread(){
 
