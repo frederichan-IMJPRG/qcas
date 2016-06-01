@@ -71,7 +71,7 @@ void WizardCatalog::retranslate(){
     findAction->setText(tr("Rechercher"));
     findAction->setShortcut(tr("Entrée"));
     findAction->setStatusTip(tr("Recherche la présence du mot-clé dans la description des différentes commandes"));
-   
+
     previousAction->setText(tr("&Précédent"));
     previousAction->setShortcut(tr("Alt+Gauche"));
     previousAction->setStatusTip(tr("Page précédente"));
@@ -182,6 +182,11 @@ void WizardCatalog::newPage(QUrl url){
         if (keyWord.startsWith("?")){
             if(keyWord.startsWith("??")){
                 keyWord.remove(0,2);
+                //convertir les {} et les \ car ds QT5 ils sont convertis par toString
+                keyWord.replace("%7B","{");
+                keyWord.replace("%7D","}");
+                keyWord.replace("%5C","\\");
+                //qDebug()<<keyWord;
                 QRegExp titre=QRegExp(keyWord);
                 //search the link from the pattern on the fly in index.html
                 zone->setSource(QUrl("index.html"));

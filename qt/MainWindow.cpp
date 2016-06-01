@@ -358,6 +358,11 @@ void MainWindow::createAction(){
 
 
     retranslateAction();
+    //QT5.2 Problem: the keyboard shortcuts from the Fichier menu are broken.
+    addAction(openAction);
+    addAction(saveAction);
+    addAction(exitAction);
+    //end QT5.2 Fix
 }
 
 void MainWindow::retranslateAction(){

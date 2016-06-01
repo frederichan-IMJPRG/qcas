@@ -40,5 +40,5 @@ plotinequation(x^2-y>0,[x=0..4,y=0..4],xstep=0.5,ystep=0.1)
 
 12) mathml: les reels avec beaucoup de chiffres n'affichent plus rien avec giac recents.
 
-13) Qt5: verifier les racourcis clavier: Ctrl+O ...
-    PB avec la doc html
+13) FAIT: Qt5: verifier les racourcis clavier: Ctrl+O ...
+    FAIT: PB avec la doc html
