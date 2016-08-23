@@ -180,7 +180,7 @@ void WizardCatalog::newPage(QUrl url){
         keyWord.replace("%7B","{");
         keyWord.replace("%7D","}");
         keyWord.replace("%5C","\\");
-        keyWord.replace("%5E","\^");
+        keyWord.replace("%5E","^");
         mainWindow->sendText(keyWord);
     }
     else{
@@ -191,7 +191,7 @@ void WizardCatalog::newPage(QUrl url){
                 keyWord.replace("%7B","{");
                 keyWord.replace("%7D","}");
                 keyWord.replace("%5C","\\");
-                keyWord.replace("%5E","\^");
+                keyWord.replace("%5E","^");
                 //qDebug()<<keyWord;
                 QRegExp titre=QRegExp(keyWord);
                 //search the link from the pattern on the fly in index.html
