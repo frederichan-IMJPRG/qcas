@@ -182,10 +182,11 @@ void WizardCatalog::newPage(QUrl url){
         if (keyWord.startsWith("?")){
             if(keyWord.startsWith("??")){
                 keyWord.remove(0,2);
-                //convertir les {} et les \ car ds QT5 ils sont convertis par toString
+                //convertir les {} et les \ et les ^ car ds QT5 ils sont convertis par toString
                 keyWord.replace("%7B","{");
                 keyWord.replace("%7D","}");
                 keyWord.replace("%5C","\\");
+                keyWord.replace("%5E","\^");
                 //qDebug()<<keyWord;
                 QRegExp titre=QRegExp(keyWord);
                 //search the link from the pattern on the fly in index.html
