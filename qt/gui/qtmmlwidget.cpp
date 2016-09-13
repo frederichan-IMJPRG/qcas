@@ -4705,9 +4705,12 @@ void MmlMtableNode::layoutSymbol()
     QString s;
     QList<int> &col_widths = m_cell_size_data.col_widths;
     for (i = 0; i < col_widths.count(); ++i) {
-	s += QString("[w=%1 %2%%]")
-		.arg(col_widths[i])
-		.arg(100*col_widths[i]/m_cell_size_data.colWidthSum());
+        // FH: avoid division by 0 (crash with empty cells: " ")
+        if(m_cell_size_data.colWidthSum()>0){
+            s += QString("[w=%1 %2%%]")
+                .arg(col_widths[i])
+                .arg(100*col_widths[i]/m_cell_size_data.colWidthSum());
+        }
     }
 //    qWarning(s);
 
