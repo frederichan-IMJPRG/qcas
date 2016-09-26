@@ -10,30 +10,38 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = qcas
 TEMPLATE = app
-QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
-QMAKE_CFLAGS_RELEASE += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_DEBUG += -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_RELEASE += -fno-strict-aliasing -Wno-unused-parameter
 
-QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
+QMAKE_CXXFLAGS_DEBUG += \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
     -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
-QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
+QMAKE_CXXFLAGS_RELEASE += \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
     -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
 DEPENDPATH += . \
     qt 
- INCLUDEPATH += . \
+INCLUDEPATH += . \
     qt
 win32{
     RC_FILE=qcas.rc
     CONFIG+=rtti
-    QMAKE_CXXFLAGS+=-D__MINGW_H -DGIAC_MPQS
-    QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
-    INCLUDEPATH+=pthread
-    win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
+    QMAKE_CXXFLAGS+=-D__MINGW_H -DGIAC_MPQS -UHAVE_CONFIG_H -DIN_GIAC  -fexceptions
+    win32:LIBS+=-lgiac -lgmp
+    # ce test ne marche qu avec QT5 ??
+    win32:contains(QMAKE_HOST.arch, i386):{
+        message("x86 build")
+   } else {
+        message("x86_64 build")
+        QMAKE_LFLAGS+=-L./win64/bin
+        INCLUDEPATH += ./win64/include
+   }
 }
+
 unix{
+#    QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
     LIBS += -ldl -lgiac  -lgmp
 }
 macx{
