@@ -110,13 +110,13 @@
 #define HAVE_GMP_H 1
 
 /* Define to 1 if you have the <gsl/gsl_blas.h> header file. */
-#define HAVE_GSL_GSL_BLAS_H 1
+//#define HAVE_GSL_GSL_BLAS_H 1
 
 /* Define to 1 if you have the <gsl/gsl_eigen.h> header file. */
-#define HAVE_GSL_GSL_EIGEN_H 1
+//#define HAVE_GSL_GSL_EIGEN_H 1
 
 /* Define if you have the iconv() function. */
-#define HAVE_ICONV 1
+//#define HAVE_ICONV 1
 
 /* Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>. */
 #define HAVE_INTMAX_T 1
@@ -159,7 +159,7 @@
 /* #undef HAVE_LIBFLVW */
 
 /* Define to 1 if you have the `fontconfig' library (-lfontconfig). */
-#define HAVE_LIBFONTCONFIG 1
+//#define HAVE_LIBFONTCONFIG 1
 
 /* Define to 1 if you have the `gc' library (-lgc). */
 /* #undef HAVE_LIBGC */
@@ -174,34 +174,34 @@
 #define HAVE_LIBGMP 1
 
 /* Define to 1 if you have the `gmpxx' library (-lgmpxx). */
-#define HAVE_LIBGMPXX 1
+//#define HAVE_LIBGMPXX 1
 
 /* Define to 1 if you have the `gsl' library (-lgsl). */
-#define HAVE_LIBGSL 1
+//#define HAVE_LIBGSL 1
 
 /* Define to 1 if you have the `gslcblas' library (-lgslcblas). */
-#define HAVE_LIBGSLCBLAS 1
+//#define HAVE_LIBGSLCBLAS 1
 
 /* Define to 1 if you have the `intl' library (-lintl). */
-#define HAVE_LIBINTL 1
+//#define HAVE_LIBINTL 1
 
 /* Define to 1 if you have the `intl.dll' library (-lintl.dll). */
 /* #undef HAVE_LIBINTL_DLL */
 
 /* Define to 1 if you have the `jpeg' library (-ljpeg). */
-#define HAVE_LIBJPEG 1
+//#define HAVE_LIBJPEG 1
 
 /* Define to 1 if you have the `lapack' library (-llapack). */
 /* #undef HAVE_LIBLAPACK */
 
 /* Define to 1 if you have the `m' library (-lm). */
-#define HAVE_LIBM 1
+//#define HAVE_LIBM 1
 
 /* Define to 1 if you have the `mpfi' library (-lmpfi). */
 /* #undef HAVE_LIBMPFI */
 
 /* Define to 1 if you have the `mpfr' library (-lmpfr). */
-#define HAVE_LIBMPFR 1
+//#define HAVE_LIBMPFR 1
 
 /* Define to 1 if you have the `ntl' library (-lntl). */
 /* #undef HAVE_LIBNTL */
@@ -210,13 +210,13 @@
 /* #undef HAVE_LIBPARI */
 
 /* Define to 1 if you have the `png' library (-lpng). */
-#define HAVE_LIBPNG 1
+//#define HAVE_LIBPNG 1
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
-#define HAVE_LIBREADLINE 1
+//#define HAVE_LIBREADLINE 1
 
 /* Define to 1 if you have the `rt' library (-lrt). */
 /* #undef HAVE_LIBRT */
@@ -237,7 +237,7 @@
 /* #undef HAVE_LIBXINERAMA */
 
 /* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
+//#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -267,7 +267,7 @@
 /* #undef HAVE_MPFI_H */
 
 /* Define to 1 if you have the <mpfr.h> header file. */
-#define HAVE_MPFR_H 1
+//#define HAVE_MPFR_H 1
 
 /* Define to 1 if you have the `mpfr_set_str_raw' function. */
 /* #undef HAVE_MPFR_SET_STR_RAW */
@@ -303,7 +303,7 @@
 /* #undef HAVE_PARI_PARI_H */
 
 /* Define to 1 if you have the <png.h> header file. */
-#define HAVE_PNG_H 1
+//#define HAVE_PNG_H 1
 
 /* Define if your printf() function supports format strings with positions. */
 /* #undef HAVE_POSIX_PRINTF */

@@ -597,6 +597,7 @@ bool MainWindow::loadFile(const QString &fileName){
       else
         return loadQcasFile(fileName);
       }
+      return;
 }
 
 bool MainWindow::appendFile(const QString &fileName){
@@ -608,6 +609,7 @@ bool MainWindow::appendFile(const QString &fileName){
       else
         return loadQcasFile(fileName);
       }
+      return;
 }
 
 bool MainWindow::loadQcasFile(const QString &fileName){

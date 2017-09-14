@@ -22,13 +22,13 @@ QMAKE_CXXFLAGS_RELEASE += \
     -Wno-unused-parameter \
     -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
 DEPENDPATH += . \
-    qt 
+    qt
 INCLUDEPATH += . \
     qt
 win32{
     RC_FILE=qcas.rc
     CONFIG+=rtti
-    QMAKE_CXXFLAGS+=-D__MINGW_H -DGIAC_MPQS -UHAVE_CONFIG_H -DIN_GIAC  -fexceptions
+    QMAKE_CXXFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 -D__MINGW_H -DGIAC_MPQS -UHAVE_CONFIG_H -DIN_GIAC  -fexceptions
     win32:LIBS+=-lgiac -lgmp
     # ce test ne marche qu avec QT5 ??
     win32:contains(QMAKE_HOST.arch, i386):{
@@ -37,6 +37,7 @@ win32{
         message("x86_64 build")
         QMAKE_LFLAGS+=-L./win64/bin
         INCLUDEPATH += ./win64/include
+
    }
 }
 
@@ -46,7 +47,7 @@ unix{
 }
 macx{
     LIBS += -lintl
-    # path to giac and gmp libraries/headers 
+    # path to giac and gmp libraries/headers
     LIBS+=-L/opt/local/lib
     INCLUDEPATH+=/opt/local/include
     #with libgiac from the xcas installer
@@ -245,4 +246,3 @@ OTHER_FILES += \
 RESOURCES += qt/qcas.qrc
 TRANSLATIONS = qt/lang/qcas_en.ts qt/lang/qcas_es.ts qt/lang/qcas_el.ts qt/lang/qcas_zh.ts
 FORMS=qt/MainWindow.ui
-

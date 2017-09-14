@@ -133,6 +133,10 @@ namespace giac {
   }
 #endif
   int gcd(int a,int b);
+  inline int smod_adjust(int r,int m){ // precondition -m<r<m
+    r += (unsigned(r)>>31)*m; // make positive
+    return r-(unsigned((m>>1)-r)>>31)*m;
+  }
   int smod(int a,int b); // where b is assumed to be positive
   int smod(longlong a,int b); 
   int simplify(int & a,int & b);
@@ -1163,7 +1167,8 @@ namespace giac {
     monome():coeff(0),exponent(0) {};
     monome(const gen & mycoeff) : coeff(mycoeff),exponent(zero) {};
     monome(const gen &mycoeff,const gen &myexponent) : coeff(mycoeff),exponent(myexponent) {};
-    std::string print() const ;
+    // std::string print() const ;
+    std::string print(GIAC_CONTEXT) const ;
     const char * dbgprint() const ;
   };
 #ifdef NSPIRE
