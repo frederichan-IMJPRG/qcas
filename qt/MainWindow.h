@@ -19,6 +19,7 @@
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include "sizeof_void_p.h"
 #include "gui/CentralTabWidget.h"
 #include <QMainWindow>
 #include <ui_MainWindow.h>

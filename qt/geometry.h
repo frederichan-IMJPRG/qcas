@@ -22,6 +22,7 @@
 #include <QVector>
 #include <QColor>
 #include <QPainterPath>
+#include "sizeof_void_p.h"
 #include <giac/gen.h>
 #include <giac/tex.h>
 #include <QDomElement>

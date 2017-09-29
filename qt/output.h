@@ -19,6 +19,7 @@
 
 #ifndef OUTPUT_H
 #define OUTPUT_H
+#include "sizeof_void_p.h"
 #include "geometry.h"
 #include <giac/gen.h>
 #include <QWidget>

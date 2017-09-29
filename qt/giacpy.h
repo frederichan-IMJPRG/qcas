@@ -17,7 +17,7 @@
 *    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
 */
 
-
+#include "sizeof_void_p.h"
 #include <giac/giac.h>
 #include <QApplication>
 #include <QTextCodec>

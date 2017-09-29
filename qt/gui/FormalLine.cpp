@@ -16,6 +16,7 @@
 *    You should have received a copy of the GNU General Public License
 *    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
 */
+#include "sizeof_void_p.h"
 
 #include <QCheckBox>
 #include <QGridLayout>
@@ -128,6 +129,7 @@ OutputWidget* Line::getOuputWidget(){
 }
 
 void Line::displayResult(OutputWidget* uuu){
+    //qInfo() << "previousout = " << this->out <<"  id= " << this->id;
     this->out=uuu;
     if(!this->getgiacmessages().isEmpty()){
         giacmessages=new QPlainTextEdit(this);

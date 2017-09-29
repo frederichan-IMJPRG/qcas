@@ -31,6 +31,8 @@
 #include <QGroupBox>
 #include "../MainWindow.h"
 #include "prefdialog.h"
+
+#include "../sizeof_void_p.h"
 #include <giac/global.h>
 #include <giac/plot.h>
 #include "config.h"

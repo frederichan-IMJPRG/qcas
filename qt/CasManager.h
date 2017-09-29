@@ -24,6 +24,7 @@
 #include <QDomElement>
 #include <QStringList>
 //#include "global.h"
+#include "sizeof_void_p.h"
 #include <giac/gen.h>
 #include "MainWindow.h"
 
@@ -92,6 +93,7 @@ public:
     void evaluate();
     void evaluateforinsertion();
     bool isRunning() const;
+    void setdisplaydone();
     void killThread();
     giac::context* getContext() const;
     giac::gen getAnswer() const;
@@ -103,17 +105,17 @@ public:
     void toXML(QDomElement &, const bool &archivecontext=false);
     void loadXML(const QDomElement &, const bool &archivecontext=false);
     void loadGeneralXML(const QDomElement &);
-    QEventLoop * buisyloop; //buisyloop->exec() will wait the end of monitor
+    QEventLoop * buisyloop; //buisyloop->exec() will wait the end of display
     QString xcashtmlHelp(const giac::gen &);
 
 private:
     static giac::gen answer;
+    static bool displaydone;
     MainWindow* mainWindow;
     MonitorThread* monitor;
     StopThread* stopThread;
     QString printCache;
     QStringList fullDisplay;
-
     static void callback(const giac::gen & ,void * );
     QString gen2mathml(const giac::gen &);
     bool testExpression(const giac::gen& );

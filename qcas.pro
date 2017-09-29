@@ -43,7 +43,7 @@ win32{
 
 unix{
     //QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
-    QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=8 #for amd64 system. define SMARTPTR64 in <giac/first.h>
+    //QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=__SIZEOF_POINTER__ #for amd64 system. define SMARTPTR64 in <giac/first.h>
     LIBS += -ldl -lgiac  -lgmp
 }
 macx{
@@ -76,9 +76,8 @@ HEADERS +=  qt/MainWindow.h \
     qt/gui/CentralTabWidget.h \
     qt/gui/prefdialog.h \
     qt/gui/plotfunctiondialog.h \
-    pthread-win32/semaphore.h \
-    pthread-win32/sched.h \
-    pthread-win32/pthread.h
+    qt/sizeof_void_p.h
+
 
 SOURCES +=     qt/MainWindow.cpp \
     qt/output.cpp \

@@ -17,13 +17,13 @@
 *    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
 */
 
-
-#include "giac/giac.h"
 #include "config.h"
 #include "output.h"
 #include <QPainter>
 #include <QTreeWidgetItem>
 #include <QDebug>
+#include "geometry.h"
+
 MyItem::MyItem(Canvas2D *graph){
     g2d=graph;
     visible=true;

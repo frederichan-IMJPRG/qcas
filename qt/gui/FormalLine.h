@@ -20,7 +20,9 @@
 #ifndef FORMALLINE_H
 #define FORMALLINE_H
 #include <QWidget>
-#include "giac/gen.h"
+
+#include "../sizeof_void_p.h"
+#include <giac/gen.h>
 class QGridLayout;
 class TextInput;
 class TextEditOutput;

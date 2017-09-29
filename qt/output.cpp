@@ -16,6 +16,7 @@
 *    You should have received a copy of the GNU General Public License
 *    along with Foobar.  If not, see <http://www.gnu.org/licenses/>
 */
+#include "sizeof_void_p.h"
 
 #include <QHBoxLayout>
 #include <QPainter>
@@ -23,7 +24,6 @@
 #include <QMenu>
 #include <QLabel>
 #include <QMouseEvent>
-#include <giac/giac.h>
 #include <QFileDialog>
 #include <QUndoStack>
 #include <QFile>
@@ -49,6 +49,7 @@
 #include "config.h"
 #include "gui/qtmmlwidget.h"
 #include "output.h"
+#include <giac/giac.h>
 #include <giac/vecteur.h>
 #include "MainWindow.h"
 #include "gui/plotfunctiondialog.h"

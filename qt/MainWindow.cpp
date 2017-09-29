@@ -65,6 +65,7 @@
 
 #include "CasManager.h"
 #include <QCompleter>
+
 #include <giac/giac.h>
 #include "gui/prefdialog.h"
 
@@ -1663,9 +1664,12 @@ void MainWindow::evaluate(const QString &formula){
     switch(sheet->getType()){
     case MainSheet::FORMAL_TYPE:
         {FormalWorkSheet *form=qobject_cast<FormalWorkSheet*>(tabPages->currentWidget());
+            //qInfo() << "form " << form;
             form->getCurrentLine()->addStopButton(stopButton);
+            //qInfo()<<"current line in ev" << form->getCurrentLine();
 
             if(cas->isRunning()){
+                //qInfo()<<"starting buisy loop in ev";
                 cas->buisyloop->exec();
                 //qInfo()<<"finished; I can compute:";
             }
@@ -1728,13 +1732,15 @@ void MainWindow::evaluateall(){
 
             //be sure that previous computation is finished and displayed before a new output.
             if(cas->isRunning()){
+                //qInfo()<<"starting buisyloop" << "i="<<i;
                 cas->buisyloop->exec();
                 //qInfo()<<"finished; I can compute:"
             }
             if(! isEvaluatingAll()){break;} // external stop button
-
+            //if(){qInfo() <<"PB: display not done";}
             form->setCurrent(i);
             taskProperties.currentLine=i;
+            //qInfo()<<"line i" << form->getLineAt(i) <<"i" <<i << " id:" <<form->getLineAt(i)->getId();
             const QString formula=form->getLineAt(i)->getTextInput()->toPlainText();
             //qInfo()<<"formula "<<formula<<" index i="<<i;
             form->getLineAt(i)->evaluate(formula);
@@ -1806,6 +1812,7 @@ void MainWindow::evaluateforinsertion(const QString &formula){
 }
 
 void MainWindow::displayResult(){
+    //qInfo()<<"currentLine in displayresult"<<taskProperties.currentLine;
     displayGiacMessages();
     tabPages->setCurrentIndex(taskProperties.currentSheet);
     // Formal Sheet
@@ -1816,9 +1823,10 @@ void MainWindow::displayResult(){
         stopButton->setParent(this);
 
 //        return form->getLineAt(taskProperties.currentLine)->getOuputWidget();
-        form->displayResult(taskProperties.currentLine,cas->createDisplay());
-
+        form->displayResult(taskProperties.currentLine,cas->createDisplay()); 
     }
+        //qInfo()<<"end displayresult cur line" << taskProperties.currentLine;
+        cas->setdisplaydone();
 }
 
 void MainWindow::insertResult(){
@@ -1843,6 +1851,7 @@ void MainWindow::insertResult(){
         form->getCurrentLine()->getTextInput()->setTextCursor(cs);
 
     }
+    cas->setdisplaydone();
 }
 QToolButton* MainWindow::getStopButton() const{
     return stopButton;

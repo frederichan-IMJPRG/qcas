@@ -35,7 +35,7 @@ using namespace std;
 using namespace giac;
 
 giac::gen CasManager::answer=giac::gen("",context0);
-
+bool CasManager::displaydone=true;
 
 MonitorThread::MonitorThread(giac::context * c){
     contextptr=c;
@@ -134,6 +134,8 @@ CasManager::CasManager(MainWindow* main){
     mainWindow=main;
     giac::child_id=1;
     signal(SIGINT,giac::ctrl_c_signal_handler);
+    //
+    displaydone = true;
     //setup xcasroot for langages keywords and html doc
     QString XCASROOT=QCoreApplication::applicationDirPath();
     if(!XCASROOT.endsWith("/")){
@@ -174,7 +176,7 @@ CasManager::CasManager(MainWindow* main){
     connect(stopThread,SIGNAL(startDirtyInterrupt()),mainWindow,SLOT(displayCrashWarning()));
     connect(mainWindow,SIGNAL(hideCrashWarning()),stopThread,SLOT(setContinueTrue()));
     connect(monitor,SIGNAL(finished()),mainWindow,SLOT(removeStopWarning()));
-    connect(monitor, SIGNAL(finished()), buisyloop, SLOT(quit()));
+    //connect(monitor, SIGNAL(finished()), buisyloop, SLOT(exit()));
     logptr(new MyStream(this),context);
 
 }
@@ -288,9 +290,15 @@ QString CasManager::xcashtmlHelp(const giac::gen & g){
 }*/
 void CasManager::callback(const giac::gen & g,void * newcontextptr) {
     answer=g;
+    displaydone = false;
 //    context=newcontextptr;
 }
 
+void CasManager::setdisplaydone(){
+    displaydone = true;
+    //QThread::msleep(500);
+    buisyloop->exit();
+}
 
 /*void callback(const giac::gen & g,void * newcontextptr) {
     CasManager::answer=g;
@@ -332,11 +340,12 @@ void CasManager::evaluate(){
 
         monitor->start();
         connect(monitor,SIGNAL(finished()),mainWindow,SLOT(displayResult()));
+
     }
     // Thread is already busy
     else {
 
-    }
+   }
 
     // Add result to history
     giac::history_in(context).push_back(expression);
@@ -514,7 +523,7 @@ void CasManager::info(giac::gen & gg,int decal) const{
 
     }
 bool CasManager::isRunning() const{
-    return monitor->isRunning();
+    return monitor->isRunning() || buisyloop->isRunning() || !(displaydone);
 }
 
 

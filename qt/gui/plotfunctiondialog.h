@@ -20,6 +20,8 @@
 
 #ifndef PLOTFUNCTIONDIALOG_H
 #define PLOTFUNCTIONDIALOG_H
+
+#include "sizeof_void_p.h"
 #include <giac/gen.h>
 
 #include <QDialog>
