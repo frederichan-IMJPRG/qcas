@@ -24,7 +24,7 @@
 #include <QFileDialog>
 #include <QSplitter>
 #include <QCloseEvent>
-#include <QDebug>
+#include <QtDebug>
 #include <QLabel>
 #include <QToolBox>
 #include <QSettings>
@@ -113,7 +113,7 @@ MainWindow::MainWindow(){
     }
 
     Config::GiacHtmlLanguage=lang;
-    //   qDebug()<<lang;
+    //   qInfo()<<lang;
     translator =new QTranslator(0);
 
 
@@ -615,7 +615,7 @@ bool MainWindow::appendFile(const QString &fileName){
 bool MainWindow::loadQcasFile(const QString &fileName){
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)){
-        qDebug()<<"Failed to open: "<<fileName;
+        qInfo()<<"Failed to open: "<<fileName;
         return false;
     }
     QDomDocument doc("xml");
@@ -625,7 +625,7 @@ bool MainWindow::loadQcasFile(const QString &fileName){
     dataIn >> compByteArray;
     QByteArray xmlByteArray = qUncompress(compByteArray);
     QString xmlString =QString::fromUtf8(xmlByteArray.data(), xmlByteArray.size());
-    //qDebug()<<xmlString;//too slow with big files
+    //qInfo()<<xmlString;//too slow with big files
     if (!doc.setContent(xmlString)){
         file.close();
         return false;
@@ -723,7 +723,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	GraphWidget * g2d=0;
     int currentformalindex=0;
 	while (!xcasline.isNull()&&!xcasline.startsWith("// context")) {
-	  //qDebug()<<xcasline;
+      //qInfo()<<xcasline;
 	  if(xcasline.startsWith("// fltk")){
 	    if((xcasline.contains("_Tile"))||(xcasline.contains("History"))){
 		  //drop those cases.
@@ -759,7 +759,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
           //xcasline=xcasline.replace(QChar(0x00A3),"\n");
           xcasline=xcasline.replace(QChar(65533),"\n");
           //xcasline=xcasline.to();//pb with greek chineese...
-          //qDebug()<<xcasline;
+          //qInfo()<<xcasline;
           dataIn.setCodec("");
 	      if(fltktag=="newformal"){
             fltktag="";
@@ -794,7 +794,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 		else{
 		  if(fltktag=="newformal"){
 		    fltktag="";
-            //qDebug()<<xcasline;
+            //qInfo()<<xcasline;
 		    tabPages->addFormalSheet();
 		    f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
             currentformalindex=tabPages->currentIndex();
@@ -810,7 +810,7 @@ bool MainWindow::loadGiacFile(const QString &fileName){
 	      if((xcasline!="]")&&(xcasline!="[")&&(xcasline!=",")&&(xcasline!="")){
         if(fltktag=="newformal"){
 		  fltktag="";
-          //qDebug()<<xcasline;
+          //qInfo()<<xcasline;
 		  tabPages->addFormalSheet();
 		  f=qobject_cast<FormalWorkSheet*>(tabPages->widget(tabPages->count()-2));
           currentformalindex=tabPages->currentIndex();
@@ -950,9 +950,9 @@ bool MainWindow::saveFile(const QString &fileName){
 
    }
     doc.appendChild(root);
-//    qDebug()<<root.toString();
-//    qDebug()<<doc.toString();
-//    qDebug()<<"Nom du fichier"<<fileName;
+//    qInfo()<<root.toString();
+//    qInfo()<<doc.toString();
+//    qInfo()<<"Nom du fichier"<<fileName;
     QFile file(fileName);
     if (file.open(QIODevice::WriteOnly))
     {
@@ -1078,7 +1078,7 @@ void MainWindow::initAutoSave(){
     int i;
 
     if(! autofound.isEmpty()){
-        qDebug()<<"Found automatic saving file"<<autofound;
+        qInfo()<<"Found automatic saving file"<<autofound;
         QMessageBox msgBox;
         msgBox.setWindowTitle("AutoSave");
         msgBox.setIcon(QMessageBox::Warning);
@@ -1667,7 +1667,7 @@ void MainWindow::evaluate(const QString &formula){
 
             if(cas->isRunning()){
                 cas->buisyloop->exec();
-                //qDebug()<<"finished; I can compute:"
+                //qInfo()<<"finished; I can compute:";
             }
 
             taskProperties.currentLine=form->getCurrentLine()->getId();
@@ -1705,14 +1705,15 @@ void MainWindow::evaluateall(){
     autoSave();
     setWindowModified(true);
     displayInStatusBar("","black");
-    //qDebug()<<"evaluateall";
+    //qInfo()<<"evaluateall ";
     taskProperties.firstPrintMessage=true;
     taskProperties.currentSheet=tabPages->currentIndex();
     taskProperties.currentLine=-1;
     MainSheet* sheet=0;
-  for(int i=0;i<tabPages->count()-1;i++){
+  for(int j=0;j<tabPages->count()-1;j++){
     //MainSheet* sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
-    tabPages->setCurrentIndex(i);
+    //qInfo()<< "tabPages: " << j;
+    tabPages->setCurrentIndex(j);
     sheet=dynamic_cast<MainSheet*>(tabPages->currentWidget());
     switch(sheet->getType()){
     case MainSheet::FORMAL_TYPE:
@@ -1728,14 +1729,14 @@ void MainWindow::evaluateall(){
             //be sure that previous computation is finished and displayed before a new output.
             if(cas->isRunning()){
                 cas->buisyloop->exec();
-                //qDebug()<<"finished; I can compute:"
+                //qInfo()<<"finished; I can compute:"
             }
             if(! isEvaluatingAll()){break;} // external stop button
 
             form->setCurrent(i);
             taskProperties.currentLine=i;
             const QString formula=form->getLineAt(i)->getTextInput()->toPlainText();
-            //qDebug()<<formula;
+            //qInfo()<<"formula "<<formula<<" index i="<<i;
             form->getLineAt(i)->evaluate(formula);
 
         }
@@ -1757,7 +1758,7 @@ void MainWindow::evaluateall(){
             tabPages->insertG2dSheet(i,titre);
             g2d=qobject_cast<GraphWidget*>(tabPages->currentWidget());
             for(int i=0;i< displaycommands.size();i++){
-                //qDebug()<<"display commands "<<displaycommands.at(i);
+                //qInfo()<<"display commands "<<displaycommands.at(i);
                 g2d->sendText(displaycommands.at(i));
             }
             g2d->updateAllCategories();
@@ -1786,7 +1787,7 @@ void MainWindow::evaluateforinsertion(const QString &formula){
 
             if(cas->isRunning()){
                 cas->buisyloop->exec();
-                //qDebug()<<"finished; I can compute:"
+                //qInfo()<<"finished; I can compute:"
             }
 
             CasManager::warning id=cas->initExpression(&formula);
@@ -1882,7 +1883,7 @@ void MainWindow::displayXcasHelp(const QString & keyWord) const{
        while(rep.contains("/")){
            rep.remove(QRegExp("^.*/"));
        }
-       //qDebug()<<"found xcas html doc:"<<rep;
+       //qInfo()<<"found xcas html doc:"<<rep;
        displayHelp(rep);
    }
 
@@ -2046,10 +2047,10 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         line.append("<hr>");
         line.append(minimaltoHtml(description));
         //
-        qDebug()<<command<<"fin de commande\n";
+        qInfo()<<command<<"fin de commande\n";
         //kwdsearch="?"+command.split(QRegExp("[\s(]")).at(0);
         kwdsearch.prepend("?");
-        qDebug()<<kwdsearch;
+        qInfo()<<kwdsearch;
         if(kwdsearch !="?"){
         line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a>"));
         //
@@ -2079,7 +2080,7 @@ QString CommandInfo::seekForKeyword(const QString & inputkeyWord) const{
 
         //consider if the keyword can be translated by giac.
         QString keyWord=QString::fromStdString(giac::unlocalize(inputkeyWord.toStdString()));
-        //qDebug()<<"traduction par giac:"<<keyWord;
+        //qInfo()<<"traduction par giac:"<<keyWord;
 
         QFile file(":/aide_cas");
         file.open(QIODevice::ReadOnly);

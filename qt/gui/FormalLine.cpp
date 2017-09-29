@@ -108,9 +108,11 @@ FormalWorkSheet* Line::getWorkSheet() const{
 }
 void Line::evaluate(const QString & formula){
     if (out!=0){
+        //qInfo() << " delete out in line: " << id << "to evaluate " << formula;
         mainLayout->removeWidget(out);
         delete out;
         out=0;
+
         if(giacmessages != 0){
             mainLayout->removeWidget(giacmessages);
             delete giacmessages;

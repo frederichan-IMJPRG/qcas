@@ -23,7 +23,7 @@
 #include <QMainWindow>
 #include <ui_MainWindow.h>
 #include <QGroupBox>
-#include <giac/global.h>
+#include <giac/giac.h>
 class QAction;
 class QListWidget;
 class QStackedWidget;

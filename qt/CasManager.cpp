@@ -55,7 +55,7 @@ void StopThread::run(){
     sleep(2);
     // Finally, try to kill thread  (dirty...), be carefull with crash!!
     if (check_thread(contextptr)==1) {
-        qDebug()<<"Dirty try to interrupt thread!!!";
+        qInfo()<<"Dirty try to interrupt thread!!!";
         go=false;
         emit(startDirtyInterrupt());
         while(!go){
@@ -63,7 +63,7 @@ void StopThread::run(){
         }
         kill_thread(true,contextptr);
     }
-    else qDebug()<<"Clean interruption";
+    else qInfo()<<"Clean interruption";
 }
 void StopThread::setContinueTrue(){
     go=true;
@@ -104,7 +104,7 @@ int    mybuf::sync(){
   @param chr: the character to add
   **/
 void    mybuf::put_char(int chr){
- //   qDebug()<<(chr=='\n');
+ //   qInfo()<<(chr=='\n');
     QChar c=QChar(chr);
     cas->appendPrintCache(c);
 }
@@ -120,7 +120,7 @@ void     mybuf::put_buffer(){
     // mettre ici le code de sortie java de la chaine buffer
     setp(pbase(), epptr());
     cerr << "1 chaine " << endl;
-    qDebug()<<"debug "<<buffer;
+    qInfo()<<"debug "<<buffer;
     delete [] buffer;
   }
 }
@@ -142,7 +142,7 @@ CasManager::CasManager(MainWindow* main){
     QString tmp=XCASROOT;
     tmp.append("doc/aide_cas");
     if(QFile::exists(tmp)){
-        qDebug()<<"Setting xcasroot to"<<XCASROOT;
+        qInfo()<<"Setting xcasroot to"<<XCASROOT;
         giac::xcasroot()=XCASROOT.toStdString();
         Config::XcasRoot=XCASROOT;
     }
@@ -151,12 +151,12 @@ CasManager::CasManager(MainWindow* main){
         tmp=XCASROOT;
         tmp.append("doc/aide_cas");
         if(QFile::exists(tmp)){
-            qDebug()<<"Setting xcasroot to"<<XCASROOT;
+            qInfo()<<"Setting xcasroot to"<<XCASROOT;
             giac::xcasroot()=XCASROOT.toStdString();
             Config::XcasRoot=XCASROOT;
         }
         else{
-            qDebug()<<"Warning: doc/aide_cas not found. This file should be in \
+            qInfo()<<"Warning: doc/aide_cas not found. This file should be in \
                       ../share/giac/ (relatively to the PATH of the executable qcas";
         }
     }
@@ -202,13 +202,13 @@ CasManager::warning CasManager::initExpression(const QString *str){
         return CasManager::Warning;
     }
     if(expression.is_symb_of_sommet(giac::at_findhelp)){
-        //qDebug()<<"found ?  trying xcas html help";
+        //qInfo()<<"found ?  trying xcas html help";
         QString rep=CasManager::xcashtmlHelp(expression.ref_SYMBptr()->feuille);
         if (! rep.isEmpty()){
             while(rep.contains("/")){
                 rep.remove(QRegExp("^.*/"));
             }
-            //qDebug()<<"found xcas html doc:"<<rep;
+            //qInfo()<<"found xcas html doc:"<<rep;
             mainWindow->displayHelp(rep);
         }
         else{
@@ -217,14 +217,14 @@ CasManager::warning CasManager::initExpression(const QString *str){
             */
             rep=QString::fromStdString(expression.ref_SYMBptr()->feuille.print());
             rep.remove("'");
-            //qDebug()<<"no help found for"<<rep;
+            //qInfo()<<"no help found for"<<rep;
             mainWindow->displayHelp(rep);
         }
 
     }
     // fred input/output/inputform
     if(expression.is_symb_of_sommet(giac::at_input)){
-        qDebug()<<"input form found";
+        qInfo()<<"input form found";
     }
 
     return CasManager::No_warning;
@@ -239,7 +239,7 @@ QString CasManager::xcashtmlHelp(const giac::gen & g){
     giac::gen f(g);
     std::string s;
     QString rep="";
-    //qDebug()<<file.fileName();
+    //qInfo()<<file.fileName();
     if (f.type==giac::_SYMB)
           f=f._SYMBptr->sommet;
         if (f.type==giac::_FUNC){
@@ -268,7 +268,7 @@ QString CasManager::xcashtmlHelp(const giac::gen & g){
 
 
     }
-    //qDebug()<<"rep xcashtmlHelp"<<rep;
+    //qInfo()<<"rep xcashtmlHelp"<<rep;
   return rep;
 }
 
@@ -315,7 +315,7 @@ void callback(const gen & g,void * newcontextptr){
 void CasManager::evaluate(){
 /*    gen var("A",context);
     gen rep(eval(var,1,context));
-            qDebug()<<"test..."<<QString::fromStdString(rep.print());
+            qInfo()<<"test..."<<QString::fromStdString(rep.print());
 
 */
 
@@ -478,38 +478,38 @@ void CasManager::info(giac::gen & gg,int decal) const{
         }
 
     if (gg.type==giac::_SYMB){
-        qDebug()<< s << "_SYMB Sommet";
-        qDebug()<< s << QString::fromStdString(gg._SYMBptr->sommet.ptr()->print(context));
+        qInfo()<< s << "_SYMB Sommet";
+        qInfo()<< s << QString::fromStdString(gg._SYMBptr->sommet.ptr()->print(context));
         giac::gen g=gg._SYMBptr->feuille;
-        qDebug()<< s << "_SYMB feuille";
+        qInfo()<< s << "_SYMB feuille";
         info(g,decal);
     }
     else if (gg.type==giac::_VECT){
         decal=decal+5;
 
         giac::vecteur *v=gg._VECTptr;
-        qDebug()<< s << "_VECT subtype"<< displaySubType(gg.subtype);
-        qDebug()<< s << "size"<<QString::number(v->size());
+        qInfo()<< s << "_VECT subtype"<< displaySubType(gg.subtype);
+        qInfo()<< s << "size"<<QString::number(v->size());
         vecteur::iterator it;
         unsigned int i=0;
         for(it=v->begin();it<v->end();it++){
 
 
-            qDebug()<< s<< "element"<<i;
+            qInfo()<< s<< "element"<<i;
             info(*it,decal);
             i++;
         }
-        qDebug()<< s <<"//fin vect";
+        qInfo()<< s <<"//fin vect";
         decal=decal-5;
     }
     else if(gg.type==giac::_DOUBLE_){
-        qDebug()<<"DOUBLE";
-        qDebug()<<QString::fromStdString(gg.print(context));
+        qInfo()<<"DOUBLE";
+        qInfo()<<QString::fromStdString(gg.print(context));
     }
     else     {
-        qDebug()<< s << "autres";
-        qDebug()<< s << displayType(gg.type);
-        qDebug()<< s << QString::fromStdString(gg.print());
+        qInfo()<< s << "autres";
+        qInfo()<< s << displayType(gg.type);
+        qInfo()<< s << QString::fromStdString(gg.print());
     }
 
     }
@@ -530,7 +530,7 @@ OutputWidget* CasManager::createDisplay(){
   }
   else if(answer.is_symb_of_sommet(at_pnt)){
         if (is3d(answer)){
-            qDebug("3D is not implemented in qcas");
+            qInfo("3D is not implemented in qcas");
         }
         else {
             return new GraphWidget(answer,context,false,mainWindow);
@@ -568,7 +568,7 @@ OutputWidget* CasManager::createDisplay(){
 /*      bool graph=false;
     if (answer.is_symb_of_sommet(giac::at_pnt)) graph=true;
     else if(answer.type==giac::_VECT){
-        qDebug()<<QString::number(answer.subtype);
+        qInfo()<<QString::number(answer.subtype);
         giac::vecteur* v=answer._VECTptr;
         for(int i=0;i<v->size();++i){
             if (v->at(i).is_symb_of_sommet(giac::at_pnt)){
@@ -580,7 +580,7 @@ OutputWidget* CasManager::createDisplay(){
 //    if (graph) return graph2Widget(answer);
   //  else
 
-//    qDebug()<<gen2mathml(answer);
+//    qInfo()<<gen2mathml(answer);
 /*
 return formula2Widget("<mrow>"
                       "<mi>A</mi>"
@@ -670,8 +670,8 @@ void CasManager::appendPrintCache(const QChar& c){
     }
     else printCache.append(c);
 
-//    qDebug()<<"fullldisplay:"<<fullDisplay.size()<<fullDisplay;
-//    qDebug()<<"printCache"<<printCache;
+//    qInfo()<<"fullldisplay:"<<fullDisplay.size()<<fullDisplay;
+//    qInfo()<<"printCache"<<printCache;
 }
 
 QStringList& CasManager::getGiacDisplay(){
@@ -731,7 +731,7 @@ void CasManager::toXML(QDomElement & root, const bool &archivecontext){
        //save giac session (variables... with history = false)
        archct.setAttribute("context",QString::fromStdString(giac::archive_session(false,context)));
        settings.appendChild(archct);
-       //qDebug()<<QString::fromStdString(giac::archive_session(true,context));
+       //qInfo()<<QString::fromStdString(giac::archive_session(true,context));
     }
     root.appendChild(settings);
 
@@ -763,7 +763,7 @@ void CasManager::loadXML(const QDomElement& root,const bool &archivecontext){
     giac::NEWTON_DEFAULT_ITERATION=root.attribute("newton","20").toInt();
     if((archivecontext)&&(!root.attribute("context").isEmpty())){
        giac::gen replace;
-       //qDebug()<<root.attribute("context");
+       //qInfo()<<root.attribute("context");
        giac::unarchive_session_string(root.attribute("context").toStdString(),-1,replace,context);
     }
 

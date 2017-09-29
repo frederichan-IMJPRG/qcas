@@ -24,7 +24,7 @@
 #include <QDomElement>
 #include <QStringList>
 //#include "global.h"
-#include "giac/gen.h"
+#include <giac/gen.h>
 #include "MainWindow.h"
 
 class OutputWidget;

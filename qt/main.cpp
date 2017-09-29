@@ -33,7 +33,6 @@ int main(int argc, char * argv []){
 #endif
 
     MainWindow win;
-
     if(argc>1){
       if(win.loadFile(argv[1])){win.show();}
       else{return 1;}

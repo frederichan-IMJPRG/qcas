@@ -326,7 +326,9 @@ int FormalWorkSheet::getCurrent() const{
     return current;
 }
 void FormalWorkSheet::setCurrent(const int c){
-    current=c;
+    if(c<lines->size() && c>= 0){
+        current=c;
+    }
 }
 void FormalWorkSheet::setFocus(Qt::FocusReason reason){
     QScrollArea::setFocus(reason);

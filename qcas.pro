@@ -42,7 +42,8 @@ win32{
 }
 
 unix{
-#    QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
+    //QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
+    QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=8 #for amd64 system. define SMARTPTR64 in <giac/first.h>
     LIBS += -ldl -lgiac  -lgmp
 }
 macx{
@@ -58,8 +59,8 @@ macx{
 
 
 # Input
-HEADERS += qt/output.h \
-    qt/MainWindow.h \
+HEADERS +=  qt/MainWindow.h \
+    qt/output.h \
     qt/CasManager.h \
     qt/geometry.h \
     qt/config.h \
@@ -79,8 +80,8 @@ HEADERS += qt/output.h \
     pthread-win32/sched.h \
     pthread-win32/pthread.h
 
-SOURCES += qt/output.cpp \ # qt/Window.cpp \
-    qt/MainWindow.cpp \
+SOURCES +=     qt/MainWindow.cpp \
+    qt/output.cpp \
     qt/main.cpp \
     qt/config.cpp \
     qt/CasManager.cpp \
