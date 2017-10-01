@@ -5,45 +5,67 @@ QT += core \
      gui \
      xml \
      svg
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TARGET = qcas
 TEMPLATE = lib
-CONFIG+=staticlib
+#CONFIG+=staticlib
 
-QMAKE_CFLAGS_DEBUG += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
-QMAKE_CFLAGS_RELEASE += -DHAVE_CONFIG_H  -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_DEBUG += -fno-strict-aliasing -Wno-unused-parameter
+QMAKE_CFLAGS_RELEASE += -fno-strict-aliasing -Wno-unused-parameter
 
-QMAKE_CXXFLAGS_DEBUG += -DHAVE_CONFIG_H \
+QMAKE_CXXFLAGS_DEBUG += \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
-QMAKE_CXXFLAGS_RELEASE += -DHAVE_CONFIG_H \
+    -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
+QMAKE_CXXFLAGS_RELEASE += \
     -fno-strict-aliasing \
     -Wno-unused-parameter \
-    -DGIAC_GENERIC_CONSTANTS -fpermissive
+    -DGIAC_GENERIC_CONSTANTS -fpermissive -fPIC
 DEPENDPATH += . \
-    qt 
- INCLUDEPATH += . \
-    qt \
-    giac 
+    qt
+INCLUDEPATH += . \
+    qt
 win32{
+    RC_FILE=qcas.rc
     CONFIG+=rtti
-    QMAKE_CXXFLAGS+=-D__MINGW_H
-    QMAKE_LFLAGS+=-static-libgcc -static-libstdc++
-    INCLUDEPATH+=pthread
-    win32:LIBS+=-lgiac -lntl -lgsl -lgslcblas -lmpfr -lgmp -lpthread
+    QMAKE_CXXFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 -D__MINGW_H -DGIAC_MPQS -UHAVE_CONFIG_H -DIN_GIAC  -fexceptions
+    win32:LIBS+=-lgiac -lgmp -lpthread
+    # ce test ne marche qu avec QT5 ??
+    win32:contains(QMAKE_HOST.arch, i386):{
+        message("x86 build")
+   } else {
+        message("x86_64 build")
+        QMAKE_LFLAGS+=-L./win64/bin
+        INCLUDEPATH += ./win64/include
+
+   }
 }
+
 unix{
-    LIBS += -ldl -lgiac -lgmp
+    //QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
+    //QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=__SIZEOF_POINTER__ #for amd64 system. define SMARTPTR64 in <giac/first.h>
+    LIBS += -ldl -lgiac  -lgmp
+}
+macx{
+    LIBS += -lintl
+    # path to giac and gmp libraries/headers
+    LIBS+=-L/opt/local/lib
+    INCLUDEPATH+=/opt/local/include
+    #with libgiac from the xcas installer
+    #INCLUDEPATH+=/Applications/usr/include
+    #LIBS+=-L/Applications/usr/64/local/lib -L/Applications/usr/lib
+#
 }
 
 
 # Input
-HEADERS += qt/output.h \
-    qt/MainWindow.h \
+HEADERS +=  qt/MainWindow.h \
+    qt/output.h \
     qt/CasManager.h \
     qt/geometry.h \
     qt/config.h \
-    qt/giacpy.h \
     qt/gui/WizardMatrix.h \
     qt/gui/WizardEquation.h \
     qt/gui/WizardCatalog.h \
@@ -54,86 +76,15 @@ HEADERS += qt/output.h \
     qt/gui/FormalLineWidgets.h \
     qt/gui/FormalLine.h \
     qt/gui/CentralTabWidget.h \
-#Header for giac
-           giac/alg_ext.h \
-           giac/cocoa.h \
-           giac/config.h \
-           giac/csturm.h \
-           giac/derive.h \
-           giac/desolve.h \
-           giac/dispatch.h \
-           giac/ezgcd.h \
-           giac/first.h \
-           giac/fraction.h \
-           giac/gauss.h \
-           giac/gausspol.h \
-           giac/gen.h \
-           giac/giac.h \
-           giac/giacintl.h \
-           giac/giacPCH.h \
-           giac/global.h \
-           giac/gmp_replacements.h \
-           giac/help.h \
-           giac/identificateur.h \
-           giac/ifactor.h \
-           giac/index.h \
-           giac/input_lexer.h \
-           giac/input_parser.h \
-           giac/intg.h \
-           giac/intgab.h \
-           giac/isom.h \
-           giac/lexer.h \
-           giac/lexer_tab_int.h \
-           giac/lin.h \
-           giac/maple.h \
-           giac/mathml.h \
-           giac/misc.h \
-           giac/modfactor.h \
-           giac/modpoly.h \
-           giac/monomial.h \
-           giac/moyal.h \
-           giac/pari.h \
-           giac/path.h \
-           giac/permu.h \
-           giac/plot.h \
-           giac/plot3d.h \
-           giac/poly.h \
-           giac/prog.h \
-           giac/quater.h \
-           giac/risch.h \
-           giac/rpn.h \
-           giac/series.h \
-           giac/solve.h \
-           giac/static.h \
-           giac/static_extern.h \
-           giac/static_help.h \
-           giac/static_lexer.h \
-           giac/static_lexer_.h \
-           giac/subst.h \
-           giac/sym2poly.h \
-           giac/symbolic.h \
-           giac/tex.h \
-           giac/threaded.h \
-           giac/ti89.h \
-           giac/tinymt32.h \
-           giac/tinymt32_license.h \
-           giac/TmpFGLM.H \
-           giac/TmpLESystemSolver.H \
-           giac/unary.h \
-           giac/usual.h \
-           giac/vecteur.h \
-           giac/vector.h \
     qt/gui/prefdialog.h \
     qt/gui/plotfunctiondialog.h \
-    pthread-win32/semaphore.h \
-    pthread-win32/sched.h \
-    pthread-win32/pthread.h
+    qt/sizeof_void_p.h
 
-SOURCES += qt/output.cpp \ # qt/Window.cpp \
-    qt/MainWindow.cpp \
+
+SOURCES +=     qt/MainWindow.cpp \
+    qt/output.cpp \
     qt/main.cpp \
     qt/config.cpp \
-    qt/giacpy.cpp \
     qt/CasManager.cpp \
     qt/gui/WizardMatrix.cpp \
     qt/gui/WizardEquation.cpp \
@@ -149,26 +100,32 @@ SOURCES += qt/output.cpp \ # qt/Window.cpp \
     qt/geometry.cpp \
     qt/gui/plotfunctiondialog.cpp
 #
-OTHER_FILES += \ 
+OTHER_FILES += \
     qt/doc/fr/menu.html \
     qt/doc/fr/memento.html \
     qt/doc/fr/memento_algo.html \
     qt/doc/fr/xcasmenu.html \
+    qt/doc/fr/transformations.html \
     qt/doc/en/menu.html \
     qt/doc/en/memento.html \
     qt/doc/en/xcasmenu.html \
+    qt/doc/en/transformations.html \
     qt/doc/el/menu.html \
     qt/doc/el/memento.html \
     qt/doc/el/xcasmenu.html \
+    qt/doc/el/transformations.html \
     qt/doc/es/menu.html \
     qt/doc/es/memento.html \
     qt/doc/es/xcasmenu.html \
+    qt/doc/es/transformations.html \
     qt/doc/zh/menu.html \
     qt/doc/zh/memento.html \
     qt/doc/zh/xcasmenu.html \
+    qt/doc/zh/transformations.html \
     qt/doc/de/menu.html \
     qt/doc/de/memento.html \
     qt/doc/de/xcasmenu.html \
+    qt/doc/de/transformations.html \
     qt/images/stop.png \
     qt/images/spreadsheet.png \
     qt/images/segment.png \
@@ -196,6 +153,7 @@ OTHER_FILES += \
     qt/images/edit-redo.png \
     qt/images/edit-paste.png \
     qt/images/edit-find.png \
+    qt/images/home.png \
     qt/images/edit-cut.png \
     qt/images/edit-copy.png \
     qt/images/document-save-as.png \
@@ -289,5 +247,4 @@ OTHER_FILES += \
     android/res/values-es/strings.xml
 RESOURCES += qt/qcas.qrc
 TRANSLATIONS = qt/lang/qcas_en.ts qt/lang/qcas_es.ts qt/lang/qcas_el.ts qt/lang/qcas_zh.ts
-FORMS=MainWindow.ui
-
+FORMS=qt/MainWindow.ui

@@ -1293,7 +1293,6 @@ void MainWindow::createGui(){
     labelStatus->show();
 
 
-
  /*   warningFirstEvaluation=new QLabel(tr("<b><font color=\"red\">Shift+Entrée pour évaluer</font></b>"));
     warningFirstEvaluation->setIndent(20);
     warningFirstEvaluation->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);

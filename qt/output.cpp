@@ -421,6 +421,10 @@ void GraphWidget::initGui(){
     hbox->setSizeConstraint(QLayout::SetMinimumSize);
     setLayout(hbox);
 
+    // same background color as main window.
+    this->setAutoFillBackground(true);
+
+
 }
 /**
  * @brief GraphWidget::createToolBar

@@ -234,6 +234,9 @@ FormalWorkSheet::FormalWorkSheet(MainWindow *parent):QScrollArea(),MainSheet(Mai
 
     lines->last()->getTextInput()->setFocus(Qt::OtherFocusReason);
 
+    // same background color as main window.
+    this->setAutoFillBackground(true);
+
 }
 void FormalWorkSheet::addSelectedLevel(int level){
   /*  if (shift){

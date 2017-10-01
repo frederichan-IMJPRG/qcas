@@ -46,7 +46,6 @@ void MainTabWidget::retranslate(){
 }
 MainTabWidget::MainTabWidget(MainWindow *main):QTabWidget(){
     mainWindow=main;
-
     setTabsClosable(true);
     setMovable(true);
     setIconSize(QSize(20,20));

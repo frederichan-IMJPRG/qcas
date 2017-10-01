@@ -29,7 +29,7 @@ win32{
     RC_FILE=qcas.rc
     CONFIG+=rtti
     QMAKE_CXXFLAGS+=-D_GLIBCXX_USE_CXX11_ABI=0 -D__MINGW_H -DGIAC_MPQS -UHAVE_CONFIG_H -DIN_GIAC  -fexceptions
-    win32:LIBS+=-lgiac -lgmp
+    win32:LIBS+=-lgiac -lgmp -lpthread
     # ce test ne marche qu avec QT5 ??
     win32:contains(QMAKE_HOST.arch, i386):{
         message("x86 build")
