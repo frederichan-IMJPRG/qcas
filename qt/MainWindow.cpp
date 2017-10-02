@@ -1451,7 +1451,7 @@ void MainWindow::about(){
                                                       "<li><b>Licence:</b> GPL v3</li>"
                                                       "<li><b>Version:</b> %1 </li>"
                                                       "<li><b>Sources de QCAS: </b><center><a href=\"http://git.tuxfamily.org/?p=qcas/qcas.git\">http://git.tuxfamily.org/?p=qcas/qcas.git</a></center><br></li>"
-                              "<li><b>Binaires de QCAS: </b><center><a href=\"http://www.math.jussieu.fr/~han/qcas\">http://www.math.jussieu.fr/~han/qcas</a></center><br></li>"
+                              "<li><b>Site Web de QCAS: </b><center><a href=\"http://www.imj-prg.fr/~frederic.han/qcas\">http://www.imj-prg.fr/~frederic.han/qcas</a></center><br></li>"
                                                       "<li><b>Auteur de QCAS: </b>Loïc Le Coq  (2012) </li>"
                               "<li><b>Maintenance et développement de QCAS: </b>(2013- )<center>Han Frédéric <a href=\"mailto:frederic.han@imj-prg.fr\"> frederic.han@imj-prg.fr</a></center></li>"
                                                       "<li><b>Développeur de Giac/Xcas: </b>Bernard Parisse</li>"
