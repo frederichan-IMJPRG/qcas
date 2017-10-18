@@ -44,8 +44,9 @@ win32{
 }
 
 unix{
-    //QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
-    //QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=__SIZEOF_POINTER__ #for amd64 system. define SMARTPTR64 in <giac/first.h>
+    #QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
+    #QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=__SIZEOF_POINTER__ #for amd64 system. define SMARTPTR64 in <giac/first.h>
+    CONFIG+=staticlib
     LIBS += -ldl -lgiac  -lgmp
 }
 macx{
@@ -66,6 +67,7 @@ HEADERS +=  qt/MainWindow.h \
     qt/CasManager.h \
     qt/geometry.h \
     qt/config.h \
+    qt/giacpy.h \
     qt/gui/WizardMatrix.h \
     qt/gui/WizardEquation.h \
     qt/gui/WizardCatalog.h \
@@ -85,6 +87,7 @@ SOURCES +=     qt/MainWindow.cpp \
     qt/output.cpp \
     qt/main.cpp \
     qt/config.cpp \
+    qt/giacpy.cpp \
     qt/CasManager.cpp \
     qt/gui/WizardMatrix.cpp \
     qt/gui/WizardEquation.cpp \

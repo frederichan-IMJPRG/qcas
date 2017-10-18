@@ -9,7 +9,9 @@ int externalqcas( giac::gen & c , giac::context * ct){
     setlocale(LC_NUMERIC,"POSIX");
     app=new QApplication(argc, argv,true);
     Q_INIT_RESOURCE(qcas);
-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#if QT_VERSION < 0x050000
+QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
 
     MainWindow win(1);
     win.loadgiacgen(c,ct);
@@ -26,7 +28,10 @@ int externalinteractiveqcas( giac::gen & c , giac::context * ct, std::string s){
     setlocale(LC_NUMERIC,"POSIX");
     app=new QApplication(argc, argv,true);
     Q_INIT_RESOURCE(qcas);
-    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#if QT_VERSION < 0x050000
+QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
+
 
     MainWindow win(1);
     win.loadinteractivegiacgen(c,ct);
