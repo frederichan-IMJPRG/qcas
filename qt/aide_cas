@@ -1,19 +1,38 @@
-# tabvar
-1 Tableau de variations pour un graphe de fonction ou une courbe parametrique
-2 Variations for a function graph or a parametric curve
-0 f or [f,g]
-tabvar(sin(x))
-tabvar([cos(2t),sin(3t)])
+# smith
+1 Calcule la forme normale de Smith d'une matrice a coefficients polynomiaux :renvoie U,D,V tels que tels que U et V inversibles, D  diagonale et U*A*V=D.
+2 Smith normal form of a matrix with  polynomial coefficients : returns U,D,V such that U and V invertible, D diagonal, and U*A*V=D.
+3 Calcula la forma normal de Smith de una matriz a coeficientes polominos: devuelve U,B,V tales que U y V invertibles, D diagonal, y D=U*A*V.
+4 Υπολογίζει την κανονική μορφή Smith ενός πίνακα με συντελεστές πολυώνυμα : επιστρέφει U, D, V, τέτοια ώστε U και V αντιστρέψιμα, D διαγώνιος, και D=U*A*V.
+9 Gibt die Smith-Normalform der Koeffizientenmatrix eines Polynoms an (U,D,V wobei U*A*V=D)
+0 Mtrx(A)
+-1 hermite
+-2 ismith
+-3 ihermite
+ n:=10; A:=ranm(n,n) % 17; U,D,V:=smith(x*idn(n)-A);normal(U*(x*idn(n)-A)*V-D); diag(D);
+ GF(3,5,g); n:=3; A:=ranm(n,n,g); U,D,V:=smith(x*idn(n)-A);normal(U*(x*idn(n)-A)*V-D); diag(D);
+
+# wz_certificate
+1 Certificat de Wilf-Zeilberger pour une identite sum(U,k)=res
+2 Wilf-Zeilberger certificate for an identity sum(U,k)=res
+9 Wilf-Zeilberger Zertifikat
+0 Expr(U),[Expr(res)],[Var(n),Var(k)]
+-1 sum
+wz_certificate((-1)^k*comb(n,k)*comb(2k,k)*4^(n-k),comb(2n,n),n,k);
+wz_certificate((-1)^k*comb(n,k)/comb(k+a,k),a/(n+a),n,k);
+wz_certificate((-1)^(n-k)*comb(2n,k)^2,comb(2n,n),n,k);
+wz_certificate((a+k)!*(b+k)!*(c+n-k-a-b-1)!/(k+1)!/(n-k)!/(c+k)!,(a-1)!*(b-1)!*(c-a-b-1)!*(c+n-a)!*(c+n-b)!/(c-a-1)!/(c-b-1)!/(n+1)!/(c+n)!,n,k);
 
 # keep_algext
 1 Laisse les extensions algébriques telles quelles (keep_algext:=1) ou tente de les réécrire (keep_algext:=0).
-2 Pseudo-variable to keep algebraic extensions (keep_algext:=1) or try to rewrite them (keep_algext:=0)
+2 Pseudo-variable to keep algebraic extensions (keep_algext:=1) or try to rewrite them (keep_algext:=0).
+9 Pseudevariable, die benutzt werden kann um algebraische Erweiterungen zu behalten (keep_algext:=1) oder um sie zu überschreiben (keep_algext:=0)
 0 :=Intg(0 or 1)
  keep_algext:=1
 
 # jacobi_linsolve
 1 Résolution d'un système linéaire de matrice A et de second membre b, par la méthode itérative de Jacobi avec une tolérance de eps et un nombre maximal d'itérations de maxiter. 
 2 Resolution of a linear system  A*X=b  by the iterative Jacobi method with eps as error margin  and a number of iterations inferior to maxiter.
+9 Loesung eines linearen Gleichungssystems A*X=b mit dem Jacobi-Verfahren. Die Groesse des Fehlers wird mit eps festgelegt und die die maximale Anzahl der Iterationen mit maxiter
 0 Mtrx(A),Vect(b),Real(eps),[Int(maxiter)]
 -1 gauss_seidel_linsolve
 -2 linsolve
@@ -23,6 +42,7 @@ tabvar([cos(2t),sin(3t)])
 # gauss_seidel_linsolve
 1 Résolution d'un système linéaire de matrice A et de second membre b, par la méthode itérative de Gauss-Seidel (par défaut omega=1) ou de relaxation avec une tolérance de eps et un nombre maximal d'itérations de maxiter. 
 2 Resolution of a linear system A*X=b  by the iterative Gauss-Seidel method (by defaut omega=1) or by relaxation method, with eps as error margin and a number of iterations inferior to maxiter.
+9 Loesung eines linearen Gleichungssystems A*X=b mit dem Gauss-Seidel-Verfahren (ohne Spezifikition omega=1) oder dem Relaxationsverfahren, wobei die Groesse des Fehlers mit eps und die die maximale Anzahl der Iterationen mit maxiter festgelegt wird
 0 [Real(omega)],Mtrx(A),Vect(b),Real(eps),[Int(maxiter)]
 -1 jacobi_linsolve
 -2 linsolve
@@ -34,6 +54,7 @@ tabvar([cos(2t),sin(3t)])
 # linspace
 1 linspace(a,b,n) génère une liste de n éléments régulièrement espacés entre a et b, par défaut n=100 (commande compatible scilab).
 2 linspace(a,b,n) creates a list of n elements at regular intervals between a and b, by defaut n=100 (compatibility with scilab).
+9 linspace(a,b,n) generiert eine Liste aus n aequidistanten Elementen zwischen a und b, ohne Spezifikation n=100 (kompatibel mit scilab)
 0 Real(a),Real(b),[Int(n)]
 linspace(0,1,11)
 
@@ -226,10 +247,27 @@ back([1,2,3])
 back("bonjour")
 
 # find
-1 Liste des positions d'un objet dans une liste
-2 List of positions of an object in a list
+1 Liste des positions d'un objet dans une liste, une chaîne ou un ensemble.
+2 List of positions of an object in a list, a string or a set.
 0 Expr,Vect
+-1 index
+-2 member
 find(1,[3,x,1,2,1,3])
+find(2,[0,1,3,2,4,2,5])[0]
+find("a","abracadabrant")
+find("ab","abracadabrant")
+find(1,%{4,3,1,2%})
+
+# index
+1 Indice de la première position d'un objet dans une liste une chaîne ou un ensemble ou renvoie un message d'erreur.
+2 Index of the first position of an object in a list, a string or a set or return an error message.
+0 Vect,Expr
+-1 find
+-2 member
+index([3,x,1,2,1,3],1)
+index([0,1,3,2,4,2,5],2)
+index(%{4,3,1,2%},1)
+index("abracadabrant","c")
 
 # count
 1 Renvoie f(l[0])+f(l[1])+...+f(l[size(l)-1]) ou compte le nombre d'occurrences si l'argument est une liste d'entiers en renvoyant une matrice de 1ère col les éléments de la liste triée et 2ème col l'effectif de cet élément dans la liste.
@@ -577,10 +615,10 @@ betad_cdf(2,1,0.2)
 betad_cdf(2,1,0.1,0.3)
 
 # betad_icdf
-1 Renvoie la valeur h telle que la probabilité qu'une variable aléatoire de type Gamma ayant a et b comme paramètres soit inférieure à h soit égale à p( 0<=p<=1).
-2 Returns h such that the probability that a Gamma random variable is lower than h is p (0<=p<=1).
-3 Devuelve h tal que la probabilidad que una variable aleatoria Gamma sea menor que h es p (0<=p<=1).
-4 Επιστρέφει h τέτοιο ώστε η πιθανότητα μια Gamma τυχαία μεταβλητή να είναι μικρότερη του h είναι p (0<=p<=1).
+1 Renvoie la valeur h telle que la probabilité qu'une variable aléatoire de type Beta ayant a et b comme paramètres soit inférieure à h soit égale à p( 0<=p<=1).
+2 Returns h such that the probability that a Beta random variable is lower than h is p (0<=p<=1).
+3 Devuelve h tal que la probabilidad que una variable aleatoria Beta sea menor que h es p (0<=p<=1).
+4 Επιστρέφει h τέτοιο ώστε η πιθανότητα μια Beta τυχαία μεταβλητή να είναι μικρότερη του h είναι p (0<=p<=1).
 0 Real(a>0),Real(b>0),Real(0<=p<=1)
 -1 betad_cdf
 -2 betad
@@ -695,6 +733,7 @@ polar_point(2,-pi/3)
 8 向量。
 0 Pnt,Pnt || Pnt,Vect
 -1 coordinates
+-2 segment
 vecteur(1+i)
 vector(point(1,2),point(2,3))
 vector(1+2*i,vecteur(1+i))
@@ -805,7 +844,7 @@ odd(1251)
  assume(a,integer)
  a:=2;type(a)
 
-# DOM_SYMBOLIC symbol
+# DOM_SYMBOLIC symbol expression
 1 DOM_SYMBOLIC ou symbol représente le type d'une variable symbolique, valeur de la commande type. C'est aussi une option de assume.
 2 DOM_SYMBOLIC or symbol is the type of a symbolic variable, as returned by the type command. It is also an option of the assume command.
 3 DOM_SYMBOLIC o symbol representa el tipo de una variable simbólica, valor del comando type o es una opción del comando assume.
@@ -820,11 +859,11 @@ odd(1251)
  a:=sqrt(2);type(a)
  type(2x+1)
 
-# DOM_IDENT
-1 DOM_IDENT représente le type d'un identificateur, valeur de la commande type. C'est aussi une option de assume.
-2 DOM_IDENT is the type of an identifier, as returned by the type command. It is also an option of the assume command.
-3 DOM_IDENT representa el tipo de un identificador, valor del comando type o es una opción del comando assume.
-4 DOM_IDENT είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
+# DOM_IDENT identifier
+1 DOM_IDENT ou identifier représente le type d'un identificateur, valeur de la commande type. C'est aussi une option de assume.
+2 DOM_IDENT or identifier is the type of an identifier, as returned by the type command. It is also an option of the assume command.
+3 DOM_IDENT o identifier representa el tipo de un identificador, valor del comando type o es una opción del comando assume.
+4 DOM_IDENT ή identifier είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
 0 Opt
 -1 type
 -2 assume
@@ -832,11 +871,11 @@ odd(1251)
 -4 DOM_FLOAT
  purge(a);type(a)
 
-# DOM_LIST
-1 DOM_LIST représente le type d'une liste ou d'une séquence, valeur de la commande type. C'est aussi une option de assume.
-2 DOM_LIST is the type of a list or of a sequence, as returned by the type command. It is also an option of the assume command.
-3 DOM_LIST representa el tipo de una lista o de una secuencia, valor del comando type o es una opción del comando assume.
-4 DOM_LIST είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
+# DOM_LIST vector
+1 DOM_LIST ou vector représente le type d'une liste ou d'une séquence, valeur de la commande type. C'est aussi une option de assume.
+2 DOM_LIST or vector is the type of a list or of a sequence, as returned by the type command. It is also an option of the assume command.
+3 DOM_LIST o vector representa el tipo de una lista o de una secuencia, valor del comando type o es una opción del comando assume.
+4 DOM_LIST ή vector είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
 0 Opt
 -1 type
 -2 assume
@@ -846,11 +885,11 @@ odd(1251)
  a:=[1,2,3];type(a)
  a:=1,2,3;type(a)
 
-# DOM_STRING
-1 DOM_STRING représente le type d'une chaîne de caractères, valeur de la commande type. C'est aussi une option de assume.
-2 DOM_STRING is the type of a string, as returned by the type command. It is also an option of the assume command.
-3 DOM_STRING representa el tipo de una cadena de caracteres, valor del comando type o es una opción del comando assume.
-4 DOM_STRING είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
+# DOM_STRING string
+1 DOM_STRING ou string représente le type d'une chaîne de caractères, valeur de la commande type. C'est aussi une option de assume.
+2 DOM_STRING or string is the type of a string, as returned by the type command. It is also an option of the assume command.
+3 DOM_STRING o string representa el tipo de una cadena de caracteres, valor del comando type o es una opción del comando assume.
+4 DOM_STRING ή string είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
 0 Opt
 -1 type
 -2 assume
@@ -873,11 +912,11 @@ odd(1251)
  assume(a,DOM_COMPLEX)
  a:=1+i;type(a)
 
-# DOM_FUNC
-1 DOM_FUNC représente le type d'une fonction, valeur de la commande type. C'est aussi une option de assume.
-2 DOM_FUNC is the type of a function, as returned by the type command. It is also an option of the assume command.
-3 DOM_FUNC representa el tipo de una función, valor del comando type o es una opción del comando assume.
-4 DOM_FUNC είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας???????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
+# DOM_FUNC func
+1 DOM_FUNC ou func représente le type d'une fonction, valeur de la commande type. C'est aussi une option de assume.
+2 DOM_FUNC or func is the type of a function, as returned by the type command. It is also an option of the assume command.
+3 DOM_FUNC o func representa el tipo de una función, valor del comando type o es una opción del comando assume.
+4 DOM_FUNC ή func είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας???????? μεταβλητής, είναι η τιμή της εντολής type ή Επιλογή της εντολής assume.
 0 Opt
 -1 type
 -2 assume
@@ -889,10 +928,10 @@ odd(1251)
  type(factor)
 
 # DOM_RAT rational
-1 DOM_RAT rational représente le type d'un rationnel, valeur de la commande type. C'est aussi une option de assume.
-2 DOM_RAT rational is the type of a rational, as returned by the type command. It is also an option of the assume command.
-3 DOM_RAT rational reprasenta el tipo de un racional, valor del comando type o es una opción del comando assume.
-4 DOM_RAT rational είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type.
+1 DOM_RAT ou rational représente le type d'un rationnel, valeur de la commande type. C'est aussi une option de assume.
+2 DOM_RAT or rational is the type of a rational, as returned by the type command. It is also an option of the assume command.
+3 DOM_RAT o rational reprasenta el tipo de un racional, valor del comando type o es una opción del comando assume.
+4 DOM_RAT ή rational είναι ένας ακέραιος αριθμός που εκφράζει τον τύπο μιας ?????? μεταβλητής, είναι η τιμή της εντολής type.
 0 Opt
 -1 type
 -2 assume
@@ -913,6 +952,7 @@ odd(1251)
  set[1,2,3]
  %{1,2,3%}
  L:=[1,2,2,3];S:=set[op(L)]
+ set[1,2]*set[2,3]
 
 # i[]
 1 i[] est utilisé pour définir un intervalle réel.
@@ -1441,6 +1481,7 @@ assign([a1=1,a2=2,a3=3])
 4 Υπολογίζει την κανονική μορφή Smith ενός πίνακα με συντελεστές στο ℤ: επιστρέφει U, B, V, τέτοια ώστε U και V αντιστρέψιμα στο ℤ, B διαγώνιος, το B[j,j] διαιρεί το B[j+1,j+1] και Β=U*A*V.
 0 Mtrx(A)
 -1 ihermite
+-2 smith
 ismith([[9,-36,30],[-36,192,-180],[30,-180,180]])
 ismith([[1,2,3],[4,5,6],[7,8,9]])
 
@@ -1455,15 +1496,17 @@ ihermite([[9,-36,30], [-36,192,-180], [30,-180,180]])
 ihermite([[1,2,3],[4,5,6],[7,8,9]])
 
 # GF
-1 Crée un corps de Galois (Galois Field) de caractéristique p ayant p^n éléments.
-2 Create a Galois Field of characteristic p with p^n elements.
+1 Crée un corps de Galois (Galois Field) de caractéristique p ayant p^n éléments. Le polynome minimal est primitif sauf s'il est donné ou si on passe 0 en dernier argument.
+2 Create a Galois Field of characteristic p with p^n elements. The minimal polynomial is primitive except if given or if 0 is passed as last argument.
 3 Crea un campo de Galois de característica p con p^n elementos.
 4 Δημιουργία Σώματος Galois με χαρακτηριστική p και p^n στοιχεία.
-0 Intg(p), Intg(n)
+0 Intg(p), Intg(n)|Minpoly,[Variable],[0|undef|Poly]
 GF(2,8)
-GF(5,9)
+GF(5,9,a)
+GF(2,128,0)
+GF(2,w^8+w^7+w^5+w+1)
 GF(2,8,['a','G'])
-G:=GF(2,a^8+a^6+a^3+a^2+1,['a','G'],undef)
+ G:=GF(2,a^8+a^6+a^3+a^2+1,['a','G'],undef)
 
 # droite_tangente
 1 Trace la tangente au graphe de y=f(x) en x=a.
@@ -1515,14 +1558,17 @@ droite_tangente(x^2-x,1)
 -1 rsolve
 reverse_rsolve([1,-1,3,3])
 
-# revlist
-1 Renvoie la liste l inversée.
-2 Returns the list l in reverse order.
-3 Devuelve la lista l al revés.
-4 Επιστρέφει την λίστα l με αντίστροφη διάταξη.
+# revlist reverse
+1 Renvoie la liste L inversée; L:=revlist(L) ou L.revlist().
+2 Returns the list L in reverse order; L:=revlist(L) or L.revlist().
+3 Devuelve la lista L al revés; L:=revlist(L) o L.revlist().
+4 Επιστρέφει την λίστα L με αντίστροφη διάταξη; L:=revlist(L) ή L.revlist().
 8 反转数据列。  反转数据列中元素的顺序，并返回为一个新数据列。
-0 Lst(l)
-revlist([1,2,3])
+0 Lst(L)
+revlist([1,2,3,4])
+ L:=[1,2,3,4];L:=revlist(L)
+ L:=[1,2,3,4];L.revlist()
+ L:=[1,2,3,4];L.reverse()
 
 # ratnormal
 1 Réécriture sous forme de fraction irréductible.
@@ -2438,11 +2484,11 @@ reciprocation(circle(0,1),[point((1+i)/2), line(1,-1+i)])
 reciprocation(circle(0,1),[line(1+i,2),point(1+i*2)])
 
 # harmonic_conjugate
-1 Renvoie le conjugué harmonique de 3 points alignés ou de 3 droites parallèles ou concourantes, ou la polaire d'un point par rapport à 2 droites.
-2 Returns the harmonic conjugate of 3 points or of 3 parallel or concurrent lines or the line of conjugates of a point in respect to 2 lines.
-3 Devuelve el conjugado armónico de 3 puntos alineados o de 3 rectas paralelas o concurrentes, o la polar de un punto con respecto a 2 rectas.
+1 Renvoie le conjugué harmonique C par rapport à A et B des 3 points alignés ou des 3 droites parallèles ou concourantes, ou la polaire d'un point par rapport à 2 droites.
+2 Returns the harmonic conjugate C  toward A and B of 3 points or of 3 parallel or concurrent lines or the line of conjugates of a point in respect to 2 lines.
+3 Devuelve el conjugado armónico C con respecto A y B de 3 puntos alineados o de 3 rectas paralelas o concurrentes , o la polar de un punto con respecto a 2 rectas.
 4 Επιστρέφει την αρμονική συζυγή 3 ευθυγραμμισμένων σημείων ή 3 παράλληλων ή συγκλινουσών ευθειών ή την πολική ενός σημείου αναφορικά με 2 ευθείες.
-0 Line or Pnt,Line or Pnt,Line or Pnt
+0 Line or Pnt(A),Line or Pnt(B),Line or Pnt(C)
 -1 is_harmonic
 -2 harmonic_division
 harmonic_conjugate(0,2,3/2)
@@ -2625,7 +2671,7 @@ coordinates(-1-i)
 coordinates(point(1,2,3))
 coordinates(vecteur([1,2,3],[4,5,6]))
 
-# false FALSE
+# false FALSE False
 1 booléen valant faux ou 0.
 2 boolean equal to false or 0.
 3 Tipo de dato lógico (booleano) que vale falso o 0.
@@ -2634,7 +2680,7 @@ coordinates(vecteur([1,2,3],[4,5,6]))
 -1 true
  a:=false
 
-# true TRUE
+# true TRUE True
 1 booléen valant vrai ou 1.
 2 boolean equal to true or 1.
 3 Tipo de dato lógico (booleano) que vale verdadero o 1.
@@ -2668,7 +2714,7 @@ coordinates(vecteur([1,2,3],[4,5,6]))
  1==2 and 2>1
  1!=2 and 2>0
 
-# end end_for fpour end_while ftantque end_if fi fsi od ffaire
+# end end_for fpour end_while ftantque end_if fi fsi od ffaire ffonction
 1 Fin de bloc.
 2 Bloc end.
 3 Final de bloque.
@@ -2677,7 +2723,11 @@ coordinates(vecteur([1,2,3],[4,5,6]))
 -1 begin
 -2 bloc
 -3 {}
- if (2>1) begin print("ifactor(154)=",ifactor(154));ifactor(154);end
+ if (2>1) begin print("ifactor(154)=",ifactor(154));ifactor(154);end;
+ if (2>1) begin print("ifactor(154)=",ifactor(154));ifactor(154);fi;
+ f:=function(a,b) local c;c:=a+b;c+gcd(a,b);end;f(28,21);
+ f:=fonction(a,b) local c;c:=a+b;c+gcd(a,b);ffonction;
+ fonction f(a,b) local c;c:=a+b;c+gcd(a,b);ffonction;
 
 # bisection_solver brent_solver falsepos_solver newton_solver secant_solver steffenson_solver
 1 Argument de fsolve indiquant la méthode pour résoudre numériquement une équation.
@@ -5853,14 +5903,33 @@ Circle(0,1,1,1)
 -1 
 version()
 
-# seq
-1 Renvoie la séquence (2 ou 3 arg) ou la liste (4 ou 5 arg) obtenue lorsque var varie entre a et b (pas=p) dans Xpr (ou on répète n fois l'expression Xpr ou on obtient la sequence des réels entre a et b par pas de p).
-2 Returns the sequence (2 or 3 arg) or the list (4 or 5 arg) obtained when var go from a to b (step p) in Xpr (or the Xpr is repeated n times or returns the sequence of reals from a to b (step p)).
-3 Devuelve la secuencia (2 o 3 arg) o la lista (4 o 5 arg) obtenida cuando var va desde a hasta b (paso=p) en Xpr (o la expresión Xpr es repetida n veces).
-4 Επιστρέφει την ακολουθία (2 ή 3 ορίσματα) ή τη λίστα (4 ή 5 ορίσματα) που αποκτιέται όταν το var μεταβάλλεται από a έως b (με βήμα p) στην παράσταση (ή η παράσταση επαναλαμβάνεται n φορές).
-0 Expr(Xpr)||Int(a..b),Intg(n)||Var(var)||Real(p),[Intg(a)],[Intg(b)],[Real(p)]
+# range
+1 Renvoie la liste [0,1..n-1] ou la liste [a,a+1..b[ ou la liste [a,a+p,a+2p..b[
+2 Returns the list [0,1..n-1] or the list [a,a+1..b[ or the list [a,a+p,a+2p..b[
+3 Devuelve la lista [0,1..n-1] o la lista [a,a+1..b[ o la lista [a,a+p,a+2p..b[.
+4 Επιστρέφει τη λίστα [0,1..n-1] ή τη λίστα [a,a+1..b[ ή τη λίστα [a,a+p,a+2p..b[
+0 Intg(n)||Intg(a),Intg(b),[Intg(p)]
 -1 $
 -2 makelist
+-3 seq
+range(10)
+range(1,11)
+range(1,11,2)
+range(1,11,3)
+range(11,1,-1)
+ L:=[j^2 for j in range(20) if isprime(j)]
+
+# seq
+1 Renvoie la séquence (2 ou 3 arg) ou la liste (4 ou 5 arg) obtenue lorsque var varie entre a et b (pas=p) dans Xpr (ou on répète n fois l'expression Xpr ou on obtient la sequence des réels entre a et b par pas de p). On a aussi seq(expression,variable,liste) équivaut à map(liste,unapply(expression,variable)) 
+2 Returns the sequence (2 or 3 arg) or the list (4 or 5 arg) obtained when var go from a to b (step p) in Xpr (or the Xpr is repeated n times or returns the sequence of reals from a to b (step p)).And also seq(expression,variable,liste) is equivanent to map(liste,unapply(expression,variable)) 
+3 Devuelve la secuencia (2 o 3 arg) o la lista (4 o 5 arg) obtenida cuando var va desde a hasta b (paso=p) en Xpr (o la expresión Xpr es repetida n veces).
+4 Επιστρέφει την ακολουθία (2 ή 3 ορίσματα) ή τη λίστα (4 ή 5 ορίσματα) που αποκτιέται όταν το var μεταβάλλεται από a έως b (με βήμα p) στην παράσταση (ή η παράσταση επαναλαμβάνεται n φορές).
+0 Expr(Xpr),Var(var)=Int(a..b),[Real(p)]||Expr(Xpr),Var(var),Real(a),Real(b),[Real(p)]
+-1 $
+-2 makelist
+-3 range
+-4 map
+-5 unapply
 seq(0.3,4)
 seq(t,4)
 seq(0,0)
@@ -5869,6 +5938,7 @@ seq(2^k,k=0..8,2)
 seq(0.3..2,0.2)
 seq(2^k,k,0,8)
 seq(2^k,k,0,8,2)
+seq(x^3,x,[1,2,3])
  [seq(0.3..2,0.2)] 
  a:=(1,2,3);eval(seq(a,4))
 
@@ -5880,6 +5950,7 @@ seq(2^k,k,0,8,2)
 0 (Expr(var)||Int(a..b)),(Var(var)=Int(a..b))||Intg(n)||Real(p)
 -1 seq
 -2 makelist
+-3 range
  0.3$4
  t$4
  0$0
@@ -6415,7 +6486,7 @@ InputStr("nom?",N)
 3 Devuelve el tipo del argumento (STR,EXPR,FUNC,NUM,LIST,MAT,VAR,NONE,PIC...).
 4 Επιστρέφει τον τύπο του ορίσματος (STR,EXPR,FUNC,NUM,LIST,MAT,VAR,NONE,PIC...).
 0 Expr
--1 
+-1 getKey
 getType("aze")
 getType(2+i)
 getType(x->cos(2*x))
@@ -6427,8 +6498,17 @@ getType(1.414)
 3 Instrucción en un programa, devuelve 0 si no pulsa ninguna tecla, y si no, devuelve el código ascii de la tecla pulsada.
 4 Εντολή σε ένα πρόγραμμα, που επιστρέφει 0 αν δεν πατηθεί κανένα πλήκτρο και αλλιώς επιστρέφει τον ascii κωδικό του πλήκτρου που θα πατηθεί.
 0 NULL
--1 
+-1 getType
 getKey()
+
+# assert
+1 Instruction dans un programme, renvoie une erreur si b==faux.
+2 Instruction in a program, returns an error if b==false.
+3 Instrucción en un programa, devuelve un error si b==false.
+4 Εντολή σε ένα πρόγραμμα, που επιστρέφει λάθος αν b==false.
+0 Boolean(b)
+-1 break
+assert(a>0);
 
 # string
 1 Retourne l'expression évaluée sous la forme d'une chaîne de caractères ou Option de la commande convert ou convertir (id string).
@@ -6569,6 +6649,14 @@ Fill(1.1,A)
 expr("ifactor(54)")
 expr("123")
 expr("0123")
+expr(sin,x)
+
+# list2exp
+1 Fonction inverse de exp2list
+2 Invert exp2list
+0 List
+-1 exp2list
+list2exp([[3,9],[- 1,1]],[x, y])
 
 # exp2list
 1 Renvoie la liste formée par les membres de droite de (var=expr0 or var=expr1), utile après solve en mode TI.
@@ -6576,6 +6664,7 @@ expr("0123")
 3 Devuelve la lista formada por los miembros derechos de (var=expr0 o var=expr1), práctico después de solve en modo TI.
 4 Επιστρέφει τη λίστα που δημιουργείται από τα δεξιά μέλη των (var=expr0 ή var=expr1), για να χρησιμοποιηθούν μετά την solve σε λειτουργία TI.
 0 Expr
+-1 list2exp
 exp2list((x=2) or (x=0))
 exp2list(solve(x^2-1))
 
@@ -6973,6 +7062,9 @@ colspace([[1,2,3],[1,3,6],[2,5,9]],d)
 -3 @
 function_diff(sin+id)
 function_diff(sq@sin+id)
+function_diff(ln)(x,y)
+function_diff(ln)([x,y])
+ (function_diff @@3)(ln)('x') 
 
 # id
 1 Désigne la fonction identité (ℝ^n -> ℝ^n).
@@ -7238,6 +7330,7 @@ convert(9976/6961,confrac,'l');l
 convert(sqrt(2),confrac,'dev');dev
 convert(123,base,8)
 convert([3,7,1],base,8)
+convert([1,2,3],set[])
  A[2,1]:=1;convert(A,array)
  B[0..1,1..2]:=1;B[2,2]:=2;convert(B,array)
 
@@ -7752,10 +7845,10 @@ genpoly(7*y+5,6,x)
 genpoly(7*y-5*z,10,x)
 
 # left lhs gauche
-1 Renvoie la partie gauche d'une égalité, d'un intervalle ou d'une chaîne.
-2 Returns the left part of an equality, of an interval or of a string.
-3 Devuelve la parte izquierda de una igualdad, de un intervalo o de una cadena.
-4 Επιστρέφει το αριστερό μέρος μια ισότητας, ενός διαστήματος ή μιας συμβολοσειράς.
+1 Renvoie la partie gauche d'une égalité, d'un intervalle, d'une liste ou d'une chaîne.
+2 Returns the left part of an equality, of an interval, of a list or of a string.
+3 Devuelve la parte izquierda de una igualdad, de un intervalo, de una lista o de una cadena.
+4 Επιστρέφει το αριστερό μέρος μια ισότητας, ενός διαστήματος, μιας λίστας ή μιας συμβολοσειράς.
 8 左。
 0 Equal(a=b) or Interval(a..b) or Str,Intg
 -1 right
@@ -7768,10 +7861,10 @@ left(1..5)
 left("abcdefg",3)
 
 # right rhs droit
-1 Renvoie la partie droite d'une égalité, d'un intervalle ou d'une chaîne.
-2 Returns the right part of an equality, of an interval or of a string.
-3 Devuelve la parte derecha de una igualdad, de un intervalo o de una cadena.
-4 Επιστρέφει το δεξιό μέρος μια ισότητας, ενός διαστήματος ή μιας συμβολοσειράς.
+1 Renvoie la partie droite d'une égalité, d'un intervalle, d'une liste ou d'une chaîne.
+2 Returns the right part of an equality, of an interval, of a list or of a string.
+3 Devuelve la parte derecha de una igualdad, de un intervalo, de una lista o de una cadena.
+4 Επιστρέφει το δεξιό μέρος μια ισότητας, ενός διαστήματος, μιας λίστας ή μιας συμβολοσειράς.
 8 右。
 0 Equal(a=b) or Interval(a..b) or Str,Intg
 -1 left
@@ -7796,11 +7889,11 @@ ord("ABC")
 ord(["a","b","c"])
 
 # rotate
-1 Renvoie la liste obtenue en mettant le dernier élément [ou la fin de la liste à partir du n-ième élément] en premier (par défaut n=-1).
-2 Returns the list where the last element [or the tail beginning with the n-th element] is the first element (by default n=-1).
-3 Devuelve la lista obtenida al cambiar el último elemento (o la cola a partir del n-ésimo elemento) por el primer elemento (por defecto n=-1).
-4 Επιστρέφει τη λίστα που δημιουργείται θέτοντας το τελευταίο στοιχείο [ή την ουρά της λίστας που αρχίζει με το n-στο στοιχείο] ως πρώτο στοιχείο (προεπιλογή n =- 1).
-0 Lst,[Intg(n)]
+1 Renvoie la liste obtenue en mettant le dernier élément [ou la fin de la liste à partir du n-ième élément] en premier (par défaut n=-1);L:=rotate(L,n) ou L.rotate(n)
+2 Returns the list where the last element [or the tail beginning with the n-th element] is the first element (by default n=-1);L:=rotate(L,n) or L.rotate(n).
+3 Devuelve la lista obtenida al cambiar el último elemento (o la cola a partir del n-ésimo elemento) por el primer elemento (por defecto n=-1);L:=rotate(L,n) o L.rotate(n).
+4 Επιστρέφει τη λίστα που δημιουργείται θέτοντας το τελευταίο στοιχείο [ή την ουρά της λίστας που αρχίζει με το n-στο στοιχείο] ως πρώτο στοιχείο (προεπιλογή n =- 1);L:=rotate(L,n) ή L.rotate(n).
+0 Lst||Str(L),[Intg(n)]
 -1 tail
 -2 mid
 -3 shift
@@ -7808,18 +7901,24 @@ rotate([0,1,2,3],2)
 rotate([[1,2,3],[4,5,6],[7,8,9]])
 rotate([0,1,2,3,4])
 rotate([0,1,2,3,4],-1)
+ L:=[0,1,2,3,4];L:=rotate([0,1,2,3,4])
+ L:=[0,1,2,3,4];L.rotate()
+ L:=[0,1,2,3];L:=rotate([0,1,2,3],2)
+ L:=[0,1,2,3];L.rotate(2)
 
 # shift
-1 Renvoie la liste obtenue en mettant le dernier élément [ou la fin de la liste à partir du n-ième élément] en premier en la complétant par undef (par défaut n=-1).
-2 Returns the list where the last element [or the tail beginning with the n-th element] is the first element and then complete with undef (by default n=-1).
-3 Devuelve la lista obtenida al cambiar el último elemento (o la cola empezando al n-ésimo elemento) por el primer elemento y completada con undef (por defecto n=-1).
-4 Επιστρέφει τη λίστα που δημιουργείται θέτοντας το τελευταίο στοιχείο [ή την ουρά της λίστας που αρχίζει με το n-στο στοιχείο] ως πρώτο στοιχείο και αντικαθιστώντας το με undef (προεπιλογή n =- 1).
+1 Renvoie la liste obtenue en mettant le dernier élément [ou la fin de la liste à partir du n-ième élément] en premier en la complétant par 0 (par défaut n=-1);L:=shift(L,2) ou L.shift(2).
+2 Returns the list where the last element [or the tail beginning with the n-th element] is the first element and then complete with 0 (by default n=-1);L:=shift(L,2) o L.shift(2).
+3 Devuelve la lista obtenida al cambiar el último elemento (o la cola empezando al n-ésimo elemento) por el primer elemento y completada con 0 (por defecto n=-1);L:=shift(L,2) o L.shift(2).
+4 Επιστρέφει τη λίστα που δημιουργείται θέτοντας το τελευταίο στοιχείο [ή την ουρά της λίστας που αρχίζει με το n-στο στοιχείο] ως πρώτο στοιχείο και αντικαθιστώντας το με 0 (προεπιλογή n =- 1);L:=shift(L,2) ή L.shift(2).
 0 Lst,[Intg(n)]
 -1 rotate
 -2 tail
 shift([0,1,2,3],2)
 shift([0,1,2,3])
 shift([0,1,2,3,4])
+ L:=[0,1,2,3];L:=shift(L,2)
+ L:=[0,1,2,3];L.shift(2)
 
 # correlation
 1 Renvoie la corrélation des éléments de l'argument.
@@ -8063,24 +8162,26 @@ coldim([[1,2],[3,4],[5,6]])
 identity(3)
 identity(5)
 
-# diag BlockDiagonal
+# BlockDiagonal
 1 Renvoie soit la matrice diagonale de diagonale l soit la diagonale de A.
 2 Returns either the diagonal matrix with diagonal l or the diagonal of A.
 3 Devuelve o bien la matrix diagonal con diagonal l, o bien la diagonal de A.
 4 Αν η εισαγωγή είναι η λίστα l επιστρέφει τετραγωνικό πίνακα με διαγώνιο την l, αν η εισαγωγή είναι ο πίνακας Α επιστρέφει την διαγώνιό του.
 0 Lst(l)||Mtrx(A)
 -1 identity
+-2 diag 
 BlockDiagonal([[1,2],[3,4]])
 BlockDiagonal([1,2,3])
 
 # diag 
-1 Avec 1 argument renvoie soit la matrice diagonale de diagonale l soit la diagonale de A, avec 2 arguments renvoie la partie gauche large de A ou la partie gdroite large de A ou découpe A en 3 parties : gauche stricte, diagonale, droite stricte, et avec 3 arguments renvoie la matrice tridiagonale de diagonales l,d,u.
+1 Avec 1 argument renvoie soit la matrice diagonale de diagonale l soit la diagonale de A, avec 2 arguments renvoie la partie gauche large de A ou la partie droite large de A ou découpe A en 3 parties : gauche stricte, diagonale, droite stricte, et avec 3 arguments renvoie la matrice tridiagonale de diagonales l,d,u.
 2 With 1 argument returns either the diagonal matrix with diagonal l or the diagonal of A, with 2 arguments returns the large left part of A or the large right part of A or cuts A into 3 parts : strict left,diagonal,strict right  and with 3 arguments returns the tridiagonale matrix with diagonals l,d,u.
 3 Con 1 argumento devuelve o bien la matrix diagonal con diagonal l, o bien la diagonal de A, con 2 argumentos devuelve la parte izquierda de A o la parte derecha de A ou cortar A en 3 partes : estricto izquierda,diagonal,estricto derecha y con 3 argumentos devuelve la matrix tridiagonal con diagonal l,d,u.
 4 με 1 όρισμα η εισαγωγή είναι η λίστα l επιστρέφει τετραγωνικό πίνακα με διαγώνιο την l, αν η εισαγωγή είναι ο πίνακας Α επιστρέφει την διαγώνιό του,  και με 2 ορίσματα, επιστρέφει το αριστερό μέρος του A,διαγώνιό του Α, το δεξιό μέρος του A, και με 3 ορίσματα, η εισαγωγή είναι τις λίστες l,d,u επιστρέφει.
 0 Lst(l)||(Mtrx(A),[left||right||lu])||Lst(l),Lst(d),Lst(u)
 -1 identity
 -2 lu
+-3 BlockDiagonal
 diag([[1,2],[3,4]])
 diag([1,2,3])
 diag([[1,2],[3,4]],left)
@@ -8089,16 +8190,16 @@ diag([[1,2],[3,4]],lu)
 diag([1,2],[3,4,5],[6,7])
 
 # coeff coeffs
-1 Renvoie la liste des coefficients d'un polynôme par rapport au 2ème argument ou le coefficient du 3ème argument.
-2 Returns the list of coefficients of a polynomial with respect to the 2nd argument or the coefficient of the 3rd argument.
-3 Devuelve la lista de los coeficientes de un polinomio con respecto al 2o argumento o el coeficiente del 3er argumento.
-4 Επιστρέφει τους συντελεστές ενός πολυωνύμου αναφορικά με το 2ο όρισμα ή τον συντελεστή του 3ου ορίσματος.
-0 Expr,[Var]
+1 Renvoie la liste des coefficients d'un polynôme P par rapport au 2ème argument ou le coefficient de degré le 3ème argument.
+2 Returns the list of coefficients of a polynomial with respect to the 2nd argument or the coefficient of degree the 3rd argument.
+3 Devuelve la lista de los coeficientes de un polinomio con respecto al 2o argumento o el coeficiente de grado del 3er argumento.
+4 Επιστρέφει τους συντελεστές ενός πολυωνύμου αναφορικά με το 2ο όρισμα ή τον συντελεστή του βαθμού του 3ου ορίσματος.
+0 Expr(P),[Var]
 -1 pcoeff
 -2 fcoeff
 coeff(x*3+2)
-coeff(2*y^2-3,y)
-coeff(2*y^2-3,y,2)
+coeff(5*y^2-3,y)
+coeff(5*y^2-3,y,2)
 
 # taylor
 1 Développement limité ou asymptotique (par défaut x=0 et ordre relatif=5).
@@ -8463,15 +8564,19 @@ extract_measure(angleatraw(0,1,1+i,1))
  A:=point(0);B:=point(1+i);a:=distanceatraw(A,B,(1+i)/2);extract_measure(a)
 
 # append
-1 Ajoute un élément à une liste.
-2 Append an element to a list.
-3 Añade un elemento a una lista.
-4 Προσθήκη ενός στοιχείου στο τέλος μιας λίστας.
-0 (Lst||Seq|| Set,Elem
+1 Rajoute un élément à un ensemble ou à la fin d'une liste ou d'une chaîne (L:=append(L,a) ou L.append(a)).
+2 Append an element to a set or at the end of a list or of a string (L:=append(L,a) o L.append(a)).
+3 Añade un elemento a una lista (conjunto o cadena)(L:=append(L,a) ou L.append(a)).
+4 Προσθήκη ενός στοιχείου στο τέλος μιας λίστας (σύνολο ή συμβολοσειράς)(L:=append(L,a) ή L.append(a)).
+0 (Lst||Set||Str(L),Elem)
 -1 concat
 -2 prepend
-append([1,2,3],4)
-append(%{1,2,3%},4)
+append([1,2,4],6)
+append(%{1,2,4%},6)
+ L:=[1,2,4];L:=append(L,6)
+ L:=[1,2,4];L.append(6)
+ S:=set[1,2,4];S:=append(S,6)
+ S:=set[1,2,4];S.append(6)
 
 # arg
 1 Argument d'un nombre complexe.
@@ -8806,9 +8911,9 @@ changebase([[1,2],[1,3]],[[1,1],[0,1]])
 changebase([[1,2],[1,3]],[[1,0],[1,1]])
 
 # char
-1 Renvoie la chaîne correspondant aux caractères contenus dans l'argument.
+1 Renvoie la chaîne correspondant aux codes des caractères contenus dans l'argument.
 2 Returns the string corresponding to the character code of the argument.
-3 Devuelve la cadena correspondiente a los caracteres contenidos en el argumento.
+3 Devuelve la cadena correspondiente a los códigos de caracteres contenidos en el argumento.
 4 Επιστρέφει την συμβολοσειρά που αντιστοιχεί στους χαρακτήρες στο όρισμα.
 8 返回与矢量的 ASCII 字符码相对应的字符串，或返回与该整数相关的单个字符。
 0 Intg or Lst(Intg)
@@ -8953,11 +9058,11 @@ comb(4,2)
 -1 
 comment("my_comment")
 
-# concat augment
-1 Concatène deux listes ou deux chaînes ou deux séquences ou 2 matrices (les 2 matrices doivent avoir le même nombre de lignes et seront concaténées ligne par ligne).
-2 Concatenates two lists or two strings or two sequences or 2 matrix.
-3 Concatena 2 listas o 2 cadenas o 2 secuencias o dos matrices.
-4 Συνένωση 2 λιστών ή 2 συμβολοσειρών ή 2 ακολουθιών ή 2 πινάκων.
+# concat augment extend
+1 Concatène deux listes ou deux chaînes ou deux séquences ou 2 matrices (les 2 matrices doivent avoir le même nombre de lignes et seront concaténées ligne par ligne); L:=concat(L,L1) ou L.concat(L1).
+2 Concatenates two lists or two strings or two sequences or 2 matrix; L:=concat(L,L1) or L.concat(L1).
+3 Concatena 2 listas o 2 cadenas o 2 secuencias o dos matrices; L:=concat(L,L1) o L.concat(L1).
+4 Συνένωση 2 λιστών ή 2 συμβολοσειρών ή 2 ακολουθιών ή 2 πινάκων; L:=concat(L,L1)  ή L.concat(L1).
 8 连结  将两个列表连接成一个新列表。
 0 Lst,Lst||Seq,Seq||Str,Str||Mtrx,Mtrx
 -1 append
@@ -8968,6 +9073,8 @@ comment("my_comment")
 concat([1,2],[3,4,5])
 concat("bon","jour")
 concat([[1,2],[3,4]],[[4,5,6],[6,7,8]])
+ L:=[1,2];L.concat([3,4,5])
+ S:="abcd";S.concat("efghi")
 
 # conj
 1 Conjugué d'un nombre complexe.
@@ -9002,6 +9109,8 @@ inString("abcd","e")
 0 Elem(e),(Lst(l) or Set(l))
 -1 contains
 -2 est_element
+-3 find
+-4 index
 member(1,[4,3,1,2])
 member(1,%{4,3,1,2%})
 
@@ -9163,15 +9272,16 @@ debug(pgcd(25,15))
  a:=1;switch(a){case 0:{b:=1;break;} case 1:{b:=3;break;} default:{b:=0;}};
 
 # degree
-1 Degré du polynôme P.
-2 Degree of the polynomial P.
-3 Grado del polinomio P.
-4 Βαθμός του πολυωνύμου P.
-0 Poly(P)
+1 Degré du polynôme P par rapport à la variable var.
+2 Degree of the polynomial P with respect to the second argument.
+3 Grado del polinomio P con respecto al segundo argumento.
+4 Βαθμός του πολυωνύμου P αναφορικά με το 2ο όρισμα.
+0 Poly(P),Var(var)
 -1 valuation
 -2 size
 degree(x^3+x)
 degree([1,0,1,0])
+degree(x^3+x*y,y)
 
 # desolve deSolve dsolve
 1 Résout une équation différentielle ou un système différentiel linéaire à coefficients constants.
@@ -9284,7 +9394,9 @@ dot([[1,2],[3,4]],[[3,2],[4,5]])
 -3 integrate
 -4 taux_accroissement
 diff(x^3-x)
-diff(x^3-x,x$3)
+diff(x^3-x,'x'$3)
+diff(x^3-x,quote(x)$3)
+(diff@@3)('x^3-x')
 diff(x*y+z*y,y)
 diff(x*y+z*y,y,z)
 diff(x*y+z*y,[y,z])
@@ -9573,7 +9685,7 @@ is_parallel(line(0,i),line(1,1+i))
 is_parallel(line([2,3,-2],[-1,-1,-1]),plane([-1,-1,-1],[1,2,-3],[0,0,0]))
 is_parallel(line([0,0,0],[-1,-1,-1]),line([2,3,-2],[-1,-1,-1]))
 
-# is_permu
+# is_permu est_permu
 1 Renvoie 1 si l'argument est une permutation de [0,1..s-1] et 0 sinon
 2 Returns 1 if the argument is a permutation and 0 otherwise
 3 Devuelve 1 si el argumento es una permutación y 0 si no
@@ -10092,14 +10204,28 @@ head([1,2,3])
 head("bonjour")
 
 # hermite
-1 Renvoie le polynôme de Hermite de degré n
-2 Returns the Hermite polynomial of degree n
+1 Renvoie le polynôme de Hermite de degré n ou la forme normale de Hermite d'une matrice a coefficients polynomiaux (I,U tels que I*A=U)
+2 Returns the Hermite polynomial of degree n or the Hermite normal form for a polynomial coefficients matrix (I,U such that I*A=U)
 3 Devuelve el polinómio de Hermite de grado n
 4 Επιστρέφει το πολυώνυμο Hermite βαθμού n
-0 Intg(n)
+0 Intg(n)||Matr(A)
 -1 legendre
 -2 laguerre
+-3 smith
+-4 ihermite
+-5 ismith
 hermite(3)
+ n:=5; a:=ranm(n,n) % 17; l,u:=hermite(x-a);normal(l*(x-a)-u);
+
+# smith
+1 Renvoie la forme normale de Smith d'une matrice a coefficients polynomiaux (U,D,V tels que U*A*V=D)
+2 Returns the Smith normal form of a polynomial coefficients matrix (U,D,V tels que U*A*V=D)
+0 Matr(A)
+-1 hermite
+-2 ismith
+-3 ihermite
+ n:=10; a:=ranm(n,n) % 17; u,b,v:=smith(x-a);normal(u*(x-a)*v-b); diag(b);
+ GF(3,5,g); n:=3; a:=ranm(n,n,g); u,b,v:=smith(x-a);normal(u*(x-a)*v-b); diag(b);
 
 # grad
 1 Renvoie le gradient de l'expression Xpr
@@ -10455,6 +10581,33 @@ iquo(125,41)
 iquo(-7,3)
 iquo(25+12*i,5+7*i)
 
+# /%
+1 Quotient euclidien de 2 entiers ou de 2 entiers de Gauss : c'est la version infixée de iquo.
+2 Euclidean quotient of 2 integers : it is the infixed version of iquo.
+3 Cociente euclídeo de 2 enteros : es la versión infija de iquo.
+4 Ευκλείδιο πηλίκο 2 ακεραίων : εντεθειμένη μορφή του iquo.
+8  整数的欧几里德商。  整数 a 除以整数 b 时，返回整数商。 a/%b
+-4 mod
+irem(125,15)
+irem(125,41)
+irem(-7,3)
+irem(25+12*i,5+7*i)
+
+# %/
+1 Reste euclidien de 2 entiers ou de 2 entiers de Gauss : c'est la version infixée de irem).
+2 Euclidean remainder of 2 integer : it is the infixed version of irem.
+3 Resto euclídeo de 2 enteros : es la versión infija de irem.
+4 Ευκλείδιο υπόλοιπο 2 ακεραίων : εντεθειμένη μορφή του irem.
+8 整数的欧几里德余数。  整数 a 除以整数 b 时，返回整数余数 : 
+0 Intg(a),Intg(b)
+-1 irem
+-2 smod
+-3 quo
+iquo(125,15)
+iquo(125,41)
+iquo(-7,3)
+iquo(25+12*i,5+7*i)
+
 # div
 1 Quotient euclidien de 2 entiers ou de 2 entiers de Gauss (opérateur infixé)
 2 Euclidean quotient of 2 integers (infixed operator).
@@ -10497,6 +10650,23 @@ irem(125,15)
 irem(125,41)
 irem(-7,3)
 irem(25+12*i,5+7*i)
+
+# %/
+1 Reste euclidien de 2 entiers ou de 2 entiers de Gauss : c'est la version infixée de irem).
+2 Euclidean remainder of 2 integer : it is the infixed version of irem.
+3 Resto euclídeo de 2 enteros : es la versión infija de irem.
+4 Ευκλείδιο υπόλοιπο 2 ακεραίων : εντεθειμένη μορφή του irem.
+8 整数的欧几里德余数。  整数 a 除以整数 b 时，返回整数余数 : a%/b
+0 Intg(a),Intg(b)
+-1 iquo
+-2 smod
+-3 rem
+-4 mod
+ 125 %/ 15
+ 125 %/ 41
+ -7 %/ 3
+ 25+12*i %/ 5+7*i
+
 
 # is_pseudoprime
 1 Test de pseudo-primalité (0 non premier, 1 probablement premier, 2 premier)
@@ -10645,8 +10815,8 @@ Resultant(x^3+x+1,x^2-x-2,x)
 kill()
 
 # lagrange interp
-1 Renvoie le polynôme de degré n-1 tel que P(xk)=yk=f(x_k) k=0..n-1
-2 Returns the polynomial of degree n-1 such that P(xk)=yk=f(x_k) k=0..n-1
+1 Renvoie le polynôme de degré n-1 tel que P(xk)=yk=f(x_k) k=0..n-1 ou la liste des differences divisees si le dernier argument est lagrange
+2 Returns the polynomial of degree n-1 such that P(xk)=yk=f(x_k) k=0..n-1 or the list of divided differences if the last argument is lagrange
 3 Devuelve el polinomio de grado n-1 tal que P(xk)=yk=f(x_k) k=0..n-1
 4 Επιστρέφει το πολυώνυμο παρεμβολής βαθμού n-1 έτσι ώστε P(xk)=yk=f(x_k) k=0..n-1
 0 (Lst_xk,Lst_yk)||Mtrx_2*n||(Lst_xk,Fnc(f)),[Var||[]||lagrange]
@@ -10825,6 +10995,13 @@ linsolve([[2,1,1],[1,1,2],[1,2,1]],[1,1,4])
  gl_shownames=true;K:=carre(i,1+i)
  gl_shownames=false;K:=carre(i,1+i)
 
+# gl_showaxes
+1 Option permettant de montrer ou de cacher les axes.
+2 Option that shows or hides axes.
+0 Opt=Boolean
+ gl_showaxes=true;plot(sin(x))
+ gl_showaxes=false;plot(sin(x))
+
 # gl_quaternion
 1 Option permettant de définir le quaternion pour la visualisation des scènes 3-d (pas compatible avec l'interactivité).
 2 Option that defines the quaternion for the visualization in 3-d scenes (do not use for interactive scenes).
@@ -10840,6 +11017,14 @@ linsolve([[2,1,1],[1,1,2],[1,2,1]],[1,1,4])
 4 Καθολική επιλογή που επιτρέπει τον ορισμό του άξονα περιστροφής για εφέ κίνησης με περιστροφή 3-Δ σκηνών.
 0 Opt=NameFich
  gl_rotation=[1,1,1];cube([0,0,0],[3,0,0],[0,0,1])
+
+# gl_ortho
+1 Option globale permettant de définir une configuration graphique orthonormée.
+2 Global option that sets a orthonormal graphic configuration.
+3 Opción global que permite definir el ortonormal gráfico.
+4 Καθολική επιλογή που επιτρέπει τον ορισμό των ορθοκανονική γραφικών κάδρων.
+0 Opt=Interval
+ gl_ortho=1; cercle(i,1+i)
 
 # gl_x gl_y gl_z
 1 Option globale permettant de définir le cadrage du graphique.
@@ -10969,6 +11154,7 @@ ln(e)
 -3 ->
 -4 {}
  f2(x):={local (a:=2),b; b:=a*x; return b;}
+ f2(x):={var (a:=2),b; b:=a*x; return b;}
 
 # logb
 1 Logarithme à base b.
@@ -11142,10 +11328,12 @@ max(25,35)
 8 创建列表。  计算新列表的元素顺序。 对函数求值，并利用步长从初值开始增加变量值，一直增加到终值。
 0 Fnc,InitVal,FinalVal,StepVal
 -1 seq
--2 makemat
--3 $
+-2 range
+-3 makemat
+-4 $
 makelist(x->x^2,1,10,2)
 makelist(4,1,10)
+makelist(4,5,10)
 makelist(x->ifte(x<5,"A","B"),1,10)
 
 # map
@@ -11155,7 +11343,10 @@ makelist(x->ifte(x<5,"A","B"),1,10)
 4 Εφαρμογή της συνάρτησης f στα στοιχεία της λίστας l.
 0 Lst(l),Fnc(f)
 -1 apply
+-2 set
+-3 unapply
 map([1,2,3],x->x^3)
+map([1,2,3],unapply(x^3,x))
 map(%%%{1,[2,0]%%%}+%%%{2,[1,1]%%%},(a,b,c)->a*(b+2*c))
 
 # apply
@@ -11469,6 +11660,7 @@ cpartfrac(a/(z*(z-b)),z)
 -4 companion
 -5 rat_jordan
 -6 pmin
+-7 adjoint_matrix 
 pcar([[1,2],[3,4]])
 pcar([[1,2],[3,4]],x)
 pcar([[1,2,3],[1,3,6],[2,5,7]])
@@ -11631,7 +11823,7 @@ plotimplicit((x+5)^2+(y+4)^2-1,[x=-6..-4,y=-5..-3])
 -2 odeplot
 -3 odesolve
 -4 desolve
-fieldplot(sin(t*y),[t,y],xstep=0.5,ystep=0.5)
+fieldplot(sin(t*y),[t=-5..5,y=-3..3],xstep=0.5,ystep=0.5)
 fieldplot(-t*y,[t,y])
 fieldplot(-t*y,[t,y],normalize)
 fieldplot(-t*y,[t,y],normalize,xstep=0.5,ystep=0.5)
@@ -11774,14 +11966,19 @@ prevprime(9856989898999)
 prevprime(97160249868928888261606009)
 
 # prepend
-1 Met l'élément au début de la liste.
-2 Puts the element at the beginning of the list.
-3 Pone el elemento al principio de la lista.
-4 Ένθεση στοιχείου στην αρχή μιας λίστας.
-0 Lst,Elem
+1 Rajoute un élément à un ensemble ou le met au début d'une liste ou d'une chaîne (L:=prepend(L,a) ou L.prepend(a)).
+2 Puts an element to a set or at the beginning of a list or of a string (L:=prepend(L,a) or L.prepend(a)).
+3 Pone el elemento al principio de la lista (conjunto o cadena) (L:=prepend(L,a) o L.prepend(a)).
+4 Ένθεση στοιχείου στην αρχή μιας λίστας (σύνολο ή συμβολοσειράς) (L:=prepend(L,a)  ή L.prepend(a)).
+0 Lst||Set||Str(L),Elem(n)
 -1 append
 -2 concat
 prepend([1,2],3)
+prepend(set[1,2],3)
+ L:=[1,2];L:=prepend(L,3)
+ L:=[1,2];L.prepend(L,3) 
+ S:=set[1,2];S:=prepend(L,3)
+ S:=set[1,2];S.prepend(L,3)
 
 # print Disp
 1 Permet d'afficher un résultat intermédiaire dans un programme.
@@ -11789,7 +11986,7 @@ prepend([1,2],3)
 3 Permite mostrar un resultado intermedio en un programa.
 4 Εκτύπωση ενδιαμέσου αποτελέσματος σε ένα πρόγραμμα.
 8 将 expr 或 string 结果打印到终端。
-0 Expr or Str
+0 Expr|| Str
 -1 
 print("salut")
 print(a)
@@ -11959,11 +12156,11 @@ quorem(t^4-1,(t+1)^2,t)
 -1 a2q
 q2a(x^2+2*x*y+2*y^2,[x,y])
 
-# rand
-1 rand(n)=un entier (resp rand(p,n)=un réel ou rand(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (rand()=rand(0,1)=un réel de [0,1[) ou rand(n,b1,b2)=n entiers de [b1;b2] ou rand(n,L)=n éléments de L.
-2 rand(n)=a random integer (resp rand(p,n)=a real or rand(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(rand()=rand(0,1)=a real in [0,1[) or rand(n,b1,b2)=n integers between b1 and b2 or rand(n,L)=n elements of L.
-3 rand(n)=un número (resp rand(p,n)=un número real o rand(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (rand()=rand(0,1)) o rand(n,b1,b2)= enteros entre b1 y b2 o rand(n,L)=n elementos de L.
-4 rand(n)=έναν τυχαίο ακέραιο (αντίστοιχα rand(p,n)=ένα πραγματικό ή rand(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(rand()=rand(0,1)) ή rand(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή rand(n,L)=n στοιχεία του L.
+# rand random
+1 rand(n)=un entier (resp rand(p,n)=un réel ou rand(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (rand()=rand(0,1)=un réel de [0,1[) ou rand(n,b1,b2)=n entiers de [b1;b2] ou rand(n,L)=liste de n éléments de L.
+2 rand(n)=a random integer (resp rand(p,n)=a real or rand(p..n)=a real function) with uniform distribution in 0..n-1 (resp in [p;n])(rand()=rand(0,1)=a real in [0,1[) or rand(n,b1,b2)=n integers between b1 and b2 or rand(n,L)=list of n elements of L.
+3 rand(n)=un número (resp rand(p,n)=un número real o rand(p..n)=una función real) aleatorio distribuido en 0..n-1 (resp en [p;n]) (rand()=rand(0,1)) o rand(n,b1,b2)= enteros entre b1 y b2 o rand(n,L)=lista de n elementos de L.
+4 rand(n)=έναν τυχαίο ακέραιο (αντίστοιχα rand(p,n)=ένα πραγματικό ή rand(p..n)=μια πραγματική συνάρτηση) ομοιόμορφα κατανεμημένο στο 0..n-1 (αντίστοιχα στο [p;n])(rand()=rand(0,1)) ή rand(n,b1,b2)=n ακέραιους μεταξύ b1 και b2 ή rand(n,L)=λίστας n στοιχεία του L.
 0 Intg(n) or Interval(p..n) or NULL,[Intg(b1) or Lst(L)],[Intg(b2)]
 -1 srand
 -2 randpoly
@@ -11977,6 +12174,44 @@ rand(0..2)()
  f:=rand(0..2)
 rand(3,1,10)
 rand(3,["r","r","r","b","n"])
+ L:=["r","r","r","b","n"];L:=rand(L,3)
+ L:=["r","r","r","b","n"];L.rand(3)
+
+# choice
+1 choice(L)=rand(L)=un élément de L tiré au hasard.
+2 choice(L)=rand(L)=one extracted element of L.
+3 choice(L)=rand(L)=  un elemento de L.
+4 choice(L)=rand(L)
+0 Lst(L)
+-1 rand 
+-2 sample
+choice([1,2,3,4,5,6])
+choice(["r","r","r","b","n"])
+ L:=[1,2,3,4,5,6];L:=choice(L)
+ L:=[1,2,3,4,5,6];L.choice()
+
+# sample
+1 sample(L,n)= rand(n,L)=liste de n éléments de L tirés sans remise.
+2 sample(L,n)= rand(n,L)=list of de n extracted elements of L without throw-in.
+3 sample(L,n)= rand(n,L)=lista de n elementos de L.
+4 sample(L,n)= rand(n,L)=λίστας n στοιχεία του L.
+0 Lst(L),Intg(n)
+-1 rand 
+sample([1,2,3,4,5,6],6)
+sample([1,2,3,4,5,6],3)
+sample(["r","r","r","b","n"],3)
+ L:=[1,2,3,4,5,6];L:=sample(L,3)
+ L:=[1,2,3,4,5,6];L.sample(3)
+ 
+# randint
+1 randint(n1,n2)=un entier entre n1 et n2 (bornes incluses). 
+2 randint(n1,n2)=an integer in [n1, n2] or [n2,n1].
+3 randint(n1,n2)=un número un entero en [n1, n2] o [n2,n1].
+4 randint(n1,n2)= ενός ακεραίο στο [n1, n2]  ή [n2,n1]
+0 Intg(n1),Intg(n2)
+-1 rand 
+randint(1,10)
+randint(-1,-10)
 
 # hasard
 1 (hasard n)=un entier (resp (hasard p,n)=un réel ou hasard(p..n)=une fonction réelle) aléatoire uniformément distribué dans 0.. n-1 (resp dans [p; n]) (hasard ou (hasard 0,1)=un réel aléatoire de [0,1[) ou hasard(n,b1,b2)=n entiers de [b1;b2] ou hasard(n,L)=n éléments de L. Si hasard a un seul argument il peut se passer de () (compatibilité langage tortue).
@@ -12209,16 +12444,20 @@ randvector(3,'rand(3)')
 randvector(3,1..2)
  GF(2,8,g);randvector(3,g)
 
-# randperm
-1 Renvoie une permutation aléatoire de [0,1,2,..,n-1].
-2 Returns a random permutation of [0,1,2,..,n-1].
-3 Devuelve una permutación aleatoria de [0,1,2,..,n-1].
-4 Επιστρέφει μια τυχαία μετάθεση στο [0,1,2,..,n-1].
-0 Intg(n)
+# randperm shuffle
+1 Renvoie une permutation aléatoire de [0,1,2,..,n-1] ou de la liste L.
+2 Returns a random permutation of [0,1,2,..,n-1] or of the list L.
+3 Devuelve una permutación aleatoria de [0,1,2,..,n-1] o de L.
+4 Επιστρέφει μια τυχαία μετάθεση στο [0,1,2,..,n-1] ή στο L.
+0 Intg(n)||Lst(L)
 -1 permu2cycles
 -2 is_permu
+-3 permu2mat
 randperm(4)
 randperm(7)
+randperm([1,3,5,7,9])
+ L:=[1,3,5,7,9];L:=randperm(L)
+ L:=[1,3,5,7,9];L.randperm()
 
 # nextperm
 1 Renvoie la permutation suivante dans l'ordre lexicographique.
@@ -12301,11 +12540,11 @@ Rem(x^3+2*x^2+3*x+4,-x+2)
 Rem(t^3+2*t^2+3*t+4,-t+2,t)
 
 # remove
-1 Enlève les occurrences e de l ou les éléments e qui vérifient f(e)=vrai.
-2 Remove the occurrences e of l or the elements e such that f(e)=true.
-3 Borra los elementos e de l tales que f(e)=verdadero.
-4 Απομάκρυνση των στοιχείων e της l για τα οποία f(e)=true.
-0 FncBool(f)||e,Lst(l)
+1 Enlève les occurrences a de l ou les éléments a qui vérifient f(a)=vrai.
+2 Remove the occurrences a of l or the elements a such that f(a)=true.
+3 Borra los elementos a de l tales que f(a)=verdadero.
+4 Απομάκρυνση των στοιχείων a της l για τα οποία f(a)=true.
+0 FncBool(f)||a,Lst(l)
 -1 select
 -2 suppress
 remove(x->x>=5,[1,2,6,7])
@@ -12458,16 +12697,17 @@ same((2-1)^2,2^2-2*2+1)
 sec(pi/3)
 
 # segment
-1 segment(A,B) trace le segment AB.
-2 segment(A,B) draws the segment AB.
-3 segment(A,B) traza el segmento AB.
+1 segment(A,B) trace le segment AB et segment([xM,yM],[xN,yN]) trace le vecteur d'origine [xM,yM], de coordonnées [xN,yN] (i.e trace segment(M,point(M+N)).
+2 segment(A,B) draws the segment AB and segment([xM,yM],[xN,yN]) draws the vector as origin [xM,yM], of coordinates [xN,yN] (i.e draws segment(M,point(M+N)).
+3 segment(A,B) traza el segmento AB y segment([xM,yM],[xN,yN]) traza el vector con origen [xM,yM] de coordenadas [xN,yN] (i.e traza segment(M,point(M+N)).
 4 segment(A,B) σχεδιάζει το ευθύγραμμο τμήμα ΑΒ.
-0 (Pnt or Cplx),(Pnt or Cplx),[Var],[Var]
+0 (Pnt or Cplx or Lst([xM,yM])),(Pnt or Cplx or Lst([xN,yN]),[Var],[Var]
 -1 line
 segment(i,1+i)
 segment(point(i),point(1+i))
 segment(point(i),point(1+i),A,B)
-
+segment([-1,0],[2,1])
+segment([-1,0],point([-1,0]+[2,1]))
 
 # half_line
 1 demi_droite(A,B) trace la demi-droite AB d'origine A.
@@ -12491,14 +12731,17 @@ half_line(point(i),point(1+i))
 -4 polynom
 -5 truncate
 series(sin(x)/x,x=0)
+series(sin(x),x=0,6,polynom)
 series(ln(x+x^2)-ln(x),x=0,1)
 series((x^4+x+2)/(x^2+1),x=0,5)
-series(sin(x),x=0,6,polynom)
+ series("h",8); ln(1+h);
 series(1/(1+x+y),[x,y],[0,0],5) 
 series(sin(x*y),[x,y],[1,pi/2],3)
 series(sin((1+h*t)*(pi/2+k*t)),t=0,3,polynom)(t=1)
 series(y^2/x^3,[x,y],[1,-1],3)
 series((-1+k*t)^2/(1+h*t)^3,t=0,3,polynom)(t=1)
+series(subst(sin(x+y)+cos(y*x),[x,y],h*[x,y]),h=0,6,polynom)
+series(subst(sin(x+y)+cos(y*x),[x,y],h*[x,y]),h=0,6,polynom)(h=1)
  truncate(series(sin(x),x=0,6),6)
 
 # select
@@ -12508,7 +12751,9 @@ series((-1+k*t)^2/(1+h*t)^3,t=0,3,polynom)(t=1)
 4 Επιλέγει τα στοιχεία e της l που ικανοποιούν f(e)=true.
 0 FncBool(f),Lst(l)
 -1 remove
+-2 range
 select(x->x>=5,[1,2,6,7])
+select(x->isprime(x),range(20)).^2
 
 # sign
 1 Retourne le signe (-1,0,+1) de l'argument.
@@ -12567,7 +12812,7 @@ similarity(line(x=y,y=z),2,pi/3,point(-1,2,1))
  s:=similarity(1+i,2,pi/3);s(i)
  s:=similarity(line(x=y,y=z),2,pi/3),s(point(-1,2,1))
 
-# size nops length
+# size nops length len
 1 Renvoie la longueur d'une liste, d'une chaîne de caractères ou d'une suite.
 2 Returns the size of a list, a string or a sequence.
 3 Devuelve el tamaño de una lista, cadena o secuencia de caracteres o de una secuencia.
@@ -12989,15 +13234,31 @@ sum(1/(x*(x+1)),x)
 sum(cos(n*x),n)
 
 # suppress
-1 Renvoie l sans son élément d'indice n.
-2 Returns l without the element of index n.
-3 Devuelve l sin el elemento de índice n.
-4 Επιστρέφει την l χωρίς το στοιχείο με δείκτη n.
-0 Vect(l),Intg(n)
+1 Renvoie L sans son élément d'indice n; L:=suppress(L,n) ou L.suppress(n).
+2 Returns L without the element of index n; L:=suppress(L,n) or L.suppress(n).
+3 Devuelve L sin el elemento de índice n; L:=suppress(L,n) o L.suppress(n).
+4 Επιστρέφει την L χωρίς το στοιχείο με δείκτη n; L:=suppress(L,n) ou L.suppress(n).
+0 Vect(L)||Str(l),Intg(n)
 -1 tail
 -2 mid
 -3 remove
+-4 insert
 suppress([0,1,2,3],2)
+suppress("0123",2)
+ L:=[0,1,2,3];L:=suppress(L,2)
+ L:=[0,1,2,3];L.suppress(2)
+
+# insert
+1 Renvoie l dans laquelle l'élément b a été insérer à l'indice n.
+2 Returns l where the element b is of index n.
+3 Devuelve l donde el elemento b es de índice n.
+0 Vect(l)||Str(l),Intg(n),Val(b)
+-1 tail
+-2 mid
+-3 remove
+-4 suppress
+insert([0,1,2,3],2,5)
+insert("0123",2,"5")
 
 # svd
 1 Pour une matrice carrée numérique réelle A, renvoie U orthogonale, S vecteur des valeurs singulières, Q orthogonale tels que A=U*diag(S)*tran(Q).
@@ -13172,13 +13433,26 @@ reflection(line(0,1+i),circle(i,1+i))
 -2 rref
 syst2mat([x-y=1,x+2*y],[x,y])
 
+# tabvar
+1 Tableau de variations et le graph sur DispG d'une fonction.
+2 Table of variations of a function with its graph on DispG.
+3 Tabla de variacións de una función.
+4 Πίνακας μιας συνάρτησης
+0 Expr,Var
+-1 tablefunc
+tabvar(sin(x),x)
+tabvar(x^2+x+1,x)
+tabvar(x^2,x,-3,5)
+tabvar([sin(2t),cos(3t)])
+
 # tablefunc
 1 Tableau de valeurs d'une fonction : on doit être dans un tableur.
 2 Table of value of a function : you must be in a spreadsheet.
 3 Tabla de valores de una función: debemos estar en una hoja de balance.
 4 Πίνακας τιμών μιας συνάρτησης : σε υπολογιστικό φύλλο.
 0 Expr,Var
--1 tableseq
+-1 tabvar
+-2 tableseq
 tablefunc(sin(x),x)
 tablefunc(x^2-x-2,x)
 
@@ -13829,8 +14103,8 @@ halftan(cos(x))
 halftan(tan(x))
 
 # horner
-1 Renvoie la valeur P(a) calculée selon la méthode de Hörner.
-2 Returns the value of P(a) calculated with Horner's method.
+1 Renvoie la valeur P(a) calculée selon la méthode de Hörner. La syntaxe horner(liste_alpha_i,liste_x_i,x) permet d'utiliser les differences divisees pour evaluer un polynome d'interpolation en x.
+2 Returns the value of P(a) calculated with Horner's method. With horner(liste_alpha_i,liste_x_i,x), evals an interpolation polynomial from the divided differences at x.
 3 Devuelve el valor de P(a) calculado según el método de Horner.
 4 Επιστρέφει την τιμή P(a) υπολογισμένη με τη μέθοδο Horner.
 0 Poly(P),Real(a)
@@ -13840,6 +14114,7 @@ halftan(tan(x))
 horner(x^2+1,2)
 horner([1,0,1],2)
 horner(x^2+y*x+y^3-1,2,y)
+ X:=[0.0,1.0,2.0]; A:=lagrange(X,exp,lagrange); horner(A,X,1.5);
 
 # ifte IFTE
 1 Si condition renvoie Expr1 sinon renvoie Expr2.
@@ -14062,6 +14337,20 @@ display(red+filled);square(0,1);
  f:= (x,y)->sin(x+y)+sin(x-y)
  k:=(x,y)->{if (x!=y) 0; else 1;}
  g:=(x,y)->return(sin(x+y),sin(x-y))
+
+# function fonction	
+1 Instruction qui définit une fonction utilisateur.
+2 Instruction which define an user function.
+3 Instrucción que define una función definida por el usuario.
+4 Εντολή που καθορίζει μια συνάρτηση ως απεικόνιση.
+0 Fnc(f)
+-1 ->
+-2 :=
+-3 end
+-4 ffonction
+fonction f(a,b) local c;c=a+b;c+gcd(a,b);ffonction;
+ f:=function(a,b) local c;c=a+b;c+gcd(a,b);end;
+ f:=fonction(a,b) local c;c=a+b;c+gcd(a,b);ffonction;
 
 # mod %
 1 Opérateur infixé qui renvoie n mod p un nombre de ℤ/pℤ.
@@ -14812,3 +15101,160 @@ wilcoxons([1, 3, 4, 5, 7, 8, 8, 12, 15, 17] , 10)
 dayofweek(21,4,2014)
 dayofweek(15,10,1582)
 
+# minimize maximize
+1 Recherche du minimum ou maximum d'une fonction
+2 Minimize a function
+0 Expr,[Constr],Vars,[Options]
+minimize(sin(x),[x=0..4])
+minimize(x^4-x^2,x=-3..3,locus)
+minimize(piecewise(x<=-2,x+6,x<=1,x^2,3/2-x/2),x=-3..2)
+minimize(x^2-3x+y^2+3y+3,[x=2..4,y=-4..-2],point)
+minimize(2x^2-y^2+6y,x^2+y^2<=16,[x,y])
+minimize(sqrt(x^2+y^2)-z,[x^2+y^2<=16,x+y+z=10],[x,y,z])
+minimize((1+x^2+3y+5x-4*x*y)/(1+x^2+y^2),x^2/4+y^2/3=9,[x,y])
+minimize(cos(x)^2+cos(y)^2,x+y=pi/4,[x,y],locus)
+
+# minimax
+1 Approximation polynomiale de degré n d'une fonction continue bornée sur [a,b] par la méthode de Remez
+2 Implementation of Remez method for minimax polynomial approximation of degree n of a continuous bounded function on a..b
+0 Expr,Var=a..b,n,[Options]
+minimax(x*exp(-x),x=0..10,24)
+minimax(x*sin(x),x=0..10,25)
+minimax(ln(2+x-sin(x)^2),x=0..2*pi,20)
+minimax(cos(x^2-x+1),x=-2..2,40)
+minimax(atan(x),x=-5..5,25)
+minimax(tanh(sin(9x)),x=-1/2..1/2,40)
+minimax(abs(x),x=-1..1,20)
+minimax(abs(x)*sqrt(abs(x)),x=-2..2,15)
+minimax(min(1/cosh(3*sin(10x)),sin(9x)),x=-0.3..0.4,25)
+minimax(when(x==0,0,exp(-1/x^2)),x=-1..1,30)
+
+# tpsolve
+1 resolution d'un probleme de transport par la methode MODI
+2 solves a transportation problem using MODI method
+0 supply,demand,cost_matrix
+tpsolve([12,17,11],[10,10,10,10],[[500,750,300,450],[650,800,400,600],[400,700,500,550]])
+tpsolve([7,10,8,8,9,6],[9,6,12,8,10],[[36,40,32,43,29],[28,27,29,40,38],[34,35,41,29,31],[41,42,35,27,36],[25,28,40,34,38],[31,30,43,38,40]])
+tpsolve([95,70,165,165],[195,150,30,45,75],[[15,M,45,M,0],[12,40,M,M,0],[0,15,25,25,0],[M,0,M,12,0]])
+tpsolve([1,1,1,1],[1,1,1,1],[[10,12,9,11],[5,10,7,8],[12,14,13,11],[8,15,11,9]])
+
+# thiele
+1 Approximation rationnelle d'une liste de points par la methode de Thiele
+2 computes rational interpolation for the given list of points using Thiele's method with continued fractions
+0 [Data || Data_x],[Data_y],v 
+ data_x:=[-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1,1.25,1.5,1.75,2];data_y:=[0.0,2.83341735599,2.88770329586,2.75030303645,2.71828182846,2.66568510781,2.24894558809,1.21863761951,0.0,-0.555711613283,-0.377871362418,-0.107135851128,-0.0136782294833]; thiele(data_x,data_y,x)
+
+# lpsolve
+1 Resoud un probleme d'optimisation lineaire de fonction objectif o sous contraintes optionnelles c
+2 solves a (mixed integer/binary) LP problem in general form
+0 Expr(o),[List(c)],[bounds],[options]
+lpsolve(2x+y-z+4,[x<=1,y>=2,x+3y-z=2,2x-y+z<=8,-x+y<=5])
+lpsolve(-4x-5y,[x+2y<=6,5x+4y<=20,0<=x,0<=y])
+lpsolve(-7x+2y,[4x-12y<=20,-x+3y<=3],x=-5..5,y=0..inf,lp_maximize=true)
+lpsolve(x-y-2z+3,[-3x-y+z<=3,2x-3y>=4z,x-z=y,x>=0,y<=0],lp_maximize)
+lpsolve(-x-y,[y<=3x+1/2,y<=-5x+2],assume=lp_nonnegative)
+lpsolve(x+y,[x<=8,-x+y<=4,-x+2y>=6,2x+y<=25,3x+y>=18,-x+2y>=6],assume=lp_nonnegative)
+lpsolve(45.55x1+21.87x2,[1.64x1+2.67x2<=31.2,2.11x1+2.3x2>=13.9],assume=lp_nonnegative)
+lpsolve(3x+4y,[x<=4,x+3y<=15,-x+2y>=5,x-y>=9,x+y=6],assume=lp_nonnegative,lp_maximize=true)
+lpsolve(-6x+4y+z,[5x-10y<=20,2z-3y=6,-x+3y<=3],x=1..20,y=0..inf)
+lpsolve(-5x-7y,[7x+y<=35,-x+3y<=6],assume=integer)
+lpsolve(x+3y+3z,[x+3y+2z<=7,2x+2y+z<=11],assume=lp_nonnegative,lp_integervariables=[x,z],lp_maximize)
+lpsolve(2x+5y,[3x-y=1,x-y<=5],assume=nonnegint)
+lpsolve(x1+x2,[2x1+5x2<=16,6x1+5x2<=30],assume=nonnegint,lp_maximize)
+lpsolve(8x1+11x2+6x3+4x4,[5x1+7x2+4x3+3x4<=14],assume=lp_binary,lp_maximize)
+
+# implicitdiff
+1 Derivee implicite
+2 Implicit differentiation
+0 constr,[depvars],y,diffvars
+implicitdiff(x^2*y+y^2=1,y,x)
+implicitdiff(R=P*V/T,P,T)
+implicitdiff([x^2+y=z,x+y*z=1],[y(x),z(x)],y,x)
+implicitdiff([x^2+y=z,x+y*z=1],[y(x),z(x)],[y,z],x)
+implicitdiff(y=x^2/z,y,x)
+implicitdiff(y=x^2/z,y,z)
+implicitdiff(y^3+x^2=1,y,x)
+implicitdiff(y^3+x^2=1,y,x,x)
+implicitdiff(a*x^3*y-2y/z=z^2,y(x,z),x)
+implicitdiff(a*x^3*y-2y/z=z^2,y(x,z),x,z)
+implicitdiff([-2x*z+y^2=1,x^2-exp(x*z)=y],[y(x),z(x)],y,x)
+implicitdiff([-2x*z+y^2=1,x^2-exp(x*z)=y],[y(x),z(x)],[y,z],x)
+implicitdiff([a*sin(u*v)+b*cos(w*x)=c,u+v+w+x=z,u*v+w*x=z],[u(x,z),v(x,z),w(x,z)],u,z)
+implicitdiff(x*y,-2x^3+15x^2*y+11y^3-24y=0,y(x),x$2)
+implicitdiff((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[v(u,x),y(u,x)],u,x)
+implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=1)
+implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=2,[1,-1,0])
+ pd:=implicitdiff(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,z,y],order_size=4,[0,z,0]);pd[4,0]
+
+# lp_assume lp_binary lp_binaryvariables lp_depthlimit lp_integer lp_integervariables lp_maximize lp_nonnegative lp_nonnegint lp_variables lp_nodelimit lp_integertolerance lp_method lp_simplex lp_interiorpoint lp_initialpoint
+1 Options de la commande lpsolve
+2 Options for lpsolve command
+0 Opt
+-1 lpsolve
+
+# periodic
+1 Cree une expression periodique egale a Expr sur [a,b], periode b-a
+2 Make a periodic expression equal to Expr on a..b, period b-a
+0 Expr,Var,a,b
+periodic(x^2,x,0,1)
+
+# extrema
+1 Recherche des extremas d'une expression
+2 Search extrema of an expression
+extrema(-2*cos(x)-cos(x)^2,x)
+extrema((x^3-1)^4/(2x^3+1)^4,x=0..inf)
+extrema(x/2-2*sin(x/2),x=-12..12)
+extrema(x-ln(abs(x)),x)
+ assume(a>=0);extrema(x^2+a*x,x)
+extrema(x^7+3x^6+3x^5+x^4+2x^2-x,x)
+extrema((x^2+x+1)/(x^4+1),x)
+extrema(x^2+exp(-x),x)
+extrema(exp(-x)*ln(x),x)
+extrema(tan(x)*(x^3-5x^2+1),x=-0.5)
+extrema(tan(x)*(x^3-5x^2+1),x=0.5)
+extrema(exp(x^2-2x)*ln(x)*ln(1-x),x=0.5)
+extrema(ln(2+x-sin(x)^2),x=0..2*pi)
+extrema(x^3-2x*y+3y^4,[x,y])
+extrema((2x^2-y)*(y-x^2),[x,y])  //Peano surface
+extrema(5x^2+3y^2+x*z^2-z*y^2,[x,y,z])
+extrema(3*atan(x)-2*ln(x^2+y^2+1),[x,y])
+extrema(x*y,x+y=1,[x,y])
+extrema(sqrt(x*y),x+y=2,[x,y])
+extrema(x*y,x^3+y^3=16,[x,y])
+extrema(x^2+y^2,x*y=1,[x=0..inf,y=0..inf])
+extrema(ln(x*y^2),2x^2+3y^2=8,[x,y])
+extrema(y^2+4y+2x-x^2,x+2y=2,[x,y])
+ assume(a>0);extrema(x/a^2+a*y^2,x+y=a,[x,y])
+extrema(6x+3y+2z,4x^2+2y^2+z^2=70,[x,y,z])
+extrema(x*y*z,x+y+z=1,[x,y,z])
+extrema(x*y^2*z^2,x+y+z=5,[x,y,z])
+extrema(4y-2z,[2x-y-z=2,x^2+y^2=1],[x,y,z])
+extrema((x-3)^2+(y-1)^2+(z-1)^2,x^2+y^2+z^2=4,[x,y,z])
+extrema(x+3y-z,2x^2+y^2=z,[x,y,z])
+extrema(2x*y+2y*z+x*z,x*y*z=4,[x,y,z])
+extrema(x+y+z,[x^2+y^2=1,2x+z=1],[x,y,z])
+ assume(a>0);extrema(x+y+z,[y^2-x^2=a,x+2z=1],[x,y,z])
+extrema((x-u)^2+(y-v)^2,[x^2/4+y^2/9=1,(u-3)^2+(v+5)^2=1],[u,v,x,y])
+extrema(x2^6+x1^3+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
+extrema(x*y,-2x^3+15x^2*y+11y^3-24y=0,[x,y])
+extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2],order_size=1)
+extrema(x2^4-x1^4-x2^8+x1^10,[x1,x2])
+extrema(x2^6+x1^3+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
+extrema(x2^6+x1^3+2x1^2-x2^2+4x1+4x2,x1^5+x2^4+x1+x2=0,[x1,x2])
+extrema(3x^2-2x*y+y^2-8y,[x,y])
+extrema(x^3+3x*y^2-15x-12y,[x,y])
+extrema(4x*y-x^4-y^4,[x,y])
+extrema(x*sin(y),[x,y])
+extrema(x^4+y^4,[x,y])
+extrema(x^3*y-x*y^3,[x,y])  
+extrema(x^2+y^2+z^2,x^4+y^4+z^4=1,[x,y,z])
+extrema(3x+3y+8z,[x^2+z^2=1,y^2+z^2=1],[x,y,z])
+extrema(2x^2+y^2,x^4-x^2+y^2=5,[x,y])
+extrema((3x^4-4x^3-12x^2+18)/(12*(1+4y^2)),[x,y])
+extrema(x-y+z,[x^2+y^2+z^2=1,x+y+2z=1],[x,y,z])
+extrema(ln(x)+2*ln(y)+3*ln(z)+4*ln(u)+5*ln(v),x+y+z+u+v=1,[x,y,z,u,v])
+extrema(x*y*z,-2x^3+15x^2*y+11y^3-24y=0,[x,y,z])
+extrema(x+y-exp(x)-exp(y)-exp(x+y),[x,y])
+extrema(x^2*sin(y)-4*x,[x,y])    
+extrema((1+y*sinh(x))/(1+y^2+tanh(x)^2),[x,y])
+extrema((1+y*sinh(x))/(1+y^2+tanh(x)^2),y=x^2,[x,y])
