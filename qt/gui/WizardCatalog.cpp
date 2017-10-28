@@ -181,6 +181,9 @@ void WizardCatalog::newPage(QUrl url){
         keyWord.replace("%7D","}");
         keyWord.replace("%5C","\\");
         keyWord.replace("%5E","^");
+        keyWord.replace("%3C","<");
+        keyWord.replace("%3E",">");
+        keyWord.replace("%22","\"");
         mainWindow->sendText(keyWord);
     }
     else{
@@ -192,16 +195,25 @@ void WizardCatalog::newPage(QUrl url){
                 keyWord.replace("%7D","}");
                 keyWord.replace("%5C","\\");
                 keyWord.replace("%5E","^");
-                //qDebug()<<keyWord;
+                keyWord.replace("%3C","<");
+                keyWord.replace("%3E",">");
+                keyWord.replace("%322","\"");
+
+                //qInfo()<<keyWord;
                 QRegExp titre=QRegExp(keyWord);
                 //search the link from the pattern on the fly in index.html
                 zone->setSource(QUrl("index.html"));
                 QString indexhtml=zone->toHtml();
                 int i1=indexhtml.indexOf(titre);
-                //qDebug()<<indexhtml.mid(i1-10,30);
+                //qInfo()<<indexhtml.mid(i1-10,30);
                 int i0=indexhtml.left(i1).lastIndexOf("#htoc");
+                if(i0<0){
+                    // some version of the giac doc uses #sec instead of #htoc
+                    i0=indexhtml.left(i1).lastIndexOf("#sec");
+                }
                 i1=indexhtml.mid(i0,i1-i0).indexOf("\">");
                 keyWord="index.html"+indexhtml.mid(i0,i1);
+                //qInfo()<<keyWord;
                 addHistory(keyWord);
                 zone->setSource(QUrl(keyWord));
             }
