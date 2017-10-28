@@ -891,7 +891,7 @@ bool MainWindow::askforXcasarchive(){
     else{
         return true;
     }
-
+  return;
 }
 
 
@@ -1129,6 +1129,7 @@ bool MainWindow::autoSave(){
         autosaveFileName=hp+autosaveFileName;
         saveToGiacFile(autosaveFileName);
     }
+  return;
 }
 
 bool MainWindow::saveAs(){

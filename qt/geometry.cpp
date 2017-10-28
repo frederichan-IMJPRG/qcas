@@ -427,7 +427,7 @@ QColor MyItem::getFltkColor(int& c) const{
         return QColor(255*r/4,255*g/7,255*b/4);
 
     }
-
+  return;
 }
 
 QColor arcenciel(int k){

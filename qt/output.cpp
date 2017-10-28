@@ -111,6 +111,7 @@ QString FormulaWidget::getTextOutput(){
         else
             return "";
     }
+  return;
 }
 
 bool FormulaWidget::isFormula(){
