@@ -616,7 +616,11 @@ bool MainWindow::appendFile(const QString &fileName){
 bool MainWindow::loadQcasFile(const QString &fileName){
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)){
+#if QT_VERSION < 0x050000
+        qDebug()<<"Failed to open: "<<fileName;
+#else
         qInfo()<<"Failed to open: "<<fileName;
+#endif
         return false;
     }
     QDomDocument doc("xml");
@@ -1079,7 +1083,11 @@ void MainWindow::initAutoSave(){
     int i;
 
     if(! autofound.isEmpty()){
+#if QT_VERSION < 0x050000
+        qDebug()<<"Found automatic saving file"<<autofound;
+#else
         qInfo()<<"Found automatic saving file"<<autofound;
+#endif
         QMessageBox msgBox;
         msgBox.setWindowTitle("AutoSave");
         msgBox.setIcon(QMessageBox::Warning);
@@ -2056,10 +2064,19 @@ QString CommandInfo::displayPage(const QString& keyWord) const{
         line.append("<hr>");
         line.append(minimaltoHtml(description));
         //
+#if QT_VERSION < 0x050000
+        qDebug()<<command<<"fin de commande\n";
+#else
         qInfo()<<command<<"fin de commande\n";
+#endif
+
         //kwdsearch="?"+command.split(QRegExp("[\s(]")).at(0);
         kwdsearch.prepend("?");
-        qInfo()<<kwdsearch;
+#if QT_VERSION < 0x050000
+                qDebug()<<kwdsearch;
+#else
+                qInfo()<<kwdsearch;
+#endif
         if(kwdsearch !="?"){
         line.append(" <a href=\"").append(kwdsearch).append("\">").append(QObject::tr("(Plus de détails)</a>"));
         //

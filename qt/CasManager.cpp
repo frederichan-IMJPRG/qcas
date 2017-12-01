@@ -55,7 +55,11 @@ void StopThread::run(){
     sleep(2);
     // Finally, try to kill thread  (dirty...), be carefull with crash!!
     if (check_thread(contextptr)==1) {
-        qInfo()<<"Dirty try to interrupt thread!!!";
+#if QT_VERSION < 0x050000
+       qInfo()<<"Dirty try to interrupt thread!!!";
+#else
+       qInfo()<<"Dirty try to interrupt thread!!!";
+#endif
         go=false;
         emit(startDirtyInterrupt());
         while(!go){
@@ -63,7 +67,13 @@ void StopThread::run(){
         }
         kill_thread(true,contextptr);
     }
-    else qInfo()<<"Clean interruption";
+    else{
+#if QT_VERSION < 0x050000
+        qDebug()<<"Clean interruption";
+#else
+        qInfo()<<"Clean interruption";
+#endif
+    }
 }
 void StopThread::setContinueTrue(){
     go=true;
@@ -120,7 +130,11 @@ void     mybuf::put_buffer(){
     // mettre ici le code de sortie java de la chaine buffer
     setp(pbase(), epptr());
     cerr << "1 chaine " << endl;
-    qInfo()<<"debug "<<buffer;
+#if QT_VERSION < 0x050000
+        qDebug()<<"debug "<<buffer;
+#else
+        qInfo()<<"debug "<<buffer;
+#endif
     delete [] buffer;
   }
 }
@@ -144,7 +158,11 @@ CasManager::CasManager(MainWindow* main){
     QString tmp=XCASROOT;
     tmp.append("doc/aide_cas");
     if(QFile::exists(tmp)){
+#if QT_VERSION < 0x050000
+        qDebug()<<"Setting xcasroot to"<<XCASROOT;
+#else
         qInfo()<<"Setting xcasroot to"<<XCASROOT;
+#endif
         giac::xcasroot()=XCASROOT.toStdString();
         Config::XcasRoot=XCASROOT;
     }
@@ -153,13 +171,22 @@ CasManager::CasManager(MainWindow* main){
         tmp=XCASROOT;
         tmp.append("doc/aide_cas");
         if(QFile::exists(tmp)){
-            qInfo()<<"Setting xcasroot to"<<XCASROOT;
+#if QT_VERSION < 0x050000
+        qDebug()<<"Setting xcasroot to"<<XCASROOT;
+#else
+        qInfo()<<"Setting xcasroot to"<<XCASROOT;
+#endif
             giac::xcasroot()=XCASROOT.toStdString();
             Config::XcasRoot=XCASROOT;
         }
         else{
+#if QT_VERSION < 0x050000
+            qDebug()<<"Warning: doc/aide_cas not found. This file should be in \
+                      ../share/giac/ (relatively to the PATH of the executable qcas";
+#else
             qInfo()<<"Warning: doc/aide_cas not found. This file should be in \
                       ../share/giac/ (relatively to the PATH of the executable qcas";
+#endif
         }
     }
 
@@ -226,7 +253,11 @@ CasManager::warning CasManager::initExpression(const QString *str){
     }
     // fred input/output/inputform
     if(expression.is_symb_of_sommet(giac::at_input)){
+#if QT_VERSION < 0x050000
+        qDebug()<<"input form found";
+#else
         qInfo()<<"input form found";
+#endif
     }
 
     return CasManager::No_warning;
@@ -487,33 +518,56 @@ void CasManager::info(giac::gen & gg,int decal) const{
         }
 
     if (gg.type==giac::_SYMB){
+#if QT_VERSION < 0x050000
+        qDebug()<< s << "_SYMB Sommet";
+        qDebug()<< s << QString::fromStdString(gg._SYMBptr->sommet.ptr()->print(context));
+        giac::gen g=gg._SYMBptr->feuille;
+        qDebug()<< s << "_SYMB feuille";
+#else
         qInfo()<< s << "_SYMB Sommet";
         qInfo()<< s << QString::fromStdString(gg._SYMBptr->sommet.ptr()->print(context));
         giac::gen g=gg._SYMBptr->feuille;
         qInfo()<< s << "_SYMB feuille";
+#endif
         info(g,decal);
     }
     else if (gg.type==giac::_VECT){
         decal=decal+5;
 
         giac::vecteur *v=gg._VECTptr;
+#if QT_VERSION < 0x050000
+        qDebug()<< s << "_VECT subtype"<< displaySubType(gg.subtype);
+        qDebug()<< s << "size"<<QString::number(v->size());
+#else
         qInfo()<< s << "_VECT subtype"<< displaySubType(gg.subtype);
         qInfo()<< s << "size"<<QString::number(v->size());
+#endif
         vecteur::iterator it;
         unsigned int i=0;
         for(it=v->begin();it<v->end();it++){
-
-
-            qInfo()<< s<< "element"<<i;
+#if QT_VERSION < 0x050000
+        qDebug()<< s<< "element"<<i;
+#else
+        qInfo()<< s<< "element"<<i;
+#endif
             info(*it,decal);
             i++;
         }
+#if QT_VERSION < 0x050000
+        qDebug()<< s <<"//fin vect";
+#else
         qInfo()<< s <<"//fin vect";
+#endif
         decal=decal-5;
     }
     else if(gg.type==giac::_DOUBLE_){
+#if QT_VERSION < 0x050000
+        qDebug()<<"DOUBLE";
+        qDebug()<<QString::fromStdString(gg.print(context));
+#else
         qInfo()<<"DOUBLE";
         qInfo()<<QString::fromStdString(gg.print(context));
+#endif
     }
     else     {
         qInfo()<< s << "autres";
@@ -539,7 +593,11 @@ OutputWidget* CasManager::createDisplay(){
   }
   else if(answer.is_symb_of_sommet(at_pnt)){
         if (is3d(answer)){
+#if QT_VERSION < 0x050000
+            qDebug("3D is not implemented in qcas");
+#else
             qInfo("3D is not implemented in qcas");
+#endif
         }
         else {
             return new GraphWidget(answer,context,false,mainWindow);
