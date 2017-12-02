@@ -1,3 +1,9 @@
+qcas (0.5.2) unstable; urgency=low
+
+  * upstream updates. Fixes for Qt4 and format-security in qtmmlwidgets
+
+ -- Frederic Han  <frederic.han@imj-prg.fr>  Sat, 2 Dec 2017 06:33:00 +0100
+
 qcas (0.5.1) unstable; urgency=low
 
   * upstream updates for giac html doc; fixes  missing return in 3 functions
