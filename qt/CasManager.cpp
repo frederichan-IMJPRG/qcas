@@ -56,7 +56,7 @@ void StopThread::run(){
     // Finally, try to kill thread  (dirty...), be carefull with crash!!
     if (check_thread(contextptr)==1) {
 #if QT_VERSION < 0x050000
-       qInfo()<<"Dirty try to interrupt thread!!!";
+       qDebug()<<"Dirty try to interrupt thread!!!";
 #else
        qInfo()<<"Dirty try to interrupt thread!!!";
 #endif
