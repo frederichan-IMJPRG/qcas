@@ -573,7 +573,7 @@ void CasManager::info(giac::gen & gg,int decal) const{
 #if QT_VERSION < 0x050000
         qDebug()<< s << "autres";
         qDebug()<< s << displayType(gg.type);
-        QDebug()<< s << QString::fromStdString(gg.print());
+        qDebug()<< s << QString::fromStdString(gg.print());
 #else
         qInfo()<< s << "autres";
         qInfo()<< s << displayType(gg.type);
