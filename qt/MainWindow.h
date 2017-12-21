@@ -22,7 +22,7 @@
 #include "sizeof_void_p.h"
 #include "gui/CentralTabWidget.h"
 #include <QMainWindow>
-#include <ui_MainWindow.h>
+#include "ui_MainWindow.h"
 #include <QGroupBox>
 #include <giac/giac.h>
 class QAction;
