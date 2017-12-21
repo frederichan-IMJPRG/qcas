@@ -46,7 +46,7 @@ win32{
 unix{
     #QMAKE_CXXFLAGS+=-DHAVE_CONFIG_H
     #QMAKE_CXXFLAGS+=-DSIZEOF_VOID_P=__SIZEOF_POINTER__ #for amd64 system. define SMARTPTR64 in <giac/first.h>
-    CONFIG+=staticlib
+    #CONFIG+=staticlib
     LIBS += -ldl -lgiac  -lgmp
 }
 macx{

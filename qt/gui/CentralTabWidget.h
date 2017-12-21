@@ -21,7 +21,7 @@
 
 #include <QTabWidget>
 
-#include "sizeof_void_p.h"
+#include "../sizeof_void_p.h"
 #include <giac/giac.h>
 
 class QToolButton;
